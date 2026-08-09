@@ -35,4 +35,13 @@ public class AuthActionTicketEntity {
         return ticket;
     }
     public void consume(Instant now) { consumedAt = now; }
+    public UUID getId() { return id; }
+    public AuthActionPurpose getPurpose() { return purpose; }
+    public UUID getUserId() { return userId; }
+    public String getGoogleSubject() { return googleSubject; }
+    public String getEmailNormalized() { return emailNormalized; }
+    public boolean isGoogleEmailVerified() { return googleEmailVerified; }
+    public String getDisplayName() { return displayName; }
+    public Instant getExpiresAt() { return expiresAt; }
+    public Instant getConsumedAt() { return consumedAt; }
 }
