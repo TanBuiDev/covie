@@ -1,8 +1,8 @@
 # CoVie V1 — Project Status Dashboard
 
 **Last verified:** 2026-08-09  
-**Overall status:** Planning and UI design complete; Plan 01 implementation in progress.  
-**Current implementation plan:** Plan 01 — Foundation & Repository.
+**Overall status:** Planning, UI design and Plan 01 foundation complete; Plan 02 is ready to begin.
+**Current implementation plan:** Plan 02 — Identity, Auth & User.
 
 ## Purpose
 
@@ -14,15 +14,15 @@ This is the single progress dashboard for CoVie V1. It records completed work on
 |---|---|---|
 | Product, UX, database, API and technical planning | Complete | Approved documents in `docs/` |
 | Figma foundations, components and P0 screens | Complete | Figma cover records 37/37 production units `FROZEN`; cross-screen QA and critical prototypes `PASS` |
-| Repository implementation | In progress | Plan 01 workspace is active on `codex/plan-01-foundation` |
+| Repository implementation | Foundation complete | Plan 01 acceptance passed on `codex/plan-01-foundation` (commit `4590072`) |
 | Production / pilot | Not started | Depends on successful completion of Plans 01–10 |
 
 ## Delivery checklist
 
 | Plan | Scope | Status | Required evidence before marking complete |
 |---|---|---|---|
-| 01 | Foundation & Repository | In progress | Local infra, API/web boot, OpenAPI client and CI acceptance gate green |
-| 02 | Identity, Auth & User | Blocked by Plan 01 | Authentication testing contract green |
+| 01 | Foundation & Repository | Complete | Local infra, API/web boot, OpenAPI client and CI acceptance gate green (2026-08-09) |
+| 02 | Identity, Auth & User | Ready | Authentication testing contract green |
 | 03 | Merchant, Location, Media & Catalog | Blocked by Plan 02 | Guest discovery and seller catalog management work end-to-end |
 | 04 | Shipping, Cart, Inventory & Checkout | Blocked by Plan 03 | Atomic order creation; concurrent last-stock test has one success and one conflict |
 | 05 | Orders & Fulfillment | Blocked by Plan 04 | Product delivery, pickup and service critical transitions pass |
