@@ -348,7 +348,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - covie_postgres:/var/lib/postgresql/data
+      - covie_postgres:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U covie -d covie"]
       interval: 5s
@@ -394,6 +394,8 @@ volumes:
   covie_postgres:
   covie_minio:
 ```
+
+For PostgreSQL 18 images, mount the named volume at `/var/lib/postgresql`; the image manages its major-version-specific data subdirectory below that path.
 
 - [ ] **Step 2: Validate Compose syntax before starting anything**
 
