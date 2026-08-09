@@ -1126,6 +1126,10 @@ git commit -m "feat(api): add shared id time and money primitives"
 
 **Produces:** Stable `/api/v1` baseline contract and request correlation used by all later controllers.
 
+Spring Boot 4 keeps MockMvc support in the explicit test-scoped
+`org.springframework.boot:spring-boot-starter-webmvc-test` dependency. Keep it alongside
+`spring-boot-starter-test` when using `org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc`.
+
 - [ ] **Step 1: Write the failing health/request-id integration test**
 
 ```java
