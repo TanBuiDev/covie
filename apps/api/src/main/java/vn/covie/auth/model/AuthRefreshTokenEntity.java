@@ -26,6 +26,12 @@ public class AuthRefreshTokenEntity {
     public UUID getId() { return id; }
     public UUID getSessionId() { return sessionId; }
     public String getTokenHash() { return tokenHash; }
+    public UUID getReplacedByTokenId() { return replacedByTokenId; }
+    public Instant getExpiresAt() { return expiresAt; }
+    public Instant getUsedAt() { return usedAt; }
+    public Instant getRevokedAt() { return revokedAt; }
+    public boolean isUsedOrReplaced() { return usedAt != null || replacedByTokenId != null; }
+    public boolean isRevoked() { return revokedAt != null; }
     public void replaceWith(UUID replacementId, Instant now) { usedAt = now; replacedByTokenId = replacementId; }
     public void revoke(Instant now) { revokedAt = now; }
 }

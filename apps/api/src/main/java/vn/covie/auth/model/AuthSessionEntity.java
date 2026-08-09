@@ -32,6 +32,10 @@ public class AuthSessionEntity {
     public UUID getTokenFamilyId() { return tokenFamilyId; }
     public Instant getExpiresAt() { return expiresAt; }
     public Instant getRevokedAt() { return revokedAt; }
+    public String getDeviceName() { return deviceName; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getLastUsedAt() { return lastUsedAt; }
     public boolean isActiveAt(Instant now) { return revokedAt == null && expiresAt.isAfter(now); }
     public void revoke(Instant now, AuthSessionRevocationReason reason) { if (revokedAt == null) { revokedAt = now; revocationReason = reason; } }
+    public void markUsed(Instant now) { lastUsedAt = now; }
 }
