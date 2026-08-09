@@ -5,11 +5,12 @@ import { CovieApiError } from "../../lib/api/api-error";
 
 type PasswordFormProps = {
   submitPassword: (password: string) => Promise<void>;
+  fieldName?: string;
   onComplete?: (path: string) => void;
   expiredMessage?: string;
 };
 
-export function PasswordForm({ submitPassword, onComplete = (path) => window.location.assign(path), expiredMessage }: PasswordFormProps) {
+export function PasswordForm({ submitPassword, fieldName = "password", onComplete = (path) => window.location.assign(path), expiredMessage }: PasswordFormProps) {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(expiredMessage);
   const [fields, setFields] = useState<Record<string, string[]>>({});
@@ -34,8 +35,8 @@ export function PasswordForm({ submitPassword, onComplete = (path) => window.loc
 
   return <form onSubmit={submit}>
     <label htmlFor="new-password">Mật khẩu mới</label>
-    <input id="new-password" name="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={10} />
-    {fields.password?.map((error) => <p key={error}>{error}</p>)}
+    <input id="new-password" name={fieldName} type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={10} />
+    {fields[fieldName]?.map((error) => <p key={error}>{error}</p>)}
     {message && <p role="alert">{message}</p>}
     <button type="submit">Lưu mật khẩu</button>
   </form>;

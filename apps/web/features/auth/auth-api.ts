@@ -20,7 +20,7 @@ export function setOnboardingPassword(password: string) {
 }
 
 export function resetPasswordWithGoogle(password: string) {
-  return post("/api/v1/auth/password/reset-with-google", { password });
+  return post("/api/v1/auth/password/reset-with-google", { newPassword: password });
 }
 
 export async function logout(navigate: (path: string) => void): Promise<void> {

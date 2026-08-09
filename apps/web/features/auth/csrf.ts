@@ -19,6 +19,9 @@ export function getCsrfToken(): Promise<CsrfToken> {
       if (!response.ok) throw new Error("Unable to obtain CSRF token");
       return (await response.json()) as CsrfToken;
     });
+    cached.catch(() => {
+      cached = null;
+    });
   }
   return cached;
 }

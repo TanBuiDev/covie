@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApiClient } from "../../lib/api/api-client";
+import { createApiClient, requestBrowserApi } from "../../lib/api/api-client";
+import { readApiError } from "../../lib/api/api-error";
 import { getCsrfToken, invalidateCsrfToken } from "../../features/auth/csrf";
 import { refreshSession } from "../../features/auth/auth-session";
 
@@ -60,6 +61,35 @@ describe("browser CSRF middleware", () => {
 
     expect(token.token).toBe("new-token");
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries CSRF loading after a previous token request failed", async () => {
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new Error("network unavailable"))
+      .mockResolvedValueOnce(json({ headerName: "X-CSRF-Token", token: "recovered-token" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getCsrfToken()).rejects.toThrow("network unavailable");
+    await expect(getCsrfToken()).resolves.toEqual({ headerName: "X-CSRF-Token", token: "recovered-token" });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("invalidates CSRF after a CSRF-specific 403 without replaying the mutation", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(json({ headerName: "X-CSRF-Token", token: "stale-token" }))
+      .mockResolvedValueOnce(json({ error: { code: "CSRF_INVALID", message: "expired" } }, 403))
+      .mockResolvedValueOnce(json({ headerName: "X-CSRF-Token", token: "fresh-token" }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const rejectedResponse = await requestBrowserApi("POST", "/api/v1/example");
+    const error = await readApiError(rejectedResponse);
+
+    expect(error.code).toBe("CSRF_INVALID");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await requestBrowserApi("POST", "/api/v1/example");
+    expect(new Request(fetchMock.mock.calls[3]![0]).headers.get("X-CSRF-Token")).toBe("fresh-token");
   });
 });
 
