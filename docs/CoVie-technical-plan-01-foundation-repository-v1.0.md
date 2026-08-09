@@ -1723,7 +1723,7 @@ Expected: PASS and `apps/api/target/openapi/openapi.json` exists.
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "openapi-fetch": "^0.14.2"
+    "openapi-fetch": "^0.17.0"
   },
   "devDependencies": {
     "openapi-typescript": "^7.9.1",
