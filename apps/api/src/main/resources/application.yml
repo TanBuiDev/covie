@@ -2,7 +2,7 @@ spring:
   application:
     name: covie-api
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/covie}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/covie}
     username: ${DB_USERNAME:covie}
     password: ${DB_PASSWORD:covie_local}
   data:

@@ -265,7 +265,7 @@ Thumbs.db
 
 ```dotenv
 SPRING_PROFILES_ACTIVE=local
-DB_URL=jdbc:postgresql://localhost:5432/covie
+DB_URL=jdbc:postgresql://localhost:5433/covie
 DB_USERNAME=covie
 DB_PASSWORD=covie_local
 REDIS_URL=redis://localhost:6379
@@ -346,7 +346,7 @@ services:
       POSTGRES_USER: covie
       POSTGRES_PASSWORD: covie_local
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - covie_postgres:/var/lib/postgresql
     healthcheck:
@@ -2245,11 +2245,11 @@ pnpm infra:up
 
 Run API:
 cd apps/api
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+./mvnw -Dspring-boot.run.profiles=local spring-boot:run
 
 Windows PowerShell API equivalent:
 cd apps/api
-.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local
+.\mvnw.cmd "-Dspring-boot.run.profiles=local" spring-boot:run
 
 Run web in another terminal:
 pnpm web:dev
@@ -2459,7 +2459,7 @@ Terminal A:
 
 ```bash
 cd apps/api
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+./mvnw -Dspring-boot.run.profiles=local spring-boot:run
 ```
 
 Terminal B:
@@ -2490,6 +2490,8 @@ Next.js development rewrite /api/v1/health -> backend HTTP 200
 
 ```bash
 docker run --rm \
+  --add-host api:127.0.0.1 \
+  --add-host web:127.0.0.1 \
   -v "$PWD/infra/docker/nginx.conf:/etc/nginx/nginx.conf:ro" \
   nginx:1.28-alpine nginx -t
 ```

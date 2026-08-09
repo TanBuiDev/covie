@@ -19,14 +19,14 @@ Run the API:
 
 ```bash
 cd apps/api
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+./mvnw -Dspring-boot.run.profiles=local spring-boot:run
 ```
 
 Windows PowerShell equivalent:
 
 ```powershell
 cd apps/api
-.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local
+.\mvnw.cmd "-Dspring-boot.run.profiles=local" spring-boot:run
 ```
 
 Run the web app in another terminal:
