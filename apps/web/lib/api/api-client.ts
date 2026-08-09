@@ -26,6 +26,7 @@ export function createApiClient(baseUrl = "") {
 
   client.use({
     async onResponse({ request, response }) {
+      if (typeof window === "undefined") return response;
       if (response.status !== 401) return response;
 
       const method = request.method.toUpperCase();
