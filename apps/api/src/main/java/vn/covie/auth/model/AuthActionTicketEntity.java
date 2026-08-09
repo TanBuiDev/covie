@@ -27,5 +27,12 @@ public class AuthActionTicketEntity {
     @Column(name = "expires_at", nullable = false) private Instant expiresAt;
     @Column(name = "consumed_at") private Instant consumedAt;
     protected AuthActionTicketEntity() {}
+    public static AuthActionTicketEntity create(UUID id, AuthActionPurpose purpose, String tokenHash, UUID userId, String googleSubject, String emailNormalized, boolean googleEmailVerified, String displayName, Instant now, Instant expiresAt) {
+        AuthActionTicketEntity ticket = new AuthActionTicketEntity();
+        ticket.id = id; ticket.purpose = purpose; ticket.tokenHash = tokenHash; ticket.userId = userId;
+        ticket.googleSubject = googleSubject; ticket.emailNormalized = emailNormalized; ticket.googleEmailVerified = googleEmailVerified;
+        ticket.displayName = displayName; ticket.createdAt = now; ticket.expiresAt = expiresAt;
+        return ticket;
+    }
     public void consume(Instant now) { consumedAt = now; }
 }

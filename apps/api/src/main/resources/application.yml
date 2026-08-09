@@ -1,6 +1,17 @@
 spring:
   application:
     name: covie-api
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            provider: google
+            client-id: ${GOOGLE_OAUTH_CLIENT_ID:disabled-local-client}
+            client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:disabled-local-secret}
+            authorization-grant-type: authorization_code
+            scope: openid,profile,email
+            redirect-uri: ${GOOGLE_OAUTH_REDIRECT_URI:http://localhost:3000/api/v1/auth/google/callback/google}
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/covie}
     username: ${DB_USERNAME:covie}

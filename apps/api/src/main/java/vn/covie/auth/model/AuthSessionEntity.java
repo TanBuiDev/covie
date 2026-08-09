@@ -25,7 +25,8 @@ public class AuthSessionEntity {
     @Enumerated(EnumType.STRING) @Column(name = "revocation_reason") private AuthSessionRevocationReason revocationReason;
     @Version private long version;
     protected AuthSessionEntity() {}
-    public static AuthSessionEntity create(UUID id, UUID userId, UUID familyId, Instant now, Instant expiresAt) { AuthSessionEntity session = new AuthSessionEntity(); session.id=id; session.userId=userId; session.tokenFamilyId=familyId; session.createdAt=now; session.lastUsedAt=now; session.expiresAt=expiresAt; return session; }
+    public static AuthSessionEntity create(UUID id, UUID userId, UUID familyId, Instant now, Instant expiresAt) { return create(id, userId, familyId, null, now, expiresAt); }
+    public static AuthSessionEntity create(UUID id, UUID userId, UUID familyId, DeviceMetadata device, Instant now, Instant expiresAt) { AuthSessionEntity session = new AuthSessionEntity(); session.id=id; session.userId=userId; session.tokenFamilyId=familyId; session.deviceName=device == null ? null : device.deviceName(); session.userAgent=device == null ? null : device.userAgent(); session.createdAt=now; session.lastUsedAt=now; session.expiresAt=expiresAt; return session; }
     public UUID getId() { return id; }
     public UUID getUserId() { return userId; }
     public UUID getTokenFamilyId() { return tokenFamilyId; }
