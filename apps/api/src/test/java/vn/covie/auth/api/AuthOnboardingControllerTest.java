@@ -16,6 +16,7 @@ import vn.covie.auth.api.dto.SetOnboardingPasswordRequest;
 import vn.covie.auth.application.AuthApplicationService;
 import vn.covie.auth.application.EmailPasswordLoginService;
 import vn.covie.auth.application.RefreshTokenService;
+import vn.covie.auth.application.PasswordRecoveryService;
 import vn.covie.auth.application.SessionManagementService;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.auth.application.IssuedSession;
@@ -34,7 +35,7 @@ class AuthOnboardingControllerTest {
         UUID sessionId = UUID.randomUUID();
         IssuedSession issued = new IssuedSession(sessionId, "raw-refresh", Instant.parse("2026-09-01T00:00:00Z"), new IssuedAccessToken("raw-access", Instant.parse("2026-08-09T01:00:00Z")));
         when(service.completeOnboarding(eq("action"), eq("correct horse battery staple"), any())).thenReturn(issued);
-        AuthController controller = new AuthController(service, mock(EmailPasswordLoginService.class), mock(RefreshTokenService.class), mock(SessionManagementService.class), mock(CurrentActorProvider.class), cookies, csrf, requestIds);
+        AuthController controller = new AuthController(service, mock(EmailPasswordLoginService.class), mock(PasswordRecoveryService.class), mock(RefreshTokenService.class), mock(SessionManagementService.class), mock(CurrentActorProvider.class), cookies, csrf, requestIds);
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
 

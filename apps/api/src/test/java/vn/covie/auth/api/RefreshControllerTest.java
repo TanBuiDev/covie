@@ -15,6 +15,7 @@ import vn.covie.auth.application.AuthApplicationService;
 import vn.covie.auth.application.EmailPasswordLoginService;
 import vn.covie.auth.application.IssuedSession;
 import vn.covie.auth.application.RefreshTokenService;
+import vn.covie.auth.application.PasswordRecoveryService;
 import vn.covie.auth.application.SessionManagementService;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.auth.security.CsrfTokenLifecycleService;
@@ -30,7 +31,7 @@ class RefreshControllerTest {
         CsrfTokenLifecycleService csrf = mock(CsrfTokenLifecycleService.class);
         IssuedSession issued = new IssuedSession(UUID.randomUUID(), "new-refresh", Instant.parse("2026-09-01T00:00:00Z"), new IssuedAccessToken("new-access", Instant.parse("2026-08-10T00:00:00Z")));
         when(refresh.refresh(eq("old-refresh"), any())).thenReturn(issued);
-        AuthController controller = new AuthController(mock(AuthApplicationService.class), mock(EmailPasswordLoginService.class), refresh, mock(SessionManagementService.class), mock(CurrentActorProvider.class), cookies, csrf, mock(RequestIdAccessor.class));
+        AuthController controller = new AuthController(mock(AuthApplicationService.class), mock(EmailPasswordLoginService.class), mock(PasswordRecoveryService.class), refresh, mock(SessionManagementService.class), mock(CurrentActorProvider.class), cookies, csrf, mock(RequestIdAccessor.class));
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
 

@@ -11,11 +11,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.covie.auth.api.dto.AuthSessionResponse;
 import vn.covie.auth.api.dto.EmailPasswordLoginRequest;
+import vn.covie.auth.api.dto.ResetPasswordWithGoogleRequest;
 import vn.covie.auth.api.dto.SetOnboardingPasswordRequest;
 import vn.covie.auth.application.AuthApplicationService;
 import vn.covie.auth.application.EmailPasswordLoginService;
 import vn.covie.auth.application.IssuedSession;
 import vn.covie.auth.application.RefreshTokenService;
+import vn.covie.auth.application.PasswordRecoveryService;
 import vn.covie.auth.application.SessionManagementService;
 import vn.covie.auth.model.DeviceMetadata;
 import vn.covie.auth.security.CsrfTokenLifecycleService;
@@ -29,14 +31,15 @@ import vn.covie.shared.web.RequestIdAccessor;
 public class AuthController {
     private final AuthApplicationService auth;
     private final EmailPasswordLoginService emailPasswordLogin;
+    private final PasswordRecoveryService passwordRecovery;
     private final RefreshTokenService refreshTokens;
     private final SessionManagementService sessionManagement;
     private final CurrentActorProvider actorProvider;
     private final SecurityCookieService cookies;
     private final CsrfTokenLifecycleService csrf;
     private final RequestIdAccessor requestIds;
-    public AuthController(AuthApplicationService auth, EmailPasswordLoginService emailPasswordLogin, RefreshTokenService refreshTokens, SessionManagementService sessionManagement, CurrentActorProvider actorProvider, SecurityCookieService cookies, CsrfTokenLifecycleService csrf, RequestIdAccessor requestIds) {
-        this.auth = auth; this.emailPasswordLogin = emailPasswordLogin; this.refreshTokens = refreshTokens; this.sessionManagement=sessionManagement; this.actorProvider=actorProvider; this.cookies = cookies; this.csrf = csrf; this.requestIds = requestIds;
+    public AuthController(AuthApplicationService auth, EmailPasswordLoginService emailPasswordLogin, PasswordRecoveryService passwordRecovery, RefreshTokenService refreshTokens, SessionManagementService sessionManagement, CurrentActorProvider actorProvider, SecurityCookieService cookies, CsrfTokenLifecycleService csrf, RequestIdAccessor requestIds) {
+        this.auth = auth; this.emailPasswordLogin = emailPasswordLogin; this.passwordRecovery = passwordRecovery; this.refreshTokens = refreshTokens; this.sessionManagement=sessionManagement; this.actorProvider=actorProvider; this.cookies = cookies; this.csrf = csrf; this.requestIds = requestIds;
     }
     @PostMapping("/onboarding/set-password")
     public ResponseEntity<AuthSessionResponse> setOnboardingPassword(@CookieValue(name = "covie_auth_action", required = false) String rawTicket,
@@ -55,6 +58,16 @@ public class AuthController {
         cookies.writeRefreshCookie(response, issued.rawRefreshToken(), issued.refreshExpiresAt());
         csrf.invalidate(servletRequest, response);
         return AuthSessionResponse.from(issued);
+    }
+    @PostMapping("/password/reset-with-google")
+    public ResponseEntity<AuthSessionResponse> resetPasswordWithGoogle(@CookieValue(name = "covie_auth_action", required = false) String rawTicket,
+            @Valid @RequestBody ResetPasswordWithGoogleRequest request, HttpServletRequest servletRequest, HttpServletResponse response) {
+        IssuedSession issued = passwordRecovery.resetWithGoogle(rawTicket, request.password(), requestIds.current());
+        cookies.writeAccessCookie(response, issued.accessToken().value(), issued.accessToken().expiresAt());
+        cookies.writeRefreshCookie(response, issued.rawRefreshToken(), issued.refreshExpiresAt());
+        cookies.clearActionTicketCookie(response);
+        csrf.invalidate(servletRequest, response);
+        return ResponseEntity.ok(AuthSessionResponse.from(issued));
     }
     @PostMapping("/refresh")
     public AuthSessionResponse refresh(@CookieValue(name = "covie_rt", required = false) String rawRefreshToken, HttpServletRequest servletRequest, HttpServletResponse response) {
