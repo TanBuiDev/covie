@@ -14,6 +14,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import vn.covie.auth.api.dto.SetOnboardingPasswordRequest;
 import vn.covie.auth.application.AuthApplicationService;
+import vn.covie.auth.application.EmailPasswordLoginService;
 import vn.covie.auth.application.IssuedSession;
 import vn.covie.auth.security.CsrfTokenLifecycleService;
 import vn.covie.auth.security.IssuedAccessToken;
@@ -30,7 +31,7 @@ class AuthOnboardingControllerTest {
         UUID sessionId = UUID.randomUUID();
         IssuedSession issued = new IssuedSession(sessionId, "raw-refresh", Instant.parse("2026-09-01T00:00:00Z"), new IssuedAccessToken("raw-access", Instant.parse("2026-08-09T01:00:00Z")));
         when(service.completeOnboarding(eq("action"), eq("correct horse battery staple"), any())).thenReturn(issued);
-        AuthController controller = new AuthController(service, cookies, csrf, requestIds);
+        AuthController controller = new AuthController(service, mock(EmailPasswordLoginService.class), cookies, csrf, requestIds);
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
 
