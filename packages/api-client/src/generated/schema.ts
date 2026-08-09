@@ -425,11 +425,6 @@ export interface components {
         HealthResponse: {
             status?: string;
         };
-        CsrfToken: {
-            parameterName?: string;
-            token?: string;
-            headerName?: string;
-        };
         CsrfTokenResponse: {
             headerName?: string;
             token?: string;
@@ -452,8 +447,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -634,8 +629,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -887,9 +882,7 @@ export interface operations {
     };
     csrf: {
         parameters: {
-            query: {
-                token: components["schemas"]["CsrfToken"];
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -918,8 +911,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };

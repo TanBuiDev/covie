@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -85,7 +86,7 @@ public class AuthController {
         return AuthSessionResponse.from(issued);
     }
     @PostMapping("/logout")
-    @Operation(summary = "Sign out", description = "Browser mutations use X-CSRF-Token. Browser auth cookies are HttpOnly.")
+    @Operation(summary = "Sign out", description = "Browser mutations use X-CSRF-Token. Browser auth cookies are HttpOnly.", responses = @ApiResponse(responseCode = "204", description = "No Content"))
     public ResponseEntity<Void> logout(@CookieValue(name = "covie_rt", required = false) String rawRefreshToken, HttpServletRequest servletRequest, HttpServletResponse response) {
         try { sessionManagement.revokeForLogout(actorProvider.currentActor().sessionId()); }
         catch (ApiException ignored) { refreshTokens.sessionIdFor(rawRefreshToken).ifPresent(sessionManagement::revokeForLogout); }
