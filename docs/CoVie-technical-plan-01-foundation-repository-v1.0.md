@@ -2213,9 +2213,14 @@ Run from repository root:
 
 ```bash
 docker run --rm \
+  --add-host api:127.0.0.1 \
+  --add-host web:127.0.0.1 \
   -v "$PWD/infra/docker/nginx.conf:/etc/nginx/nginx.conf:ro" \
   nginx:1.28-alpine nginx -t
 ```
+
+The two temporary aliases are only for an isolated syntax check. At runtime Docker Compose DNS resolves
+the real `api` and `web` upstream names.
 
 Expected:
 
