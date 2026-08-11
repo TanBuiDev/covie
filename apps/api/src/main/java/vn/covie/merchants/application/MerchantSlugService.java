@@ -31,7 +31,8 @@ public class MerchantSlugService {
         String base = normalize(name);
         lock(base);
         if (!slugExists.test(base)) return base;
-        String candidate = base + "-" + merchantId.toString().replace("-", "").substring(0, 6);
+        String compactMerchantId = merchantId.toString().replace("-", "");
+        String candidate = base + "-" + compactMerchantId.substring(compactMerchantId.length() - 6);
         if (slugExists.test(candidate)) {
             throw new SlugCollisionException();
         }
