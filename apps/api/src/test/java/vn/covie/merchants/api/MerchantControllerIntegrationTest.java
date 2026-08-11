@@ -1,111 +1,173 @@
 package vn.covie.merchants.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
-import java.util.Map;
-import java.util.Set;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InOrder;
-import org.springframework.http.HttpStatus;
-import vn.covie.audit.AuditLogWriter;
-import vn.covie.auth.security.CurrentActorProvider;
-import vn.covie.merchants.application.MerchantSlugService;
-import vn.covie.merchants.application.MerchantApplicationService;
-import vn.covie.merchants.api.dto.CreateMerchantRequest;
-import vn.covie.merchants.api.dto.MerchantSummaryResponse;
-import vn.covie.merchants.api.dto.UpdateMerchantRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+import vn.covie.auth.model.AuthSessionEntity;
+import vn.covie.auth.persistence.AuthSessionRepository;
 import vn.covie.merchants.model.MerchantMembershipEntity;
 import vn.covie.merchants.model.MerchantProfileEntity;
 import vn.covie.merchants.model.MerchantRole;
 import vn.covie.merchants.persistence.MerchantMembershipRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
-import vn.covie.merchants.security.MerchantAccess;
-import vn.covie.merchants.security.MerchantAccessPolicy;
-import vn.covie.merchants.security.MerchantCapability;
-import vn.covie.shared.id.UuidV7Generator;
-import vn.covie.shared.security.CurrentActor;
-import vn.covie.shared.security.SystemRole;
-import vn.covie.shared.time.AppClock;
-import vn.covie.shared.web.RequestIdAccessor;
-import vn.covie.media.application.MediaAttachmentPolicy;
+import vn.covie.support.PostgresIntegrationTest;
+import vn.covie.users.model.UserEntity;
+import vn.covie.users.persistence.UserRepository;
 
+class MerchantControllerIntegrationTest extends PostgresIntegrationTest {
+    private static final Instant NOW = Instant.parse("2026-01-01T00:00:00Z");
 
-class MerchantControllerIntegrationTest {
+    @Autowired WebApplicationContext web;
+    @Autowired UserRepository users;
+    @Autowired AuthSessionRepository sessions;
+    @Autowired MerchantProfileRepository profiles;
+    @Autowired MerchantMembershipRepository memberships;
+    private MockMvc mockMvc;
 
-    @Test
-    void normalizesVietnameseMerchantNamesIntoStableSlugs() {
-        MerchantSlugService slugs = new MerchantSlugService(mock(MerchantProfileRepository.class));
-
-        assertThat(slugs.uniqueSlug("Tạp hóa Minh", UUID.randomUUID())).isEqualTo("tap-hoa-minh");
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(web).apply(springSecurity()).build();
     }
 
     @Test
-    void createsMerchantAndOwnerMembershipInOneApplicationTransaction() {
-        UUID actorId = UUID.randomUUID();
-        CurrentActorProvider actors = mock(CurrentActorProvider.class);
-        when(actors.currentActor()).thenReturn(new CurrentActor(actorId, Set.of(SystemRole.USER), UUID.randomUUID()));
-        MerchantProfileRepository profiles = mock(MerchantProfileRepository.class);
-        MerchantMembershipRepository memberships = mock(MerchantMembershipRepository.class);
-        AuditLogWriter audit = mock(AuditLogWriter.class);
-        MerchantApplicationService service = service(actors, profiles, memberships, mock(MerchantAccessPolicy.class), audit);
-
-        MerchantSummaryResponse created = service.create(new CreateMerchantRequest("  Tạp hóa Minh  ", "  Local shop  "));
-
-        assertThat(created.name()).isEqualTo("Tạp hóa Minh");
-        assertThat(created.slug()).isEqualTo("tap-hoa-minh");
-        assertThat(created.currentUserRole()).isEqualTo(MerchantRole.OWNER);
-        InOrder writes = inOrder(profiles, memberships, audit);
-        writes.verify(profiles).save(any(MerchantProfileEntity.class));
-        writes.verify(memberships).save(any(MerchantMembershipEntity.class));
-        writes.verify(audit).securityEvent(eq(actorId), eq("MERCHANT_CREATED"), eq("MERCHANT"),
-                eq(created.id()), any(), eq(Map.of()));
+    void requiresAuthenticationForMerchantRoutes() throws Exception {
+        mockMvc.perform(get("/api/v1/me/merchants"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value("AUTH_SESSION_INVALID"));
     }
 
     @Test
-    void updateRequiresProvidedVersionAndUsesMediaPolicyForNewAttachments() {
-        UUID merchantId = UUID.randomUUID();
-        UUID actorId = UUID.randomUUID();
-        UUID logoId = UUID.randomUUID();
-        MerchantProfileEntity merchant = MerchantProfileEntity.create(merchantId, "Before", "before", Instant.EPOCH);
-        MerchantProfileRepository profiles = mock(MerchantProfileRepository.class);
-        when(profiles.findByIdAndDeletedAtIsNull(merchantId)).thenReturn(java.util.Optional.of(merchant));
-        when(profiles.saveAndFlush(merchant)).thenReturn(merchant);
-        CurrentActorProvider actors = mock(CurrentActorProvider.class);
-        when(actors.currentActor()).thenReturn(new CurrentActor(actorId, Set.of(SystemRole.USER), UUID.randomUUID()));
-        MerchantAccessPolicy access = mock(MerchantAccessPolicy.class);
-        when(access.require(merchantId, MerchantCapability.EDIT_PROFILE))
-                .thenReturn(new MerchantAccess(actorId, merchantId, UUID.randomUUID(), MerchantRole.OWNER));
-        MediaAttachmentPolicy media = mock(MediaAttachmentPolicy.class);
-        MerchantApplicationService service = service(actors, profiles, mock(MerchantMembershipRepository.class), access,
-                mock(AuditLogWriter.class), media);
+    void createsMerchantAndListsCurrentActiveMemberships() throws Exception {
+        Actor actor = actor("creator");
 
-        service.update(merchantId, "\"v0\"", new UpdateMerchantRequest("After", null, logoId, null));
+        mockMvc.perform(post("/api/v1/me/merchants").with(actor.jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Tạp hóa Minh\",\"description\":\"Local shop\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Tạp hóa Minh"))
+                .andExpect(jsonPath("$.slug").value("tap-hoa-minh"))
+                .andExpect(jsonPath("$.currentUserRole").value("OWNER"));
 
-        verify(media).requireMerchantLogo(logoId, actorId);
-        assertThat(merchant.getName()).isEqualTo("After");
+        mockMvc.perform(get("/api/v1/me/merchants").with(actor.jwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].currentUserRole").value("OWNER"));
     }
 
-    private MerchantApplicationService service(CurrentActorProvider actors, MerchantProfileRepository profiles,
-            MerchantMembershipRepository memberships, MerchantAccessPolicy access, AuditLogWriter audit) {
-        return service(actors, profiles, memberships, access, audit, new MediaAttachmentPolicy() {
-            @Override public void requireMerchantLogo(UUID mediaId, UUID ownerUserId) {}
-            @Override public void requireMerchantCover(UUID mediaId, UUID ownerUserId) {}
-        });
+    @Test
+    void exposesPrivateEtagContractAndRejectsStaleOrMissingPreconditions() throws Exception {
+        Actor owner = actor("owner");
+        UUID merchantId = merchant(owner, MerchantRole.OWNER);
+
+        mockMvc.perform(get("/api/v1/merchants/{merchantId}", merchantId).with(owner.jwt()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("ETag", "\"v0\""))
+                .andExpect(header().string("Cache-Control", "private, no-store"));
+
+        mockMvc.perform(patch("/api/v1/merchants/{merchantId}", merchantId).with(owner.jwt())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"After\"}"))
+                .andExpect(status().isPreconditionRequired())
+                .andExpect(jsonPath("$.error.code").value("IF_MATCH_REQUIRED"));
+
+        mockMvc.perform(patch("/api/v1/merchants/{merchantId}", merchantId).with(owner.jwt())
+                        .header("If-Match", "\"v99\"")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"After\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("RESOURCE_VERSION_CONFLICT"));
+
+        mockMvc.perform(patch("/api/v1/merchants/{merchantId}", merchantId).with(owner.jwt())
+                        .header("If-Match", "\"v0\"")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"After\"}"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("ETag", "\"v1\""))
+                .andExpect(jsonPath("$.name").value("After"));
     }
 
-    private MerchantApplicationService service(CurrentActorProvider actors, MerchantProfileRepository profiles,
-            MerchantMembershipRepository memberships, MerchantAccessPolicy access, AuditLogWriter audit,
-            MediaAttachmentPolicy media) {
-        return new MerchantApplicationService(actors, profiles, memberships, new MerchantSlugService(profiles), access,
-                media, new UuidV7Generator(), () -> Instant.parse("2026-01-01T00:00:00Z"), audit,
-                mock(RequestIdAccessor.class));
+    @Test
+    void hidesPrivateMerchantFromUnrelatedActorAndForbidsOwnerOnlyMembershipAction() throws Exception {
+        Actor owner = actor("owner");
+        UUID merchantId = merchant(owner, MerchantRole.OWNER);
+        Actor unrelated = actor("unrelated");
+
+        mockMvc.perform(get("/api/v1/merchants/{merchantId}", merchantId).with(unrelated.jwt()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"));
+
+        Actor manager = actor("manager");
+        memberships.saveAndFlush(MerchantMembershipEntity.active(UUID.randomUUID(), merchantId, manager.userId(), MerchantRole.MANAGER, NOW));
+        MerchantMembershipEntity ownerMembership = memberships.findActive(merchantId, owner.userId()).orElseThrow();
+        mockMvc.perform(patch("/api/v1/merchants/{merchantId}/members/{memberId}", merchantId, ownerMembership.getId())
+                        .with(manager.jwt()).header("If-Match", "\"v0\"")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"MANAGER\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("MERCHANT_ACTION_NOT_ALLOWED"));
+    }
+
+    @Test
+    void validatesCreateInput() throws Exception {
+        Actor actor = actor("validation");
+
+        mockMvc.perform(post("/api/v1/me/merchants").with(actor.jwt())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"\"}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_FAILED"));
+    }
+
+    @Test
+    void rollsBackLastOwnerRevocation() throws Exception {
+        Actor owner = actor("last-owner");
+        UUID merchantId = merchant(owner, MerchantRole.OWNER);
+        MerchantMembershipEntity ownerMembership = memberships.findActive(merchantId, owner.userId()).orElseThrow();
+
+        mockMvc.perform(delete("/api/v1/merchants/{merchantId}/members/{memberId}", merchantId, ownerMembership.getId())
+                        .with(owner.jwt()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("MERCHANT_LAST_OWNER_REQUIRED"));
+
+        org.assertj.core.api.Assertions.assertThat(memberships.findById(ownerMembership.getId()).orElseThrow()
+                .getMembershipStatus()).isEqualTo(vn.covie.merchants.model.MembershipStatus.ACTIVE);
+    }
+
+    private UUID merchant(Actor actor, MerchantRole role) {
+        UUID id = UUID.randomUUID();
+        profiles.saveAndFlush(MerchantProfileEntity.create(id, "Merchant " + id, "merchant-" + id, NOW));
+        memberships.saveAndFlush(MerchantMembershipEntity.active(UUID.randomUUID(), id, actor.userId(), role, NOW));
+        return id;
+    }
+
+    private Actor actor(String prefix) {
+        UUID userId = UUID.randomUUID();
+        UUID sessionId = UUID.randomUUID();
+        Instant now = Instant.now();
+        users.saveAndFlush(UserEntity.active(userId, prefix, now));
+        sessions.saveAndFlush(AuthSessionEntity.create(sessionId, userId, UUID.randomUUID(), now, now.plus(30, ChronoUnit.DAYS)));
+        return new Actor(userId, sessionId);
+    }
+
+    private record Actor(UUID userId, UUID sessionId) {
+        org.springframework.test.web.servlet.request.RequestPostProcessor jwt() {
+            return org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt()
+                    .jwt(token -> token.subject(userId.toString())
+                    .claim("sessionId", sessionId.toString()).claim("roles", List.of("USER")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_USER"));
+        }
     }
 }

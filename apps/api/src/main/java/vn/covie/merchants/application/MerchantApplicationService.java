@@ -31,6 +31,7 @@ import vn.covie.shared.web.RequestIdAccessor;
 
 @Service
 public class MerchantApplicationService {
+    private static final int MAX_SLUG_ID_ATTEMPTS = 3;
     private final CurrentActorProvider actors;
     private final MerchantProfileRepository merchants;
     private final MerchantMembershipRepository memberships;
@@ -62,13 +63,25 @@ public class MerchantApplicationService {
     public MerchantSummaryResponse create(CreateMerchantRequest request) {
         CurrentActor actor = actors.currentActor();
         Instant now = clock.now();
-        UUID merchantId = ids.generate();
-        MerchantProfileEntity merchant = MerchantProfileEntity.create(merchantId, requiredName(request.name()),
-                slugs.uniqueSlug(request.name(), merchantId), cleanNullable(request.description()), now);
+        MerchantProfileEntity merchant = createProfile(request, now);
+        UUID merchantId = merchant.getId();
         merchants.save(merchant);
         memberships.save(MerchantMembershipEntity.active(ids.generate(), merchantId, actor.userId(), MerchantRole.OWNER, now));
         audit.securityEvent(actor.userId(), "MERCHANT_CREATED", "MERCHANT", merchantId, requestIds.current(), Map.of());
         return summary(merchant, MerchantRole.OWNER);
+    }
+
+    private MerchantProfileEntity createProfile(CreateMerchantRequest request, Instant now) {
+        for (int attempt = 0; attempt < MAX_SLUG_ID_ATTEMPTS; attempt++) {
+            UUID merchantId = ids.generate();
+            try {
+                return MerchantProfileEntity.create(merchantId, requiredName(request.name()),
+                        slugs.uniqueSlug(request.name(), merchantId), cleanNullable(request.description()), now);
+            } catch (MerchantSlugService.SlugCollisionException ignored) {
+                // A pre-existing suffix collided; retry with a fresh merchant ID while still holding the base-slug lock.
+            }
+        }
+        throw new IllegalStateException("Unable to allocate a unique merchant slug.");
     }
 
     @Transactional(readOnly = true)

@@ -2,7 +2,6 @@ package vn.covie.merchants.api;
 
 import jakarta.validation.Valid;
 import java.util.UUID;
-import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +19,6 @@ import vn.covie.shared.concurrency.VersionPrecondition;
 @RestController
 @RequestMapping("/api/v1/merchants/{merchantId}")
 public class MerchantController {
-    private static final CacheControl PRIVATE_NO_STORE = CacheControl.noStore().cachePrivate();
     private final MerchantApplicationService merchants;
 
     public MerchantController(MerchantApplicationService merchants) { this.merchants = merchants; }
@@ -38,6 +36,7 @@ public class MerchantController {
     }
 
     private static ResponseEntity<MerchantManagementResponse> response(MerchantManagementResponse body) {
-        return ResponseEntity.ok().eTag(VersionPrecondition.format(body.version())).cacheControl(PRIVATE_NO_STORE).body(body);
+        return ResponseEntity.ok().eTag(VersionPrecondition.format(body.version()))
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store").body(body);
     }
 }
