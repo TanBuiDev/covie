@@ -62,14 +62,7 @@ jobs:
         run: pnpm --filter @covie/web test
       - name: Build web
         run: pnpm --filter @covie/web build
+      - name: Test secret-hygiene status handling
+        run: ./infra/scripts/test-secret-hygiene.sh
       - name: Reject tracked secrets
-        run: |
-          tracked_secret_pattern='infra/'
-          tracked_secret_pattern+='secrets|jwt-'
-          tracked_secret_pattern+='private|\.env\.'
-          tracked_secret_pattern+='local'
-          git ls-files | grep -E "$tracked_secret_pattern" && exit 1 || true
-          secret_pattern='GOOGLE_OAUTH_CLIENT_SECRET'
-          secret_pattern+='=.+|BEGIN (RSA '
-          secret_pattern+=')?PRIVATE KEY'
-          git grep -nE "$secret_pattern" -- ':!*.md' ':!.env.example' && exit 1 || true
+        run: ./infra/scripts/verify-secret-hygiene.sh
