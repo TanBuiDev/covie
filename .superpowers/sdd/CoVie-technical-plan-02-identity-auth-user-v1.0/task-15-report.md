@@ -105,6 +105,32 @@ Final rerun after the audit-log and stale-cookie recovery extensions: the combin
 - `apps/api/src/test/java/vn/covie/auth/acceptance/AuthIdorAcceptanceTest.java`
 - `apps/api/src/test/java/vn/covie/auth/acceptance/AuthAuditSafetyTest.java`
 - `apps/api/src/test/java/vn/covie/auth/acceptance/AuthDatabaseInvariantTest.java`
+
+## Fix round 3 — selector safety scope
+
+The first selector bridge set `failIfNoSpecifiedTests=false` in the global Surefire configuration. That made the mandated literal work, but it would also have allowed an accidental ordinary `-Dtest` typo to pass with zero selected tests. The tolerance is now configured only on the `task-15-plan-literal-selector` profile, which activates solely for the exact literal `test=vn.covie.auth.acceptance.*`. The normal/default Surefire configuration retains its failure-on-no-match behavior.
+
+### RED/GREEN verification
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Java\jdk-25.0.2'
+$env:DOCKER_HOST='npipe:////./pipe/dockerDesktopLinuxEngine'
+.\mvnw '-Dtest=DefinitelyMissingTask15SelectorTest' test
+```
+
+RED (expected): **BUILD FAILURE** with `No tests matching pattern "DefinitelyMissingTask15SelectorTest" were executed!`.
+
+```powershell
+.\mvnw "-Dtest=vn.covie.auth.acceptance.*" test
+```
+
+GREEN: the property-activated bridge ran the five acceptance classes: **20 tests, 0 failures, 0 errors, 22.355 s** on fresh Testcontainers PostgreSQL.
+
+```powershell
+.\mvnw test
+```
+
+GREEN: normal suite **84 tests across 43 reports, 0 failures, 0 errors**. (The Maven output was long; the Surefire XML report totals were checked after execution.)
 - `apps/api/src/test/java/vn/covie/auth/security/ActiveSessionFilterFailureTest.java`
 
 ### Remaining concern

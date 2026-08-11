@@ -124,7 +124,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                     <systemPropertyVariables>
                         <user.timezone>UTC</user.timezone>
                     </systemPropertyVariables>
@@ -153,6 +152,9 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>acceptance-plan-selector</id>
