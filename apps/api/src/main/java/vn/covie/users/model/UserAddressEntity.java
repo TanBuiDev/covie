@@ -25,6 +25,7 @@ public class UserAddressEntity {
     @Column(name = "recipient_name", length = 120) private String recipientName;
     @Column(length = 30) private String phone;
     @Column(name = "address_text", nullable = false) private String addressText;
+    @Column(name = "location_area_id") private UUID locationAreaId;
     @JdbcTypeCode(SqlTypes.GEOGRAPHY)
     @Column(name = "geo_point", nullable = false, columnDefinition = "geography(Point,4326)")
     private Point geoPoint;
@@ -69,6 +70,7 @@ public class UserAddressEntity {
     public String getRecipientName() { return recipientName; }
     public String getPhone() { return phone; }
     public String getAddressText() { return addressText; }
+    public UUID getLocationAreaId() { return locationAreaId; }
     public Point getGeoPoint() { return geoPoint; }
     public PinSource getPinSource() { return pinSource; }
     public String getNote() { return note; }
@@ -80,5 +82,6 @@ public class UserAddressEntity {
     public Instant getDeletedAt() { return deletedAt; }
 
     public void setDefaultAddress(boolean value) { defaultAddress = value; }
+    public void setLocationAreaId(UUID value) { locationAreaId = value; }
     public void delete(Instant now) { status = "DELETED"; defaultAddress = false; deletedAt = now; updatedAt = now; }
 }

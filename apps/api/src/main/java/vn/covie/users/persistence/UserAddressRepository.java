@@ -9,5 +9,6 @@ import vn.covie.users.model.UserAddressEntity;
 public interface UserAddressRepository extends JpaRepository<UserAddressEntity, UUID> {
     List<UserAddressEntity> findAllByUserIdAndStatusOrderByUpdatedAtDesc(UUID userId, String status);
     Optional<UserAddressEntity> findByIdAndUserIdAndStatus(UUID id, UUID userId, String status);
+    Optional<UserAddressEntity> findByIdAndUserIdAndDeletedAtIsNull(UUID id, UUID userId);
     long countByUserIdAndStatus(UUID userId, String status);
 }
