@@ -33,10 +33,11 @@ public final class MerchantAccessPolicy {
         CurrentActor actor = actors.currentActor();
         MerchantMembershipEntity membership = memberships.findActive(merchantId, actor.userId())
                 .orElseThrow(MerchantAccessPolicy::notFound);
-        if (!allows(membership.role(), capability)) throw notAllowed();
-        if (membership.role() == MerchantRole.STAFF && !memberLocations.existsByMembershipId(membership.getId())) {
+        if (membership.role() == MerchantRole.STAFF
+                && !memberLocations.existsActiveLocationAssignment(membership.getId())) {
             throw notFound();
         }
+        if (!allows(membership.role(), capability)) throw notAllowed();
         return new MerchantAccess(actor.userId(), merchantId, membership.getId(), membership.role());
     }
 

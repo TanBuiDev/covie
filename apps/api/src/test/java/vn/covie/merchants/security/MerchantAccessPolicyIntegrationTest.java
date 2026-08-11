@@ -63,8 +63,11 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
     }
 
     @Test
-    void staffCannotEditProfile() {
+    void staffWithAssignedLocationCannotEditProfile() {
         Fixture fixture = fixture(MerchantRole.STAFF);
+        MerchantLocationEntity assigned = location(fixture.merchantId(), "Location A");
+        locations.saveAndFlush(assigned);
+        memberLocations.saveAndFlush(fixture.membership().assignTo(ids, assigned.getId(), NOW));
 
         assertForbidden(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.EDIT_PROFILE));
     }
@@ -90,6 +93,7 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
 
         assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.VIEW_MERCHANT));
         assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.UPLOAD_MERCHANT_MEDIA));
+        assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.EDIT_PROFILE));
     }
 
     @Test
@@ -111,7 +115,7 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
         memberships.saveAndFlush(fixture.membership());
 
         assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.VIEW_MERCHANT));
-        assertForbidden(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.EDIT_PROFILE));
+        assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.EDIT_PROFILE));
     }
 
     @Test
@@ -166,6 +170,29 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
 
         assertNotFound(() -> fixture.policy().requireLocation(
                 fixture.merchantId(), otherLocation.getId(), MerchantCapability.EDIT_PROFILE));
+    }
+
+    @Test
+    void deletedLocationAssignmentDoesNotGrantStaffMerchantVisibility() {
+        Fixture fixture = fixture(MerchantRole.STAFF);
+        MerchantLocationEntity assigned = location(fixture.merchantId(), "Deleted location");
+        locations.saveAndFlush(assigned);
+        memberLocations.saveAndFlush(fixture.membership().assignTo(ids, assigned.getId(), NOW));
+        assigned.delete(NOW);
+        locations.saveAndFlush(assigned);
+
+        assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.VIEW_MERCHANT));
+    }
+
+    @Test
+    void crossMerchantLocationAssignmentDoesNotGrantStaffMerchantVisibility() {
+        Fixture fixture = fixture(MerchantRole.STAFF);
+        UUID otherMerchantId = profile("Other merchant assignment");
+        MerchantLocationEntity otherLocation = location(otherMerchantId, "Other location assignment");
+        locations.saveAndFlush(otherLocation);
+        memberLocations.saveAndFlush(fixture.membership().assignTo(ids, otherLocation.getId(), NOW));
+
+        assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.VIEW_MERCHANT));
     }
 
     @ParameterizedTest

@@ -57,6 +57,12 @@ public class MerchantLocationEntity {
         return point;
     }
 
+    public void delete(Instant now) {
+        locationStatus = MerchantLocationStatus.DELETED;
+        deletedAt = now;
+        updatedAt = now;
+    }
+
     public UUID getId() { return id; }
     public UUID getMerchantProfileId() { return merchantProfileId; }
     public String getName() { return name; }
