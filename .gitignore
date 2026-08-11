@@ -1,1 +1,30 @@
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+infra/secrets/
+
+# Node
+node_modules/
+.next/
+coverage/
+.pnpm-store/
+*.tsbuildinfo
+
+# Java/Maven
+**/target/
+.idea/
+*.iml
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Local infrastructure and isolated worktrees
+.minio/
+.postgres/
+.redis/
 .worktrees/

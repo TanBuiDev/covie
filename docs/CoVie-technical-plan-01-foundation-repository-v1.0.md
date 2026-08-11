@@ -265,7 +265,7 @@ Thumbs.db
 
 ```dotenv
 SPRING_PROFILES_ACTIVE=local
-DB_URL=jdbc:postgresql://localhost:5432/covie
+DB_URL=jdbc:postgresql://localhost:5433/covie
 DB_USERNAME=covie
 DB_PASSWORD=covie_local
 REDIS_URL=redis://localhost:6379
@@ -346,9 +346,9 @@ services:
       POSTGRES_USER: covie
       POSTGRES_PASSWORD: covie_local
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - covie_postgres:/var/lib/postgresql/data
+      - covie_postgres:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U covie -d covie"]
       interval: 5s
@@ -394,6 +394,8 @@ volumes:
   covie_postgres:
   covie_minio:
 ```
+
+For PostgreSQL 18 images, mount the named volume at `/var/lib/postgresql`; the image manages its major-version-specific data subdirectory below that path.
 
 - [ ] **Step 2: Validate Compose syntax before starting anything**
 
@@ -544,8 +546,8 @@ Use Spring Boot `4.1.0`, Java `25`, and keep dependency surface limited to found
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -569,12 +571,12 @@ Use Spring Boot `4.1.0`, Java `25`, and keep dependency surface limited to found
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
+            <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -1123,6 +1125,10 @@ git commit -m "feat(api): add shared id time and money primitives"
 - Create: `apps/api/src/test/java/vn/covie/shared/web/HealthControllerTest.java`
 
 **Produces:** Stable `/api/v1` baseline contract and request correlation used by all later controllers.
+
+Spring Boot 4 keeps MockMvc support in the explicit test-scoped
+`org.springframework.boot:spring-boot-starter-webmvc-test` dependency. Keep it alongside
+`spring-boot-starter-test` when using `org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc`.
 
 - [ ] **Step 1: Write the failing health/request-id integration test**
 
@@ -1717,7 +1723,7 @@ Expected: PASS and `apps/api/target/openapi/openapi.json` exists.
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "openapi-fetch": "^0.14.2"
+    "openapi-fetch": "^0.17.0"
   },
   "devDependencies": {
     "openapi-typescript": "^7.9.1",
@@ -2207,9 +2213,14 @@ Run from repository root:
 
 ```bash
 docker run --rm \
+  --add-host api:127.0.0.1 \
+  --add-host web:127.0.0.1 \
   -v "$PWD/infra/docker/nginx.conf:/etc/nginx/nginx.conf:ro" \
   nginx:1.28-alpine nginx -t
 ```
+
+The two temporary aliases are only for an isolated syntax check. At runtime Docker Compose DNS resolves
+the real `api` and `web` upstream names.
 
 Expected:
 
@@ -2234,11 +2245,11 @@ pnpm infra:up
 
 Run API:
 cd apps/api
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+./mvnw -Dspring-boot.run.profiles=local spring-boot:run
 
 Windows PowerShell API equivalent:
 cd apps/api
-.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local
+.\mvnw.cmd "-Dspring-boot.run.profiles=local" spring-boot:run
 
 Run web in another terminal:
 pnpm web:dev
@@ -2448,7 +2459,7 @@ Terminal A:
 
 ```bash
 cd apps/api
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+./mvnw -Dspring-boot.run.profiles=local spring-boot:run
 ```
 
 Terminal B:
@@ -2479,6 +2490,8 @@ Next.js development rewrite /api/v1/health -> backend HTTP 200
 
 ```bash
 docker run --rm \
+  --add-host api:127.0.0.1 \
+  --add-host web:127.0.0.1 \
   -v "$PWD/infra/docker/nginx.conf:/etc/nginx/nginx.conf:ro" \
   nginx:1.28-alpine nginx -t
 ```

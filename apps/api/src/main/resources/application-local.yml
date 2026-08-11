@@ -1,0 +1,12 @@
+springdoc:
+  swagger-ui:
+    enabled: true
+
+covie:
+  auth:
+    cookies:
+      secure: false
+
+logging:
+  level:
+    vn.covie: INFO

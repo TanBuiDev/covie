@@ -1,0 +1,20 @@
+{
+  "name": "covie",
+  "private": true,
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=10 <11"
+  },
+  "scripts": {
+    "infra:config": "docker compose -f infra/compose/compose.local.yml config",
+    "infra:up": "docker compose -f infra/compose/compose.local.yml up -d",
+    "infra:down": "docker compose -f infra/compose/compose.local.yml down",
+    "web:dev": "pnpm --filter @covie/web dev",
+    "web:lint": "pnpm --filter @covie/web lint",
+    "web:typecheck": "pnpm --filter @covie/web typecheck",
+    "web:test": "pnpm --filter @covie/web test",
+    "web:build": "pnpm --filter @covie/web build",
+    "api-client:generate": "pnpm --filter @covie/api-client generate",
+    "api-client:check": "pnpm --filter @covie/api-client check"
+  }
+}
