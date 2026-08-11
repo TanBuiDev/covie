@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import vn.covie.auth.application.GoogleAuthResult;
 import vn.covie.auth.application.IssuedSession;
+import vn.covie.auth.model.AuthRefreshTokenEntity;
+import vn.covie.users.model.IdentityProvider;
 import vn.covie.users.model.ContactType;
 import vn.covie.users.model.PinSource;
 import vn.covie.users.model.UserAddressEntity;
@@ -35,6 +37,8 @@ class AuthDatabaseInvariantTest extends AuthAcceptanceSupport {
         String hash = fingerprints.sha256Hex(session.rawRefreshToken());
         assertThat(jdbc.queryForObject("select count(*) from auth_refresh_tokens where token_hash = ?", Integer.class, hash)).isEqualTo(1);
         assertThat(jdbc.queryForObject("select count(*) from auth_refresh_tokens where token_hash = ?", Integer.class, session.rawRefreshToken())).isZero();
+        assertThatThrownBy(() -> refreshTokens.saveAndFlush(AuthRefreshTokenEntity.create(UUID.randomUUID(), session.sessionId(), hash, session.refreshExpiresAt(), Instant.now())))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -44,6 +48,11 @@ class AuthDatabaseInvariantTest extends AuthAcceptanceSupport {
         GoogleAuthResult.Onboarding issuedTicket = (GoogleAuthResult.Onboarding) google.handleLogin(claims(subject, email));
         String rawTicket = issuedTicket.ticket().rawToken();
         IssuedSession session = onboarding.completeOnboarding(rawTicket, "Single-Use-Password-42", "invariant-onboard");
+        List<vn.covie.users.model.UserIdentityEntity> linked = identities.findAllByUserId(sessions.findById(session.sessionId()).orElseThrow().getUserId());
+        assertThat(linked.stream().filter(identity -> identity.getProvider() == IdentityProvider.GOOGLE).map(vn.covie.users.model.UserIdentityEntity::getEmailNormalized))
+                .containsExactly(email);
+        assertThat(linked.stream().filter(identity -> identity.getProvider() == IdentityProvider.EMAIL).map(vn.covie.users.model.UserIdentityEntity::getEmailNormalized))
+                .containsExactly(email);
         List<String> characterColumns = jdbc.query("select table_name || '.' || column_name from information_schema.columns where table_schema='public' and data_type in ('character varying','text','character')", (rs, row) -> rs.getString(1));
         long rawRefreshHits = characterColumns.stream().mapToLong(qualified -> {
             String[] parts = qualified.split("\\.", 2);

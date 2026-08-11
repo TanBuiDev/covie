@@ -67,3 +67,46 @@ $env:DOCKER_HOST='npipe:////./pipe/dockerDesktopLinuxEngine'
 ```
 
 Result: **7 tests, 0 failures, 0 errors**, including real PostgreSQL concurrent refresh and onboarding paths.
+
+## Fix round 1 completion — expanded matrix
+
+### Added coverage and evidence
+
+| Finding / contract | Executable evidence |
+| --- | --- |
+| Global session-then-token order remains deadlock-free | `refreshRacingLogoutOrGoogleResetCompletesAndLeavesTheOriginalFamilyRevoked` races refresh against logout and Google password reset, bounds both futures to ten seconds, and proves the original session and every family token are revoked. |
+| Reuse vs successor refresh | `oldReuseRacingSuccessorRefreshCommitsReuseAuditAndRevokesTheWholeFamily` races old R1 reuse against successor R2 refresh, requires reuse detection, a single persisted audit event, and full-family revocation. |
+| Maximum accepted request id | `refreshReuseWithMaximumAcceptedRequestIdPersistsAuditAndFamilyRevocation` uses exactly 100 characters and proves the reuse audit persists and revocation commits. |
+| Operational session validation failures | `ActiveSessionFilterFailureTest.operationalSessionValidationFailurePropagatesInsteadOfBecomingUnauthorized` injects `DataAccessResourceFailureException`, proves it escapes the filter (for normal 5xx handling), and verifies the 401 entry point is not invoked. |
+| CSRF lifecycle and stale cookie boundary | `csrfIsInvalidatedThenRegeneratedAfterOnboardingRefreshResetAndLogout` proves clear-cookie plus a different next `/auth/csrf` token for onboarding, refresh, Google reset, and logout. `staleAccessCookieDoesNotBlockPublicAuthEndpointsOrGoogleRecoveryStart` sends an invalid `covie_at` through login, refresh, logout, and Google reset-start, with valid CSRF where applicable. Cookie names now come from `AuthProperties`. |
+| JWT/session end-to-end boundary | `logoutAndGoogleRecoveryRejectThePreviouslyUsableAccessJwt` verifies the current-session logout and recovery-revoked access JWT both fail on the next `/me` request. |
+| Audit/log secret safety | `AuthAuditSafetyTest` now attaches a Logback `ListAppender` during login/refresh/reset and scans captured application log messages together with audit JSON for distinctive passwords, JWTs, refresh/action tokens, CSRF value, and OAuth code. |
+| DB invariants | Explicit `saveAndFlush` duplicate refresh hash insertion fails. The same onboarding user is asserted to have GOOGLE metadata email equal to its EMAIL identity email. |
+
+### RED/GREEN notes
+
+The above are acceptance-characterization additions against the already fixed code. The focused test cycle was GREEN without a further production edit: the prior refresh/session order, 100-character request-id validation, and narrowed `ActiveSessionFilter` exception handling satisfy the added cases. The filter-failure test would regress to an entry-point 401 if the former broad `RuntimeException` catch were restored.
+
+### Final verification
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Java\jdk-25.0.2'
+$env:DOCKER_HOST='npipe:////./pipe/dockerDesktopLinuxEngine'
+.\mvnw '-Dtest=ActiveSessionFilterFailureTest' test
+.\mvnw '-Dtest=AuthAcceptanceTest,AuthCookieCsrfAcceptanceTest,AuthIdorAcceptanceTest,AuthAuditSafetyTest,AuthDatabaseInvariantTest' test
+```
+
+Final rerun after the audit-log and stale-cookie recovery extensions: the combined command completed **21 tests, 0 failures, 0 errors, 27.748 s** on a fresh Docker/Testcontainers PostgreSQL process (the five requested acceptance classes account for 20; the direct operational-failure filter test accounts for one).
+
+### Files changed in this completion pass
+
+- `apps/api/src/test/java/vn/covie/auth/acceptance/AuthAcceptanceTest.java`
+- `apps/api/src/test/java/vn/covie/auth/acceptance/AuthCookieCsrfAcceptanceTest.java`
+- `apps/api/src/test/java/vn/covie/auth/acceptance/AuthIdorAcceptanceTest.java`
+- `apps/api/src/test/java/vn/covie/auth/acceptance/AuthAuditSafetyTest.java`
+- `apps/api/src/test/java/vn/covie/auth/acceptance/AuthDatabaseInvariantTest.java`
+- `apps/api/src/test/java/vn/covie/auth/security/ActiveSessionFilterFailureTest.java`
+
+### Remaining concern
+
+The acceptance suite exercises real PostgreSQL and the installed HTTP filter chain; the operational database-error case is deliberately a direct filter test because terminating the Testcontainers database inside an HTTP test would make the test nondeterministic and contaminate the shared context. It proves the required discriminator: operational error propagation rather than a fabricated 401.

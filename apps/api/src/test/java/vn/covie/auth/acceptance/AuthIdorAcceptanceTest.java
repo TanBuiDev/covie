@@ -3,6 +3,7 @@ package vn.covie.auth.acceptance;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
@@ -58,5 +59,24 @@ class AuthIdorAcceptanceTest extends AuthAcceptanceSupport {
             users.saveAndFlush(user);
             mvc.perform(get("/api/v1/me").header("Authorization", "Bearer " + session.accessToken().value())).andExpect(status().isUnauthorized());
         }
+    }
+
+    @Test
+    void logoutAndGoogleRecoveryRejectThePreviouslyUsableAccessJwt() throws Exception {
+        UserEntity logoutUser = activeUser("Logout JWT user");
+        IssuedSession logoutSession = issuer.issue(logoutUser.getId(), device());
+        String logoutBearer = "Bearer " + logoutSession.accessToken().value();
+        mvc.perform(post("/api/v1/auth/logout").header("Authorization", logoutBearer)).andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/me").header("Authorization", logoutBearer)).andExpect(status().isUnauthorized());
+
+        UserEntity recoveryUser = activeUser("Recovery JWT user");
+        String subject = "jwt-recovery-" + UUID.randomUUID();
+        String email = "jwt-recovery-" + UUID.randomUUID() + "@example.com";
+        identities.save(vn.covie.users.model.UserIdentityEntity.google(UUID.randomUUID(), recoveryUser.getId(), subject, email, Instant.now()));
+        identities.save(vn.covie.users.model.UserIdentityEntity.email(UUID.randomUUID(), recoveryUser.getId(), email, passwords.encode("Recovery-Jwt-Password-42"), Instant.now()));
+        IssuedSession old = issuer.issue(recoveryUser.getId(), device());
+        String ticket = ((vn.covie.auth.application.GoogleAuthResult.PasswordReset) google.handlePasswordReset(claims(subject, email))).ticket().rawToken();
+        recovery.resetWithGoogle(ticket, "Recovery-Jwt-New-Password-42", "recovery-old-jwt");
+        mvc.perform(get("/api/v1/me").header("Authorization", "Bearer " + old.accessToken().value())).andExpect(status().isUnauthorized());
     }
 }

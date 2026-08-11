@@ -9,6 +9,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -148,6 +149,54 @@ class AuthAcceptanceTest extends AuthAcceptanceSupport {
     }
 
     @Test
+    void refreshRacingLogoutOrGoogleResetCompletesAndLeavesTheOriginalFamilyRevoked() throws Exception {
+        UserEntity logoutUser = activeUser("Refresh logout race");
+        IssuedSession logoutSession = issuer.issue(logoutUser.getId(), device());
+        race(() -> refreshOutcome(logoutSession.rawRefreshToken(), "race-refresh-logout"),
+                () -> { sessionManagement.revokeForLogout(logoutSession.sessionId()); return null; });
+        assertRevokedFamily(logoutSession.sessionId());
+
+        UserEntity resetUser = activeUser("Refresh reset race");
+        String subject = "refresh-reset-" + UUID.randomUUID();
+        String email = "refresh-reset-" + UUID.randomUUID() + "@example.com";
+        identities.save(UserIdentityEntity.google(UUID.randomUUID(), resetUser.getId(), subject, email, Instant.now()));
+        identities.save(UserIdentityEntity.email(UUID.randomUUID(), resetUser.getId(), email, passwords.encode("Reset-Race-Password-42"), Instant.now()));
+        IssuedSession resetSession = issuer.issue(resetUser.getId(), device());
+        String ticket = ((GoogleAuthResult.PasswordReset) google.handlePasswordReset(claims(subject, email))).ticket().rawToken();
+        race(() -> refreshOutcome(resetSession.rawRefreshToken(), "race-refresh-reset"),
+                () -> { recovery.resetWithGoogle(ticket, "Reset-Race-New-Password-42", "race-reset"); return null; });
+        assertRevokedFamily(resetSession.sessionId());
+    }
+
+    @Test
+    void oldReuseRacingSuccessorRefreshCommitsReuseAuditAndRevokesTheWholeFamily() throws Exception {
+        UserEntity user = activeUser("Reuse successor race");
+        IssuedSession first = issuer.issue(user.getId(), device());
+        IssuedSession successor = refresh.refresh(first.rawRefreshToken(), "rotate-before-race");
+
+        java.util.List<ErrorCode> outcomes = race(
+                () -> refreshOutcome(first.rawRefreshToken(), "old-reuse-race"),
+                () -> refreshOutcome(successor.rawRefreshToken(), "successor-race"));
+
+        assertThat(outcomes).contains(ErrorCode.REFRESH_TOKEN_REUSE_DETECTED);
+        assertRevokedFamily(first.sessionId());
+        assertThat(jdbc.queryForObject("select count(*) from audit_logs where action = 'REFRESH_TOKEN_REUSE_DETECTED'", Integer.class)).isEqualTo(1);
+    }
+
+    @Test
+    void refreshReuseWithMaximumAcceptedRequestIdPersistsAuditAndFamilyRevocation() {
+        UserEntity user = activeUser("Maximum request id");
+        IssuedSession issued = issuer.issue(user.getId(), device());
+        refresh.refresh(issued.rawRefreshToken(), "rotate-maximum-request-id");
+        String requestId = "r".repeat(100);
+
+        assertThatThrownBy(() -> refresh.refresh(issued.rawRefreshToken(), requestId))
+                .extracting(error -> ((ApiException) error).code()).isEqualTo(ErrorCode.REFRESH_TOKEN_REUSE_DETECTED);
+        assertRevokedFamily(issued.sessionId());
+        assertThat(jdbc.queryForObject("select request_id from audit_logs where action = 'REFRESH_TOKEN_REUSE_DETECTED'", String.class)).isEqualTo(requestId);
+    }
+
+    @Test
     void revokeOneAndRevokeOthersPreserveTheRequestedCurrentSession() {
         UserEntity user = activeUser("Session management user");
         IssuedSession current = issuer.issue(user.getId(), device());
@@ -189,6 +238,26 @@ class AuthAcceptanceTest extends AuthAcceptanceSupport {
         assertThat(users.count()).isEqualTo(1);
         assertThat(roles.findAllByUserId(userId)).hasSize(1);
         assertThat(sessions.findAllByUserIdOrderByCreatedAtDesc(userId)).hasSize(1);
+    }
+
+    private ErrorCode refreshOutcome(String rawRefreshToken, String requestId) {
+        try { refresh.refresh(rawRefreshToken, requestId); return null; }
+        catch (ApiException exception) { return exception.code(); }
+    }
+
+    private java.util.List<ErrorCode> race(Callable<ErrorCode> leftCall, Callable<ErrorCode> rightCall) throws Exception {
+        CyclicBarrier ready = new CyclicBarrier(2);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<ErrorCode> left = pool.submit(() -> { ready.await(); return leftCall.call(); });
+            Future<ErrorCode> right = pool.submit(() -> { ready.await(); return rightCall.call(); });
+            return java.util.Arrays.asList(left.get(10, TimeUnit.SECONDS), right.get(10, TimeUnit.SECONDS));
+        } finally { pool.shutdownNow(); }
+    }
+
+    private void assertRevokedFamily(UUID sessionId) {
+        assertThat(sessions.findById(sessionId).orElseThrow().getRevokedAt()).isNotNull();
+        assertThat(refreshTokens.findAllBySessionId(sessionId)).allSatisfy(token -> assertThat(token.getRevokedAt()).isNotNull());
     }
 }
 
