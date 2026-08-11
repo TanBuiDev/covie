@@ -16,7 +16,7 @@ import vn.covie.shared.id.UuidV7Generator;
 public final class RequestIdFilter extends OncePerRequestFilter {
     public static final String HEADER = "X-Request-Id";
     public static final String MDC_KEY = "requestId";
-    private static final Pattern SAFE = Pattern.compile("^[A-Za-z0-9._:-]{8,128}$");
+    private static final Pattern SAFE = Pattern.compile("^[A-Za-z0-9._:-]{8,100}$");
 
     private final UuidV7Generator uuidV7Generator = new UuidV7Generator();
 

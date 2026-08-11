@@ -141,7 +141,7 @@ class AuthAcceptanceTest extends AuthAcceptanceSupport {
         try {
             Future<ErrorCode> left = pool.submit(attempt);
             Future<ErrorCode> right = pool.submit(attempt);
-            assertThat(java.util.Arrays.asList(left.get(), right.get())).containsExactlyInAnyOrder(null, ErrorCode.REFRESH_TOKEN_REUSE_DETECTED);
+            assertThat(java.util.Arrays.asList(left.get(10, java.util.concurrent.TimeUnit.SECONDS), right.get(10, java.util.concurrent.TimeUnit.SECONDS))).containsExactlyInAnyOrder(null, ErrorCode.REFRESH_TOKEN_REUSE_DETECTED);
         } finally { pool.shutdownNow(); }
         assertThat(sessions.findById(initial.sessionId()).orElseThrow().getRevokedAt()).isNotNull();
         assertThat(refreshTokens.findAllBySessionId(initial.sessionId())).allSatisfy(token -> assertThat(token.getRevokedAt()).isNotNull());
@@ -183,7 +183,7 @@ class AuthAcceptanceTest extends AuthAcceptanceSupport {
         try {
             Future<ErrorCode> left = pool.submit(completeFirst);
             Future<ErrorCode> right = pool.submit(completeSecond);
-            assertThat(java.util.Arrays.asList(left.get(), right.get())).containsExactlyInAnyOrder(null, ErrorCode.IDENTITY_LINK_CONFLICT);
+            assertThat(java.util.Arrays.asList(left.get(10, java.util.concurrent.TimeUnit.SECONDS), right.get(10, java.util.concurrent.TimeUnit.SECONDS))).containsExactlyInAnyOrder(null, ErrorCode.IDENTITY_LINK_CONFLICT);
         } finally { pool.shutdownNow(); }
         UUID userId = identities.findByProviderAndProviderSubject(IdentityProvider.GOOGLE, subject).orElseThrow().getUserId();
         assertThat(users.count()).isEqualTo(1);

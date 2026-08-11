@@ -47,3 +47,23 @@ The brief's literal `-Dtest='vn.covie.auth.acceptance.*'` is not a Surefire patt
 ## Concerns / follow-up
 
 The suite is focused on the contractual security paths and production defects it exposed. The CSRF test covers login invalidation plus valid/missing/invalid/Bearer/GET behavior; endpoint-by-endpoint lifecycle checks for refresh, onboarding, reset and logout, and stale-cookie public-route variants remain useful expansion cases. The test command needs the Docker Desktop npipe override in this environment.
+
+## Fix round 1 (review follow-up)
+
+### Root cause and changes
+
+The first refresh fix took the refresh token row before the session. Logout, session revocation and password recovery take the session before that session's refresh-token family. This inconsistent order could deadlock and, when refresh waited after materializing the token entity, could retain stale ORM state. Refresh now performs scalar token-id/session-id lookups (which do not materialize an entity), locks the session first, then locks the token. Session revocation/recovery already uses that order.
+
+`RequestIdFilter` accepted 128-character values although `audit_logs.request_id` is `varchar(100)`. The validation ceiling is now 100. `ActiveSessionFilter` now converts only expected `ApiException` and malformed UUID errors to an authentication response; unexpected runtime failures are allowed to reach normal 5xx handling.
+
+Concurrency futures in the acceptance suite now have deterministic 10-second timeouts.
+
+### Fix-round verification
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Java\jdk-25.0.2'
+$env:DOCKER_HOST='npipe:////./pipe/dockerDesktopLinuxEngine'
+.\mvnw -Dtest=AuthAcceptanceTest test
+```
+
+Result: **7 tests, 0 failures, 0 errors**, including real PostgreSQL concurrent refresh and onboarding paths.

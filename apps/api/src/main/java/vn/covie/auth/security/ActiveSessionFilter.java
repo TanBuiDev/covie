@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import vn.covie.auth.application.SessionManagementService;
+import vn.covie.shared.web.ApiException;
 
 @Component
 public final class ActiveSessionFilter extends OncePerRequestFilter {
@@ -23,7 +24,7 @@ public final class ActiveSessionFilter extends OncePerRequestFilter {
             try {
                 UUID sessionId=UUID.fromString(jwt.getClaimAsString("sessionId")); UUID userId=UUID.fromString(jwt.getSubject());
                 sessions.requireActiveSessionForUser(sessionId, userId);
-            } catch (RuntimeException exception) { SecurityContextHolder.clearContext(); entryPoint.commence(request,response,new org.springframework.security.core.AuthenticationException("Invalid session") {}); return; }
+            } catch (ApiException | IllegalArgumentException exception) { SecurityContextHolder.clearContext(); entryPoint.commence(request,response,new org.springframework.security.core.AuthenticationException("Invalid session") {}); return; }
         }
         chain.doFilter(request,response);
     }
