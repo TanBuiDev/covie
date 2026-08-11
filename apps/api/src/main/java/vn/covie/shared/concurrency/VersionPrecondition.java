@@ -30,7 +30,14 @@ public final class VersionPrecondition {
                     HttpStatus.BAD_REQUEST,
                     "Invalid If-Match value.");
         }
-        return Long.parseLong(matcher.group(1));
+        try {
+            return Long.parseLong(matcher.group(1));
+        } catch (NumberFormatException exception) {
+            throw new ApiException(
+                    ErrorCode.INVALID_IF_MATCH,
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid If-Match value.");
+        }
     }
 
     public static void require(long expected, long current) {

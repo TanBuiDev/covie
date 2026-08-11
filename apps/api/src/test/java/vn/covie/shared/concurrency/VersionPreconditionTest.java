@@ -36,6 +36,14 @@ class VersionPreconditionTest {
     }
 
     @Test
+    void rejectsAnIfMatchVersionThatOverflowsLong() {
+        assertThatThrownBy(() -> VersionPrecondition.parseRequired("\"v9223372036854775808\""))
+                .isInstanceOf(ApiException.class)
+                .satisfies(ex -> assertThat(((ApiException) ex).code())
+                        .isEqualTo(ErrorCode.INVALID_IF_MATCH));
+    }
+
+    @Test
     void rejectsAStaleVersion() {
         assertThatThrownBy(() -> VersionPrecondition.require(11L, 12L))
                 .isInstanceOf(ApiException.class)
