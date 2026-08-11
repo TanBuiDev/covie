@@ -11,6 +11,12 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    env:
+      # Test profile uses OIDC fixtures and generates an RSA keypair in-process.
+      # These placeholders keep CI independent of a real Google client or network call.
+      GOOGLE_OAUTH_CLIENT_ID: ci-test-client
+      GOOGLE_OAUTH_CLIENT_SECRET: ci-test-secret
+      GOOGLE_OAUTH_REDIRECT_URI: http://localhost:3000/api/v1/auth/google/callback/google
     defaults:
       run:
         working-directory: apps/api
@@ -21,7 +27,7 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - name: Verify backend
+      - name: Verify backend with test OIDC fixtures and ephemeral RSA keys
         run: ./mvnw verify
 
   frontend-and-contract:
@@ -40,15 +46,30 @@ jobs:
         run: npm install --global pnpm@10
       - name: Install workspace
         run: pnpm install --frozen-lockfile
-      - name: Regenerate OpenAPI client and check drift
-        run: ./infra/scripts/verify-generated-client.sh
+      - name: Export OpenAPI
+        run: ./infra/scripts/export-openapi.sh
+      - name: Generate typed API client
+        run: pnpm api-client:generate
+      - name: Check generated contract drift
+        run: git diff --exit-code -- packages/api-client/openapi/openapi.json packages/api-client/src/generated/schema.ts
       - name: Typecheck API client
-        run: pnpm --filter @covie/api-client check
-      - name: Test web
-        run: pnpm --filter @covie/web test
+        run: pnpm api-client:check
       - name: Typecheck web
         run: pnpm --filter @covie/web typecheck
       - name: Lint web
         run: pnpm --filter @covie/web lint
+      - name: Test web
+        run: pnpm --filter @covie/web test
       - name: Build web
         run: pnpm --filter @covie/web build
+      - name: Reject tracked secrets
+        run: |
+          tracked_secret_pattern='infra/'
+          tracked_secret_pattern+='secrets|jwt-'
+          tracked_secret_pattern+='private|\.env\.'
+          tracked_secret_pattern+='local'
+          git ls-files | grep -E "$tracked_secret_pattern" && exit 1 || true
+          secret_pattern='GOOGLE_OAUTH_CLIENT_SECRET'
+          secret_pattern+='=.+|BEGIN (RSA '
+          secret_pattern+=')?PRIVATE KEY'
+          git grep -nE "$secret_pattern" -- ':!*.md' ':!.env.example' && exit 1 || true
