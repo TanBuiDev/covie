@@ -2,7 +2,14 @@ package vn.covie.auth.acceptance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
@@ -14,8 +21,15 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import vn.covie.audit.AuditLogRepository;
 import vn.covie.auth.application.AuthApplicationService;
 import vn.covie.auth.application.EmailPasswordLoginService;
@@ -29,10 +43,14 @@ import vn.covie.auth.application.RefreshTokenService;
 import vn.covie.auth.application.SessionManagementService;
 import vn.covie.auth.model.AuthActionPurpose;
 import vn.covie.auth.model.AuthSessionRevocationReason;
+import vn.covie.auth.oauth.GoogleAuthIntent;
+import vn.covie.auth.oauth.GoogleOAuthSuccessHandler;
 import vn.covie.auth.persistence.AuthActionTicketRepository;
 import vn.covie.auth.persistence.AuthRefreshTokenRepository;
 import vn.covie.auth.persistence.AuthSessionRepository;
 import vn.covie.auth.token.TokenFingerprint;
+import vn.covie.auth.security.AuthProperties;
+import vn.covie.auth.api.GoogleAuthController;
 import vn.covie.shared.security.SystemRole;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
@@ -49,15 +67,32 @@ import vn.covie.users.persistence.UserRepository;
  * Real PostGIS/PostgreSQL acceptance coverage.  Google claims are injected at the
  * success-handler boundary; neither these tests nor the tested services mock a repository.
  */
+@AutoConfigureMockMvc
 class AuthAcceptanceTest extends AuthAcceptanceSupport {
+    @Autowired MockMvc mvc;
+    @Autowired GoogleOAuthSuccessHandler googleSuccess;
+    @Autowired AuthProperties authProperties;
 
     @Test
-    void firstGoogleRegistrationCreatesOneActiveUserBothIdentitiesRoleSessionAndUsableJwt() {
+    void firstGoogleRegistrationTraversesOidcSuccessHandlerThenOnboardsAndAuthenticatesCurrentActor() throws Exception {
         String subject = "google-first-" + UUID.randomUUID();
         String email = "first-" + UUID.randomUUID() + "@example.com";
 
-        GoogleAuthResult.Onboarding start = (GoogleAuthResult.Onboarding) google.handleLogin(claims(subject, email));
-        IssuedSession issued = onboarding.completeOnboarding(start.ticket().rawToken(), "Password-First-Secret-42", "first-registration");
+        OidcUser oidc = mock(OidcUser.class);
+        when(oidc.getSubject()).thenReturn(subject); when(oidc.getEmail()).thenReturn(email); when(oidc.getClaim("email_verified")).thenReturn(true); when(oidc.getFullName()).thenReturn("OIDC Acceptance");
+        MockHttpServletRequest callback = new MockHttpServletRequest("GET", "/api/v1/auth/google/callback/google");
+        callback.getSession(true).setAttribute(GoogleAuthController.SESSION_INTENT, GoogleAuthIntent.LOGIN.name());
+        MockHttpServletResponse callbackResponse = new MockHttpServletResponse();
+        googleSuccess.onAuthenticationSuccess(callback, callbackResponse, new OAuth2AuthenticationToken(oidc, java.util.List.of(), "google"));
+        assertThat(callbackResponse.getRedirectedUrl()).isEqualTo("/onboarding/password");
+        String actionToken = responseCookieValue(callbackResponse, authProperties.cookies().actionName());
+
+        Cookie csrf = mvc.perform(get("/api/v1/auth/csrf")).andExpect(status().isOk()).andReturn().getResponse().getCookie("COVIE-XSRF-TOKEN");
+        MvcResult onboardingResponse = mvc.perform(post("/api/v1/auth/onboarding/set-password")
+                        .cookie(new Cookie(authProperties.cookies().actionName(), actionToken), csrf).header("X-CSRF-Token", csrf.getValue())
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("{\"password\":\"Password-First-Secret-42\"}"))
+                .andExpect(status().isOk()).andReturn();
+        String issuedAccessJwt = responseCookieValue(onboardingResponse.getResponse(), authProperties.cookies().accessName());
 
         UserIdentityEntity googleIdentity = identities.findByProviderAndProviderSubject(IdentityProvider.GOOGLE, subject).orElseThrow();
         assertThat(users.count()).isEqualTo(1);
@@ -66,10 +101,11 @@ class AuthAcceptanceTest extends AuthAcceptanceSupport {
                 .containsExactlyInAnyOrder(IdentityProvider.GOOGLE, IdentityProvider.EMAIL);
         assertThat(passwords.matches("Password-First-Secret-42", identities.findLocalEmail(email).orElseThrow().getPasswordHash())).isTrue();
         assertThat(roles.findAllByUserId(googleIdentity.getUserId())).extracting(SystemRoleAssignmentEntity::getRole).containsExactly(SystemRole.USER);
-        assertThat(sessions.findById(issued.sessionId())).isPresent();
-        assertThat(refreshTokens.findAllBySessionId(issued.sessionId())).hasSize(1);
-        assertThat(jwt.issueAccessToken(googleIdentity.getUserId(), issued.sessionId(), java.util.Set.of(SystemRole.USER)).value()).isNotBlank();
-        assertThat(sessionManagement.requireActiveSession(issued.sessionId()).getUserId()).isEqualTo(googleIdentity.getUserId());
+        UUID sessionId = sessions.findAllByUserIdOrderByCreatedAtDesc(googleIdentity.getUserId()).getFirst().getId();
+        assertThat(refreshTokens.findAllBySessionId(sessionId)).hasSize(1);
+        mvc.perform(get("/api/v1/me").header("Authorization", "Bearer " + issuedAccessJwt))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(googleIdentity.getUserId().toString()))
+                .andExpect(jsonPath("$.email").value(email));
     }
 
     @Test
@@ -184,14 +220,17 @@ class AuthAcceptanceTest extends AuthAcceptanceSupport {
     }
 
     @Test
-    void refreshReuseWithMaximumAcceptedRequestIdPersistsAuditAndFamilyRevocation() {
+    void refreshReuseWithMaximumAcceptedRequestIdCrossesFilterAndPersistsAuditAndFamilyRevocation() throws Exception {
         UserEntity user = activeUser("Maximum request id");
         IssuedSession issued = issuer.issue(user.getId(), device());
         refresh.refresh(issued.rawRefreshToken(), "rotate-maximum-request-id");
         String requestId = "r".repeat(100);
 
-        assertThatThrownBy(() -> refresh.refresh(issued.rawRefreshToken(), requestId))
-                .extracting(error -> ((ApiException) error).code()).isEqualTo(ErrorCode.REFRESH_TOKEN_REUSE_DETECTED);
+        Cookie csrf = mvc.perform(get("/api/v1/auth/csrf")).andExpect(status().isOk()).andReturn().getResponse().getCookie("COVIE-XSRF-TOKEN");
+        mvc.perform(post("/api/v1/auth/refresh").cookie(new Cookie(authProperties.cookies().refreshName(), issued.rawRefreshToken()), csrf)
+                        .header("X-CSRF-Token", csrf.getValue()).header("X-Request-Id", requestId))
+                .andExpect(status().isUnauthorized()).andExpect(jsonPath("$.error.code").value(ErrorCode.REFRESH_TOKEN_REUSE_DETECTED.name()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("X-Request-Id", requestId));
         assertRevokedFamily(issued.sessionId());
         assertThat(jdbc.queryForObject("select request_id from audit_logs where action = 'REFRESH_TOKEN_REUSE_DETECTED'", String.class)).isEqualTo(requestId);
     }
@@ -259,6 +298,12 @@ class AuthAcceptanceTest extends AuthAcceptanceSupport {
         assertThat(sessions.findById(sessionId).orElseThrow().getRevokedAt()).isNotNull();
         assertThat(refreshTokens.findAllBySessionId(sessionId)).allSatisfy(token -> assertThat(token.getRevokedAt()).isNotNull());
     }
+
+    private String responseCookieValue(MockHttpServletResponse response, String name) {
+        String header = response.getHeaders("Set-Cookie").stream().filter(value -> value.startsWith(name + "=")).findFirst().orElseThrow();
+        return header.substring(name.length() + 1, header.indexOf(';'));
+    }
+
 }
 
 abstract class AuthAcceptanceSupport extends PostgresIntegrationTest {

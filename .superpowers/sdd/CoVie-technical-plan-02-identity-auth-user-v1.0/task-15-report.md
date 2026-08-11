@@ -110,3 +110,36 @@ Final rerun after the audit-log and stale-cookie recovery extensions: the combin
 ### Remaining concern
 
 The acceptance suite exercises real PostgreSQL and the installed HTTP filter chain; the operational database-error case is deliberately a direct filter test because terminating the Testcontainers database inside an HTTP test would make the test nondeterministic and contaminate the shared context. It proves the required discriminator: operational error propagation rather than a fabricated 401.
+
+## Fix round 2 — reviewer follow-up
+
+### Added/strengthened evidence
+
+- The first-registration acceptance path now starts at the real `GoogleOAuthSuccessHandler` with an `OidcUser` principal, extracts its onboarding action cookie, posts `/auth/onboarding/set-password` through MockMvc, extracts the resulting access cookie, and proves the exact returned JWT authenticates `/api/v1/me` as the new actor. It no longer calls `GoogleAuthService` directly then mints an unrelated JWT.
+- Maximum request-id reuse coverage now sends a 100-character `X-Request-Id` through MockMvc `/auth/refresh`, checks the returned response header and nested error code, then verifies the committed reuse audit record has that exact ID and the family is revoked.
+- Audit safety now uses real HTTP login, cookie refresh, deliberate refresh reuse, and Google password reset; it sends a distinctive double-submit CSRF fixture through cookie-auth refresh and a distinctive OAuth `code` through the OAuth failure-handler boundary. It requires the four expected audit actions before scanning audit snapshots plus captured Logback messages for every raw password, initial/rotated/reset access JWT, initial/rotated/reset raw refresh, reset action ticket, CSRF fixture, and OAuth code.
+- The database character-column probe now uses substring containment (`position(... in ...)`) instead of exact equality, so a token embedded in JSON/text is detected.
+- The literal Task 15 command remains unchanged. `pom.xml` activates a narrowly scoped Surefire execution only when `test=vn.covie.auth.acceptance.*`; the default execution tolerates that legacy dotted selector's zero direct matches and the activated execution runs the explicit acceptance class list. Other selectors continue to use the normal execution.
+
+### RED/GREEN evidence
+
+RED: before the selector bridge, the literal plan command failed immediately with `No tests matching pattern "vn.covie.auth.acceptance.*" were executed!`.
+
+GREEN: after the profile-scoped Surefire bridge, the same literal command invoked `acceptance-plan-selector` and completed the five acceptance classes successfully. During focused request-id test development, the response was correctly 401 with the expected nested envelope code, but the new assertion incorrectly used `$.code`; it was corrected to `$.error.code` with no production change.
+
+### Verification
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Java\jdk-25.0.2'
+$env:DOCKER_HOST='npipe:////./pipe/dockerDesktopLinuxEngine'
+.\mvnw "-Dtest=vn.covie.auth.acceptance.*" test
+```
+
+Result: **20 tests, 0 failures, 0 errors, 28.197 s** on fresh Testcontainers PostgreSQL.
+
+### Changed files (round 2)
+
+- `apps/api/pom.xml`
+- `apps/api/src/test/java/vn/covie/auth/acceptance/AuthAcceptanceTest.java`
+- `apps/api/src/test/java/vn/covie/auth/acceptance/AuthAuditSafetyTest.java`
+- `apps/api/src/test/java/vn/covie/auth/acceptance/AuthDatabaseInvariantTest.java`

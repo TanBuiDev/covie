@@ -56,7 +56,7 @@ class AuthDatabaseInvariantTest extends AuthAcceptanceSupport {
         List<String> characterColumns = jdbc.query("select table_name || '.' || column_name from information_schema.columns where table_schema='public' and data_type in ('character varying','text','character')", (rs, row) -> rs.getString(1));
         long rawRefreshHits = characterColumns.stream().mapToLong(qualified -> {
             String[] parts = qualified.split("\\.", 2);
-            return jdbc.queryForObject("select count(*) from \"" + parts[0] + "\" where \"" + parts[1] + "\"::text = ?", Long.class, session.rawRefreshToken());
+            return jdbc.queryForObject("select count(*) from \"" + parts[0] + "\" where position(? in coalesce(\"" + parts[1] + "\"::text, '')) > 0", Long.class, session.rawRefreshToken());
         }).sum();
 
         assertThat(rawRefreshHits).isZero();
