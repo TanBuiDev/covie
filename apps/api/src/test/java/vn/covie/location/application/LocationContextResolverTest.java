@@ -119,6 +119,16 @@ class LocationContextResolverTest {
                 ErrorCode.LOCATION_CONTEXT_INVALID, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
+    @Test
+    void rejectsNotANumberCoordinatesBeforeCreatingAGeometry() {
+        LocationContextResolver resolver = resolver(mock(CurrentActorProvider.class), mock(UserAddressRepository.class));
+
+        assertError(() -> resolver.resolveForDiscovery(Double.NaN, 106.8, null),
+                ErrorCode.LOCATION_CONTEXT_INVALID, HttpStatus.UNPROCESSABLE_ENTITY);
+        assertError(() -> resolver.resolveForDiscovery(10.8, Double.NaN, null),
+                ErrorCode.LOCATION_CONTEXT_INVALID, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
     private LocationContextResolver resolver(CurrentActorProvider actors, UserAddressRepository addresses) {
         return new LocationContextResolver(actors, addresses, new GeoPointFactory());
     }

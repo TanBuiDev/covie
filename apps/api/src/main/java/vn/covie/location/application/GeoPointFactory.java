@@ -14,7 +14,8 @@ public final class GeoPointFactory {
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
     public Point point(double latitude, double longitude) {
-        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+        if (!Double.isFinite(latitude) || !Double.isFinite(longitude)
+                || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
             throw new ApiException(
                     ErrorCode.LOCATION_CONTEXT_INVALID,
                     HttpStatus.UNPROCESSABLE_ENTITY,
