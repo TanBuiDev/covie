@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.UUID;
+import vn.covie.shared.id.UuidV7Generator;
 
 @Entity
 @Table(name = "merchant_memberships")
@@ -31,10 +32,11 @@ public class MerchantMembershipEntity {
         return membership;
     }
 
-    public MerchantMemberLocationEntity assignTo(UUID merchantLocationId, Instant now) {
-        return MerchantMemberLocationEntity.assign(UUID.randomUUID(), id, merchantLocationId, now);
+    public MerchantMemberLocationEntity assignTo(UuidV7Generator ids, UUID merchantLocationId, Instant now) {
+        return MerchantMemberLocationEntity.assign(ids.generate(), id, merchantLocationId, now);
     }
 
+    public void changeRole(MerchantRole role) { this.role = role; }
     public void revoke() { membershipStatus = MembershipStatus.REVOKED; }
     public UUID getId() { return id; }
     public UUID getMerchantProfileId() { return merchantProfileId; }

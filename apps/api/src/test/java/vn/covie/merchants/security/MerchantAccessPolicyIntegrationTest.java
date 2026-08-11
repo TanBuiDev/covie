@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.merchants.model.MembershipStatus;
 import vn.covie.merchants.model.MerchantLocationEntity;
+import vn.covie.merchants.model.MerchantMemberLocationEntity;
 import vn.covie.merchants.model.MerchantMembershipEntity;
 import vn.covie.merchants.model.MerchantProfileEntity;
 import vn.covie.merchants.model.MerchantRole;
@@ -26,6 +27,7 @@ import vn.covie.merchants.persistence.MerchantMembershipRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
 import vn.covie.shared.security.CurrentActor;
 import vn.covie.shared.security.SystemRole;
+import vn.covie.shared.id.UuidV7Generator;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
 import vn.covie.support.PostgresIntegrationTest;
@@ -40,6 +42,7 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
     @Autowired MerchantMembershipRepository memberships;
     @Autowired MerchantMemberLocationRepository memberLocations;
     @Autowired MerchantLocationRepository locations;
+    @Autowired UuidV7Generator ids;
 
     @Test
     void ownerCanEditProfile() {
@@ -71,12 +74,44 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
         Fixture fixture = fixture(MerchantRole.STAFF);
         MerchantLocationEntity assigned = location(fixture.merchantId(), "Location A");
         locations.saveAndFlush(assigned);
-        memberLocations.saveAndFlush(fixture.membership().assignTo(assigned.getId(), NOW));
+        MerchantMemberLocationEntity assignment = fixture.membership().assignTo(ids, assigned.getId(), NOW);
+        memberLocations.saveAndFlush(assignment);
 
         MerchantAccess access = fixture.policy().requireLocation(
                 fixture.merchantId(), assigned.getId(), MerchantCapability.MANAGE_LOCATION_OFFER);
 
         assertThat(access.membershipId()).isEqualTo(fixture.membership().getId());
+        assertThat(assignment.getId().version()).isEqualTo(7);
+    }
+
+    @Test
+    void staffWithNoLocationAssignmentsCannotViewOrUploadMerchantMedia() {
+        Fixture fixture = fixture(MerchantRole.STAFF);
+
+        assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.VIEW_MERCHANT));
+        assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.UPLOAD_MERCHANT_MEDIA));
+    }
+
+    @Test
+    void promotionFromStaffToManagerTakesEffectOnTheNextRequest() {
+        Fixture fixture = fixture(MerchantRole.STAFF);
+        assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.VIEW_MERCHANT));
+        fixture.membership().changeRole(MerchantRole.MANAGER);
+        memberships.saveAndFlush(fixture.membership());
+
+        assertThat(fixture.policy().require(fixture.merchantId(), MerchantCapability.EDIT_PROFILE).role())
+                .isEqualTo(MerchantRole.MANAGER);
+    }
+
+    @Test
+    void demotionFromManagerToUnassignedStaffTakesEffectOnTheNextRequest() {
+        Fixture fixture = fixture(MerchantRole.MANAGER);
+        fixture.policy().require(fixture.merchantId(), MerchantCapability.VIEW_MERCHANT);
+        fixture.membership().changeRole(MerchantRole.STAFF);
+        memberships.saveAndFlush(fixture.membership());
+
+        assertNotFound(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.VIEW_MERCHANT));
+        assertForbidden(() -> fixture.policy().require(fixture.merchantId(), MerchantCapability.EDIT_PROFILE));
     }
 
     @Test
@@ -85,7 +120,7 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
         MerchantLocationEntity assigned = location(fixture.merchantId(), "Location A");
         MerchantLocationEntity unassigned = location(fixture.merchantId(), "Location B");
         locations.saveAllAndFlush(java.util.List.of(assigned, unassigned));
-        memberLocations.saveAndFlush(fixture.membership().assignTo(assigned.getId(), NOW));
+        memberLocations.saveAndFlush(fixture.membership().assignTo(ids, assigned.getId(), NOW));
 
         assertNotFound(() -> fixture.policy().requireLocation(
                 fixture.merchantId(), unassigned.getId(), MerchantCapability.MANAGE_LOCATION_OFFER));
@@ -110,6 +145,27 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
 
         assertNotFound(() -> fixture.policy().requireLocation(
                 fixture.merchantId(), otherLocation.getId(), MerchantCapability.MANAGE_LOCATION_OFFER));
+    }
+
+    @Test
+    void staffForbiddenActionCannotRevealUnassignedLocation() {
+        Fixture fixture = fixture(MerchantRole.STAFF);
+        MerchantLocationEntity unassigned = location(fixture.merchantId(), "Location B");
+        locations.saveAndFlush(unassigned);
+
+        assertNotFound(() -> fixture.policy().requireLocation(
+                fixture.merchantId(), unassigned.getId(), MerchantCapability.EDIT_PROFILE));
+    }
+
+    @Test
+    void staffForbiddenActionCannotRevealCrossMerchantLocation() {
+        Fixture fixture = fixture(MerchantRole.STAFF);
+        UUID otherMerchantId = profile("Other merchant");
+        MerchantLocationEntity otherLocation = location(otherMerchantId, "Other location");
+        locations.saveAndFlush(otherLocation);
+
+        assertNotFound(() -> fixture.policy().requireLocation(
+                fixture.merchantId(), otherLocation.getId(), MerchantCapability.EDIT_PROFILE));
     }
 
     @ParameterizedTest
@@ -147,7 +203,8 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
     }
 
     private UUID profile(String name) {
-        MerchantProfileEntity profile = MerchantProfileEntity.create(UUID.randomUUID(), name, name.toLowerCase().replace(' ', '-'), NOW);
+        MerchantProfileEntity profile = MerchantProfileEntity.create(
+                UUID.randomUUID(), name, name.toLowerCase().replace(' ', '-') + "-" + UUID.randomUUID(), NOW);
         profiles.saveAndFlush(profile);
         return profile.getId();
     }

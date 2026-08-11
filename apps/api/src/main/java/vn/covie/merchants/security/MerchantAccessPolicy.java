@@ -34,18 +34,24 @@ public final class MerchantAccessPolicy {
         MerchantMembershipEntity membership = memberships.findActive(merchantId, actor.userId())
                 .orElseThrow(MerchantAccessPolicy::notFound);
         if (!allows(membership.role(), capability)) throw notAllowed();
+        if (membership.role() == MerchantRole.STAFF && !memberLocations.existsByMembershipId(membership.getId())) {
+            throw notFound();
+        }
         return new MerchantAccess(actor.userId(), merchantId, membership.getId(), membership.role());
     }
 
     public MerchantAccess requireLocation(UUID merchantId, UUID locationId, MerchantCapability capability) {
-        MerchantAccess access = require(merchantId, capability);
+        CurrentActor actor = actors.currentActor();
+        MerchantMembershipEntity membership = memberships.findActive(merchantId, actor.userId())
+                .orElseThrow(MerchantAccessPolicy::notFound);
         MerchantLocationEntity location = locations.findByIdAndMerchantProfileIdAndDeletedAtIsNull(locationId, merchantId)
                 .orElseThrow(MerchantAccessPolicy::notFound);
-        if (access.role() == MerchantRole.STAFF
-                && !memberLocations.existsByMembershipIdAndMerchantLocationId(access.membershipId(), location.getId())) {
+        if (membership.role() == MerchantRole.STAFF
+                && !memberLocations.existsByMembershipIdAndMerchantLocationId(membership.getId(), location.getId())) {
             throw notFound();
         }
-        return access;
+        if (!allows(membership.role(), capability)) throw notAllowed();
+        return new MerchantAccess(actor.userId(), merchantId, membership.getId(), membership.role());
     }
 
     static boolean allows(MerchantRole role, MerchantCapability capability) {
