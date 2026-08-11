@@ -37,9 +37,9 @@ public class RefreshRotationTransaction {
     }
     @Transactional
     public RefreshRotationOutcome rotate(String rawRefreshToken, String requestId) {
-        AuthRefreshTokenEntity candidate = tokens.findByTokenHash(fingerprints.sha256Hex(rawRefreshToken)).orElseThrow(this::invalid);
+        AuthRefreshTokenEntity candidate = tokens.findByTokenHashForUpdate(fingerprints.sha256Hex(rawRefreshToken)).orElseThrow(this::invalid);
         AuthSessionEntity session = sessions.findByIdForUpdate(candidate.getSessionId()).orElseThrow(this::invalid);
-        AuthRefreshTokenEntity token = tokens.findByIdForUpdate(candidate.getId()).orElseThrow(this::invalid);
+        AuthRefreshTokenEntity token = candidate;
         Instant now = clock.now();
         if (token.isUsedOrReplaced()) { revokeFamily(session, now, requestId); return new RefreshRotationOutcome.ReuseDetected(session.getId()); }
         if (!session.isActiveAt(now) || token.isRevoked() || !token.getExpiresAt().isAfter(now)) throw invalid();

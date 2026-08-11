@@ -12,6 +12,8 @@ import vn.covie.auth.model.AuthRefreshTokenEntity;
 
 public interface AuthRefreshTokenRepository extends JpaRepository<AuthRefreshTokenEntity, UUID> {
     Optional<AuthRefreshTokenEntity> findByTokenHash(String tokenHash);
+    @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select t from AuthRefreshTokenEntity t where t.tokenHash = :tokenHash")
+    Optional<AuthRefreshTokenEntity> findByTokenHashForUpdate(@Param("tokenHash") String tokenHash);
     List<AuthRefreshTokenEntity> findAllBySessionId(UUID sessionId);
     @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select t from AuthRefreshTokenEntity t where t.id = :id")
     Optional<AuthRefreshTokenEntity> findByIdForUpdate(@Param("id") UUID id);

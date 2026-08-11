@@ -1,6 +1,7 @@
 package vn.covie.auth.application;
 
 import java.time.Instant;
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,16 @@ public class SessionManagementService {
     public AuthSessionEntity requireActiveSession(UUID sessionId) {
         return sessions.findUsableById(sessionId).filter(session -> session.isActiveAt(clock.now()))
                 .orElseThrow(() -> new ApiException(ErrorCode.AUTH_SESSION_INVALID, HttpStatus.UNAUTHORIZED, "Authentication session is no longer active."));
+    }
+    @Transactional
+    public AuthSessionEntity requireActiveSessionForUser(UUID sessionId, UUID userId) {
+        Instant now = clock.now();
+        AuthSessionEntity session = sessions.findUsableById(sessionId)
+                .filter(value -> value.getUserId().equals(userId))
+                .filter(value -> value.isActiveAt(now))
+                .orElseThrow(() -> new ApiException(ErrorCode.AUTH_SESSION_INVALID, HttpStatus.UNAUTHORIZED, "Authentication session is no longer active."));
+        sessions.touchLastUsedIfBefore(sessionId, now, now.minus(Duration.ofMinutes(5)));
+        return session;
     }
     @Transactional(readOnly = true)
     public List<AuthSessionEntity> activeSessions(UUID userId) {
