@@ -1,7 +1,12 @@
 package vn.covie.merchants.persistence;
 
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import vn.covie.merchants.model.MerchantProfileEntity;
 
-public interface MerchantProfileRepository extends JpaRepository<MerchantProfileEntity, UUID> {}
+public interface MerchantProfileRepository extends JpaRepository<MerchantProfileEntity, UUID> {
+    boolean existsBySlugAndDeletedAtIsNull(String slug);
+
+    Optional<MerchantProfileEntity> findByIdAndDeletedAtIsNull(UUID id);
+}

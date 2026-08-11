@@ -29,10 +29,22 @@ public class MerchantProfileEntity {
     protected MerchantProfileEntity() {}
 
     public static MerchantProfileEntity create(UUID id, String name, String slug, Instant now) {
+        return create(id, name, slug, null, now);
+    }
+
+    public static MerchantProfileEntity create(UUID id, String name, String slug, String description, Instant now) {
         MerchantProfileEntity profile = new MerchantProfileEntity();
-        profile.id = id; profile.name = name; profile.slug = slug; profile.merchantStatus = MerchantStatus.ACTIVE;
+        profile.id = id; profile.name = name; profile.slug = slug; profile.description = description; profile.merchantStatus = MerchantStatus.ACTIVE;
         profile.moderationStatus = MerchantModerationStatus.NOT_REQUIRED; profile.createdAt = now; profile.updatedAt = now;
         return profile;
+    }
+
+    public void update(String name, String description, UUID logoMediaId, UUID coverMediaId, Instant now) {
+        this.name = name;
+        this.description = description;
+        this.logoMediaId = logoMediaId;
+        this.coverMediaId = coverMediaId;
+        this.updatedAt = now;
     }
 
     public UUID getId() { return id; }
