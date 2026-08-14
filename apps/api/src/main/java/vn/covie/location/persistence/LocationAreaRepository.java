@@ -11,4 +11,6 @@ public interface LocationAreaRepository extends JpaRepository<LocationAreaEntity
 
     List<LocationAreaEntity> findAllByParentIdAndStatusOrderBySortOrderAscNameAsc(
             UUID parentId, LocationAreaStatus status);
+
+    boolean existsByIdAndStatus(UUID id, LocationAreaStatus status);
 }

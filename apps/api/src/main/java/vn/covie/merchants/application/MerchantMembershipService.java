@@ -1,5 +1,6 @@
 package vn.covie.merchants.application;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -10,12 +11,14 @@ import vn.covie.audit.AuditLogWriter;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.merchants.api.dto.AddMerchantMemberRequest;
 import vn.covie.merchants.api.dto.MerchantMemberResponse;
+import vn.covie.merchants.api.dto.ReplaceMemberLocationsRequest;
 import vn.covie.merchants.api.dto.UpdateMerchantMemberRequest;
 import vn.covie.merchants.model.MembershipStatus;
 import vn.covie.merchants.model.MerchantMembershipEntity;
 import vn.covie.merchants.model.MerchantRole;
 import vn.covie.merchants.persistence.MerchantMemberLocationRepository;
 import vn.covie.merchants.persistence.MerchantMembershipRepository;
+import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.security.MerchantAccess;
 import vn.covie.merchants.security.MerchantAccessPolicy;
 import vn.covie.merchants.security.MerchantCapability;
@@ -35,6 +38,7 @@ public class MerchantMembershipService {
     private final MerchantAccessPolicy access;
     private final MerchantMembershipRepository memberships;
     private final MerchantMemberLocationRepository locations;
+    private final MerchantLocationRepository merchantLocations;
     private final UserIdentityRepository identities;
     private final EmailNormalizer emails;
     private final UuidV7Generator ids;
@@ -44,9 +48,11 @@ public class MerchantMembershipService {
 
     public MerchantMembershipService(CurrentActorProvider actors, MerchantAccessPolicy access,
             MerchantMembershipRepository memberships, MerchantMemberLocationRepository locations,
-            UserIdentityRepository identities, EmailNormalizer emails, UuidV7Generator ids, AppClock clock,
+            MerchantLocationRepository merchantLocations, UserIdentityRepository identities,
+            EmailNormalizer emails, UuidV7Generator ids, AppClock clock,
             AuditLogWriter audit, RequestIdAccessor requestIds) {
         this.actors = actors; this.access = access; this.memberships = memberships; this.locations = locations;
+        this.merchantLocations = merchantLocations;
         this.identities = identities; this.emails = emails; this.ids = ids; this.clock = clock;
         this.audit = audit; this.requestIds = requestIds;
     }
@@ -97,6 +103,40 @@ public class MerchantMembershipService {
         memberships.save(member);
         audit.securityEvent(actorAccess.userId(), "MERCHANT_MEMBERSHIP_REVOKED", "MERCHANT_MEMBERSHIP", memberId,
                 requestIds.current(), Map.of());
+    }
+
+    @Transactional
+    public long replaceLocations(UUID merchantId, UUID memberId, String ifMatch,
+            ReplaceMemberLocationsRequest request) {
+        MerchantAccess actorAccess = access.require(merchantId, MerchantCapability.MANAGE_MEMBERS);
+        MerchantMembershipEntity member = activeMember(merchantId, memberId);
+        long currentVersion = member.getVersion();
+        VersionPrecondition.require(VersionPrecondition.parseRequired(ifMatch), currentVersion);
+        if (member.getRole() != MerchantRole.STAFF) {
+            throw new ApiException(ErrorCode.MEMBERSHIP_ROLE_NOT_LOCATION_SCOPED,
+                    HttpStatus.UNPROCESSABLE_ENTITY, "Membership role is not location scoped.");
+        }
+        List<UUID> requested = request.locationIds();
+        if (new HashSet<>(requested).size() != requested.size()) {
+            throw new ApiException(ErrorCode.VALIDATION_FAILED, HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Duplicate location IDs are not allowed.");
+        }
+        requested.forEach(locationId -> merchantLocations
+                .findByIdAndMerchantProfileIdAndDeletedAtIsNull(locationId, merchantId)
+                .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND,
+                        "Resource not found.")));
+        locations.deleteAllByMembershipId(memberId);
+        locations.flush();
+        locations.saveAll(requested.stream()
+                .map(locationId -> member.assignTo(ids, locationId, clock.now())).toList());
+        locations.flush();
+        if (memberships.incrementVersion(memberId, currentVersion) != 1) {
+            throw new ApiException(ErrorCode.RESOURCE_VERSION_CONFLICT, HttpStatus.CONFLICT,
+                    "Resource version has changed.");
+        }
+        audit.securityEvent(actorAccess.userId(), "MERCHANT_MEMBER_LOCATIONS_REPLACED", "MERCHANT_MEMBERSHIP",
+                memberId, requestIds.current(), Map.of("locationCount", requested.size()));
+        return currentVersion + 1;
     }
 
     private MerchantAccess requireForRole(UUID merchantId, MerchantRole role) {

@@ -7,6 +7,7 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 import vn.covie.merchants.model.MembershipStatus;
 import vn.covie.merchants.model.MerchantMembershipEntity;
@@ -72,4 +73,8 @@ public interface MerchantMembershipRepository extends JpaRepository<MerchantMemb
 
     long countByMerchantProfileIdAndRoleAndMembershipStatus(
             UUID merchantId, MerchantRole role, MembershipStatus status);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update MerchantMembershipEntity membership set membership.version = membership.version + 1 where membership.id = :id and membership.version = :version")
+    int incrementVersion(@Param("id") UUID id, @Param("version") long version);
 }

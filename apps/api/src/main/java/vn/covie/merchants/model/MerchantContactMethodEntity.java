@@ -27,6 +27,24 @@ public class MerchantContactMethodEntity {
 
     protected MerchantContactMethodEntity() {}
 
+    public static MerchantContactMethodEntity create(UUID id, UUID merchantId, UUID locationId, ContactType type,
+            String value, UUID qrMediaId, boolean primary, boolean publicContact, Instant now) {
+        MerchantContactMethodEntity contact = new MerchantContactMethodEntity();
+        contact.id = id; contact.merchantProfileId = merchantId; contact.createdAt = now;
+        contact.status = ContactStatus.ACTIVE;
+        contact.update(locationId, type, value, qrMediaId, primary, publicContact);
+        return contact;
+    }
+
+    public void update(UUID locationId, ContactType type, String value, UUID qrMediaId, boolean primary,
+            boolean publicContact) {
+        merchantLocationId = locationId; contactType = type; this.value = value; this.qrMediaId = qrMediaId;
+        this.primary = primary; this.publicContact = publicContact;
+    }
+
+    public void demote() { primary = false; }
+    public void deactivate() { status = ContactStatus.INACTIVE; primary = false; }
+
     public UUID getId() { return id; }
     public UUID getMerchantProfileId() { return merchantProfileId; }
     public UUID getMerchantLocationId() { return merchantLocationId; }

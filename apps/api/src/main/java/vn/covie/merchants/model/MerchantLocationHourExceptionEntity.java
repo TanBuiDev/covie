@@ -25,6 +25,26 @@ public class MerchantLocationHourExceptionEntity {
 
     protected MerchantLocationHourExceptionEntity() {}
 
+    public static MerchantLocationHourExceptionEntity closed(UUID id, UUID locationId, LocalDate date,
+            OperationType operationType, String note) {
+        return create(id, locationId, date, operationType, null, null, true, note, 0);
+    }
+
+    public static MerchantLocationHourExceptionEntity open(UUID id, UUID locationId, LocalDate date,
+            OperationType operationType, LocalTime openTime, LocalTime closeTime, String note, int sortOrder) {
+        return create(id, locationId, date, operationType, openTime, closeTime, false, note, sortOrder);
+    }
+
+    private static MerchantLocationHourExceptionEntity create(UUID id, UUID locationId, LocalDate date,
+            OperationType operationType, LocalTime openTime, LocalTime closeTime, boolean closed, String note,
+            int sortOrder) {
+        MerchantLocationHourExceptionEntity exception = new MerchantLocationHourExceptionEntity();
+        exception.id = id; exception.merchantLocationId = locationId; exception.localDate = date;
+        exception.operationType = operationType; exception.openTime = openTime; exception.closeTime = closeTime;
+        exception.closed = closed; exception.note = note; exception.sortOrder = sortOrder;
+        return exception;
+    }
+
     public UUID getId() { return id; }
     public UUID getMerchantLocationId() { return merchantLocationId; }
     public LocalDate getLocalDate() { return localDate; }

@@ -13,10 +13,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.covie.merchants.api.dto.AddMerchantMemberRequest;
 import vn.covie.merchants.api.dto.MerchantMemberResponse;
 import vn.covie.merchants.api.dto.UpdateMerchantMemberRequest;
+import vn.covie.merchants.api.dto.ReplaceMemberLocationsRequest;
 import vn.covie.merchants.application.MerchantMembershipService;
 import vn.covie.shared.concurrency.VersionPrecondition;
 
@@ -49,5 +51,13 @@ public class MerchantMemberController {
     public ResponseEntity<Void> revoke(@PathVariable UUID merchantId, @PathVariable UUID memberId) {
         members.revoke(merchantId, memberId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{memberId}/locations")
+    public ResponseEntity<Void> replaceLocations(@PathVariable UUID merchantId, @PathVariable UUID memberId,
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String ifMatch,
+            @Valid @RequestBody ReplaceMemberLocationsRequest request) {
+        long version = members.replaceLocations(merchantId, memberId, ifMatch, request);
+        return ResponseEntity.noContent().eTag(VersionPrecondition.format(version)).build();
     }
 }

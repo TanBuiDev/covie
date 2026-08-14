@@ -12,10 +12,7 @@ import java.sql.Types;
 import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
 
 @Entity
 @Table(name = "merchant_locations")
@@ -43,18 +40,50 @@ public class MerchantLocationEntity {
 
     public static MerchantLocationEntity create(UUID id, UUID merchantProfileId, String name, String addressText,
             double latitude, double longitude, Instant now) {
+        org.locationtech.jts.geom.GeometryFactory factory = new org.locationtech.jts.geom.GeometryFactory(
+                new org.locationtech.jts.geom.PrecisionModel(), 4326);
+        Point point = factory.createPoint(new org.locationtech.jts.geom.Coordinate(longitude, latitude));
+        point.setSRID(4326);
+        return create(id, merchantProfileId, name, addressText, null, point, PinSource.GPS,
+                "Asia/Ho_Chi_Minh", false, false, false, null, "VND", now);
+    }
+
+    public static MerchantLocationEntity create(UUID id, UUID merchantProfileId, String name, String addressText,
+            UUID locationAreaId, Point geoPoint, PinSource pinSource, String timezone, boolean pickupEnabled,
+            boolean sellerDeliveryEnabled, boolean serviceEnabled, Long minimumDeliveryOrder, String currencyCode,
+            Instant now) {
         MerchantLocationEntity location = new MerchantLocationEntity();
-        location.id = id; location.merchantProfileId = merchantProfileId; location.name = name; location.addressText = addressText;
-        location.geoPoint = point(longitude, latitude); location.pinSource = PinSource.GPS; location.timezone = "Asia/Ho_Chi_Minh";
-        location.locationStatus = MerchantLocationStatus.ACTIVE; location.currencyCode = "VND"; location.createdAt = now; location.updatedAt = now;
+        location.id = id;
+        location.merchantProfileId = merchantProfileId;
+        location.apply(name, addressText, locationAreaId, geoPoint, pinSource, timezone, pickupEnabled,
+                sellerDeliveryEnabled, serviceEnabled, minimumDeliveryOrder, currencyCode, now);
+        location.locationStatus = MerchantLocationStatus.ACTIVE;
+        location.createdAt = now;
         return location;
     }
 
-    private static Point point(double longitude, double latitude) {
-        GeometryFactory factory = new GeometryFactory(new PrecisionModel(), 4326);
-        Point point = factory.createPoint(new Coordinate(longitude, latitude));
-        point.setSRID(4326);
-        return point;
+    public void update(String name, String addressText, UUID locationAreaId, Point geoPoint, PinSource pinSource,
+            String timezone, boolean pickupEnabled, boolean sellerDeliveryEnabled, boolean serviceEnabled,
+            Long minimumDeliveryOrder, String currencyCode, Instant now) {
+        apply(name, addressText, locationAreaId, geoPoint, pinSource, timezone, pickupEnabled,
+                sellerDeliveryEnabled, serviceEnabled, minimumDeliveryOrder, currencyCode, now);
+    }
+
+    private void apply(String name, String addressText, UUID locationAreaId, Point geoPoint, PinSource pinSource,
+            String timezone, boolean pickupEnabled, boolean sellerDeliveryEnabled, boolean serviceEnabled,
+            Long minimumDeliveryOrder, String currencyCode, Instant now) {
+        this.name = name;
+        this.addressText = addressText;
+        this.locationAreaId = locationAreaId;
+        this.geoPoint = geoPoint;
+        this.pinSource = pinSource;
+        this.timezone = timezone;
+        this.pickupEnabled = pickupEnabled;
+        this.sellerDeliveryEnabled = sellerDeliveryEnabled;
+        this.serviceEnabled = serviceEnabled;
+        this.minimumDeliveryOrder = minimumDeliveryOrder;
+        this.currencyCode = currencyCode;
+        this.updatedAt = now;
     }
 
     public void delete(Instant now) {

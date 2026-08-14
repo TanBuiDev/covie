@@ -23,6 +23,25 @@ public class MerchantLocationHourEntity {
 
     protected MerchantLocationHourEntity() {}
 
+    public static MerchantLocationHourEntity closed(UUID id, UUID locationId, int dayOfWeek,
+            OperationType operationType) {
+        return create(id, locationId, dayOfWeek, operationType, null, null, true, 0);
+    }
+
+    public static MerchantLocationHourEntity open(UUID id, UUID locationId, int dayOfWeek,
+            OperationType operationType, LocalTime openTime, LocalTime closeTime, int sortOrder) {
+        return create(id, locationId, dayOfWeek, operationType, openTime, closeTime, false, sortOrder);
+    }
+
+    private static MerchantLocationHourEntity create(UUID id, UUID locationId, int dayOfWeek,
+            OperationType operationType, LocalTime openTime, LocalTime closeTime, boolean closed, int sortOrder) {
+        MerchantLocationHourEntity hour = new MerchantLocationHourEntity();
+        hour.id = id; hour.merchantLocationId = locationId; hour.dayOfWeek = (short) dayOfWeek;
+        hour.operationType = operationType; hour.openTime = openTime; hour.closeTime = closeTime;
+        hour.closed = closed; hour.sortOrder = sortOrder;
+        return hour;
+    }
+
     public UUID getId() { return id; }
     public UUID getMerchantLocationId() { return merchantLocationId; }
     public short getDayOfWeek() { return dayOfWeek; }
