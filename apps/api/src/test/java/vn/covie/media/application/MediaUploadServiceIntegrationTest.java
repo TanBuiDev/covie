@@ -11,6 +11,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,5 +131,71 @@ class MediaUploadServiceIntegrationTest extends PostgresIntegrationTest {
         assertThatThrownBy(() -> uploads.complete(upload.mediaId(), " "))
                 .isInstanceOf(ApiException.class)
                 .satisfies(error -> assertThat(((ApiException) error).code()).isEqualTo(ErrorCode.IDEMPOTENCY_KEY_REQUIRED));
+    }
+
+    @Test
+    void keyUsedForReadyMediaCannotBeReusedForPendingMediaBeforeAnyVerificationSideEffect() {
+        var readyUpload = uploads.createUpload(new CreateMediaUploadRequest(MediaPurpose.USER_AVATAR, "image/png", PNG.length));
+        var ready = media.findById(readyUpload.mediaId()).orElseThrow();
+        when(storage.head(ready.getStorageKey())).thenReturn(new StoredObjectMetadata("image/png", (long) PNG.length));
+        when(storage.readPrefix(ready.getStorageKey(), 32)).thenReturn(PNG);
+        uploads.complete(readyUpload.mediaId(), "shared-cross-media-key");
+        var pendingUpload = uploads.createUpload(new CreateMediaUploadRequest(MediaPurpose.USER_AVATAR, "image/png", PNG.length));
+        var pending = media.findById(pendingUpload.mediaId()).orElseThrow();
+
+        assertThatThrownBy(() -> uploads.complete(pendingUpload.mediaId(), "shared-cross-media-key"))
+                .isInstanceOf(ApiException.class)
+                .satisfies(error -> assertThat(((ApiException) error).code())
+                        .isEqualTo(ErrorCode.IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_REQUEST));
+        assertThat(media.findById(pendingUpload.mediaId()).orElseThrow().getMediaStatus()).isEqualTo(MediaStatus.PENDING_UPLOAD);
+        org.mockito.Mockito.verify(storage, org.mockito.Mockito.never()).head(pending.getStorageKey());
+        org.mockito.Mockito.verify(storage, org.mockito.Mockito.never()).deleteIfExists(pending.getStorageKey());
+    }
+
+    @Test
+    void keyUsedForFailedPendingMediaCannotMutateAnotherPendingMedia() {
+        var firstUpload = uploads.createUpload(new CreateMediaUploadRequest(MediaPurpose.USER_AVATAR, "image/png", PNG.length));
+        var first = media.findById(firstUpload.mediaId()).orElseThrow();
+        when(storage.head(first.getStorageKey())).thenThrow(new IllegalStateException("missing"));
+        assertThatThrownBy(() -> uploads.complete(firstUpload.mediaId(), "shared-failed-key"))
+                .isInstanceOf(ApiException.class)
+                .satisfies(error -> assertThat(((ApiException) error).code()).isEqualTo(ErrorCode.MEDIA_UPLOAD_VERIFICATION_FAILED));
+        var secondUpload = uploads.createUpload(new CreateMediaUploadRequest(MediaPurpose.USER_AVATAR, "image/png", PNG.length));
+        var second = media.findById(secondUpload.mediaId()).orElseThrow();
+
+        assertThatThrownBy(() -> uploads.complete(secondUpload.mediaId(), "shared-failed-key"))
+                .isInstanceOf(ApiException.class)
+                .satisfies(error -> assertThat(((ApiException) error).code())
+                        .isEqualTo(ErrorCode.IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_REQUEST));
+        assertThat(media.findById(secondUpload.mediaId()).orElseThrow().getMediaStatus()).isEqualTo(MediaStatus.PENDING_UPLOAD);
+        org.mockito.Mockito.verify(storage, org.mockito.Mockito.never()).head(second.getStorageKey());
+        org.mockito.Mockito.verify(storage, org.mockito.Mockito.never()).deleteIfExists(second.getStorageKey());
+    }
+
+    @Test
+    void concurrentInvalidCompletionCannotDeleteObjectAfterValidCompletionMakesMediaReady() throws Exception {
+        var upload = uploads.createUpload(new CreateMediaUploadRequest(MediaPurpose.USER_AVATAR, "image/png", PNG.length));
+        var pending = media.findById(upload.mediaId()).orElseThrow();
+        CountDownLatch validHeadEntered = new CountDownLatch(1);
+        CountDownLatch releaseValidHead = new CountDownLatch(1);
+        when(storage.head(pending.getStorageKey())).thenAnswer(invocation -> {
+            validHeadEntered.countDown();
+            releaseValidHead.await();
+            return new StoredObjectMetadata("image/png", (long) PNG.length);
+        });
+        when(storage.readPrefix(pending.getStorageKey(), 32)).thenReturn(PNG);
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<?> valid = executor.submit(() -> uploads.complete(upload.mediaId(), "valid-concurrent-key"));
+            validHeadEntered.await();
+            Future<?> invalid = executor.submit(() -> {
+                when(storage.head(pending.getStorageKey())).thenThrow(new IllegalStateException("missing"));
+                return uploads.complete(upload.mediaId(), "invalid-concurrent-key");
+            });
+            releaseValidHead.countDown();
+            valid.get();
+            invalid.get();
+        }
+        assertThat(media.findById(upload.mediaId()).orElseThrow().getMediaStatus()).isEqualTo(MediaStatus.READY);
+        org.mockito.Mockito.verify(storage, org.mockito.Mockito.never()).deleteIfExists(pending.getStorageKey());
     }
 }

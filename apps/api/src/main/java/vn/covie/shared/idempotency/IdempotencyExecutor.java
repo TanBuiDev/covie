@@ -46,6 +46,18 @@ public class IdempotencyExecutor {
             int successStatus,
             Class<T> responseType,
             Supplier<T> command) {
+        return executeWithStatus(actorId, operation, rawKey, requestBody, responseType,
+                () -> new StoredResponse<>(successStatus, command.get())).response();
+    }
+
+    @Transactional
+    public <T> Execution<T> executeWithStatus(
+            UUID actorId,
+            String operation,
+            String rawKey,
+            Object requestBody,
+            Class<T> responseType,
+            Supplier<StoredResponse<T>> command) {
         if (rawKey == null || rawKey.isBlank()) {
             throw new ApiException(
                     ErrorCode.IDEMPOTENCY_KEY_REQUIRED,
@@ -71,7 +83,7 @@ public class IdempotencyExecutor {
                         "Idempotency key was already used with another request.");
             }
             if (record.status() == IdempotencyStatus.COMPLETED) {
-                return mapper.convertValue(record.responseBody(), responseType);
+                return new Execution<>(mapper.convertValue(record.responseBody(), responseType), true);
             }
         }
 
@@ -79,8 +91,11 @@ public class IdempotencyExecutor {
                 ids.generate(), actorId, operation, keyHash, requestHash,
                 clock.now(), clock.now().plus(Duration.ofHours(24)))));
 
-        T result = command.get();
-        record.complete(successStatus, mapper.valueToTree(result));
-        return result;
+        StoredResponse<T> result = command.get();
+        record.complete(result.status(), mapper.valueToTree(result.response()));
+        return new Execution<>(result.response(), false);
     }
+
+    public record StoredResponse<T>(int status, T response) {}
+    public record Execution<T>(T response, boolean replayed) {}
 }

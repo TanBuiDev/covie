@@ -35,6 +35,7 @@ public class S3ObjectStorage implements ObjectStorage {
                 .key(key)
                 .contentType(contentType)
                 .contentLength(contentLength)
+                .ifNoneMatch("*")
                 .build();
         PutObjectPresignRequest signRequest = PutObjectPresignRequest.builder()
                 .signatureDuration(ttl)

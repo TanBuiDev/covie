@@ -39,7 +39,11 @@ public class MediaAssetEntity {
     public void markReady(Instant now) {
         if (mediaStatus == MediaStatus.PENDING_UPLOAD) { mediaStatus = MediaStatus.READY; verifiedAt = now; }
     }
-    public void markFailed() { if (mediaStatus == MediaStatus.PENDING_UPLOAD) mediaStatus = MediaStatus.FAILED; }
+    public boolean markFailed() {
+        if (mediaStatus != MediaStatus.PENDING_UPLOAD) return false;
+        mediaStatus = MediaStatus.FAILED;
+        return true;
+    }
     public void markDeleted(Instant now) { if (mediaStatus == MediaStatus.PENDING_UPLOAD) { mediaStatus = MediaStatus.DELETED; deletedAt = now; } }
     public UUID getId() { return id; }
     public UUID getOwnerUserId() { return ownerUserId; }

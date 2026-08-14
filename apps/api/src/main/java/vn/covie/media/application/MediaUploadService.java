@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import vn.covie.audit.AuditLogWriter;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.media.api.dto.CreateMediaUploadRequest;
@@ -43,15 +41,13 @@ public class MediaUploadService {
     private final AppClock clock;
     private final AuditLogWriter audit;
     private final RequestIdAccessor requestIds;
-    private final TransactionTemplate transactions;
 
     public MediaUploadService(CurrentActorProvider actors, MediaAssetRepository repository, ObjectStorage storage,
             StorageProperties properties, MediaMagicSniffer magic, MediaUrlResolver urls, IdempotencyExecutor idempotency,
-            UuidV7Generator ids, AppClock clock, AuditLogWriter audit, RequestIdAccessor requestIds,
-            PlatformTransactionManager transactionManager) {
+            UuidV7Generator ids, AppClock clock, AuditLogWriter audit, RequestIdAccessor requestIds) {
         this.actors = actors; this.repository = repository; this.storage = storage; this.properties = properties;
         this.magic = magic; this.urls = urls; this.idempotency = idempotency; this.ids = ids; this.clock = clock;
-        this.audit = audit; this.requestIds = requestIds; this.transactions = new TransactionTemplate(transactionManager);
+        this.audit = audit; this.requestIds = requestIds;
     }
 
     public MediaUploadResponse createUpload(CreateMediaUploadRequest request) {
@@ -74,24 +70,31 @@ public class MediaUploadService {
     public MediaResponse complete(UUID mediaId, String idempotencyKey) {
         CurrentActor actor = actors.currentActor();
         requireIdempotencyKey(idempotencyKey);
-        MediaAssetEntity asset = owned(mediaId, actor.userId());
-        if (asset.getMediaStatus() == MediaStatus.READY) return response(asset);
-        if (asset.getMediaStatus() != MediaStatus.PENDING_UPLOAD || !objectMatches(asset)) {
-            failAndDelete(mediaId, actor.userId());
-            throw verificationFailed();
+        var execution = idempotency.executeWithStatus(actor.userId(), COMPLETE_OPERATION, idempotencyKey,
+                Map.of("mediaId", mediaId), CompletionOutcome.class, () -> completeInTransaction(mediaId, actor));
+        CompletionOutcome outcome = execution.response();
+        if (outcome.failedStorageKey() != null && !execution.replayed()) {
+            try { storage.deleteIfExists(outcome.failedStorageKey()); } catch (RuntimeException ignored) { }
         }
-        return idempotency.execute(actor.userId(), COMPLETE_OPERATION, idempotencyKey, Map.of("mediaId", mediaId), 200,
-                MediaResponse.class, () -> ready(mediaId, actor));
+        if (outcome.response() == null) throw verificationFailed();
+        return outcome.response();
     }
 
-    private MediaResponse ready(UUID mediaId, CurrentActor actor) {
-        MediaAssetEntity asset = owned(mediaId, actor.userId());
-        if (asset.getMediaStatus() == MediaStatus.PENDING_UPLOAD) {
-            asset.markReady(clock.now().truncatedTo(ChronoUnit.MICROS));
-            audit.securityEvent(actor.userId(), "MEDIA_UPLOAD_COMPLETED", "MEDIA", asset.getId(), requestIds.current(), Map.of());
+    private IdempotencyExecutor.StoredResponse<CompletionOutcome> completeInTransaction(UUID mediaId, CurrentActor actor) {
+        MediaAssetEntity asset = ownedForUpdate(mediaId, actor.userId());
+        if (asset.getMediaStatus() == MediaStatus.READY) {
+            return new IdempotencyExecutor.StoredResponse<>(200, CompletionOutcome.ready(response(asset)));
         }
-        if (asset.getMediaStatus() != MediaStatus.READY) throw verificationFailed();
-        return response(asset);
+        if (asset.getMediaStatus() == MediaStatus.PENDING_UPLOAD) {
+            if (objectMatches(asset)) {
+                asset.markReady(clock.now().truncatedTo(ChronoUnit.MICROS));
+                audit.securityEvent(actor.userId(), "MEDIA_UPLOAD_COMPLETED", "MEDIA", asset.getId(), requestIds.current(), Map.of());
+                return new IdempotencyExecutor.StoredResponse<>(200, CompletionOutcome.ready(response(asset)));
+            }
+            boolean changed = asset.markFailed();
+            return new IdempotencyExecutor.StoredResponse<>(422, CompletionOutcome.failed(changed ? asset.getStorageKey() : null));
+        }
+        return new IdempotencyExecutor.StoredResponse<>(422, CompletionOutcome.failed(null));
     }
 
     private boolean objectMatches(MediaAssetEntity asset) {
@@ -103,18 +106,12 @@ public class MediaUploadService {
         } catch (RuntimeException exception) { return false; }
     }
 
-    private void failAndDelete(UUID mediaId, UUID userId) {
-        String key = transactions.execute(status -> {
-            MediaAssetEntity asset = owned(mediaId, userId);
-            asset.markFailed();
-            repository.saveAndFlush(asset);
-            return asset.getStorageKey();
-        });
-        try { storage.deleteIfExists(key); } catch (RuntimeException ignored) { }
-    }
-
     private MediaAssetEntity owned(UUID mediaId, UUID userId) {
         return repository.findByIdAndOwnerUserId(mediaId, userId).orElseThrow(() -> new ApiException(
+                ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Resource not found."));
+    }
+    private MediaAssetEntity ownedForUpdate(UUID mediaId, UUID userId) {
+        return repository.findByIdAndOwnerUserIdForUpdate(mediaId, userId).orElseThrow(() -> new ApiException(
                 ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Resource not found."));
     }
     private MediaResponse response(MediaAssetEntity asset) {
@@ -137,4 +134,8 @@ public class MediaUploadService {
     private static String extension(String contentType) { return switch (contentType) {
         case "image/jpeg" -> "jpg"; case "image/png" -> "png"; case "image/webp" -> "webp"; default -> throw new IllegalArgumentException();
     }; }
+    public record CompletionOutcome(MediaResponse response, String failedStorageKey) {
+        static CompletionOutcome ready(MediaResponse response) { return new CompletionOutcome(response, null); }
+        static CompletionOutcome failed(String failedStorageKey) { return new CompletionOutcome(null, failedStorageKey); }
+    }
 }

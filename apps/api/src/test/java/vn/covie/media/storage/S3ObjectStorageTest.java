@@ -96,9 +96,19 @@ class S3ObjectStorageTest {
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(upload.method()).isEqualTo("PUT");
         assertThat(upload.expiresAt()).isAfter(java.time.Instant.now());
-        assertThat(upload.requiredHeaders()).isEqualTo(Map.of("Content-Type", "image/png"));
+        assertThat(upload.requiredHeaders()).isEqualTo(Map.of("Content-Type", "image/png", "If-None-Match", "*"));
         assertThat(metadata.contentType()).isEqualTo("image/png");
         assertThat(metadata.contentLength()).isEqualTo(PNG.length);
+        assertThat(storage.readPrefix(key, 8)).containsExactly(0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A);
+
+        byte[] overwriteBytes = PNG.clone();
+        overwriteBytes[overwriteBytes.length - 1] ^= 0x01;
+        HttpRequest.Builder overwrite = HttpRequest.newBuilder(upload.url())
+                .PUT(HttpRequest.BodyPublishers.ofByteArray(overwriteBytes));
+        upload.requiredHeaders().forEach(overwrite::header);
+        HttpResponse<Void> overwriteResponse = HttpClient.newHttpClient()
+                .send(overwrite.build(), HttpResponse.BodyHandlers.discarding());
+        assertThat(overwriteResponse.statusCode()).isEqualTo(412);
         assertThat(storage.readPrefix(key, 8)).containsExactly(0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A);
     }
 }

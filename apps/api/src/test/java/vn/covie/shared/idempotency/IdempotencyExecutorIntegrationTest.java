@@ -70,9 +70,9 @@ class IdempotencyExecutorIntegrationTest extends PostgresIntegrationTest {
 
         assertThat(first).isEqualTo(new StoredResponse("first", 1));
         assertThat(second).isEqualTo(new StoredResponse("second", 1));
-        assertThat(jdbc.queryForObject("select count(*) from idempotency_records where operation = 'media.complete'", Integer.class))
+        assertThat(jdbc.queryForObject("select count(*) from idempotency_records where operation = 'media.complete' and actor_id in (?, ?)", Integer.class, firstActor, secondActor))
                 .isEqualTo(2);
-        assertThat(jdbc.queryForObject("select min(response_status) from idempotency_records where operation = 'media.complete'", Integer.class))
+        assertThat(jdbc.queryForObject("select min(response_status) from idempotency_records where operation = 'media.complete' and actor_id in (?, ?)", Integer.class, firstActor, secondActor))
                 .isEqualTo(200);
     }
 
