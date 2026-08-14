@@ -1,7 +1,28 @@
 package vn.covie.catalog.api.dto.edit;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.PositiveOrZero;
 import vn.covie.catalog.model.InventoryMode;
 
-public record UpdateLocationOfferRequest(@PositiveOrZero Long price, Boolean available, InventoryMode inventoryMode,
-        @PositiveOrZero Integer preparationTimeMinutes) {}
+/** Uses setter presence for nullable preparation time: omitted retains it; explicit JSON null clears it. */
+public final class UpdateLocationOfferRequest {
+    @PositiveOrZero private Long price;
+    private Boolean available;
+    private InventoryMode inventoryMode;
+    @PositiveOrZero private Integer preparationTimeMinutes;
+    private boolean preparationTimeMinutesPresent;
+
+    public Long price() { return price; }
+    public Boolean available() { return available; }
+    public InventoryMode inventoryMode() { return inventoryMode; }
+    public Integer preparationTimeMinutes() { return preparationTimeMinutes; }
+    public boolean isPreparationTimeMinutesPresent() { return preparationTimeMinutesPresent; }
+
+    @JsonSetter public void setPrice(Long price) { this.price = price; }
+    @JsonSetter public void setAvailable(Boolean available) { this.available = available; }
+    @JsonSetter public void setInventoryMode(InventoryMode inventoryMode) { this.inventoryMode = inventoryMode; }
+    @JsonSetter public void setPreparationTimeMinutes(Integer preparationTimeMinutes) {
+        this.preparationTimeMinutes = preparationTimeMinutes;
+        this.preparationTimeMinutesPresent = true;
+    }
+}

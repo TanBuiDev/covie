@@ -131,6 +131,22 @@ class MerchantCatalogEditControllerIntegrationTest extends PostgresIntegrationTe
     }
 
     @Test
+    void distinguishesAnOmittedPreparationTimeFromAnExplicitNull() throws Exception {
+        Actor owner = actor(); Fixture fixture = fixture(owner, MerchantRole.OWNER);
+        LocationVariantEntity offer = offers.findById(fixture.offerId()).orElseThrow();
+        offer.update(offer.getPrice(), offer.isAvailable(), offer.getInventoryMode(), 15, NOW);
+        offers.saveAndFlush(offer);
+        mockMvc.perform(patch(offerPath(fixture), fixture.offerId()).with(owner.jwt()).header("If-Match", "\"v1\"")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"price\":26000}"))
+                .andExpect(status().isNoContent()).andExpect(header().string("ETag", "\"v2\""));
+        assertThat(offers.findById(fixture.offerId()).orElseThrow().getPreparationTimeMinutes()).isEqualTo(15);
+        mockMvc.perform(patch(offerPath(fixture), fixture.offerId()).with(owner.jwt()).header("If-Match", "\"v2\"")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"preparationTimeMinutes\":null}"))
+                .andExpect(status().isNoContent()).andExpect(header().string("ETag", "\"v3\""));
+        assertThat(offers.findById(fixture.offerId()).orElseThrow().getPreparationTimeMinutes()).isNull();
+    }
+
+    @Test
     void createsANewVariantAndArchivesTheOldOneInsteadOfChangingCombinations() throws Exception {
         Actor owner = actor(); Fixture fixture = fixtureWithOptions(owner);
         String path = "/api/v1/merchants/" + fixture.merchantId() + "/catalog-items/" + fixture.itemId() + "/variants";

@@ -166,7 +166,8 @@ public class CatalogEditService {
         long price = request.price() == null ? offer.getPrice() : request.price();
         boolean available = request.available() == null ? offer.isAvailable() : request.available();
         InventoryMode inventoryMode = request.inventoryMode() == null ? offer.getInventoryMode() : request.inventoryMode();
-        Integer preparation = request.preparationTimeMinutes() == null ? offer.getPreparationTimeMinutes() : request.preparationTimeMinutes();
+        Integer preparation = request.isPreparationTimeMinutesPresent()
+                ? request.preparationTimeMinutes() : offer.getPreparationTimeMinutes();
         MerchantLocationEntity location = locations.findByIdAndMerchantProfileIdAndDeletedAtIsNull(offer.getMerchantLocationId(), merchantId)
                 .orElseThrow(CatalogEditService::notFound);
         validateOffer(item.getItemType(), location, inventoryMode);
