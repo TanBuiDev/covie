@@ -13,6 +13,7 @@ import vn.covie.merchants.model.ContactType;
 import vn.covie.merchants.model.MerchantContactMethodEntity;
 import vn.covie.merchants.persistence.MerchantContactMethodRepository;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
+import vn.covie.merchants.persistence.MerchantProfileRepository;
 import vn.covie.merchants.security.MerchantAccess;
 import vn.covie.merchants.security.MerchantAccessPolicy;
 import vn.covie.merchants.security.MerchantCapability;
@@ -27,13 +28,16 @@ public class MerchantContactService {
     private final MerchantAccessPolicy access;
     private final MerchantContactMethodRepository contacts;
     private final MerchantLocationRepository locations;
+    private final MerchantProfileRepository profiles;
     private final MediaAttachmentPolicy media;
     private final UuidV7Generator ids;
     private final AppClock clock;
 
     public MerchantContactService(MerchantAccessPolicy access, MerchantContactMethodRepository contacts,
-            MerchantLocationRepository locations, MediaAttachmentPolicy media, UuidV7Generator ids, AppClock clock) {
-        this.access = access; this.contacts = contacts; this.locations = locations; this.media = media;
+            MerchantLocationRepository locations, MerchantProfileRepository profiles, MediaAttachmentPolicy media,
+            UuidV7Generator ids, AppClock clock) {
+        this.access = access; this.contacts = contacts; this.locations = locations; this.profiles = profiles;
+        this.media = media;
         this.ids = ids; this.clock = clock;
     }
 
@@ -47,6 +51,8 @@ public class MerchantContactService {
     @Transactional
     public MerchantContactResponse create(UUID merchantId, MerchantContactRequest request) {
         MerchantAccess granted = access.require(merchantId, MerchantCapability.MANAGE_HOURS_CONTACTS);
+        lockMerchant(merchantId);
+        lockLocations(merchantId, request.merchantLocationId(), request.merchantLocationId());
         ContactPayload payload = validate(merchantId, request, granted.userId());
         if (request.primary()) demotePrimary(merchantId, request.merchantLocationId(), request.contactType());
         MerchantContactMethodEntity contact = MerchantContactMethodEntity.create(ids.generate(), merchantId,
@@ -59,8 +65,10 @@ public class MerchantContactService {
     public MerchantContactResponse update(UUID merchantId, UUID contactId, String ifMatch,
             MerchantContactRequest request) {
         MerchantAccess granted = access.require(merchantId, MerchantCapability.MANAGE_HOURS_CONTACTS);
-        MerchantContactMethodEntity contact = requireContact(merchantId, contactId);
+        lockMerchant(merchantId);
+        MerchantContactMethodEntity contact = requireContactForUpdate(merchantId, contactId);
         VersionPrecondition.require(VersionPrecondition.parseRequired(ifMatch), contact.getVersion());
+        lockLocations(merchantId, contact.getMerchantLocationId(), request.merchantLocationId());
         ContactPayload payload = validate(merchantId, request, granted.userId());
         if (request.primary()) demotePrimary(merchantId, request.merchantLocationId(), request.contactType());
         contact.update(request.merchantLocationId(), request.contactType(), payload.value(), payload.qrMediaId(),
@@ -71,17 +79,15 @@ public class MerchantContactService {
     @Transactional
     public void delete(UUID merchantId, UUID contactId) {
         access.require(merchantId, MerchantCapability.MANAGE_HOURS_CONTACTS);
-        MerchantContactMethodEntity contact = requireContact(merchantId, contactId);
+        lockMerchant(merchantId);
+        MerchantContactMethodEntity contact = requireContactForUpdate(merchantId, contactId);
+        lockLocations(merchantId, contact.getMerchantLocationId(), contact.getMerchantLocationId());
         contact.deactivate();
         contacts.save(contact);
     }
 
     private ContactPayload validate(UUID merchantId, MerchantContactRequest request, UUID actorUserId) {
         if (request == null || request.contactType() == null) throw validation("Contact type is required.");
-        if (request.merchantLocationId() != null && locations
-                .findByIdAndMerchantProfileIdAndDeletedAtIsNull(request.merchantLocationId(), merchantId).isEmpty()) {
-            throw notFound();
-        }
         if (request.contactType() == ContactType.ZALO_QR) {
             if (request.qrMediaId() == null) throw validation("ZALO_QR requires qrMediaId.");
             if (request.value() != null && !request.value().isBlank()) {
@@ -102,9 +108,22 @@ public class MerchantContactService {
         contacts.flush();
     }
 
-    private MerchantContactMethodEntity requireContact(UUID merchantId, UUID contactId) {
-        return contacts.findByIdAndMerchantProfileIdAndStatus(contactId, merchantId, ContactStatus.ACTIVE)
+    private MerchantContactMethodEntity requireContactForUpdate(UUID merchantId, UUID contactId) {
+        return contacts.findActiveForUpdate(contactId, merchantId)
                 .orElseThrow(MerchantContactService::notFound);
+    }
+
+    private void lockMerchant(UUID merchantId) {
+        profiles.findActiveForUpdate(merchantId).orElseThrow(MerchantContactService::notFound);
+    }
+
+    private void lockLocations(UUID merchantId, UUID oldLocationId, UUID newLocationId) {
+        java.util.stream.Stream.of(oldLocationId, newLocationId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .sorted()
+                .forEach(locationId -> locations.findActiveForUpdate(locationId, merchantId)
+                        .orElseThrow(MerchantContactService::notFound));
     }
 
     private static MerchantContactResponse response(MerchantContactMethodEntity contact) {

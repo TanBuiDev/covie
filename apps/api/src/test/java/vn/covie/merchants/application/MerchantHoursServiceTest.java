@@ -86,6 +86,7 @@ class MerchantHoursServiceTest {
         when(locations.findById(locationId)).thenReturn(java.util.Optional.of(location));
         when(locations.findByIdAndMerchantProfileIdAndDeletedAtIsNull(locationId, merchantId))
                 .thenReturn(java.util.Optional.of(location));
+        when(locations.findActiveForUpdate(locationId, merchantId)).thenReturn(java.util.Optional.of(location));
         when(hours.saveAllAndFlush(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
         return new Fixture(merchantId, locationId, location, hours, exceptions,
                 new MerchantHoursService(access, locations, hours, exceptions, new UuidV7Generator()));

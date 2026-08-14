@@ -56,7 +56,7 @@ public class MerchantHoursService {
     @Transactional
     public MerchantHoursResponse replace(UUID merchantId, UUID locationId, ReplaceLocationHoursRequest request) {
         access.requireLocation(merchantId, locationId, MerchantCapability.MANAGE_HOURS_CONTACTS);
-        requireLocation(merchantId, locationId);
+        requireLocationForUpdate(merchantId, locationId);
         List<MerchantLocationHourEntity> replacement = validateAndMap(locationId, request);
         hours.deleteAllByMerchantLocationId(locationId);
         hours.flush();
@@ -125,6 +125,10 @@ public class MerchantHoursService {
     private MerchantLocationEntity requireLocation(UUID merchantId, UUID locationId) {
         return locations.findByIdAndMerchantProfileIdAndDeletedAtIsNull(locationId, merchantId)
                 .orElseThrow(MerchantHoursService::notFound);
+    }
+
+    private MerchantLocationEntity requireLocationForUpdate(UUID merchantId, UUID locationId) {
+        return locations.findActiveForUpdate(locationId, merchantId).orElseThrow(MerchantHoursService::notFound);
     }
 
     private static boolean matchesHours(List<MerchantLocationHourEntity> windows, LocalTime time) {
