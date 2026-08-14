@@ -6,6 +6,10 @@ covie:
   auth:
     cookies:
       secure: false
+  storage:
+    endpoint: ${COVIE_STORAGE_ENDPOINT:http://localhost:9000}
+    public-base-url: ${COVIE_MEDIA_PUBLIC_BASE_URL:http://localhost:9000/covie-local}
+    force-path-style: true
 
 logging:
   level:
