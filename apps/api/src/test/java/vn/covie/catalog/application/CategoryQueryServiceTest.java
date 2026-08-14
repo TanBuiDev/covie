@@ -17,7 +17,7 @@ class CategoryQueryServiceTest {
         CategoryAttributeRepository attributes = mock(CategoryAttributeRepository.class);
         CategoryAttributeOptionRepository options = mock(CategoryAttributeOptionRepository.class);
         UUID categoryId = UUID.randomUUID();
-        when(categories.findAllByParentIdIsNullAndStatusAndCatalogTypeInOrderBySortOrderAscNameAscIdAsc(
+        when(categories.findAllByParentIdIsNullAndStatusAndCatalogTypeInAndDeletedAtIsNullOrderBySortOrderAscNameAscIdAsc(
                 CategoryStatus.ACTIVE, List.of(CategoryCatalogType.PRODUCT, CategoryCatalogType.BOTH)))
                 .thenReturn(List.of(CategoryEntity.create(categoryId, null, "Tea", "tea", CategoryCatalogType.BOTH, CategoryStatus.ACTIVE, 2)));
 

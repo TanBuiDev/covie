@@ -38,8 +38,8 @@ public class CategoryQueryService {
     public List<CategorySummary> list(UUID parentId, CatalogItemType type) {
         Collection<CategoryCatalogType> types = compatibleTypes(type);
         List<CategoryEntity> result = parentId == null
-                ? categories.findAllByParentIdIsNullAndStatusAndCatalogTypeInOrderBySortOrderAscNameAscIdAsc(CategoryStatus.ACTIVE, types)
-                : categories.findAllByParentIdAndStatusAndCatalogTypeInOrderBySortOrderAscNameAscIdAsc(parentId, CategoryStatus.ACTIVE, types);
+                ? categories.findAllByParentIdIsNullAndStatusAndCatalogTypeInAndDeletedAtIsNullOrderBySortOrderAscNameAscIdAsc(CategoryStatus.ACTIVE, types)
+                : categories.findAllByParentIdAndStatusAndCatalogTypeInAndDeletedAtIsNullOrderBySortOrderAscNameAscIdAsc(parentId, CategoryStatus.ACTIVE, types);
         return result.stream().map(CategorySummary::from).toList();
     }
 

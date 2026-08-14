@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.catalog.application.CategoryQueryService;
 import vn.covie.catalog.model.CatalogItemEntity;
@@ -48,6 +49,7 @@ class CatalogPersistenceTest extends PostgresIntegrationTest {
     @Autowired private CategoryAttributeRepository categoryAttributes;
     @Autowired private CategoryAttributeOptionRepository categoryAttributeOptions;
     @Autowired private CategoryQueryService categoryQueries;
+    @Autowired private JdbcTemplate jdbc;
     @Autowired private MerchantProfileRepository merchants;
     @Autowired private MerchantLocationRepository locations;
     @Autowired private MediaAssetRepository mediaAssets;
@@ -113,6 +115,13 @@ class CatalogPersistenceTest extends PostgresIntegrationTest {
         categories.save(CategoryEntity.create(bothId, null, "Alpha", "alpha-" + UUID.randomUUID(), CategoryCatalogType.BOTH, CategoryStatus.ACTIVE, 1));
         categories.save(CategoryEntity.create(UUID.randomUUID(), null, "Service", "service-" + UUID.randomUUID(), CategoryCatalogType.SERVICE, CategoryStatus.ACTIVE, 0));
         categories.save(CategoryEntity.create(UUID.randomUUID(), null, "Hidden", "hidden-" + UUID.randomUUID(), CategoryCatalogType.PRODUCT, CategoryStatus.INACTIVE, 0));
+        UUID softDeletedId = UUID.randomUUID();
+        categories.save(CategoryEntity.create(softDeletedId, null, "Deleted", "deleted-" + UUID.randomUUID(), CategoryCatalogType.PRODUCT, CategoryStatus.ACTIVE, 3));
+        UUID softDeletedChildId = UUID.randomUUID();
+        categories.save(CategoryEntity.create(softDeletedChildId, productId, "Deleted child", "deleted-child-" + UUID.randomUUID(), CategoryCatalogType.PRODUCT, CategoryStatus.ACTIVE, 0));
+        categories.flush();
+        jdbc.update("update categories set deleted_at = ? where id = ?", java.sql.Timestamp.from(now()), softDeletedId);
+        jdbc.update("update categories set deleted_at = ? where id = ?", java.sql.Timestamp.from(now()), softDeletedChildId);
         UUID attributeId = UUID.randomUUID();
         categoryAttributes.save(CategoryAttributeEntity.create(attributeId, productId, "Roast", "roast", CategoryAttributeType.SINGLE_SELECT, true, true, 0));
         categoryAttributeOptions.save(CategoryAttributeOptionEntity.create(UUID.randomUUID(), attributeId, "Dark", 0));
@@ -120,9 +129,14 @@ class CatalogPersistenceTest extends PostgresIntegrationTest {
         assertThat(categoryQueries.list(null, CatalogItemType.PRODUCT))
                 .extracting(CategoryQueryService.CategorySummary::id)
                 .containsExactly(bothId, productId);
+        assertThat(categoryQueries.list(productId, CatalogItemType.PRODUCT)).isEmpty();
         assertThat(categoryQueries.detail(productId).attributes()).singleElement().satisfies(attribute -> {
             assertThat(attribute.attributeKey()).isEqualTo("roast");
             assertThat(attribute.options()).extracting(CategoryQueryService.AttributeOption::value).containsExactly("Dark");
         });
+    }
+
+    private static Instant now() {
+        return Instant.parse("2026-08-14T00:00:00Z");
     }
 }
