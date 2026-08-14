@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,6 +29,8 @@ import vn.covie.catalog.model.CategoryEntity;
 import vn.covie.catalog.model.CategoryStatus;
 import vn.covie.catalog.model.CatalogItemType;
 import vn.covie.catalog.persistence.CatalogItemRepository;
+import vn.covie.catalog.persistence.VariantOptionValueRepository;
+import vn.covie.catalog.persistence.VariantRepository;
 import vn.covie.catalog.persistence.CategoryRepository;
 import vn.covie.catalog.persistence.CategoryAttributeRepository;
 import vn.covie.merchants.model.MerchantLocationEntity;
@@ -58,6 +61,9 @@ class MerchantCatalogCreateControllerIntegrationTest extends PostgresIntegration
     @Autowired CatalogItemRepository items;
     @Autowired OutboxEventRepository outbox;
     @Autowired MediaAssetRepository mediaAssets;
+    @Autowired VariantRepository variants;
+    @Autowired VariantOptionValueRepository variantOptionValues;
+    @Autowired JdbcTemplate jdbc;
     private MockMvc mockMvc;
 
     @BeforeEach void setUp() { mockMvc = MockMvcBuilders.webAppContextSetup(web).apply(springSecurity()).build(); }
@@ -175,11 +181,108 @@ class MerchantCatalogCreateControllerIntegrationTest extends PostgresIntegration
                 .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.error.code").value("MEDIA_NOT_ATTACHABLE"));
     }
 
+    @Test
+    void rejectsIdempotentReplayWhenMembershipWasRevokedOrDemoted() throws Exception {
+        Actor revokedOwner = actor(); UUID revokedMerchant = merchant(revokedOwner);
+        UUID revokedLocation = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), revokedMerchant,
+                "Main", "1 CoVie", 10.8, 106.7, NOW)).getId(); UUID categoryId = category(CategoryCatalogType.PRODUCT);
+        String revokedBody = productBody(categoryId, revokedLocation, "Coffee", "UNTRACKED");
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", revokedMerchant).with(revokedOwner.jwt()).header("Idempotency-Key", "revoke-replay")
+                        .contentType(MediaType.APPLICATION_JSON).content(revokedBody)).andExpect(status().isCreated());
+        MerchantMembershipEntity revoked = memberships.findActive(revokedMerchant, revokedOwner.userId()).orElseThrow();
+        revoked.revoke(); memberships.saveAndFlush(revoked);
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", revokedMerchant).with(revokedOwner.jwt()).header("Idempotency-Key", "revoke-replay")
+                        .contentType(MediaType.APPLICATION_JSON).content(revokedBody)).andExpect(status().isNotFound());
+
+        Actor demotedOwner = actor(); UUID demotedMerchant = merchant(demotedOwner);
+        UUID demotedLocation = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), demotedMerchant,
+                "Main", "1 CoVie", 10.8, 106.7, NOW)).getId(); String demotedBody = productBody(categoryId, demotedLocation, "Tea", "UNTRACKED");
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", demotedMerchant).with(demotedOwner.jwt()).header("Idempotency-Key", "demote-replay")
+                        .contentType(MediaType.APPLICATION_JSON).content(demotedBody)).andExpect(status().isCreated());
+        MerchantMembershipEntity demoted = memberships.findActive(demotedMerchant, demotedOwner.userId()).orElseThrow();
+        demoted.changeRole(MerchantRole.STAFF); memberships.saveAndFlush(demoted);
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", demotedMerchant).with(demotedOwner.jwt()).header("Idempotency-Key", "demote-replay")
+                        .contentType(MediaType.APPLICATION_JSON).content(demotedBody)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void acceptsLongValidNamesAndRejectsOverlongTagsBeforeDatabasePersistence() throws Exception {
+        Actor owner = actor(); UUID merchantId = merchant(owner); UUID categoryId = category(CategoryCatalogType.PRODUCT);
+        UUID locationId = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), merchantId,
+                "Main", "1 CoVie", 10.8, 106.7, NOW)).getId();
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt()).header("Idempotency-Key", "name-205")
+                        .contentType(MediaType.APPLICATION_JSON).content(productBody(categoryId, locationId, "n".repeat(205), "UNTRACKED")))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt()).header("Idempotency-Key", "name-220")
+                        .contentType(MediaType.APPLICATION_JSON).content(productBody(categoryId, locationId, "m".repeat(220), "UNTRACKED")))
+                .andExpect(status().isCreated());
+        String tooLongTag = "t".repeat(101);
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt()).header("Idempotency-Key", "tag-101")
+                        .contentType(MediaType.APPLICATION_JSON).content(productBody(categoryId, locationId, "Tagged", "UNTRACKED")
+                                .replace("\"locationOffers\"", "\"tags\":[\"" + tooLongTag + "\"],\"locationOffers\"")))
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.error.code").value("VALIDATION_FAILED"));
+    }
+
+    @Test
+    void persistsSearchVectorAndExactlyOneDefaultVariantWithoutOptionJoins() throws Exception {
+        Actor owner = actor(); UUID merchantId = merchant(owner); UUID categoryId = category(CategoryCatalogType.PRODUCT);
+        UUID locationId = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), merchantId,
+                "Main", "1 CoVie", 10.8, 106.7, NOW)).getId(); long joinsBefore = variantOptionValues.count();
+        String result = mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt()).header("Idempotency-Key", "search-default")
+                        .contentType(MediaType.APPLICATION_JSON).content(productBody(categoryId, locationId, "Coffee", "UNTRACKED")))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        UUID itemId = UUID.fromString(result.replaceFirst("^\\{\\\"id\\\":\\\"([^\\\"]+)\\\".*", "$1"));
+        assertThat(variants.findAllByCatalogItemIdAndDeletedAtIsNullOrderBySortOrderAscIdAsc(itemId))
+                .singleElement().satisfies(variant -> assertThat(variant.isDefaultVariant()).isTrue());
+        assertThat(variantOptionValues.count()).isEqualTo(joinsBefore);
+        assertThat(jdbc.queryForObject("select search_vector is not null from catalog_items where id = ?", Boolean.class, itemId)).isTrue();
+    }
+
+    @Test
+    void rejectsEveryRemainingClientKeyLocationOfferServiceAndMediaInvariant() throws Exception {
+        Actor owner = actor(); UUID merchantId = merchant(owner); UUID productCategory = category(CategoryCatalogType.PRODUCT);
+        UUID bothCategory = category(CategoryCatalogType.BOTH); UUID locationId = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), merchantId,
+                "Main", "1 CoVie", 10.8, 106.7, NOW)).getId();
+        assertCatalogError(owner, merchantId, duplicateGroupBody(productCategory, locationId), "duplicate-group", "CATALOG_VARIANT_COMBINATION_INVALID", 422);
+        assertCatalogError(owner, merchantId, duplicateValueBody(productCategory, locationId), "duplicate-value", "CATALOG_VARIANT_COMBINATION_INVALID", 422);
+        assertCatalogError(owner, merchantId, variantBody(productCategory, locationId, "[\"unknown\"]", "v"), "unknown-option", "CATALOG_VARIANT_COMBINATION_INVALID", 422);
+        assertCatalogError(owner, merchantId, twoSameGroupBody(productCategory, locationId), "two-same-group", "CATALOG_VARIANT_COMBINATION_INVALID", 422);
+        assertCatalogError(owner, merchantId, productBody(productCategory, locationId, "Offer", "UNTRACKED").replace("__default__", "unknown"), "unknown-offer", "CATALOG_LOCATION_OFFER_INVALID", 422);
+
+        Actor foreignOwner = actor(); UUID foreignMerchant = merchant(foreignOwner); UUID foreignLocation = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), foreignMerchant,
+                "Foreign", "2 CoVie", 10.8, 106.7, NOW)).getId();
+        assertCatalogError(owner, merchantId, productBody(productCategory, foreignLocation, "Foreign offer", "UNTRACKED"), "foreign-location", "RESOURCE_NOT_FOUND", 404);
+        assertCatalogError(owner, merchantId, productBody(bothCategory, locationId, "Service stock", "UNTRACKED").replace("PRODUCT", "SERVICE"), "service-stock", "CATALOG_LOCATION_OFFER_INVALID", 422);
+        String disabledService = productBody(bothCategory, locationId, "Disabled service", "UNTRACKED").replace("PRODUCT", "SERVICE").replace(",\"inventoryMode\":\"UNTRACKED\"", "");
+        assertCatalogError(owner, merchantId, disabledService, "disabled-service", "CATALOG_LOCATION_OFFER_INVALID", 422);
+        MediaAssetEntity pending = MediaAssetEntity.pending(UUID.randomUUID(), owner.userId(), "media/pending", MediaPurpose.CATALOG_IMAGE,
+                "image/png", 10, NOW.plusSeconds(600), NOW); mediaAssets.saveAndFlush(pending);
+        assertCatalogError(owner, merchantId, productBody(productCategory, locationId, "Pending media", "UNTRACKED")
+                .replace("\"locationOffers\"", "\"mediaIds\":[\"" + pending.getId() + "\"],\"locationOffers\""), "pending-media", "MEDIA_NOT_ATTACHABLE", 422);
+    }
+
     private UUID category(CategoryCatalogType type) { return categories.saveAndFlush(CategoryEntity.create(UUID.randomUUID(), null,
             "Category", "category-" + UUID.randomUUID(), type, CategoryStatus.ACTIVE, 0)).getId(); }
     private String productBody(UUID categoryId, UUID locationId, String name, String inventoryMode) {
         return "{\"type\":\"PRODUCT\",\"listingKind\":\"STANDARD\",\"categoryId\":\"" + categoryId + "\",\"name\":\"" + name
                 + "\",\"locationOffers\":[{\"merchantLocationId\":\"" + locationId + "\",\"variantClientKey\":\"__default__\",\"price\":25000,\"currency\":\"VND\",\"available\":true,\"inventoryMode\":\"" + inventoryMode + "\"}]}";
+    }
+    private String variantBody(UUID categoryId, UUID locationId, String keys, String variantKey) {
+        return "{\"type\":\"PRODUCT\",\"listingKind\":\"STANDARD\",\"categoryId\":\"" + categoryId + "\",\"name\":\"Variant\",\"options\":[{\"clientKey\":\"color\",\"name\":\"Color\",\"values\":[{\"clientKey\":\"red\",\"value\":\"Red\"}]}],\"variants\":[{\"clientKey\":\"" + variantKey + "\",\"name\":\"Red\",\"optionValueKeys\":" + keys + "}],\"locationOffers\":[{\"merchantLocationId\":\"" + locationId + "\",\"variantClientKey\":\"" + variantKey + "\",\"price\":1,\"currency\":\"VND\",\"available\":true,\"inventoryMode\":\"UNTRACKED\"}]}";
+    }
+    private String duplicateGroupBody(UUID categoryId, UUID locationId) {
+        return variantBody(categoryId, locationId, "[\"red\"]", "v").replace("}],\"variants\"", "},{\"clientKey\":\"color\",\"name\":\"Other\",\"values\":[{\"clientKey\":\"blue\",\"value\":\"Blue\"}]}],\"variants\"");
+    }
+    private String duplicateValueBody(UUID categoryId, UUID locationId) {
+        return variantBody(categoryId, locationId, "[\"red\"]", "v").replace("}],\"variants\"", "},{\"clientKey\":\"size\",\"name\":\"Size\",\"values\":[{\"clientKey\":\"red\",\"value\":\"S\"}]}],\"variants\"");
+    }
+    private String twoSameGroupBody(UUID categoryId, UUID locationId) {
+        return variantBody(categoryId, locationId, "[\"red\",\"blue\"]", "v").replace("{\"clientKey\":\"red\",\"value\":\"Red\"}", "{\"clientKey\":\"red\",\"value\":\"Red\"},{\"clientKey\":\"blue\",\"value\":\"Blue\"}");
+    }
+    private void assertCatalogError(Actor actor, UUID merchantId, String body, String key, String errorCode, int expectedStatus) throws Exception {
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(actor.jwt()).header("Idempotency-Key", key)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().is(expectedStatus)).andExpect(jsonPath("$.error.code").value(errorCode));
     }
     private MediaAssetEntity readyMedia(UUID ownerId, MediaPurpose purpose) {
         MediaAssetEntity asset = MediaAssetEntity.pending(UUID.randomUUID(), ownerId, "media/" + UUID.randomUUID(), purpose,

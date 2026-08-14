@@ -87,6 +87,7 @@ public class CatalogCreateService {
     public IdempotencyExecutor.Execution<CatalogItemManagementResponse> create(UUID merchantId, String idempotencyKey,
             CreateCatalogItemRequest request) {
         UUID actorId = actors.currentActor().userId();
+        requireCurrentMerchantAccessAndActivity(merchantId);
         return idempotency.executeWithStatus(actorId, "CATALOG_ITEM_CREATE:" + merchantId, idempotencyKey, request,
                 CatalogItemManagementResponse.class, () -> new IdempotencyExecutor.StoredResponse<>(HttpStatus.CREATED.value(),
                         createInTransaction(merchantId, actorId, request)));
@@ -111,6 +112,7 @@ public class CatalogCreateService {
         VariantState variantState = createOptionsAndVariants(item, request.options(), request.variants(), now);
         List<CatalogItemManagementResponse.LocationOfferResponse> offers = createOffers(merchantId, request.type(),
                 request.locationOffers(), variantState.variantsByClientKey(), now);
+        items.flush();
         search.rebuild(itemId);
         outbox.append(new OutboxEventIntent("CATALOG_ITEM_CREATED", "CATALOG_ITEM", itemId,
                 Map.of("merchantId", merchantId.toString(), "catalogItemId", itemId.toString())));
@@ -190,7 +192,8 @@ public class CatalogCreateService {
     }
     private void attachTags(CatalogItemEntity item, List<String> requested, Instant now) {
         Set<String> normalized = new HashSet<>(); for (String raw : requested == null ? List.<String>of() : requested) {
-            String name=cleaned(raw); String key=name.toLowerCase(Locale.ROOT); if (!normalized.add(key)) continue;
+            String name=cleaned(raw); if (name.length() > 100) throw reject(ErrorCode.VALIDATION_FAILED, "Tag must not exceed 100 characters.");
+            String key=name.toLowerCase(Locale.ROOT); if (!normalized.add(key)) continue;
             TagEntity tag=tags.findByNormalizedName(key).orElseGet(() -> tags.save(TagEntity.create(ids.generate(), name, key, now)));
             itemTags.save(CatalogItemTagEntity.associate(item, tag));
         }
@@ -204,7 +207,18 @@ public class CatalogCreateService {
     private static void ensureUnique(List<String> keys, String message) { if (new HashSet<>(keys).size()!=keys.size()) throw variantReject(message); }
     private static String cleaned(String value) { if (value==null || value.strip().isEmpty()) throw reject(ErrorCode.VALIDATION_FAILED, "Value must not be blank."); return value.strip(); }
     private static String cleanNullable(String value) { return value==null || value.strip().isEmpty() ? null : value.strip(); }
-    private static String slug(String value, UUID id) { return cleaned(value).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", "-").replaceAll("(^-|-$)", "") + "-" + id; }
+    private void requireCurrentMerchantAccessAndActivity(UUID merchantId) {
+        access.require(merchantId, MerchantCapability.MANAGE_CATALOG_STRUCTURE);
+        var merchant = merchants.findByIdAndDeletedAtIsNull(merchantId).orElseThrow(CatalogCreateService::notFound);
+        if (merchant.getMerchantStatus() != MerchantStatus.ACTIVE) throw reject(ErrorCode.MERCHANT_ACTION_NOT_ALLOWED,
+                "Merchant is not active.");
+    }
+    private static String slug(String value, UUID id) {
+        String normalized = cleaned(value).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", "-").replaceAll("(^-|-$)", "");
+        if (normalized.isEmpty()) normalized = "item";
+        String suffix = "-" + id;
+        return normalized.substring(0, Math.min(normalized.length(), 240 - suffix.length())) + suffix;
+    }
     private static ApiException notFound() { return new ApiException(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Resource not found."); }
     private static ApiException variantReject(String message) { return reject(ErrorCode.CATALOG_VARIANT_COMBINATION_INVALID, message); }
     private static ApiException reject(ErrorCode code, String message) { return new ApiException(code, HttpStatus.UNPROCESSABLE_ENTITY, message); }
