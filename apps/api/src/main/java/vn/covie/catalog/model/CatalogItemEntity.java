@@ -18,6 +18,10 @@ public class CatalogItemEntity {
         if (itemType == CatalogItemType.SERVICE && listingKind == ListingKind.RESALE) throw new IllegalArgumentException("Only products can be resale listings.");
         CatalogItemEntity item=new CatalogItemEntity(); item.id=id;item.merchantProfileId=merchantProfileId;item.itemType=itemType;item.listingKind=listingKind;item.primaryCategoryId=primaryCategoryId;item.name=name;item.slug=slug;item.description=description;item.listingStatus=ListingStatus.DRAFT;item.moderationStatus=CatalogModerationStatus.NOT_REQUIRED;item.createdAt=now;item.updatedAt=now;return item;
     }
+    public void publish(Instant now){listingStatus=ListingStatus.ACTIVE;moderationStatus=CatalogModerationStatus.NOT_REQUIRED;updatedAt=now;}
+    public void requireModeration(Instant now){moderationStatus=CatalogModerationStatus.PENDING;updatedAt=now;}
+    public void pause(Instant now){listingStatus=ListingStatus.PAUSED;updatedAt=now;}
+    public void activate(Instant now){listingStatus=ListingStatus.ACTIVE;updatedAt=now;}
     public void delete(Instant now){listingStatus=ListingStatus.DELETED;deletedAt=now;updatedAt=now;}
     public void update(UUID categoryId, String name, String description, Instant now) { primaryCategoryId=categoryId; this.name=name;
         this.description=description; updatedAt=now; }

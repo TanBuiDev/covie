@@ -20,6 +20,7 @@ import vn.covie.catalog.api.dto.edit.UpdateLocationOfferRequest;
 import vn.covie.catalog.api.dto.edit.UpdateVariantRequest;
 import vn.covie.catalog.application.CatalogCreateService;
 import vn.covie.catalog.application.CatalogEditService;
+import vn.covie.catalog.application.CatalogLifecycleService;
 import vn.covie.shared.concurrency.VersionPrecondition;
 
 @RestController
@@ -27,7 +28,8 @@ import vn.covie.shared.concurrency.VersionPrecondition;
 public class MerchantCatalogController {
     private final CatalogCreateService catalog;
     private final CatalogEditService edits;
-    public MerchantCatalogController(CatalogCreateService catalog, CatalogEditService edits) { this.catalog = catalog; this.edits = edits; }
+    private final CatalogLifecycleService lifecycle;
+    public MerchantCatalogController(CatalogCreateService catalog, CatalogEditService edits, CatalogLifecycleService lifecycle) { this.catalog = catalog; this.edits = edits; this.lifecycle = lifecycle; }
     @PostMapping
     public ResponseEntity<CatalogItemManagementResponse> create(@PathVariable UUID merchantId,
             @RequestHeader(value="Idempotency-Key", required=false) String idempotencyKey,
@@ -71,6 +73,34 @@ public class MerchantCatalogController {
             @PathVariable UUID locationVariantId, @RequestHeader(value="If-Match", required=false) String ifMatch,
             @Valid @RequestBody UpdateLocationOfferRequest request) {
         var result = edits.updateLocationOffer(merchantId, itemId, locationVariantId, ifMatch, request);
+        return ResponseEntity.noContent().eTag(VersionPrecondition.format(result.version())).build();
+    }
+
+    @PostMapping("/{itemId}/publish")
+    public ResponseEntity<Void> publish(@PathVariable UUID merchantId, @PathVariable UUID itemId,
+            @RequestHeader(value="If-Match", required=false) String ifMatch) {
+        var result = lifecycle.publish(merchantId, itemId, ifMatch);
+        return ResponseEntity.noContent().eTag(VersionPrecondition.format(result.version())).build();
+    }
+
+    @PostMapping("/{itemId}/pause")
+    public ResponseEntity<Void> pause(@PathVariable UUID merchantId, @PathVariable UUID itemId,
+            @RequestHeader(value="If-Match", required=false) String ifMatch) {
+        var result = lifecycle.pause(merchantId, itemId, ifMatch);
+        return ResponseEntity.noContent().eTag(VersionPrecondition.format(result.version())).build();
+    }
+
+    @PostMapping("/{itemId}/activate")
+    public ResponseEntity<Void> activate(@PathVariable UUID merchantId, @PathVariable UUID itemId,
+            @RequestHeader(value="If-Match", required=false) String ifMatch) {
+        var result = lifecycle.activate(merchantId, itemId, ifMatch);
+        return ResponseEntity.noContent().eTag(VersionPrecondition.format(result.version())).build();
+    }
+
+    @PostMapping("/{itemId}/archive")
+    public ResponseEntity<Void> archive(@PathVariable UUID merchantId, @PathVariable UUID itemId,
+            @RequestHeader(value="If-Match", required=false) String ifMatch) {
+        var result = lifecycle.archive(merchantId, itemId, ifMatch);
         return ResponseEntity.noContent().eTag(VersionPrecondition.format(result.version())).build();
     }
 }

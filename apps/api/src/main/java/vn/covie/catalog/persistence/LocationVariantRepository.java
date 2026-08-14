@@ -15,4 +15,12 @@ public interface LocationVariantRepository extends JpaRepository<LocationVariant
               and i.deletedAt is null
             """)
     Optional<LocationVariantEntity> findUsableById(@Param("id") UUID id);
+    @Query("""
+            select lv from LocationVariantEntity lv
+            join VariantEntity variant on variant.id = lv.variantId
+            where variant.catalogItemId = :catalogItemId
+              and variant.deletedAt is null
+              and lv.deletedAt is null
+            """)
+    List<LocationVariantEntity> findAllActiveRecordsByCatalogItemId(@Param("catalogItemId") UUID catalogItemId);
 }
