@@ -9,3 +9,7 @@ spring:
 springdoc:
   swagger-ui:
     enabled: false
+
+covie:
+  storage:
+    public-base-url: https://media.test.covie
