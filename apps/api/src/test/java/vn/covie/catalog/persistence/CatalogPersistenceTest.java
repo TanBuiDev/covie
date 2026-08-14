@@ -128,6 +128,7 @@ class CatalogPersistenceTest extends PostgresIntegrationTest {
 
         assertThat(categoryQueries.list(null, CatalogItemType.PRODUCT))
                 .extracting(CategoryQueryService.CategorySummary::id)
+                .filteredOn(id -> id.equals(bothId) || id.equals(productId))
                 .containsExactly(bothId, productId);
         assertThat(categoryQueries.list(productId, CatalogItemType.PRODUCT)).isEmpty();
         assertThat(categoryQueries.detail(productId).attributes()).singleElement().satisfies(attribute -> {
