@@ -19,5 +19,7 @@ public class CatalogItemEntity {
         CatalogItemEntity item=new CatalogItemEntity(); item.id=id;item.merchantProfileId=merchantProfileId;item.itemType=itemType;item.listingKind=listingKind;item.primaryCategoryId=primaryCategoryId;item.name=name;item.slug=slug;item.description=description;item.listingStatus=ListingStatus.DRAFT;item.moderationStatus=CatalogModerationStatus.NOT_REQUIRED;item.createdAt=now;item.updatedAt=now;return item;
     }
     public void delete(Instant now){listingStatus=ListingStatus.DELETED;deletedAt=now;updatedAt=now;}
+    public void update(UUID categoryId, String name, String description, Instant now) { primaryCategoryId=categoryId; this.name=name;
+        this.description=description; updatedAt=now; }
     public UUID getId(){return id;} public UUID getMerchantProfileId(){return merchantProfileId;} public CatalogItemType getItemType(){return itemType;} public ListingKind getListingKind(){return listingKind;} public UUID getPrimaryCategoryId(){return primaryCategoryId;} public String getName(){return name;} public String getSlug(){return slug;} public String getDescription(){return description;} public ListingStatus getListingStatus(){return listingStatus;} public CatalogModerationStatus getModerationStatus(){return moderationStatus;} public Instant getCreatedAt(){return createdAt;} public Instant getUpdatedAt(){return updatedAt;} public Instant getDeletedAt(){return deletedAt;} public long getVersion(){return version;}
 }
