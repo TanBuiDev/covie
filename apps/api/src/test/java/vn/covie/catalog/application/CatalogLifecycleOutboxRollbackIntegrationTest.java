@@ -3,9 +3,10 @@ package vn.covie.catalog.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -41,6 +43,7 @@ import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.persistence.MerchantMembershipRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
 import vn.covie.shared.outbox.OutboxEventRepository;
+import vn.covie.shared.outbox.OutboxEventEntity;
 import vn.covie.shared.outbox.OutboxEventWriter;
 import vn.covie.support.PostgresIntegrationTest;
 import vn.covie.users.model.UserEntity;
@@ -55,18 +58,31 @@ class CatalogLifecycleOutboxRollbackIntegrationTest extends PostgresIntegrationT
     @Autowired CategoryRepository categories; @Autowired CatalogItemRepository items;
     @Autowired VariantRepository variants; @Autowired LocationVariantRepository offers;
     @Autowired OutboxEventRepository outbox;
+    @Autowired JdbcTemplate jdbc;
     @MockitoBean OutboxEventWriter writer;
 
     @AfterEach void clearActor() { SecurityContextHolder.clearContext(); }
 
     @Test
-    void rollsBackTheFlushedListingMutationWhenTheInjectedOutboxWriterFails() {
+    void archiveRollsBackTheFlushedListingAndWriterOutboxEventWhenTheWriterFails() {
         Fixture fixture = fixture(); authenticate(fixture.ownerId());
         long eventsBefore = outbox.count();
-        doThrow(new IllegalStateException("outbox write failed after listing flush")).when(writer).append(any());
+        doAnswer(invocation -> {
+            Map<String, Object> persistedItem = jdbc.queryForMap(
+                    "select listing_status, version, deleted_at from catalog_items where id = ?", fixture.itemId());
+            assertThat(persistedItem.get("listing_status")).isEqualTo("DELETED");
+            assertThat(((Number) persistedItem.get("version")).longValue()).isEqualTo(1L);
+            assertThat(persistedItem.get("deleted_at")).isNotNull();
 
-        assertThatThrownBy(() -> lifecycle.publish(fixture.merchantId(), fixture.itemId(), "\"v0\""))
-                .isInstanceOf(IllegalStateException.class).hasMessage("outbox write failed after listing flush");
+            outbox.saveAndFlush(OutboxEventEntity.pending(
+                    UUID.randomUUID(), "WRITER_STATE_FOR_ROLLBACK", "CATALOG_ITEM", fixture.itemId(),
+                    JsonNodeFactory.instance.objectNode(), NOW));
+            assertThat(outbox.count()).isEqualTo(eventsBefore + 1);
+            throw new IllegalStateException("outbox write failed after archive flush");
+        }).when(writer).append(any());
+
+        assertThatThrownBy(() -> lifecycle.archive(fixture.merchantId(), fixture.itemId(), "\"v0\""))
+                .isInstanceOf(IllegalStateException.class).hasMessage("outbox write failed after archive flush");
 
         verify(writer).append(any());
         entityManager.clear();
