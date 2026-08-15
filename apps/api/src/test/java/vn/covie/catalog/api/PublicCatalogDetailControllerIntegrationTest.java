@@ -34,7 +34,12 @@ import vn.covie.merchants.model.MerchantProfileEntity;
 import vn.covie.merchants.persistence.MerchantContactMethodRepository;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
+import vn.covie.media.model.MediaAssetEntity;
+import vn.covie.media.model.MediaPurpose;
+import vn.covie.media.persistence.MediaAssetRepository;
 import vn.covie.support.PostgresIntegrationTest;
+import vn.covie.users.model.UserEntity;
+import vn.covie.users.persistence.UserRepository;
 
 class PublicCatalogDetailControllerIntegrationTest extends PostgresIntegrationTest {
     private static final Instant NOW = Instant.parse("2026-01-01T00:00:00Z");
@@ -47,6 +52,8 @@ class PublicCatalogDetailControllerIntegrationTest extends PostgresIntegrationTe
     @Autowired CatalogItemRepository items;
     @Autowired VariantRepository variants;
     @Autowired LocationVariantRepository offers;
+    @Autowired UserRepository users;
+    @Autowired MediaAssetRepository mediaAssets;
     @Autowired JdbcTemplate jdbc;
     private MockMvc mockMvc;
 
@@ -93,6 +100,33 @@ class PublicCatalogDetailControllerIntegrationTest extends PostgresIntegrationTe
         mockMvc.perform(get("/api/v1/catalog/items/{itemId}", fixture.itemId()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"));
+    }
+
+    @Test
+    void exposesReadyPublicZaloQrMediaButFiltersAnUnreadyQrContact() throws Exception {
+        Fixture fixture = fixture();
+        UUID ownerId = UUID.randomUUID();
+        users.saveAndFlush(UserEntity.active(ownerId, "Owner", NOW));
+        MediaAssetEntity ready = MediaAssetEntity.pending(UUID.randomUUID(), ownerId, "merchant/ready-qr.png",
+                MediaPurpose.MERCHANT_CONTACT_QR, "image/png", 10, NOW.plusSeconds(300), NOW);
+        ready.markReady(NOW);
+        MediaAssetEntity readyQr = mediaAssets.saveAndFlush(ready);
+        MediaAssetEntity pendingQr = mediaAssets.saveAndFlush(MediaAssetEntity.pending(UUID.randomUUID(), ownerId,
+                "merchant/pending-qr.png", MediaPurpose.MERCHANT_CONTACT_QR, "image/png", 10,
+                NOW.plusSeconds(300), NOW));
+        contacts.saveAndFlush(MerchantContactMethodEntity.create(UUID.randomUUID(), fixture.merchantId(), fixture.locationId(),
+                ContactType.ZALO_QR, null, readyQr.getId(), true, true, NOW));
+        contacts.saveAndFlush(MerchantContactMethodEntity.create(UUID.randomUUID(), fixture.merchantId(), fixture.locationId(),
+                ContactType.ZALO_QR, null, pendingQr.getId(), false, true, NOW.plusSeconds(1)));
+
+        mockMvc.perform(get("/api/v1/catalog/merchants/{merchantId}", fixture.merchantId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contacts.length()").value(1))
+                .andExpect(jsonPath("$.contacts[0].type").value("ZALO_QR"))
+                .andExpect(jsonPath("$.contacts[0].value").doesNotExist())
+                .andExpect(jsonPath("$.contacts[0].qrMedia.id").value(readyQr.getId().toString()))
+                .andExpect(jsonPath("$.contacts[0].qrMedia.url").value("https://media.test.covie/merchant/ready-qr.png"))
+                .andExpect(jsonPath("$.contacts[0].qrMedia.storageKey").doesNotExist());
     }
 
     private Fixture fixture() {

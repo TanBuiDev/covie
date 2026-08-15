@@ -1,7 +1,7 @@
 package vn.covie.catalog.application;
 
-import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,6 +16,8 @@ import vn.covie.media.model.MediaAssetEntity;
 import vn.covie.media.model.MediaStatus;
 import vn.covie.media.persistence.MediaAssetRepository;
 import vn.covie.merchants.model.ContactStatus;
+import vn.covie.merchants.model.ContactType;
+import vn.covie.merchants.model.MerchantContactMethodEntity;
 import vn.covie.merchants.model.MerchantLocationEntity;
 import vn.covie.merchants.model.MerchantLocationStatus;
 import vn.covie.merchants.model.MerchantModerationStatus;
@@ -66,8 +68,8 @@ public class PublicMerchantViewService {
         List<PublicMerchantContactResponse> publicContacts = contacts
                 .findAllByMerchantProfileIdAndStatusOrderByCreatedAtAscIdAsc(merchant.getId(), ContactStatus.ACTIVE).stream()
                 .filter(contact -> contact.isPublicContact())
-                .map(contact -> new PublicMerchantContactResponse(contact.getId(), contact.getMerchantLocationId(),
-                        contact.getContactType(), contact.getValue(), contact.isPrimary()))
+                .map(this::publicContact)
+                .flatMap(Optional::stream)
                 .toList();
         return new PublicMerchantResponse(merchant.getId(), merchant.getName(), merchant.getSlug(),
                 merchant.getDescription(), publicMedia(merchant.getLogoMediaId()), publicMedia(merchant.getCoverMediaId()),
@@ -98,6 +100,15 @@ public class PublicMerchantViewService {
                 .filter(asset -> asset.getMediaStatus() == MediaStatus.READY)
                 .map(asset -> new PublicMediaResponse(asset.getId(), asset.getMimeType(), urls.publicUrl(asset)))
                 .orElse(null);
+    }
+
+    private Optional<PublicMerchantContactResponse> publicContact(MerchantContactMethodEntity contact) {
+        PublicMediaResponse qrMedia = publicMedia(contact.getQrMediaId());
+        if (contact.getContactType() == ContactType.ZALO_QR && qrMedia == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new PublicMerchantContactResponse(contact.getId(), contact.getMerchantLocationId(),
+                contact.getContactType(), contact.getValue(), qrMedia, contact.isPrimary()));
     }
 
     private static ApiException notFound() {
