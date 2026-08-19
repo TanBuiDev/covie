@@ -6,6 +6,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -124,26 +126,73 @@ class CatalogDiscoveryRepositoryIntegrationTest extends PostgresIntegrationTest 
     }
 
     @Test
-    void appliesTypeListingCategoryPickupAndPriceFiltersAtTheResolvedLocation() {
+    void filtersByTheExactMatchingCategoryWithoutAdmittingAnotherCategory() {
+        Fixture fixture = fixture();
+        UUID wrongCategoryItem = activeItem(fixture.merchantId(), CatalogItemType.PRODUCT, ListingKind.STANDARD,
+                category(), "Wrong category coffee");
+        UUID wrongCategoryVariant = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), wrongCategoryItem,
+                "Default", NOW)).getId();
+        offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), fixture.nearLocationId(), wrongCategoryVariant, 25_000,
+                "VND", true, InventoryMode.UNTRACKED, null, NOW));
+
+        assertThat(discovery.find(query(CatalogSort.DISTANCE, 5_000, fixture.categoryId()), context(), null, NOW))
+                .extracting(Row::itemId).containsExactly(fixture.itemId());
+    }
+
+    @Test
+    void pickupFilterExcludesAnEligibleItemAtANonPickupLocation() {
+        Fixture nonPickup = fixture();
+        UUID pickupMerchant = merchants.saveAndFlush(MerchantProfileEntity.create(UUID.randomUUID(), "Pickup merchant",
+                "pickup-" + UUID.randomUUID(), NOW)).getId();
+        UUID pickupLocation = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), pickupMerchant,
+                "Pickup", "Pickup", 10.8001, 106.7001, NOW)).getId();
+        jdbc.update("update merchant_locations set pickup_enabled = true where id = ?", pickupLocation);
+        UUID pickupItem = activeItem(pickupMerchant, CatalogItemType.PRODUCT, ListingKind.STANDARD,
+                nonPickup.categoryId(), "Pickup coffee");
+        UUID pickupVariant = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), pickupItem, "Default", NOW)).getId();
+        offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), pickupLocation, pickupVariant, 25_000,
+                "VND", true, InventoryMode.UNTRACKED, null, NOW));
+
+        CatalogDiscoveryQuery pickupOnly = new CatalogDiscoveryQuery(null, null, null, nonPickup.categoryId(), 10.8, 106.7,
+                null, 5_000, true, false, null, null, CatalogSort.DISTANCE, 20, null);
+        assertThat(discovery.find(pickupOnly, context(), null, NOW)).extracting(Row::itemId).containsExactly(pickupItem);
+    }
+
+    @Test
+    void typeFilterSelectsProductsAndServicesIndependentlyOfTheirPrices() {
         Fixture fixture = fixture();
         UUID serviceId = activeItem(fixture.merchantId(), CatalogItemType.SERVICE, ListingKind.STANDARD,
-                fixture.categoryId(), "Service coffee");
+                fixture.categoryId(), "Expensive service coffee");
         UUID serviceVariant = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), serviceId, "Default", NOW)).getId();
-        offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), fixture.nearLocationId(), serviceVariant, 35_000,
+        offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), fixture.nearLocationId(), serviceVariant, 99_000,
                 "VND", true, InventoryMode.UNTRACKED, null, NOW));
-        UUID resaleId = activeItem(fixture.merchantId(), CatalogItemType.PRODUCT, ListingKind.RESALE,
-                fixture.categoryId(), "Resale coffee");
-        UUID resaleVariant = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), resaleId, "Default", NOW)).getId();
-        offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), fixture.nearLocationId(), resaleVariant, 45_000,
-                "VND", true, InventoryMode.UNTRACKED, null, NOW));
-        jdbc.update("update merchant_locations set pickup_enabled = true where id = ?", fixture.nearLocationId());
 
+        assertThat(discovery.find(new CatalogDiscoveryQuery(null, CatalogItemType.PRODUCT, null, fixture.categoryId(),
+                10.8, 106.7, null, 5_000, false, false, null, null, CatalogSort.PRICE_ASC, 20, null), context(), null, NOW))
+                .extracting(Row::itemId).containsExactly(fixture.itemId());
         assertThat(discovery.find(new CatalogDiscoveryQuery(null, CatalogItemType.SERVICE, null, fixture.categoryId(),
-                10.8, 106.7, null, 5_000, true, false, 30_000L, 40_000L, CatalogSort.DISTANCE, 20, null), context(), null, NOW))
+                10.8, 106.7, null, 5_000, false, false, null, null, CatalogSort.PRICE_ASC, 20, null), context(), null, NOW))
                 .extracting(Row::itemId).containsExactly(serviceId);
-        assertThat(discovery.find(new CatalogDiscoveryQuery(null, CatalogItemType.PRODUCT, ListingKind.RESALE, fixture.categoryId(),
+    }
+
+    @Test
+    void resaleFilterReturnsItsProductFixtureWithoutIncludingASameCategoryService() {
+        Fixture fixture = fixture();
+        UUID productResale = activeItem(fixture.merchantId(), CatalogItemType.PRODUCT, ListingKind.RESALE,
+                fixture.categoryId(), "Product resale coffee");
+        UUID productResaleVariant = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), productResale, "Default", NOW)).getId();
+        offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), fixture.nearLocationId(), productResaleVariant, 45_000,
+                "VND", true, InventoryMode.UNTRACKED, null, NOW));
+        UUID service = activeItem(fixture.merchantId(), CatalogItemType.SERVICE, ListingKind.STANDARD,
+                fixture.categoryId(), "Service coffee");
+        UUID serviceVariant = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), service,
+                "Default", NOW)).getId();
+        offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), fixture.nearLocationId(), serviceVariant, 45_000,
+                "VND", true, InventoryMode.UNTRACKED, null, NOW));
+
+        assertThat(discovery.find(new CatalogDiscoveryQuery(null, null, ListingKind.RESALE, fixture.categoryId(),
                 10.8, 106.7, null, 5_000, false, false, null, null, CatalogSort.DISTANCE, 20, null), context(), null, NOW))
-                .extracting(Row::itemId).containsExactly(resaleId);
+                .extracting(Row::itemId).containsExactly(productResale);
     }
 
     @Test
@@ -165,11 +214,13 @@ class CatalogDiscoveryRepositoryIntegrationTest extends PostgresIntegrationTest 
     }
 
     @Test
-    void keysetsEverySortWithoutRepeatingTiedItemIds() {
-        Fixture fixture = fixture("Matrix coffee one");
-        UUID second = activeItem(fixture.merchantId(), CatalogItemType.PRODUCT, ListingKind.STANDARD, fixture.categoryId(), "Matrix coffee two");
-        UUID third = activeItem(fixture.merchantId(), CatalogItemType.PRODUCT, ListingKind.STANDARD, fixture.categoryId(), "Matrix coffee three");
-        for (UUID itemId : List.of(second, third)) {
+    void keysetsEverySortAcrossAllPagesWithEveryTiedItemExactlyOnce() {
+        Fixture fixture = fixture("Coffee tie alpha");
+        UUID second = activeItem(fixture.merchantId(), CatalogItemType.PRODUCT, ListingKind.STANDARD, fixture.categoryId(), "Coffee tie bravo");
+        UUID third = activeItem(fixture.merchantId(), CatalogItemType.PRODUCT, ListingKind.STANDARD, fixture.categoryId(), "Coffee tie charlie");
+        UUID fourth = activeItem(fixture.merchantId(), CatalogItemType.PRODUCT, ListingKind.STANDARD, fixture.categoryId(), "Coffee tie delta");
+        List<UUID> tiedItemIds = List.of(fixture.itemId(), second, third, fourth);
+        for (UUID itemId : List.of(second, third, fourth)) {
             UUID variant = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), itemId, "Default", NOW)).getId();
             offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), fixture.nearLocationId(), variant, 25_000,
                     "VND", true, InventoryMode.UNTRACKED, null, NOW));
@@ -179,10 +230,17 @@ class CatalogDiscoveryRepositoryIntegrationTest extends PostgresIntegrationTest 
         for (CatalogSort sort : CatalogSort.values()) {
             CatalogDiscoveryQuery query = new CatalogDiscoveryQuery(sort == CatalogSort.RELEVANCE ? "coffee" : null,
                     null, null, fixture.categoryId(), 10.8, 106.7, null, 5_000, false, false, null, null, sort, 1, null);
-            Row first = discovery.find(query, context(), null, NOW).getFirst();
-            CatalogCursor cursor = cursor(sort, first);
-            assertThat(discovery.find(query, context(), cursor, NOW)).extracting(Row::itemId)
-                    .doesNotContain(first.itemId()).isNotEmpty();
+            List<Row> unpaginated = discovery.find(withLimit(query, 20), context(), null, NOW);
+            assertThat(unpaginated).hasSize(tiedItemIds.size());
+            assertTiedSortKey(sort, unpaginated);
+
+            List<UUID> expected = new ArrayList<>(tiedItemIds);
+            expected.sort(sort == CatalogSort.PRICE_DESC || sort == CatalogSort.NEWEST
+                    ? Comparator.comparing(UUID::toString).reversed()
+                    : Comparator.comparing(UUID::toString));
+            List<UUID> actual = allPages(query);
+
+            assertThat(actual).containsExactlyElementsOf(expected).doesNotHaveDuplicates();
         }
     }
 
@@ -245,6 +303,33 @@ class CatalogDiscoveryRepositoryIntegrationTest extends PostgresIntegrationTest 
     private static CatalogDiscoveryQuery query(CatalogSort sort, int radius, UUID categoryId) {
         return new CatalogDiscoveryQuery(null, null, null, categoryId, 10.8, 106.7, null, radius,
                 false, false, null, null, sort, 20, null);
+    }
+
+    private List<UUID> allPages(CatalogDiscoveryQuery query) {
+        List<UUID> itemIds = new ArrayList<>();
+        CatalogCursor cursor = null;
+        while (true) {
+            List<Row> candidates = discovery.find(query, context(), cursor, NOW);
+            List<Row> page = candidates.stream().limit(query.limit()).toList();
+            itemIds.addAll(page.stream().map(Row::itemId).toList());
+            if (candidates.size() <= query.limit()) return itemIds;
+            cursor = cursor(query.sort(), page.getLast());
+        }
+    }
+
+    private static void assertTiedSortKey(CatalogSort sort, List<Row> rows) {
+        switch (sort) {
+            case RELEVANCE -> assertThat(rows).extracting(Row::rank).doesNotContainNull().containsOnly(rows.getFirst().rank());
+            case DISTANCE -> assertThat(rows).extracting(Row::distanceMeters).containsOnly(rows.getFirst().distanceMeters());
+            case PRICE_ASC, PRICE_DESC -> assertThat(rows).extracting(Row::minPrice).containsOnly(rows.getFirst().minPrice());
+            case NEWEST -> assertThat(rows).extracting(Row::createdAt).containsOnly(rows.getFirst().createdAt());
+        }
+    }
+
+    private static CatalogDiscoveryQuery withLimit(CatalogDiscoveryQuery query, int limit) {
+        return new CatalogDiscoveryQuery(query.q(), query.type(), query.listingKind(), query.categoryId(), query.lat(), query.lng(),
+                query.addressId(), query.radiusMeters(), query.pickup(), query.openNow(), query.minPrice(), query.maxPrice(),
+                query.sort(), limit, query.cursor());
     }
 
     private static LocationContext context() {
