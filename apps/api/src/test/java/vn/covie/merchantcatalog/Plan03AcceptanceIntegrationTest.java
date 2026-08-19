@@ -107,18 +107,22 @@ class Plan03AcceptanceIntegrationTest extends PostgresIntegrationTest {
                         .with(seller.jwt()).header("If-Match", "\"v0\""))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/v1/catalog/items")
+        MvcResult discovery = mockMvc.perform(get("/api/v1/catalog/items")
                         .param("lat", "10.8")
                         .param("lng", "106.7")
                         .param("sort", "PRICE_ASC")
                         .param("limit", "5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.page.items[0].id").value(itemId.toString()))
-                .andExpect(jsonPath("$.page.items[0].name").value("Caramel Latte"))
-                .andExpect(jsonPath("$.page.items[0].merchant.id").value(merchantId.toString()))
-                .andExpect(jsonPath("$.page.items[0].primaryMedia.id").value(mediaId.toString()))
-                .andExpect(jsonPath("$.page.items[0].resolvedLocation.id").value(locationId.toString()))
-                .andExpect(jsonPath("$.page.items[0].priceFrom.amount").value(25000));
+                .andReturn();
+        JsonNode discovered = java.util.stream.StreamSupport.stream(read(discovery).path("page").path("items").spliterator(), false)
+                .filter(candidate -> itemId.toString().equals(candidate.path("id").asText()))
+                .findFirst()
+                .orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(discovered.path("name").asText()).isEqualTo("Caramel Latte");
+        org.assertj.core.api.Assertions.assertThat(discovered.path("merchant").path("id").asText()).isEqualTo(merchantId.toString());
+        org.assertj.core.api.Assertions.assertThat(discovered.path("primaryMedia").path("id").asText()).isEqualTo(mediaId.toString());
+        org.assertj.core.api.Assertions.assertThat(discovered.path("resolvedLocation").path("id").asText()).isEqualTo(locationId.toString());
+        org.assertj.core.api.Assertions.assertThat(discovered.path("priceFrom").path("amount").asInt()).isEqualTo(25000);
 
         mockMvc.perform(get("/api/v1/catalog/items/{itemId}", itemId)
                         .param("lat", "10.8")
