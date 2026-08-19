@@ -2,6 +2,7 @@ package vn.covie.catalog.api;
 
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.covie.catalog.api.dto.CatalogItemManagementResponse;
+import vn.covie.catalog.api.dto.CatalogItemManagementSummaryResponse;
 import vn.covie.catalog.api.dto.create.CreateCatalogItemRequest;
+import vn.covie.catalog.application.CatalogManagementQueryService;
 import vn.covie.catalog.api.dto.edit.CreateVariantRequest;
 import vn.covie.catalog.api.dto.edit.UpdateCatalogItemRequest;
 import vn.covie.catalog.api.dto.edit.UpdateLocationOfferRequest;
@@ -29,7 +32,14 @@ public class MerchantCatalogController {
     private final CatalogCreateService catalog;
     private final CatalogEditService edits;
     private final CatalogLifecycleService lifecycle;
-    public MerchantCatalogController(CatalogCreateService catalog, CatalogEditService edits, CatalogLifecycleService lifecycle) { this.catalog = catalog; this.edits = edits; this.lifecycle = lifecycle; }
+    private final CatalogManagementQueryService queries;
+    public MerchantCatalogController(CatalogCreateService catalog, CatalogEditService edits, CatalogLifecycleService lifecycle,
+            CatalogManagementQueryService queries) { this.catalog = catalog; this.edits = edits; this.lifecycle = lifecycle; this.queries = queries; }
+
+    @org.springframework.web.bind.annotation.GetMapping
+    public List<CatalogItemManagementSummaryResponse> list(@PathVariable UUID merchantId) {
+        return queries.list(merchantId);
+    }
     @PostMapping
     public ResponseEntity<CatalogItemManagementResponse> create(@PathVariable UUID merchantId,
             @RequestHeader(value="Idempotency-Key", required=false) String idempotencyKey,

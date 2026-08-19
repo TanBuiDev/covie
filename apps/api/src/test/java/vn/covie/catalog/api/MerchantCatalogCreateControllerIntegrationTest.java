@@ -3,6 +3,7 @@ package vn.covie.catalog.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -91,6 +92,25 @@ class MerchantCatalogCreateControllerIntegrationTest extends PostgresIntegration
                 .andExpect(status().isCreated());
         assertThat(items.count()).isEqualTo(countBefore + 1);
         assertThat(outbox.count()).isEqualTo(outboxBefore + 1);
+    }
+
+    @Test
+    void listsTheMerchantCatalogWithManagementStatuses() throws Exception {
+        Actor owner = actor();
+        UUID merchantId = merchant(owner);
+        UUID locationId = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), merchantId,
+                "Main", "1 CoVie", 10.8, 106.7, NOW)).getId();
+        UUID categoryId = category(CategoryCatalogType.PRODUCT);
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt())
+                        .header("Idempotency-Key", "catalog-management-list").contentType(MediaType.APPLICATION_JSON)
+                        .content(productBody(categoryId, locationId, "Coffee", "UNTRACKED")))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Coffee"))
+                .andExpect(jsonPath("$[0].listingStatus").value("DRAFT"))
+                .andExpect(jsonPath("$[0].type").value("PRODUCT"));
     }
 
     @Test
