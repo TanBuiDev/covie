@@ -1,0 +1,9 @@
+package vn.covie.shipping.api;
+import java.util.*; import org.springframework.http.*; import org.springframework.web.bind.annotation.*; import vn.covie.shipping.api.dto.*; import vn.covie.shipping.application.ShippingPolicyService; import vn.covie.shared.concurrency.VersionPrecondition;
+@RestController @RequestMapping("/api/v1/merchants/{merchantId}/locations/{locationId}/shipping-policies") public class MerchantShippingPolicyController{
+ private final ShippingPolicyService service; public MerchantShippingPolicyController(ShippingPolicyService service){this.service=service;}
+ @GetMapping public List<ShippingPolicyResponse> list(@PathVariable UUID merchantId,@PathVariable UUID locationId){return service.list(merchantId,locationId);}
+ @PostMapping public ResponseEntity<ShippingPolicyResponse> create(@PathVariable UUID merchantId,@PathVariable UUID locationId,@RequestBody ShippingPolicyUpsertRequest req){var r=service.create(merchantId,locationId,req);return ResponseEntity.status(201).eTag(VersionPrecondition.format(r.version())).body(r);}
+ @PatchMapping("/{policyId}") public ResponseEntity<ShippingPolicyResponse> update(@PathVariable UUID merchantId,@PathVariable UUID locationId,@PathVariable UUID policyId,@RequestHeader(value=HttpHeaders.IF_MATCH,required=false)String ifMatch,@RequestBody ShippingPolicyUpsertRequest req){var r=service.update(merchantId,locationId,policyId,ifMatch,req);return ResponseEntity.ok().eTag(VersionPrecondition.format(r.version())).body(r);}
+ @DeleteMapping("/{policyId}") public ResponseEntity<Void> delete(@PathVariable UUID merchantId,@PathVariable UUID locationId,@PathVariable UUID policyId,@RequestHeader(value=HttpHeaders.IF_MATCH,required=false)String ifMatch){service.delete(merchantId,locationId,policyId,ifMatch);return ResponseEntity.noContent().build();}
+}
