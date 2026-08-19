@@ -1,0 +1,1 @@
+package vn.covie.checkout.application; import java.util.UUID; import vn.covie.checkout.api.dto.CheckoutPreviewRequest; import vn.covie.checkout.model.CheckoutSourceType; public interface CheckoutCandidateResolver{CheckoutSourceType supports();CheckoutCandidate resolve(UUID buyerUserId,CheckoutPreviewRequest request);}
