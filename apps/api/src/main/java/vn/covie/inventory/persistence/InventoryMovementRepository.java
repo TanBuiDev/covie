@@ -1,0 +1,1 @@
+package vn.covie.inventory.persistence; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; import vn.covie.inventory.model.InventoryMovementEntity; public interface InventoryMovementRepository extends JpaRepository<InventoryMovementEntity,UUID>{}
