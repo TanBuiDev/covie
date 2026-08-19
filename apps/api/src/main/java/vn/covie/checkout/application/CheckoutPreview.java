@@ -1,0 +1,1 @@
+package vn.covie.checkout.application; import java.util.*; import vn.covie.checkout.model.*; public record CheckoutPreview(String checkoutToken,java.time.Instant expiresAt,CheckoutCandidate candidate,long subtotal,Long shippingFee,Long total,long knownTotal,String currency,FulfillmentMethod fulfillmentMethod){}
