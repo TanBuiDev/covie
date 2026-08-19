@@ -57,6 +57,8 @@ cd ../..
 pnpm api-client:generate
 ```
 
+Plan 03 media/catalog checks assume local infrastructure is already up with `pnpm infra:up`. The direct-upload flow is `POST /api/v1/media/uploads`, upload to the returned URL, then `POST /api/v1/media/{mediaId}/complete` before attaching that media to merchants or catalog items.
+
 ## Local Google OAuth
 
 Create a Google OAuth web-client credential for local development and place its values only in `.env.local`. Register this exact local redirect URI:
