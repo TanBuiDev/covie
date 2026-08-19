@@ -1,0 +1,14 @@
+package vn.covie.merchants.security;
+
+public enum MerchantCapability {
+    VIEW_MERCHANT,
+    EDIT_PROFILE,
+    MANAGE_MEMBERS,
+    GRANT_OWNER,
+    MANAGE_LOCATIONS,
+    MANAGE_HOURS_CONTACTS,
+    MANAGE_CATALOG_STRUCTURE,
+    PUBLISH_CATALOG,
+    MANAGE_LOCATION_OFFER,
+    UPLOAD_MERCHANT_MEDIA
+}

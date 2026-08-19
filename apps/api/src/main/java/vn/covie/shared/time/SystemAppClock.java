@@ -3,9 +3,6 @@ package vn.covie.shared.time;
 import java.time.Clock;
 import java.time.Instant;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public final class SystemAppClock implements AppClock {
     private final Clock clock;
 

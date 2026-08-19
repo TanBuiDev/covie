@@ -1,0 +1,4 @@
+package vn.covie.catalog.model;
+import jakarta.persistence.*;
+import java.util.UUID;
+@Entity @Table(name="option_values") public class OptionValueEntity { @Id private UUID id; @Column(name="option_group_id",nullable=false) private UUID optionGroupId; @Column(nullable=false,length=160) private String value; @Column(name="sort_order",nullable=false) private int sortOrder; protected OptionValueEntity(){} public static OptionValueEntity create(UUID id,UUID optionGroupId,String value,int sortOrder){OptionValueEntity option=new OptionValueEntity();option.id=id;option.optionGroupId=optionGroupId;option.value=value;option.sortOrder=sortOrder;return option;} public UUID getId(){return id;} public UUID getOptionGroupId(){return optionGroupId;} public String getValue(){return value;} public int getSortOrder(){return sortOrder;} }

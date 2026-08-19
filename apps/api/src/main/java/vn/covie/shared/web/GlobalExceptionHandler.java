@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,9 @@ import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -41,6 +44,27 @@ public final class GlobalExceptionHandler {
     ResponseEntity<ApiErrorResponse> handleUnreadable(HttpMessageNotReadableException exception) {
         return ResponseEntity.badRequest().body(ApiErrorResponse.of(
                 ErrorCode.MALFORMED_REQUEST, "Request body is malformed.", Map.of(), Map.of(), requestId()));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    ResponseEntity<ApiErrorResponse> handleArgumentTypeMismatch(MethodArgumentTypeMismatchException exception,
+            HttpServletRequest request) {
+        if ("/api/v1/catalog/items".equals(request.getRequestURI())) {
+            return ResponseEntity.unprocessableEntity().body(ApiErrorResponse.of(
+                    ErrorCode.CATALOG_FILTER_INVALID, "Catalog discovery filters are invalid.", Map.of(), Map.of(), requestId()));
+        }
+        return ResponseEntity.unprocessableEntity().body(ApiErrorResponse.of(
+                ErrorCode.VALIDATION_FAILED, "Request validation failed.", Map.of(), Map.of(), requestId()));
+    }
+
+    @ExceptionHandler({ObjectOptimisticLockingFailureException.class, OptimisticLockException.class})
+    ResponseEntity<ApiErrorResponse> handleOptimisticLockFailure(RuntimeException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiErrorResponse.of(
+                ErrorCode.RESOURCE_VERSION_CONFLICT,
+                "Resource version has changed.",
+                Map.of(),
+                Map.of(),
+                requestId()));
     }
 
     @ExceptionHandler(Exception.class)

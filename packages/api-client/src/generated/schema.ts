@@ -4,6 +4,214 @@
  */
 
 export interface paths {
+    "/api/v1/merchants/{merchantId}/members/{memberId}/locations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["replaceLocations"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/locations/{locationId}/hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put: operations["replace"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["active"];
+        put?: never;
+        post: operations["add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/locations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/catalog-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_2"];
+        put?: never;
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createVariant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["pause"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["activate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/media/{mediaId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/media/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/security/sessions/revoke-others": {
         parameters: {
             query?: never;
@@ -24,6 +232,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/merchants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mine"];
+        put?: never;
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/contact-methods": {
         parameters: {
             query?: never;
@@ -32,9 +256,9 @@ export interface paths {
             cookie?: never;
         };
         /** List contact methods */
-        get: operations["active"];
+        get: operations["active_1"];
         put?: never;
-        post: operations["create"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -49,13 +273,13 @@ export interface paths {
             cookie?: never;
         };
         /** List saved addresses */
-        get: operations["active_1"];
+        get: operations["active_2"];
         put?: never;
         /**
          * Create a saved address
          * @description Browser mutations use X-CSRF-Token.
          */
-        post: operations["create_1"];
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -162,6 +386,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/merchants/{merchantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["update"];
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/members/{memberId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch: operations["update_1"];
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/locations/{locationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_2"];
+        put?: never;
+        post?: never;
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch: operations["update_2"];
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/contacts/{contactId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch: operations["update_3"];
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/catalog-items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateItem"];
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/variants/{variantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteVariant"];
+        options?: never;
+        head?: never;
+        patch: operations["updateVariant"];
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/location-offers/{locationVariantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateLocationOffer"];
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -180,7 +516,7 @@ export interface paths {
          * Update the authenticated profile
          * @description Browser mutations use X-CSRF-Token.
          */
-        patch: operations["update"];
+        patch: operations["update_4"];
         trace?: never;
     };
     "/api/v1/me/contact-methods/{contactMethodId}": {
@@ -193,10 +529,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete"];
+        delete: operations["delete_2"];
         options?: never;
         head?: never;
-        patch: operations["update_1"];
+        patch: operations["update_5"];
         trace?: never;
     };
     "/api/v1/me/addresses/{addressId}": {
@@ -206,13 +542,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get"];
+        get: operations["get_3"];
         put?: never;
         post?: never;
-        delete: operations["delete_1"];
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
-        patch: operations["update_2"];
+        patch: operations["update_6"];
         trace?: never;
     };
     "/api/v1/me/security/sessions": {
@@ -223,7 +559,23 @@ export interface paths {
             cookie?: never;
         };
         /** List active sessions */
-        get: operations["list"];
+        get: operations["list_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/location-areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["activeAreas"];
         put?: never;
         post?: never;
         delete?: never;
@@ -240,6 +592,86 @@ export interface paths {
             cookie?: never;
         };
         get: operations["health"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/categories/{categoryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/merchants/{merchantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["merchant"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["discover"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["item"];
         put?: never;
         post?: never;
         delete?: never;
@@ -298,7 +730,7 @@ export interface paths {
          * Revoke one session
          * @description Browser mutations use X-CSRF-Token.
          */
-        delete: operations["revoke"];
+        delete: operations["revoke_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -308,6 +740,270 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ReplaceMemberLocationsRequest: {
+            locationIds: string[];
+        };
+        DayScheduleRequest: {
+            /** Format: int32 */
+            dayOfWeek?: number;
+            /** @enum {string} */
+            operationType: "SHOP" | "DELIVERY" | "PICKUP";
+            closed?: boolean;
+            intervals: components["schemas"]["TimeIntervalRequest"][];
+        };
+        ReplaceLocationHoursRequest: {
+            days: components["schemas"]["DayScheduleRequest"][];
+        };
+        TimeIntervalRequest: {
+            openTime: string;
+            closeTime: string;
+        };
+        MerchantHoursResponse: {
+            /** Format: uuid */
+            merchantLocationId?: string;
+            days?: components["schemas"]["DayScheduleRequest"][];
+        };
+        AddMerchantMemberRequest: {
+            /** Format: email */
+            email: string;
+            /** @enum {string} */
+            role: "OWNER" | "MANAGER" | "STAFF";
+        };
+        MerchantMemberResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            userId?: string;
+            email?: string;
+            /** @enum {string} */
+            role?: "OWNER" | "MANAGER" | "STAFF";
+            /** @enum {string} */
+            status?: "ACTIVE" | "INVITED" | "REVOKED";
+            /** Format: int64 */
+            version?: number;
+        };
+        MerchantLocationUpsertRequest: {
+            name: string;
+            addressText: string;
+            /** Format: uuid */
+            locationAreaId?: string;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
+            /** @enum {string} */
+            pinSource: "GPS" | "GEOCODED" | "USER_ADJUSTED";
+            timezone: string;
+            pickupEnabled?: boolean;
+            sellerDeliveryEnabled?: boolean;
+            serviceEnabled?: boolean;
+            /** Format: int64 */
+            minimumDeliveryOrder?: number;
+            currency: string;
+        };
+        MerchantLocationResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            merchantId?: string;
+            name?: string;
+            addressText?: string;
+            /** Format: uuid */
+            locationAreaId?: string;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
+            /** @enum {string} */
+            pinSource?: "GPS" | "GEOCODED" | "USER_ADJUSTED";
+            timezone?: string;
+            /** @enum {string} */
+            status?: "ACTIVE" | "PAUSED" | "DELETED";
+            pickupEnabled?: boolean;
+            sellerDeliveryEnabled?: boolean;
+            serviceEnabled?: boolean;
+            /** Format: int64 */
+            minimumDeliveryOrder?: number;
+            currency?: string;
+            /** Format: int64 */
+            version?: number;
+        };
+        MerchantContactRequest: {
+            /** Format: uuid */
+            merchantLocationId?: string;
+            /** @enum {string} */
+            contactType: "ZALO_LINK" | "ZALO_QR" | "MESSENGER_LINK" | "PHONE" | "OTHER";
+            value?: string;
+            /** Format: uuid */
+            qrMediaId?: string;
+            primary?: boolean;
+            publicContact?: boolean;
+        };
+        MerchantContactResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            merchantId?: string;
+            /** Format: uuid */
+            merchantLocationId?: string;
+            /** @enum {string} */
+            contactType?: "ZALO_LINK" | "ZALO_QR" | "MESSENGER_LINK" | "PHONE" | "OTHER";
+            value?: string;
+            /** Format: uuid */
+            qrMediaId?: string;
+            primary?: boolean;
+            publicContact?: boolean;
+            /** @enum {string} */
+            status?: "ACTIVE" | "INACTIVE";
+            /** Format: int64 */
+            version?: number;
+        };
+        AttributeValueRequest: {
+            attributeKey?: string;
+            valueText?: string;
+            valueNumber?: number;
+            valueBoolean?: boolean;
+            /** Format: uuid */
+            optionId?: string;
+        };
+        CreateCatalogItemRequest: {
+            /** @enum {string} */
+            type: "PRODUCT" | "SERVICE";
+            /** @enum {string} */
+            listingKind: "STANDARD" | "RESALE";
+            /** Format: uuid */
+            categoryId: string;
+            name: string;
+            description?: string;
+            attributes?: components["schemas"]["AttributeValueRequest"][];
+            tags?: string[];
+            mediaIds?: string[];
+            options?: components["schemas"]["OptionGroupCreateRequest"][];
+            variants?: components["schemas"]["VariantCreateRequest"][];
+            locationOffers: components["schemas"]["LocationOfferCreateRequest"][];
+        };
+        LocationOfferCreateRequest: {
+            /** Format: uuid */
+            merchantLocationId: string;
+            variantClientKey: string;
+            /** Format: int64 */
+            price?: number;
+            currency?: string;
+            available?: boolean;
+            /** @enum {string} */
+            inventoryMode?: "TRACKED" | "UNTRACKED";
+            /** Format: int32 */
+            preparationTimeMinutes?: number;
+        };
+        OptionGroupCreateRequest: {
+            clientKey: string;
+            name: string;
+            values?: components["schemas"]["OptionValueCreateRequest"][];
+        };
+        OptionValueCreateRequest: {
+            clientKey: string;
+            value: string;
+        };
+        VariantCreateRequest: {
+            clientKey: string;
+            sku?: string;
+            name: string;
+            optionValueKeys?: string[];
+        };
+        CatalogItemManagementResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** @enum {string} */
+            listingKind?: "STANDARD" | "RESALE";
+            /** Format: uuid */
+            categoryId?: string;
+            name?: string;
+            description?: string;
+            /** @enum {string} */
+            listingStatus?: "DRAFT" | "ACTIVE" | "PAUSED" | "DELETED";
+            variants?: components["schemas"]["VariantResponse"][];
+            locationOffers?: components["schemas"]["LocationOfferResponse"][];
+            /** Format: int64 */
+            version?: number;
+        };
+        LocationOfferResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            merchantLocationId?: string;
+            /** Format: uuid */
+            variantId?: string;
+            /** Format: int64 */
+            price?: number;
+            currency?: string;
+            available?: boolean;
+            /** @enum {string} */
+            inventoryMode?: "TRACKED" | "UNTRACKED";
+            /** Format: int32 */
+            preparationTimeMinutes?: number;
+        };
+        VariantResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            isDefault?: boolean;
+            selectedOptionIds?: string[];
+        };
+        CreateVariantRequest: {
+            sku?: string;
+            variantName: string;
+            optionValueIds?: string[];
+        };
+        MediaResponse: {
+            /** Format: uuid */
+            mediaId?: string;
+            /** @enum {string} */
+            purpose?: "USER_AVATAR" | "MERCHANT_LOGO" | "MERCHANT_COVER" | "MERCHANT_CONTACT_QR" | "CATALOG_IMAGE";
+            contentType?: string;
+            /** Format: int64 */
+            fileSize?: number;
+            /** Format: uri */
+            url?: string;
+            /** Format: date-time */
+            verifiedAt?: string;
+        };
+        CreateMediaUploadRequest: {
+            /** @enum {string} */
+            purpose: "USER_AVATAR" | "MERCHANT_LOGO" | "MERCHANT_COVER" | "MERCHANT_CONTACT_QR" | "CATALOG_IMAGE";
+            contentType: string;
+            /** Format: int64 */
+            fileSize?: number;
+        };
+        MediaUploadResponse: {
+            /** Format: uuid */
+            mediaId?: string;
+            method?: string;
+            /** Format: uri */
+            uploadUrl?: string;
+            requiredHeaders?: {
+                [key: string]: string;
+            };
+            /** Format: date-time */
+            expiresAt?: string;
+        };
+        CreateMerchantRequest: {
+            name: string;
+            description?: string;
+        };
+        MerchantSummaryResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            slug?: string;
+            /** @enum {string} */
+            status?: "ACTIVE" | "PAUSED" | "SUSPENDED" | "DELETED";
+            /** @enum {string} */
+            currentUserRole?: "OWNER" | "MANAGER" | "STAFF";
+            /** Format: int64 */
+            version?: number;
+        };
         CreateContactMethodRequest: {
             /** @enum {string} */
             type: "PHONE" | "ZALO" | "MESSENGER" | "OTHER";
@@ -379,6 +1075,57 @@ export interface components {
             email: string;
             password: string;
         };
+        UpdateMerchantRequest: {
+            name?: string;
+            description?: string;
+            /** Format: uuid */
+            logoMediaId?: string;
+            /** Format: uuid */
+            coverMediaId?: string;
+        };
+        MerchantManagementResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            slug?: string;
+            description?: string;
+            /** Format: uuid */
+            logoMediaId?: string;
+            /** Format: uuid */
+            coverMediaId?: string;
+            /** @enum {string} */
+            status?: "ACTIVE" | "PAUSED" | "SUSPENDED" | "DELETED";
+            /** Format: int64 */
+            version?: number;
+        };
+        UpdateMerchantMemberRequest: {
+            /** @enum {string} */
+            role: "OWNER" | "MANAGER" | "STAFF";
+        };
+        UpdateCatalogItemRequest: {
+            name?: string;
+            description?: string;
+            /** Format: uuid */
+            primaryCategoryId?: string;
+            attributes?: components["schemas"]["AttributeValueRequest"][];
+            tags?: string[];
+            mediaIds?: string[];
+        };
+        UpdateVariantRequest: {
+            sku?: string;
+            variantName?: string;
+            /** @enum {string} */
+            variantStatus?: "ACTIVE" | "PAUSED" | "DELETED";
+        };
+        UpdateLocationOfferRequest: {
+            /** Format: int64 */
+            price?: number;
+            available?: boolean;
+            /** @enum {string} */
+            inventoryMode?: "TRACKED" | "UNTRACKED";
+            /** Format: int32 */
+            preparationTimeMinutes?: number;
+        };
         UpdateMeRequest: {
             displayName: string;
         };
@@ -410,6 +1157,19 @@ export interface components {
             note?: string;
             defaultAddress?: boolean;
         };
+        CatalogItemManagementSummaryResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** @enum {string} */
+            listingKind?: "STANDARD" | "RESALE";
+            name?: string;
+            /** @enum {string} */
+            listingStatus?: "DRAFT" | "ACTIVE" | "PAUSED" | "DELETED";
+            /** Format: int64 */
+            version?: number;
+        };
         AuthSessionSummaryResponse: {
             /** Format: uuid */
             id?: string;
@@ -422,8 +1182,182 @@ export interface components {
             /** Format: date-time */
             expiresAt?: string;
         };
+        LocationAreaResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            parentId?: string;
+            /** @enum {string} */
+            areaType?: "COMMUNITY" | "ZONE" | "CLUSTER" | "BUILDING" | "WARD";
+            name?: string;
+            slug?: string;
+            /** @enum {string} */
+            status?: "ACTIVE" | "INACTIVE" | "DELETED";
+            /** Format: int32 */
+            sortOrder?: number;
+        };
         HealthResponse: {
             status?: string;
+        };
+        CategorySummary: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            parentId?: string;
+            name?: string;
+            slug?: string;
+            /** @enum {string} */
+            catalogType?: "PRODUCT" | "SERVICE" | "BOTH";
+            /** Format: int32 */
+            sortOrder?: number;
+        };
+        AttributeDefinition: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            attributeKey?: string;
+            /** @enum {string} */
+            dataType?: "TEXT" | "NUMBER" | "BOOLEAN" | "SINGLE_SELECT" | "MULTI_SELECT";
+            required?: boolean;
+            filterable?: boolean;
+            /** Format: int32 */
+            sortOrder?: number;
+            options?: components["schemas"]["AttributeOption"][];
+        };
+        AttributeOption: {
+            /** Format: uuid */
+            id?: string;
+            value?: string;
+            /** Format: int32 */
+            sortOrder?: number;
+        };
+        CategoryDetail: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            parentId?: string;
+            name?: string;
+            slug?: string;
+            /** @enum {string} */
+            catalogType?: "PRODUCT" | "SERVICE" | "BOTH";
+            /** Format: int32 */
+            sortOrder?: number;
+            attributes?: components["schemas"]["AttributeDefinition"][];
+        };
+        PublicMediaResponse: {
+            /** Format: uuid */
+            id?: string;
+            contentType?: string;
+            /** Format: uri */
+            url?: string;
+        };
+        PublicMerchantContactResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            merchantLocationId?: string;
+            /** @enum {string} */
+            type?: "ZALO_LINK" | "ZALO_QR" | "MESSENGER_LINK" | "PHONE" | "OTHER";
+            value?: string;
+            qrMedia?: components["schemas"]["PublicMediaResponse"];
+            primary?: boolean;
+        };
+        PublicMerchantResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            slug?: string;
+            description?: string;
+            logo?: components["schemas"]["PublicMediaResponse"];
+            cover?: components["schemas"]["PublicMediaResponse"];
+            locations?: components["schemas"]["ResolvedMerchantLocationResponse"][];
+            contacts?: components["schemas"]["PublicMerchantContactResponse"][];
+        };
+        ResolvedMerchantLocationResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            addressText?: string;
+            /** Format: double */
+            distanceMeters?: number;
+            /** @enum {string} */
+            resolutionSource?: "COORDINATES" | "SAVED_ADDRESS" | "EXPLICIT_MERCHANT_LOCATION" | "DEFAULT_MERCHANT_LOCATION";
+        };
+        CatalogDiscoveryResponse: {
+            page?: components["schemas"]["CursorPageResponseCatalogItemSummaryResponse"];
+        };
+        CatalogItemSummaryResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** @enum {string} */
+            listingKind?: "STANDARD" | "RESALE";
+            name?: string;
+            slug?: string;
+            primaryMedia?: components["schemas"]["PublicMediaResponse"];
+            merchant?: components["schemas"]["PublicMerchantSummary"];
+            resolvedLocation?: components["schemas"]["ResolvedMerchantLocationResponse"];
+            priceFrom?: components["schemas"]["Money"];
+        };
+        CursorPageResponseCatalogItemSummaryResponse: {
+            items?: components["schemas"]["CatalogItemSummaryResponse"][];
+            hasMore?: boolean;
+            nextCursor?: string;
+        };
+        Money: {
+            /** Format: int64 */
+            amount?: number;
+            currency?: string;
+        };
+        PublicMerchantSummary: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            slug?: string;
+        };
+        CatalogItemDetailResponse: {
+            /** Format: uuid */
+            id?: string;
+            slug?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** @enum {string} */
+            listingKind?: "STANDARD" | "RESALE";
+            name?: string;
+            description?: string;
+            merchant?: components["schemas"]["PublicMerchantResponse"];
+            resolvedLocation?: components["schemas"]["ResolvedMerchantLocationResponse"];
+            media?: components["schemas"]["PublicMediaResponse"][];
+            options?: components["schemas"]["PublicOptionGroupResponse"][];
+            variants?: components["schemas"]["PublicVariantResponse"][];
+        };
+        PublicOfferResponse: {
+            /** Format: uuid */
+            locationVariantId?: string;
+            available?: boolean;
+            price?: components["schemas"]["Money"];
+            /** Format: int32 */
+            preparationTimeMinutes?: number;
+        };
+        PublicOptionGroupResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            values?: components["schemas"]["PublicOptionValueResponse"][];
+        };
+        PublicOptionValueResponse: {
+            /** Format: uuid */
+            id?: string;
+            value?: string;
+        };
+        PublicVariantResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            defaultVariant?: boolean;
+            optionValueIds?: string[];
+            offer?: components["schemas"]["PublicOfferResponse"];
         };
         CsrfTokenResponse: {
             headerName?: string;
@@ -438,6 +1372,442 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    replaceLocations: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceMemberLocationsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                locationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantHoursResponse"];
+                };
+            };
+        };
+    };
+    replace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                locationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceLocationHoursRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantHoursResponse"];
+                };
+            };
+        };
+    };
+    active: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantMemberResponse"][];
+                };
+            };
+        };
+    };
+    add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddMerchantMemberRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantMemberResponse"];
+                };
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantLocationResponse"][];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MerchantLocationUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantLocationResponse"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantContactResponse"][];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MerchantContactRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantContactResponse"];
+                };
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogItemManagementSummaryResponse"][];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCatalogItemRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogItemManagementResponse"];
+                };
+            };
+        };
+    };
+    createVariant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVariantRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    publish: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    pause: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archive: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    activate: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    complete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                mediaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaResponse"];
+                };
+            };
+        };
+    };
+    createUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMediaUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaUploadResponse"];
+                };
+            };
+        };
+    };
     revokeOthers: {
         parameters: {
             query?: never;
@@ -456,7 +1826,51 @@ export interface operations {
             };
         };
     };
-    active: {
+    mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantSummaryResponse"][];
+                };
+            };
+        };
+    };
+    create_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMerchantRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantSummaryResponse"];
+                };
+            };
+        };
+    };
+    active_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -476,7 +1890,7 @@ export interface operations {
             };
         };
     };
-    create: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -500,7 +1914,7 @@ export interface operations {
             };
         };
     };
-    active_1: {
+    active_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -520,7 +1934,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -662,6 +2076,336 @@ export interface operations {
             };
         };
     };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantManagementResponse"];
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMerchantRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantManagementResponse"];
+                };
+            };
+        };
+    };
+    revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_1: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMerchantMemberRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantMemberResponse"];
+                };
+            };
+        };
+    };
+    get_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                locationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantLocationResponse"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                locationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_2: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                locationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MerchantLocationUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantLocationResponse"];
+                };
+            };
+        };
+    };
+    delete_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                contactId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_3: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                contactId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MerchantContactRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantContactResponse"];
+                };
+            };
+        };
+    };
+    updateItem: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCatalogItemRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteVariant: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                itemId: string;
+                variantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateVariant: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                itemId: string;
+                variantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVariantRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateLocationOffer: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                itemId: string;
+                locationVariantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLocationOfferRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -682,7 +2426,7 @@ export interface operations {
             };
         };
     };
-    update: {
+    update_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -706,7 +2450,7 @@ export interface operations {
             };
         };
     };
-    delete: {
+    delete_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -726,7 +2470,7 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -752,7 +2496,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -774,7 +2518,7 @@ export interface operations {
             };
         };
     };
-    delete_1: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -794,7 +2538,7 @@ export interface operations {
             };
         };
     };
-    update_2: {
+    update_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -820,7 +2564,7 @@ export interface operations {
             };
         };
     };
-    list: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -836,6 +2580,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AuthSessionSummaryResponse"][];
+                };
+            };
+        };
+    };
+    activeAreas: {
+        parameters: {
+            query?: {
+                parentId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LocationAreaResponse"][];
                 };
             };
         };
@@ -856,6 +2622,136 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    list_4: {
+        parameters: {
+            query?: {
+                parentId?: string;
+                type?: "PRODUCT" | "SERVICE";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CategorySummary"][];
+                };
+            };
+        };
+    };
+    detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                categoryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CategoryDetail"];
+                };
+            };
+        };
+    };
+    merchant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PublicMerchantResponse"];
+                };
+            };
+        };
+    };
+    discover: {
+        parameters: {
+            query?: {
+                q?: string;
+                type?: string;
+                listingKind?: string;
+                categoryId?: string;
+                lat?: number;
+                lng?: number;
+                addressId?: string;
+                radiusMeters?: number;
+                pickup?: boolean;
+                openNow?: boolean;
+                minPrice?: number;
+                maxPrice?: number;
+                sort?: string;
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogDiscoveryResponse"];
+                };
+            };
+        };
+    };
+    item: {
+        parameters: {
+            query?: {
+                locationId?: string;
+                addressId?: string;
+                lat?: number;
+                lng?: number;
+            };
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogItemDetailResponse"];
                 };
             };
         };
@@ -900,7 +2796,7 @@ export interface operations {
             };
         };
     };
-    revoke: {
+    revoke_1: {
         parameters: {
             query?: never;
             header?: never;

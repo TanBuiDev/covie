@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import jakarta.persistence.OptimisticLockException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -29,9 +30,16 @@ class GlobalExceptionHandlerTest extends PostgresIntegrationTest {
                 .andExpect(jsonPath("$.error.requestId").isNotEmpty());
     }
 
+    @Test
+    void serializesOptimisticLockAsTheSharedVersionConflictContract() throws Exception {
+        mockMvc.perform(get("/__test/optimistic-lock"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("RESOURCE_VERSION_CONFLICT"))
+                .andExpect(jsonPath("$.error.requestId").isNotEmpty());
+    }
+
     @RestController
     static class ErrorProbeController {
-
         @GetMapping("/__test/not-found")
         void notFound() {
             throw new ApiException(
@@ -39,5 +47,8 @@ class GlobalExceptionHandlerTest extends PostgresIntegrationTest {
                     HttpStatus.NOT_FOUND,
                     "Resource not found.");
         }
+
+        @GetMapping("/__test/optimistic-lock")
+        void optimisticLock() { throw new OptimisticLockException("stale offer"); }
     }
 }

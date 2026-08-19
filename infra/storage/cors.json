@@ -1,0 +1,9 @@
+[
+  {
+    "AllowedOrigins": ["https://covie.vn"],
+    "AllowedMethods": ["PUT", "HEAD"],
+    "AllowedHeaders": ["Content-Type", "If-None-Match", "x-amz-*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 600
+  }
+]
