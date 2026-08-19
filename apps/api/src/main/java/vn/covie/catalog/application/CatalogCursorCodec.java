@@ -68,14 +68,22 @@ public final class CatalogCursorCodec {
             throw new IllegalArgumentException("Cursor shape is incomplete.");
         }
         boolean valid = switch (cursor.sort()) {
-            case RELEVANCE -> cursor.rank() != null && cursor.distanceMeters() != null;
-            case DISTANCE -> cursor.distanceMeters() != null;
-            case PRICE_ASC, PRICE_DESC -> cursor.price() != null;
-            case NEWEST -> cursor.createdAt() != null;
+            case RELEVANCE -> cursor.rank() != null && cursor.rank().signum() >= 0
+                    && nonNegative(cursor.distanceMeters()) && cursor.price() == null && cursor.createdAt() == null;
+            case DISTANCE -> nonNegative(cursor.distanceMeters())
+                    && cursor.rank() == null && cursor.price() == null && cursor.createdAt() == null;
+            case PRICE_ASC, PRICE_DESC -> nonNegative(cursor.price())
+                    && cursor.rank() == null && cursor.distanceMeters() == null && cursor.createdAt() == null;
+            case NEWEST -> cursor.createdAt() != null
+                    && cursor.rank() == null && cursor.distanceMeters() == null && cursor.price() == null;
         };
         if (!valid) {
             throw new IllegalArgumentException("Cursor shape does not match its sort.");
         }
+    }
+
+    private static boolean nonNegative(Long value) {
+        return value != null && value >= 0;
     }
 
     private static ApiException invalid() {

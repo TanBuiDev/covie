@@ -170,7 +170,7 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
             }
             case NEWEST -> {
                 filters.append(" and (ci.created_at, ci.id) < (:cursorCreatedAt, :cursorItemId)");
-                parameters.addValue("cursorCreatedAt", cursor.createdAt());
+                parameters.addValue("cursorCreatedAt", cursor.createdAt().atOffset(ZoneOffset.UTC), Types.TIMESTAMP_WITH_TIMEZONE);
             }
             case RELEVANCE -> {
                 String rank = "round(ts_rank_cd(ci.search_vector, qt.query)::numeric, 8)";
