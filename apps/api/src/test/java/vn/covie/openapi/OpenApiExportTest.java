@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +45,8 @@ class OpenApiExportTest extends PostgresIntegrationTest {
         assertHeaderParameter(paths, "/api/v1/media/{mediaId}/complete", "post", "Idempotency-Key");
         assertHeaderParameter(paths, "/api/v1/merchants/{merchantId}/locations/{locationId}", "patch", "If-Match");
         assertHeaderParameter(paths, "/api/v1/merchants/{merchantId}/catalog-items/{itemId}", "patch", "If-Match");
+        assertHeaderResponse(paths, "/api/v1/merchants/{merchantId}", "get", "ETag");
+        assertHeaderResponse(paths, "/api/v1/merchants/{merchantId}/locations/{locationId}", "get", "ETag");
         String output = System.getProperty("covie.openapi.output", "target/openapi/openapi.json");
         Path outputPath = Path.of(output).toAbsolutePath().normalize();
         Files.createDirectories(outputPath.getParent());
@@ -57,4 +58,9 @@ class OpenApiExportTest extends PostgresIntegrationTest {
                 .contains(headerName);
     }
 
+    private void assertHeaderResponse(JsonNode paths, String path, String method, String headerName) {
+        assertThat(paths.path(path).path(method).path("responses").path("200").path("headers").fieldNames())
+                .toIterable()
+                .contains(headerName);
+    }
 }

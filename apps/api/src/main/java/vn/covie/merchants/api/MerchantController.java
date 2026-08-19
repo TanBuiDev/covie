@@ -1,5 +1,8 @@
 package vn.covie.merchants.api;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +26,7 @@ public class MerchantController {
 
     public MerchantController(MerchantApplicationService merchants) { this.merchants = merchants; }
 
+    @Operation(responses = @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.ETAG)))
     @GetMapping
     public ResponseEntity<MerchantManagementResponse> get(@PathVariable UUID merchantId) {
         return response(merchants.get(merchantId));

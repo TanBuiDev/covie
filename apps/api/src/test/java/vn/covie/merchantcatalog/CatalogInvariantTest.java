@@ -3,6 +3,7 @@ package vn.covie.merchantcatalog;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -80,22 +81,54 @@ class CatalogInvariantTest extends PostgresIntegrationTest {
     }
 
     @Test
-    void enforcesInventoryModeAndCategoryCompatibilityAtCreateTime() throws Exception {
+    void enforcesOfferInventoryAndCategoryCompatibilityAtCreateTime() throws Exception {
         Actor actor = actor();
         UUID merchantId = merchant(actor);
         UUID locationId = location(merchantId);
         UUID productCategoryId = category(CategoryCatalogType.PRODUCT);
+        UUID bothCategoryId = category(CategoryCatalogType.BOTH);
         UUID serviceCategoryId = category(CategoryCatalogType.SERVICE);
 
         assertCatalogCreateError(actor, merchantId, productCategoryId, locationId, CatalogItemType.PRODUCT, null,
                 ErrorCode.CATALOG_LOCATION_OFFER_INVALID);
-        assertCatalogCreateStatus(actor, merchantId, productCategoryId, locationId, CatalogItemType.SERVICE, InventoryMode.UNTRACKED);
+        assertCatalogCreateError(actor, merchantId, bothCategoryId, locationId, CatalogItemType.SERVICE, InventoryMode.UNTRACKED,
+                ErrorCode.CATALOG_LOCATION_OFFER_INVALID);
         assertCatalogCreateError(actor, merchantId, serviceCategoryId, locationId, CatalogItemType.PRODUCT, InventoryMode.UNTRACKED,
                 ErrorCode.CATEGORY_NOT_COMPATIBLE);
     }
 
     @Test
-    void rejectsPublishWhenMerchantLocationVariantOrOfferBecomeInactive() {
+    void rejectsForeignOfferLocationsVariantUrlMismatchesAndDeletingTheLastVariant() throws Exception {
+        Actor actor = actor();
+        UUID merchantId = merchant(actor);
+        UUID localLocationId = location(merchantId);
+        UUID categoryId = category(CategoryCatalogType.PRODUCT);
+        UUID foreignMerchantId = merchant();
+        UUID foreignLocationId = location(foreignMerchantId);
+
+        assertCatalogCreateError(actor, merchantId, categoryId, foreignLocationId, CatalogItemType.PRODUCT, InventoryMode.UNTRACKED,
+                ErrorCode.RESOURCE_NOT_FOUND, 404);
+
+        ItemFixture first = itemFixture(merchantId, categoryId, localLocationId);
+        ItemFixture second = itemFixture(merchantId, categoryId, localLocationId);
+
+        mockMvc.perform(delete("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/variants/{variantId}", merchantId,
+                        first.itemId(), second.variantId())
+                        .with(actor.jwt())
+                        .header("If-Match", "\"v0\""))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value(ErrorCode.RESOURCE_NOT_FOUND.name()));
+
+        mockMvc.perform(delete("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/variants/{variantId}", merchantId,
+                        first.itemId(), first.variantId())
+                        .with(actor.jwt())
+                        .header("If-Match", "\"v0\""))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("CATALOG_VARIANT_COMBINATION_INVALID"));
+    }
+
+    @Test
+    void publicReadinessRequiresActiveMerchantItemLocationVariantAndOffer() {
         UUID merchantId = merchant();
         UUID locationId = location(merchantId);
         UUID categoryId = category(CategoryCatalogType.PRODUCT);
@@ -122,6 +155,12 @@ class CatalogInvariantTest extends PostgresIntegrationTest {
         jdbc.update("update variants set variant_status = 'ACTIVE' where id = ?", variantId);
         jdbc.update("update location_variants set is_available = false where variant_id = ?", variantId);
         assertCode(ErrorCode.CATALOG_LOCATION_OFFER_INVALID, () -> publishValidator.requirePublishable(items.findById(item.getId()).orElseThrow()));
+
+        jdbc.update("update location_variants set is_available = true where variant_id = ?", variantId);
+        CatalogItemEntity deleted = items.findById(item.getId()).orElseThrow();
+        deleted.delete(NOW);
+        items.saveAndFlush(deleted);
+        assertCode(ErrorCode.RESOURCE_NOT_FOUND, () -> publishValidator.requirePublishable(items.findById(item.getId()).orElseThrow()));
     }
 
     @Test
@@ -147,21 +186,17 @@ class CatalogInvariantTest extends PostgresIntegrationTest {
 
     private void assertCatalogCreateError(Actor actor, UUID merchantId, UUID categoryId, UUID locationId, CatalogItemType type,
             InventoryMode inventoryMode, ErrorCode expected) throws Exception {
+        assertCatalogCreateError(actor, merchantId, categoryId, locationId, type, inventoryMode, expected, 422);
+    }
+
+    private void assertCatalogCreateError(Actor actor, UUID merchantId, UUID categoryId, UUID locationId, CatalogItemType type,
+            InventoryMode inventoryMode, ErrorCode expected, int expectedStatus) throws Exception {
         mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(actor.jwt())
                         .header("Idempotency-Key", "inventory-" + UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(catalogCreateBody(categoryId, locationId, type, inventoryMode, false)))
-                .andExpect(status().isUnprocessableEntity())
+                .andExpect(status().is(expectedStatus))
                 .andExpect(jsonPath("$.error.code").value(expected.name()));
-    }
-
-    private void assertCatalogCreateStatus(Actor actor, UUID merchantId, UUID categoryId, UUID locationId, CatalogItemType type,
-            InventoryMode inventoryMode) throws Exception {
-        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(actor.jwt())
-                        .header("Idempotency-Key", "inventory-" + UUID.randomUUID())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(catalogCreateBody(categoryId, locationId, type, inventoryMode, true)))
-                .andExpect(status().isUnprocessableEntity());
     }
 
     private String catalogCreateBody(UUID categoryId, UUID locationId, CatalogItemType type, InventoryMode inventoryMode,
@@ -207,6 +242,16 @@ class CatalogInvariantTest extends PostgresIntegrationTest {
         return locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), merchantId, "Main", "1 CoVie", 10.8, 106.7, NOW)).getId();
     }
 
+    private ItemFixture itemFixture(UUID merchantId, UUID categoryId, UUID locationId) {
+        UUID itemId = UUID.randomUUID();
+        items.saveAndFlush(CatalogItemEntity.create(itemId, merchantId, CatalogItemType.PRODUCT, ListingKind.STANDARD,
+                categoryId, "Fixture", "fixture-" + itemId, null, NOW));
+        UUID variantId = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), itemId, "Default", NOW)).getId();
+        offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), locationId, variantId, 25000, "VND",
+                true, InventoryMode.UNTRACKED, null, NOW));
+        return new ItemFixture(itemId, variantId);
+    }
+
     private UUID category(CategoryCatalogType type) {
         return categories.saveAndFlush(CategoryEntity.create(UUID.randomUUID(), null, "Category", "category-" + UUID.randomUUID(), type, CategoryStatus.ACTIVE, 0)).getId();
     }
@@ -227,4 +272,6 @@ class CatalogInvariantTest extends PostgresIntegrationTest {
                     .claim("roles", List.of("USER"))).authorities(new SimpleGrantedAuthority("ROLE_USER"));
         }
     }
+
+    private record ItemFixture(UUID itemId, UUID variantId) {}
 }

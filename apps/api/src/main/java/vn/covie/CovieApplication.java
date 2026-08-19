@@ -5,6 +5,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import vn.covie.shared.id.UuidV7Generator;
+import vn.covie.shared.time.AppClock;
+import vn.covie.shared.time.SystemAppClock;
 
 @SpringBootApplication
 public class CovieApplication {
@@ -21,5 +23,10 @@ public class CovieApplication {
     @Bean
     ObjectMapper objectMapper() {
         return new ObjectMapper().findAndRegisterModules();
+    }
+
+    @Bean
+    AppClock appClock() {
+        return new SystemAppClock();
     }
 }

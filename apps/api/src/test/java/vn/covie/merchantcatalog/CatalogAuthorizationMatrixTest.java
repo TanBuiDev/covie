@@ -134,9 +134,12 @@ class CatalogAuthorizationMatrixTest extends PostgresIntegrationTest {
 
     private record Actor(UUID userId, UUID sessionId, boolean includeRolesClaim) {
         SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor jwt() {
-            return SecurityMockMvcRequestPostProcessors.jwt().jwt(token -> token.subject(userId.toString())
-                    .claim("sessionId", sessionId.toString())
-                    .claim("roles", List.of("USER"))).authorities(new SimpleGrantedAuthority("ROLE_USER"));
+            return SecurityMockMvcRequestPostProcessors.jwt().jwt(token -> {
+                token.subject(userId.toString()).claim("sessionId", sessionId.toString());
+                if (includeRolesClaim) {
+                    token.claim("roles", List.of("USER"));
+                }
+            }).authorities(new SimpleGrantedAuthority("ROLE_USER"));
         }
     }
 }

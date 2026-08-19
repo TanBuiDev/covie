@@ -1,5 +1,8 @@
 package vn.covie.merchants.api;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +31,7 @@ public class MerchantLocationController {
     @GetMapping
     public List<MerchantLocationResponse> list(@PathVariable UUID merchantId) { return locations.list(merchantId); }
 
+    @Operation(responses = @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.ETAG)))
     @GetMapping("/{locationId}")
     public ResponseEntity<MerchantLocationResponse> get(@PathVariable UUID merchantId, @PathVariable UUID locationId) {
         MerchantLocationResponse location = locations.get(merchantId, locationId);
