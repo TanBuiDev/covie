@@ -32,10 +32,13 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
                 .addValue("lng", context.point().getX())
                 .addValue("radiusMeters", query.radiusMeters())
                 .addValue("pickup", Boolean.TRUE.equals(query.pickup()))
+                .addValue("canServe", Boolean.TRUE.equals(query.canServe()))
                 .addValue("openNow", Boolean.TRUE.equals(query.openNow()))
+                .addValue("contextAreaId", context.locationAreaId(), Types.OTHER)
                 .addValue("now", now.atOffset(ZoneOffset.UTC), Types.TIMESTAMP_WITH_TIMEZONE)
                 .addValue("q", normalizedTerm(query.q()), Types.VARCHAR)
                 .addValue("fetchLimit", query.limit() + 1);
+        parameters.addValue("shippingMode", query.shipping() == null ? null : query.shipping().name(), Types.VARCHAR);
 
         StringBuilder filters = new StringBuilder();
         if (query.type() != null) {
@@ -63,6 +66,7 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
         String sql = """
                 with candidate_locations as (
                     select ml.id, ml.merchant_profile_id, ml.name, ml.address_text, ml.timezone, ml.currency_code,
+                           ml.geo_point, ml.pickup_enabled, ml.seller_delivery_enabled, ml.service_enabled,
                            st_distance(ml.geo_point, st_setsrid(st_makepoint(:lng, :lat), 4326)::geography)::bigint as distance_meters
                     from merchant_locations ml
                     join merchant_profiles mp on mp.id = ml.merchant_profile_id
@@ -70,6 +74,11 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
                       and mp.merchant_status = 'ACTIVE' and mp.moderation_status in ('NOT_REQUIRED', 'APPROVED') and mp.deleted_at is null
                       and st_dwithin(ml.geo_point, st_setsrid(st_makepoint(:lng, :lat), 4326)::geography, :radiusMeters)
                       and (:pickup = false or ml.pickup_enabled)
+                      and (:shippingMode is null or exists (
+                            select 1 from shipping_policies sp
+                            where sp.merchant_location_id = ml.id and sp.policy_status = 'ACTIVE'
+                              and sp.mode = :shippingMode
+                          ))
                       and (:openNow = false or (
                             not exists (
                                 select 1 from merchant_location_hour_exceptions e
@@ -110,6 +119,34 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
                         and cl.merchant_profile_id = ci.merchant_profile_id
                     where ci.listing_status = 'ACTIVE'
                       and ci.moderation_status in ('NOT_REQUIRED', 'APPROVED') and ci.deleted_at is null
+                      and (:canServe = false or (
+                            (ci.item_type = 'PRODUCT' and (cl.pickup_enabled or (
+                                cl.seller_delivery_enabled and exists (
+                                    select 1 from delivery_coverages dc
+                                    where dc.merchant_location_id = cl.id and dc.coverage_type = 'PRODUCT_DELIVERY'
+                                      and dc.coverage_status = 'ACTIVE' and (
+                                        (dc.radius_enabled and st_dwithin(cl.geo_point,
+                                            st_setsrid(st_makepoint(:lng, :lat), 4326)::geography, dc.radius_meters))
+                                        or (dc.area_enabled and :contextAreaId is not null and exists (
+                                            select 1 from delivery_coverage_areas dca
+                                            where dca.delivery_coverage_id = dc.id and dca.location_area_id = :contextAreaId
+                                        ))
+                                      )
+                                )
+                            )))
+                            or (ci.item_type = 'SERVICE' and cl.service_enabled and exists (
+                                select 1 from delivery_coverages dc
+                                where dc.merchant_location_id = cl.id and dc.coverage_type = 'SERVICE_AREA'
+                                  and dc.coverage_status = 'ACTIVE' and (
+                                    (dc.radius_enabled and st_dwithin(cl.geo_point,
+                                        st_setsrid(st_makepoint(:lng, :lat), 4326)::geography, dc.radius_meters))
+                                    or (dc.area_enabled and :contextAreaId is not null and exists (
+                                        select 1 from delivery_coverage_areas dca
+                                        where dca.delivery_coverage_id = dc.id and dca.location_area_id = :contextAreaId
+                                    ))
+                                  )
+                            ))
+                          ))
                     order by ci.id, cl.distance_meters, cl.id
                 ), resolved_pricing as (
                     select r.item_id, r.location_id, r.distance_meters, min(lv.price)::bigint as min_price,

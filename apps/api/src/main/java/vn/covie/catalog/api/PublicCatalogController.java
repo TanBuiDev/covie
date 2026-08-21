@@ -16,6 +16,7 @@ import vn.covie.catalog.api.dto.discovery.CatalogDiscoveryResponse;
 import vn.covie.catalog.api.dto.discovery.CatalogSort;
 import vn.covie.catalog.model.CatalogItemType;
 import vn.covie.catalog.model.ListingKind;
+import vn.covie.shipping.model.ShippingMode;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
 import org.springframework.http.HttpStatus;
@@ -63,10 +64,13 @@ public class PublicCatalogController {
             @RequestParam(required = false) Long maxPrice,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) Integer limit,
-            @RequestParam(required = false) String cursor) {
+            @RequestParam(required = false) String cursor,
+            @RequestParam(required = false) Boolean canServe,
+            @RequestParam(required = false) String shipping) {
         return discovery.discover(new CatalogDiscoveryQuery(q, enumValue(type, CatalogItemType.class),
                 enumValue(listingKind, ListingKind.class), categoryId, lat, lng, addressId, radiusMeters, pickup,
-                openNow, minPrice, maxPrice, enumValue(sort, CatalogSort.class), limit, cursor));
+                openNow, minPrice, maxPrice, enumValue(sort, CatalogSort.class), limit, cursor, canServe,
+                enumValue(shipping, ShippingMode.class)));
     }
 
     private static <T extends Enum<T>> T enumValue(String raw, Class<T> enumType) {
