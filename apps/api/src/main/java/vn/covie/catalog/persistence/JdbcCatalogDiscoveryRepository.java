@@ -127,9 +127,9 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
                                       and dc.coverage_status = 'ACTIVE' and (
                                         (dc.radius_enabled and st_dwithin(cl.geo_point,
                                             st_setsrid(st_makepoint(:lng, :lat), 4326)::geography, dc.radius_meters))
-                                        or (dc.area_enabled and :contextAreaId is not null and exists (
+                                        or (dc.area_enabled and cast(:contextAreaId as uuid) is not null and exists (
                                             select 1 from delivery_coverage_areas dca
-                                            where dca.delivery_coverage_id = dc.id and dca.location_area_id = :contextAreaId
+                                            where dca.delivery_coverage_id = dc.id and dca.location_area_id = cast(:contextAreaId as uuid)
                                         ))
                                       )
                                 )
@@ -140,9 +140,9 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
                                   and dc.coverage_status = 'ACTIVE' and (
                                     (dc.radius_enabled and st_dwithin(cl.geo_point,
                                         st_setsrid(st_makepoint(:lng, :lat), 4326)::geography, dc.radius_meters))
-                                    or (dc.area_enabled and :contextAreaId is not null and exists (
+                                    or (dc.area_enabled and cast(:contextAreaId as uuid) is not null and exists (
                                         select 1 from delivery_coverage_areas dca
-                                        where dca.delivery_coverage_id = dc.id and dca.location_area_id = :contextAreaId
+                                        where dca.delivery_coverage_id = dc.id and dca.location_area_id = cast(:contextAreaId as uuid)
                                     ))
                                   )
                             ))
