@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -79,6 +80,7 @@ public class CheckoutPreviewService {
         long subtotal = 0;
         List<CheckoutComparableItem> comparableItems = new ArrayList<>();
         List<RevalidatedCheckoutItem> revalidatedItems = new ArrayList<>();
+        java.util.Set<UUID> trackedOfferIds = new java.util.TreeSet<>();
         for (CheckoutCandidateItem item : candidate.items()) {
             var offer = offers.findUsableById(item.locationVariantId()).orElseThrow(
                     () -> error(ErrorCode.CHECKOUT_ITEM_UNAVAILABLE, "Item unavailable."));
@@ -87,6 +89,7 @@ public class CheckoutPreviewService {
                 throw error(ErrorCode.CHECKOUT_ITEMS_INVALID, "Service quantity must be one.");
             }
             if (offer.getInventoryMode() == InventoryMode.TRACKED) {
+                trackedOfferIds.add(offer.getId());
                 var balance = balances.findById(offer.getId()).orElseThrow(
                         () -> error(ErrorCode.INSUFFICIENT_INVENTORY, "Insufficient inventory."));
                 if (balance.availableQuantity() < item.quantity()) {
@@ -131,7 +134,7 @@ public class CheckoutPreviewService {
         CheckoutComparableSnapshot comparable = new CheckoutComparableSnapshot(candidate.sourceType(), location.getId(),
                 candidate.sourceCartVersion(), request.fulfillmentMethod(), request.addressId(), subtotal,
                 location.getCurrencyCode(), comparableItems);
-        return new CheckoutRevalidation(checkout, comparable, fee, total, knownTotal, evaluation);
+        return new CheckoutRevalidation(checkout, comparable, fee, total, knownTotal, evaluation, Set.copyOf(trackedOfferIds));
     }
 
     private static void validateFulfillmentCapability(FulfillmentMethod method, UUID addressId,
