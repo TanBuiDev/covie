@@ -1,0 +1,12 @@
+package vn.covie.checkout.application;
+
+public enum CheckoutChangeType {
+    PRICE_CHANGED,
+    ITEM_UNAVAILABLE,
+    INVENTORY_CHANGED,
+    CART_CHANGED,
+    DELIVERY_COVERAGE_CHANGED,
+    SHIPPING_CHANGED,
+    MINIMUM_ORDER_CHANGED,
+    ADDRESS_CHANGED
+}
