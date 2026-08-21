@@ -2,6 +2,7 @@ package vn.covie.checkout.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -51,6 +52,7 @@ class CheckoutCommitServiceTest {
         when(revalidated.comparableSnapshot()).thenReturn(mapper.treeToValue(session.getPreviewSnapshot(), CheckoutComparableSnapshot.class));
         when(revalidated.trackedOfferIds()).thenReturn(java.util.Set.of());
         when(previews.revalidate(eq(user), any())).thenReturn(revalidated);
+        when(previews.revalidate(eq(user), any(), anyMap())).thenReturn(revalidated);
         CheckoutComparisonService comparison = mock(CheckoutComparisonService.class);
         when(comparison.compare(any(), any())).thenReturn(List.of());
         OrderCreationService orders = mock(OrderCreationService.class);
@@ -90,6 +92,7 @@ class CheckoutCommitServiceTest {
         when(revalidated.comparableSnapshot()).thenReturn(mapper.treeToValue(session.getPreviewSnapshot(), CheckoutComparableSnapshot.class));
         when(revalidated.trackedOfferIds()).thenReturn(java.util.Set.of());
         when(previews.revalidate(eq(user), any())).thenReturn(revalidated);
+        when(previews.revalidate(eq(user), any(), anyMap())).thenReturn(revalidated);
         CheckoutComparisonService comparison = mock(CheckoutComparisonService.class);
         when(comparison.compare(any(), any())).thenReturn(List.of());
         OrderCreationService orders = mock(OrderCreationService.class);

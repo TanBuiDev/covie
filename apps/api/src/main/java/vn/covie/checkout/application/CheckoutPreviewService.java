@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -72,6 +73,11 @@ public class CheckoutPreviewService {
 
     @Transactional(readOnly = true)
     public CheckoutRevalidation revalidate(UUID user, CheckoutPreviewRequest request) {
+        return revalidate(user, request, Map.of());
+    }
+
+    public CheckoutRevalidation revalidate(UUID user, CheckoutPreviewRequest request,
+            Map<UUID, vn.covie.inventory.model.InventoryBalanceEntity> lockedBalances) {
         CheckoutCandidate candidate = candidates.resolve(user, request);
         MerchantLocationEntity location = locations.findById(candidate.merchantLocationId()).orElseThrow(
                 () -> error(ErrorCode.CHECKOUT_LOCATION_UNAVAILABLE, "Location unavailable."));
@@ -90,7 +96,8 @@ public class CheckoutPreviewService {
             }
             if (offer.getInventoryMode() == InventoryMode.TRACKED) {
                 trackedOfferIds.add(offer.getId());
-                var balance = balances.findById(offer.getId()).orElseThrow(
+                var balance = lockedBalances.get(offer.getId());
+                if (balance == null) balance = balances.findById(offer.getId()).orElseThrow(
                         () -> error(ErrorCode.INSUFFICIENT_INVENTORY, "Insufficient inventory."));
                 if (balance.availableQuantity() < item.quantity()) {
                     throw error(ErrorCode.INSUFFICIENT_INVENTORY, "Insufficient inventory.");

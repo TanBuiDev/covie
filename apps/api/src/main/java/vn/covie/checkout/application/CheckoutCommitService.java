@@ -60,14 +60,16 @@ public class CheckoutCommitService {
                     "Checkout session is invalid.");
         }
         CartEntity cart = lockCartIfRequired(userId, session, request);
-        CheckoutRevalidation revalidated = previews.revalidate(userId, request);
+        CheckoutRevalidation initial = previews.revalidate(userId, request);
+        Map<UUID, InventoryBalanceEntity> lockedBalances = lockTrackedBalances(initial);
+        CheckoutRevalidation revalidated = previews.revalidate(userId, request, lockedBalances);
         List<CheckoutChange> changes = comparison.compare(accepted, revalidated.comparableSnapshot());
         if (!changes.isEmpty()) {
             throw new ApiException(ErrorCode.CHECKOUT_CHANGED, HttpStatus.CONFLICT, "Checkout has changed.",
                     Map.of("changes", changes));
         }
         var created = orders.createPending(revalidated.checkout());
-        reserveTrackedItems(userId, revalidated, created);
+        reserveTrackedItems(userId, revalidated, created, lockedBalances);
         outbox.append(new OutboxEventIntent("ORDER_CREATED", "ORDER", created.id(),
                 Map.of("orderId", created.id(), "orderCode", created.orderCode())));
         Instant now = clock.now();
@@ -96,11 +98,15 @@ public class CheckoutCommitService {
         return new ApiException(ErrorCode.CHECKOUT_CHANGED, HttpStatus.CONFLICT, message);
     }
 
-    private void reserveTrackedItems(UUID userId, CheckoutRevalidation revalidated,
-            vn.covie.orders.application.CreatedOrder created) {
-        if (revalidated.trackedOfferIds().isEmpty()) return;
-        Map<UUID, InventoryBalanceEntity> lockedBalances = inventoryLocks.lockTrackedBalances(revalidated.trackedOfferIds())
+    private Map<UUID, InventoryBalanceEntity> lockTrackedBalances(CheckoutRevalidation revalidated) {
+        if (revalidated.trackedOfferIds().isEmpty()) return Map.of();
+        return inventoryLocks.lockTrackedBalances(revalidated.trackedOfferIds())
                 .stream().collect(java.util.stream.Collectors.toMap(InventoryBalanceEntity::getLocationVariantId, balance -> balance));
+    }
+
+    private void reserveTrackedItems(UUID userId, CheckoutRevalidation revalidated,
+            vn.covie.orders.application.CreatedOrder created, Map<UUID, InventoryBalanceEntity> lockedBalances) {
+        if (revalidated.trackedOfferIds().isEmpty()) return;
         List<ReservationLine> lines = revalidated.checkout().items().stream()
                 .filter(item -> revalidated.trackedOfferIds().contains(item.candidateItem().locationVariantId()))
                 .map(item -> new ReservationLine(item.candidateItem().locationVariantId(), created.id(),
