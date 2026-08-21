@@ -46,9 +46,9 @@ import vn.covie.users.persistence.UserRepository;
 class CheckoutRollbackInvariantTest extends PostgresIntegrationTest {
     @Autowired CheckoutCommitService commits;
     @Autowired ObjectMapper mapper;
-    @Autowired JdbcTemplate jdbc;
+    @Autowired protected JdbcTemplate jdbc;
     @Autowired UserRepository users;
-    @Autowired InventoryBalanceRepository balances;
+    @Autowired protected InventoryBalanceRepository balances;
     @MockitoBean CheckoutSessionService sessions;
     @MockitoBean CheckoutPreviewService previews;
     @MockitoBean CheckoutComparisonService comparison;
@@ -104,7 +104,7 @@ class CheckoutRollbackInvariantTest extends PostgresIntegrationTest {
         return jdbc.queryForObject("select count(*) from " + table, Integer.class);
     }
 
-    private Fixture fixture() {
+    protected Fixture fixture() {
         Instant now = Instant.now(); Timestamp timestamp = Timestamp.from(now); UUID buyer = UUID.randomUUID(), merchant = UUID.randomUUID(), location = UUID.randomUUID();
         UUID category = UUID.randomUUID(), item = UUID.randomUUID(), variant = UUID.randomUUID(), offer = UUID.randomUUID();
         users.saveAndFlush(UserEntity.active(buyer, "buyer-" + buyer, now));
@@ -117,5 +117,5 @@ class CheckoutRollbackInvariantTest extends PostgresIntegrationTest {
         InventoryBalanceEntity balance = InventoryBalanceEntity.zero(offer, now); balance.adjust(1, 0, now); balances.saveAndFlush(balance);
         return new Fixture(buyer, merchant, location, item, variant, offer);
     }
-    private record Fixture(UUID buyerId, UUID merchantId, UUID locationId, UUID itemId, UUID variantId, UUID offerId) {}
+    protected record Fixture(UUID buyerId, UUID merchantId, UUID locationId, UUID itemId, UUID variantId, UUID offerId) {}
 }
