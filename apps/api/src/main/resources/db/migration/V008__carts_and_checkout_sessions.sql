@@ -32,7 +32,7 @@ create index ix_cart_items_cart on cart_items(cart_id);
 
 create table checkout_sessions (
     id uuid primary key,
-    token_hash char(64) not null unique,
+    token_hash varchar(64) not null unique,
     user_id uuid not null references users(id),
     source_type varchar(30) not null,
     source_context jsonb not null,

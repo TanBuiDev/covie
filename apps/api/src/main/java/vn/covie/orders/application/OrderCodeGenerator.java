@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 import vn.covie.shared.time.AppClock;
 
 @Component
@@ -15,6 +16,7 @@ public final class OrderCodeGenerator {
     private final AppClock clock;
     private final SecureRandom random;
 
+    @Autowired
     public OrderCodeGenerator(AppClock clock) {
         this(clock, new SecureRandom());
     }

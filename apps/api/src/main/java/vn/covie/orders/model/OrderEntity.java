@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
 import vn.covie.shared.commerce.PaymentMethod;
 
 @Entity
@@ -28,7 +29,7 @@ public class OrderEntity {
     @Column(name = "shipping_fee") private Long shippingFee;
     @Column(name = "known_total", nullable = false) private long knownTotal;
     @Column(name = "total_amount") private Long totalAmount;
-    @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode;
+    @JdbcTypeCode(java.sql.Types.CHAR) @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode;
     @Column(name = "confirmation_expires_at") private Instant confirmationExpiresAt;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;

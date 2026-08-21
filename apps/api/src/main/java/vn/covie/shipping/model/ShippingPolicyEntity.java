@@ -2,7 +2,9 @@ package vn.covie.shipping.model;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.sql.Types;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity @Table(name = "shipping_policies")
 public class ShippingPolicyEntity {
@@ -10,7 +12,7 @@ public class ShippingPolicyEntity {
     @Column(name = "merchant_location_id", nullable = false) private UUID merchantLocationId;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 30) private ShippingMode mode;
     @Column(name = "base_fee") private Long baseFee;
-    @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode;
+    @JdbcTypeCode(Types.CHAR) @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode;
     @Enumerated(EnumType.STRING) @Column(name = "rule_match_mode", length = 10) private ShippingRuleMatchMode ruleMatchMode;
     @Enumerated(EnumType.STRING) @Column(name = "policy_status", nullable = false, length = 20) private ShippingPolicyStatus policyStatus;
     @Column(name = "created_at", nullable = false) private Instant createdAt;

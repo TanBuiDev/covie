@@ -23,7 +23,7 @@ public class OrderItemEntity {
     @Column(nullable = false) private long quantity;
     @Column(name = "unit_price", nullable = false) private long unitPrice;
     @Column(name = "line_total", nullable = false) private long lineTotal;
-    @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode;
+    @JdbcTypeCode(java.sql.Types.CHAR) @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode;
     @JdbcTypeCode(SqlTypes.JSON) @Column(name = "item_snapshot", nullable = false, columnDefinition = "jsonb") private JsonNode itemSnapshot;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     protected OrderItemEntity() {}
