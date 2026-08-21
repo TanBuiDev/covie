@@ -44,15 +44,15 @@ import vn.covie.users.model.UserEntity;
 import vn.covie.users.persistence.UserRepository;
 
 class CheckoutRollbackInvariantTest extends PostgresIntegrationTest {
-    @Autowired CheckoutCommitService commits;
-    @Autowired ObjectMapper mapper;
+    @Autowired protected CheckoutCommitService commits;
+    @Autowired protected ObjectMapper mapper;
     @Autowired protected JdbcTemplate jdbc;
-    @Autowired UserRepository users;
+    @Autowired protected UserRepository users;
     @Autowired protected InventoryBalanceRepository balances;
-    @MockitoBean CheckoutSessionService sessions;
-    @MockitoBean CheckoutPreviewService previews;
-    @MockitoBean CheckoutComparisonService comparison;
-    @MockitoBean CheckoutCommitHook hook;
+    @MockitoBean protected CheckoutSessionService sessions;
+    @MockitoBean protected CheckoutPreviewService previews;
+    @MockitoBean protected CheckoutComparisonService comparison;
+    @MockitoBean protected CheckoutCommitHook hook;
 
     @Test
     void failureAfterOrderCreationRollsBackOrderReservationMovementAndOutbox() throws Exception {
