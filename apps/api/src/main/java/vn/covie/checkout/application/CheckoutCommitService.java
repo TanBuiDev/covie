@@ -37,14 +37,15 @@ public class CheckoutCommitService {
     private final AppClock clock;
     private final CartRepository carts;
     private final CartItemRepository cartItems;
+    private final CheckoutCommitHook hook;
 
     public CheckoutCommitService(CheckoutSessionService sessions, CheckoutPreviewService previews,
             CheckoutComparisonService comparison, OrderCreationService orders, InventoryLockService inventoryLocks,
             InventoryReservationService reservations, OutboxEventWriter outbox, ObjectMapper mapper, AppClock clock,
-            CartRepository carts, CartItemRepository cartItems) {
+            CartRepository carts, CartItemRepository cartItems, CheckoutCommitHook hook) {
         this.sessions = sessions; this.previews = previews; this.comparison = comparison; this.orders = orders;
         this.inventoryLocks = inventoryLocks; this.reservations = reservations; this.outbox = outbox;
-        this.mapper = mapper; this.clock = clock; this.carts = carts; this.cartItems = cartItems;
+        this.mapper = mapper; this.clock = clock; this.carts = carts; this.cartItems = cartItems; this.hook = hook;
     }
 
     @Transactional
@@ -72,6 +73,7 @@ public class CheckoutCommitService {
         reserveTrackedItems(userId, revalidated, created, lockedBalances);
         outbox.append(new OutboxEventIntent("ORDER_CREATED", "ORDER", created.id(),
                 Map.of("orderId", created.id(), "orderCode", created.orderCode())));
+        hook.afterOrderCreated(created);
         Instant now = clock.now();
         session.consume(now);
         if (cart != null) {

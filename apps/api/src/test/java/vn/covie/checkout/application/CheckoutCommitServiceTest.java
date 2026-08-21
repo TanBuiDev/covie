@@ -61,7 +61,8 @@ class CheckoutCommitServiceTest {
         OutboxEventWriter outbox = mock(OutboxEventWriter.class);
         CheckoutCommitService service = new CheckoutCommitService(sessions, previews, comparison, orders,
                 mock(InventoryLockService.class), mock(InventoryReservationService.class), outbox, mapper,
-                () -> Instant.parse("2026-08-22T00:01:00Z"), mock(CartRepository.class), mock(CartItemRepository.class));
+                () -> Instant.parse("2026-08-22T00:01:00Z"), mock(CartRepository.class), mock(CartItemRepository.class),
+                mock(CheckoutCommitHook.class));
 
         var result = service.commit(user, "chk_test");
 
@@ -101,7 +102,7 @@ class CheckoutCommitServiceTest {
         CartItemRepository cartItems = mock(CartItemRepository.class);
         CheckoutCommitService service = new CheckoutCommitService(sessions, previews, comparison, orders,
                 mock(InventoryLockService.class), mock(InventoryReservationService.class), mock(OutboxEventWriter.class), mapper,
-                () -> Instant.parse("2026-08-22T00:01:00Z"), carts, cartItems);
+                () -> Instant.parse("2026-08-22T00:01:00Z"), carts, cartItems, mock(CheckoutCommitHook.class));
 
         service.commit(user, "chk_test");
 
