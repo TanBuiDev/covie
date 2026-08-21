@@ -41,6 +41,7 @@ import vn.covie.catalog.persistence.TagRepository;
 import vn.covie.catalog.persistence.VariantOptionValueRepository;
 import vn.covie.catalog.persistence.VariantRepository;
 import vn.covie.media.application.MediaAttachmentPolicy;
+import vn.covie.inventory.application.InventoryModeCoordinator;
 import vn.covie.media.model.MediaAssetEntity;
 import vn.covie.media.model.MediaPurpose;
 import vn.covie.merchants.model.MerchantLocationEntity;
@@ -69,7 +70,7 @@ public class CatalogCreateService {
     private final VariantRepository variants; private final VariantOptionValueRepository variantOptions;
     private final LocationVariantRepository locationVariants; private final CatalogSearchDocumentService search;
     private final IdempotencyExecutor idempotency; private final OutboxEventWriter outbox;
-    private final UuidV7Generator ids; private final AppClock clock;
+    private final UuidV7Generator ids; private final AppClock clock; private final InventoryModeCoordinator inventory;
 
     public CatalogCreateService(CurrentActorProvider actors, MerchantAccessPolicy access, MerchantProfileRepository merchants,
             MerchantLocationRepository locations, CatalogAggregateValidator validator, MediaAttachmentPolicy media,
@@ -77,11 +78,11 @@ public class CatalogCreateService {
             TagRepository tags, CatalogItemMediaRepository itemMedia, OptionGroupRepository optionGroups,
             OptionValueRepository optionValues, VariantRepository variants, VariantOptionValueRepository variantOptions,
             LocationVariantRepository locationVariants, CatalogSearchDocumentService search, IdempotencyExecutor idempotency,
-            OutboxEventWriter outbox, UuidV7Generator ids, AppClock clock) {
+            OutboxEventWriter outbox, UuidV7Generator ids, AppClock clock, InventoryModeCoordinator inventory) {
         this.actors=actors; this.access=access; this.merchants=merchants; this.locations=locations; this.validator=validator; this.media=media;
         this.items=items; this.attributeValues=attributeValues; this.itemTags=itemTags; this.tags=tags; this.itemMedia=itemMedia;
         this.optionGroups=optionGroups; this.optionValues=optionValues; this.variants=variants; this.variantOptions=variantOptions;
-        this.locationVariants=locationVariants; this.search=search; this.idempotency=idempotency; this.outbox=outbox; this.ids=ids; this.clock=clock;
+        this.locationVariants=locationVariants; this.search=search; this.idempotency=idempotency; this.outbox=outbox; this.ids=ids; this.clock=clock; this.inventory=inventory;
     }
 
     public IdempotencyExecutor.Execution<CatalogItemManagementResponse> create(UUID merchantId, String idempotencyKey,
@@ -179,6 +180,7 @@ public class CatalogCreateService {
             if (!seen.add(location.getId() + ":" + variant.getId())) throw reject(ErrorCode.CATALOG_LOCATION_OFFER_INVALID, "Duplicate location offer.");
             LocationVariantEntity persisted = locationVariants.save(LocationVariantEntity.create(ids.generate(), location.getId(), variant.getId(),
                     offer.price(), offer.currency(), offer.available(), offer.inventoryMode(), offer.preparationTimeMinutes(), now));
+            inventory.onOfferCreated(persisted, type);
             result.add(new CatalogItemManagementResponse.LocationOfferResponse(persisted.getId(), location.getId(), variant.getId(),
                     persisted.getPrice(), persisted.getCurrencyCode(), persisted.isAvailable(), persisted.getInventoryMode(), persisted.getPreparationTimeMinutes()));
         }

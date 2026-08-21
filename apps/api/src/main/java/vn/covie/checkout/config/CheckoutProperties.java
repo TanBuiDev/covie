@@ -1,0 +1,1 @@
+package vn.covie.checkout.config; import java.time.Duration; import org.springframework.boot.context.properties.ConfigurationProperties; @ConfigurationProperties(prefix="covie.checkout") public record CheckoutProperties(Duration sessionTtl){public CheckoutProperties{if(sessionTtl==null)sessionTtl=Duration.ofMinutes(15);}}

@@ -74,7 +74,8 @@ public class CatalogDiscoveryService {
         }
         return new CatalogDiscoveryQuery(term, query.type(), query.listingKind(), query.categoryId(), query.lat(), query.lng(),
                 query.addressId(), radius, Boolean.TRUE.equals(query.pickup()), Boolean.TRUE.equals(query.openNow()),
-                query.minPrice(), query.maxPrice(), sort, limit, query.cursor());
+                query.minPrice(), query.maxPrice(), sort, limit, query.cursor(), Boolean.TRUE.equals(query.canServe()),
+                query.shipping());
     }
 
     private static boolean nonNegative(Long price) {
@@ -110,7 +111,7 @@ public class CatalogDiscoveryService {
                 String.valueOf(query.q()), String.valueOf(query.type()), String.valueOf(query.listingKind()),
                 String.valueOf(query.categoryId()), String.valueOf(query.radiusMeters()), String.valueOf(query.pickup()),
                 String.valueOf(query.openNow()), String.valueOf(query.minPrice()), String.valueOf(query.maxPrice()),
-                String.valueOf(query.sort()));
+                String.valueOf(query.sort()), String.valueOf(query.canServe()), String.valueOf(query.shipping()));
     }
 
     private static ApiException invalid(String message) {

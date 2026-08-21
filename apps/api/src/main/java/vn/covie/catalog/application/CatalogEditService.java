@@ -43,6 +43,7 @@ import vn.covie.catalog.persistence.TagRepository;
 import vn.covie.catalog.persistence.VariantOptionValueRepository;
 import vn.covie.catalog.persistence.VariantRepository;
 import vn.covie.media.application.MediaAttachmentPolicy;
+import vn.covie.inventory.application.InventoryModeCoordinator;
 import vn.covie.media.model.MediaAssetEntity;
 import vn.covie.media.model.MediaPurpose;
 import vn.covie.merchants.model.MerchantLocationEntity;
@@ -66,7 +67,7 @@ public class CatalogEditService {
     private final OptionGroupRepository optionGroups; private final OptionValueRepository optionValues;
     private final LocationVariantRepository locationVariants; private final MerchantLocationRepository locations;
     private final MediaAttachmentPolicy media; private final CatalogSearchDocumentService search;
-    private final UuidV7Generator ids; private final AppClock clock;
+    private final UuidV7Generator ids; private final AppClock clock; private final InventoryModeCoordinator inventory;
 
     public CatalogEditService(CurrentActorProvider actors, MerchantAccessPolicy access, CatalogItemRepository items,
             CatalogItemAttributeValueRepository attributes, CatalogItemTagRepository itemTags, TagRepository tags,
@@ -74,11 +75,11 @@ public class CatalogEditService {
             CatalogAggregateValidator validator, VariantRepository variants, VariantOptionValueRepository variantOptions,
             OptionGroupRepository optionGroups, OptionValueRepository optionValues, LocationVariantRepository locationVariants,
             MerchantLocationRepository locations, MediaAttachmentPolicy media, CatalogSearchDocumentService search,
-            UuidV7Generator ids, AppClock clock) {
+            UuidV7Generator ids, AppClock clock, InventoryModeCoordinator inventory) {
         this.actors=actors; this.access=access; this.items=items; this.attributes=attributes; this.itemTags=itemTags; this.tags=tags;
         this.itemMedia=itemMedia; this.categoryAttributes=categoryAttributes; this.validator=validator; this.variants=variants;
         this.variantOptions=variantOptions; this.optionGroups=optionGroups; this.optionValues=optionValues;
-        this.locationVariants=locationVariants; this.locations=locations; this.media=media; this.search=search; this.ids=ids; this.clock=clock;
+        this.locationVariants=locationVariants; this.locations=locations; this.media=media; this.search=search; this.ids=ids; this.clock=clock; this.inventory=inventory;
     }
 
     @Transactional
@@ -171,6 +172,7 @@ public class CatalogEditService {
         MerchantLocationEntity location = locations.findByIdAndMerchantProfileIdAndDeletedAtIsNull(offer.getMerchantLocationId(), merchantId)
                 .orElseThrow(CatalogEditService::notFound);
         validateOffer(item.getItemType(), location, inventoryMode);
+        inventory.beforeInventoryModeChange(offer, offer.getInventoryMode(), inventoryMode, item.getItemType());
         offer.update(price, available, inventoryMode, preparation, clock.now());
         LocationVariantEntity saved = locationVariants.saveAndFlush(offer);
         return new EditResult(saved.getId(), saved.getVersion());

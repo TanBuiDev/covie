@@ -5,6 +5,7 @@ import org.springframework.data.repository.query.Param;
 import vn.covie.catalog.model.LocationVariantEntity;
 public interface LocationVariantRepository extends JpaRepository<LocationVariantEntity,UUID> {
     Optional<LocationVariantEntity> findByIdAndDeletedAtIsNull(UUID id);
+    List<LocationVariantEntity> findAllByMerchantLocationIdAndDeletedAtIsNull(UUID merchantLocationId);
     @Query("""
             select lv from LocationVariantEntity lv
             join VariantEntity v on v.id = lv.variantId

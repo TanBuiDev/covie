@@ -1,0 +1,1 @@
+package vn.covie.checkout.api.dto; import java.time.Instant; import java.util.UUID; import vn.covie.checkout.model.*; public record CheckoutPreviewResponse(String checkoutToken,Instant expiresAt,UUID merchantLocationId,long subtotal,Long shippingFee,Long total,long knownTotal,String currency,FulfillmentMethod fulfillmentMethod){}

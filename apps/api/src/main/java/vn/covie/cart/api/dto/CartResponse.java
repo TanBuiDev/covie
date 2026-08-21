@@ -1,0 +1,1 @@
+package vn.covie.cart.api.dto; import java.util.*; import vn.covie.cart.model.*; public record CartResponse(UUID id,UUID merchantLocationId,CartType cartType,long version,List<CartItemResponse> items) {}

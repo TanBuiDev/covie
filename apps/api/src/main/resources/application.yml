@@ -53,6 +53,8 @@ springdoc:
     enabled: false
 
 covie:
+  checkout:
+    session-ttl: 15m
   auth:
     issuer: ${COVIE_AUTH_ISSUER:https://covie.vn}
     access-token-ttl: PT15M

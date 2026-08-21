@@ -68,7 +68,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/merchants/{merchantId}/contacts": {
+    "/api/v1/merchants/{merchantId}/locations/{locationId}/shipping-policies": {
         parameters: {
             query?: never;
             header?: never;
@@ -84,7 +84,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/merchants/{merchantId}/catalog-items": {
+    "/api/v1/merchants/{merchantId}/locations/{locationId}/delivery-coverages": {
         parameters: {
             query?: never;
             header?: never;
@@ -94,6 +94,102 @@ export interface paths {
         get: operations["list_2"];
         put?: never;
         post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/inventory/{locationVariantId}/stock-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["stockOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/inventory/{locationVariantId}/stock-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["stockIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/inventory/{locationVariantId}/set-stock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["setStock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/inventory/bulk-set-stock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["bulkSet"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_3"];
+        put?: never;
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/catalog-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_4"];
+        put?: never;
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -241,7 +337,7 @@ export interface paths {
         };
         get: operations["mine"];
         put?: never;
-        post: operations["create_3"];
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -258,7 +354,23 @@ export interface paths {
         /** List contact methods */
         get: operations["active_1"];
         put?: never;
-        post: operations["create_4"];
+        post: operations["create_6"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/carts/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["add_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -279,7 +391,39 @@ export interface paths {
          * Create a saved address
          * @description Browser mutations use X-CSRF-Token.
          */
-        post: operations["create_5"];
+        post: operations["create_7"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/checkouts/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/checkouts/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["commit"];
         delete?: never;
         options?: never;
         head?: never;
@@ -434,7 +578,7 @@ export interface paths {
         patch: operations["update_2"];
         trace?: never;
     };
-    "/api/v1/merchants/{merchantId}/contacts/{contactId}": {
+    "/api/v1/merchants/{merchantId}/locations/{locationId}/shipping-policies/{policyId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -448,6 +592,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update_3"];
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/locations/{locationId}/delivery-coverages/{coverageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch: operations["update_4"];
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/contacts/{contactId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_3"];
+        options?: never;
+        head?: never;
+        patch: operations["update_5"];
         trace?: never;
     };
     "/api/v1/merchants/{merchantId}/catalog-items/{itemId}": {
@@ -516,7 +692,7 @@ export interface paths {
          * Update the authenticated profile
          * @description Browser mutations use X-CSRF-Token.
          */
-        patch: operations["update_4"];
+        patch: operations["update_6"];
         trace?: never;
     };
     "/api/v1/me/contact-methods/{contactMethodId}": {
@@ -529,10 +705,26 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_2"];
+        delete: operations["delete_4"];
         options?: never;
         head?: never;
-        patch: operations["update_5"];
+        patch: operations["update_7"];
+        trace?: never;
+    };
+    "/api/v1/me/carts/{cartId}/items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_5"];
+        options?: never;
+        head?: never;
+        patch: operations["update_8"];
         trace?: never;
     };
     "/api/v1/me/addresses/{addressId}": {
@@ -545,10 +737,26 @@ export interface paths {
         get: operations["get_3"];
         put?: never;
         post?: never;
-        delete: operations["delete_3"];
+        delete: operations["delete_6"];
         options?: never;
         head?: never;
-        patch: operations["update_6"];
+        patch: operations["update_9"];
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/me/security/sessions": {
@@ -559,7 +767,39 @@ export interface paths {
             cookie?: never;
         };
         /** List active sessions */
-        get: operations["list_3"];
+        get: operations["list_6"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/carts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/carts/{cartId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -607,7 +847,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -828,6 +1068,123 @@ export interface components {
             /** Format: int64 */
             version?: number;
         };
+        ShippingPolicyUpsertRequest: {
+            /** @enum {string} */
+            mode?: "FREE" | "FIXED" | "NEGOTIATED" | "CONDITIONAL";
+            /** Format: int64 */
+            baseFee?: number;
+            currencyCode?: string;
+            /** @enum {string} */
+            ruleMatchMode?: "ANY" | "ALL";
+            /** @enum {string} */
+            status?: "ACTIVE" | "INACTIVE";
+            rules?: components["schemas"]["ShippingRuleRequest"][];
+        };
+        ShippingRuleRequest: {
+            /** @enum {string} */
+            conditionType?: "ORDER_AMOUNT_MIN" | "DISTANCE_MAX";
+            /** @enum {string} */
+            operator?: "GTE" | "LTE";
+            /** Format: int64 */
+            thresholdValue?: number;
+            /** @enum {string} */
+            actionType?: "FREE_SHIPPING";
+            /** Format: int32 */
+            priority?: number;
+            enabled?: boolean;
+        };
+        ShippingPolicyResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            merchantLocationId?: string;
+            /** @enum {string} */
+            mode?: "FREE" | "FIXED" | "NEGOTIATED" | "CONDITIONAL";
+            /** Format: int64 */
+            baseFee?: number;
+            currencyCode?: string;
+            /** @enum {string} */
+            ruleMatchMode?: "ANY" | "ALL";
+            /** @enum {string} */
+            status?: "ACTIVE" | "INACTIVE";
+            /** Format: int64 */
+            version?: number;
+            rules?: components["schemas"]["ShippingRuleRequest"][];
+        };
+        DeliveryCoverageUpsertRequest: {
+            /** @enum {string} */
+            coverageType?: "PRODUCT_DELIVERY" | "SERVICE_AREA";
+            radiusEnabled?: boolean;
+            /** Format: int32 */
+            radiusMeters?: number;
+            areaEnabled?: boolean;
+            locationAreaIds?: string[];
+            /** @enum {string} */
+            status?: "ACTIVE" | "INACTIVE";
+        };
+        DeliveryCoverageResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            merchantLocationId?: string;
+            /** @enum {string} */
+            coverageType?: "PRODUCT_DELIVERY" | "SERVICE_AREA";
+            radiusEnabled?: boolean;
+            /** Format: int32 */
+            radiusMeters?: number;
+            areaEnabled?: boolean;
+            locationAreaIds?: string[];
+            /** @enum {string} */
+            status?: "ACTIVE" | "INACTIVE";
+            /** Format: int64 */
+            version?: number;
+        };
+        StockMovementRequest: {
+            /** Format: int64 */
+            quantity?: number;
+            reasonCode?: string;
+            note?: string;
+        };
+        InventoryCommandResult: {
+            /** Format: uuid */
+            locationVariantId?: string;
+            /** Format: int64 */
+            stockOnHand?: number;
+            /** Format: int64 */
+            reservedQuantity?: number;
+            /** Format: int64 */
+            availableQuantity?: number;
+            /** Format: int64 */
+            version?: number;
+        };
+        SetStockRequest: {
+            /** Format: int64 */
+            stockOnHand?: number;
+            reasonCode?: string;
+            note?: string;
+        };
+        BulkSetStockItem: {
+            /** Format: uuid */
+            locationVariantId?: string;
+            /** Format: int64 */
+            stockOnHand?: number;
+        };
+        BulkSetStockRequest: {
+            reasonCode?: string;
+            note?: string;
+            items?: components["schemas"]["BulkSetStockItem"][];
+        };
+        BulkSetStockResult: {
+            results?: components["schemas"]["InventoryBulkItemResult"][];
+        };
+        InventoryBulkItemResult: {
+            /** Format: uuid */
+            locationVariantId?: string;
+            success?: boolean;
+            /** Format: int64 */
+            stockOnHand?: number;
+            errorCode?: string;
+        };
         MerchantContactRequest: {
             /** Format: uuid */
             merchantLocationId?: string;
@@ -1022,6 +1379,34 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        AddCartItemRequest: {
+            /** Format: uuid */
+            locationVariantId?: string;
+            /** Format: int64 */
+            quantity?: number;
+        };
+        CartItemResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            locationVariantId?: string;
+            /** Format: int64 */
+            quantity?: number;
+            /** Format: int64 */
+            priceSnapshot?: number;
+            itemName?: string;
+        };
+        CartResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            merchantLocationId?: string;
+            /** @enum {string} */
+            cartType?: "PRODUCT" | "SERVICE";
+            /** Format: int64 */
+            version?: number;
+            items?: components["schemas"]["CartItemResponse"][];
+        };
         CreateUserAddressRequest: {
             label: string;
             recipientName?: string;
@@ -1057,6 +1442,55 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             updatedAt?: string;
+        };
+        CheckoutPreviewRequest: {
+            /** @enum {string} */
+            sourceType?: "CART" | "DIRECT";
+            /** Format: uuid */
+            cartId?: string;
+            items?: components["schemas"]["DirectItem"][];
+            /** @enum {string} */
+            fulfillmentMethod?: "PICKUP" | "SELLER_DELIVERY" | "SERVICE";
+            /** Format: uuid */
+            addressId?: string;
+            /** @enum {string} */
+            paymentMethod?: "COD" | "BANK_TRANSFER_NEGOTIATED";
+        };
+        DirectItem: {
+            /** Format: uuid */
+            locationVariantId?: string;
+            /** Format: int64 */
+            quantity?: number;
+        };
+        CheckoutPreviewResponse: {
+            checkoutToken?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: uuid */
+            merchantLocationId?: string;
+            /** Format: int64 */
+            subtotal?: number;
+            /** Format: int64 */
+            shippingFee?: number;
+            /** Format: int64 */
+            total?: number;
+            /** Format: int64 */
+            knownTotal?: number;
+            currency?: string;
+            /** @enum {string} */
+            fulfillmentMethod?: "PICKUP" | "SELLER_DELIVERY" | "SERVICE";
+        };
+        CheckoutCommitRequest: {
+            checkoutToken: string;
+        };
+        OrderCreatedResponse: {
+            /** Format: uuid */
+            id?: string;
+            orderCode?: string;
+            /** @enum {string} */
+            status?: "PENDING_CONFIRMATION";
+            /** Format: date-time */
+            createdAt?: string;
         };
         AuthSessionResponse: {
             /** Format: uuid */
@@ -1143,6 +1577,10 @@ export interface components {
             value: string;
             primary?: boolean;
         };
+        UpdateCartItemRequest: {
+            /** Format: int64 */
+            quantity?: number;
+        };
         UpdateUserAddressRequest: {
             label: string;
             recipientName?: string;
@@ -1156,6 +1594,29 @@ export interface components {
             pinSource: "GPS" | "GEOCODED" | "USER_ADJUSTED";
             note?: string;
             defaultAddress?: boolean;
+        };
+        InventoryItemResponse: {
+            /** Format: uuid */
+            locationVariantId?: string;
+            /** Format: uuid */
+            catalogItemId?: string;
+            itemName?: string;
+            /** Format: uuid */
+            variantId?: string;
+            variantName?: string;
+            /** Format: uuid */
+            locationId?: string;
+            locationName?: string;
+            /** @enum {string} */
+            mode?: "TRACKED" | "UNTRACKED";
+            /** Format: int64 */
+            stockOnHand?: number;
+            /** Format: int64 */
+            reservedQuantity?: number;
+            /** Format: int64 */
+            availableQuantity?: number;
+            /** Format: int64 */
+            version?: number;
         };
         CatalogItemManagementSummaryResponse: {
             /** Format: uuid */
@@ -1551,6 +2012,221 @@ export interface operations {
             header?: never;
             path: {
                 merchantId: string;
+                locationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ShippingPolicyResponse"][];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                locationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShippingPolicyUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ShippingPolicyResponse"];
+                };
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                locationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DeliveryCoverageResponse"][];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                locationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryCoverageUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DeliveryCoverageResponse"];
+                };
+            };
+        };
+    };
+    stockOut: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                merchantId: string;
+                locationVariantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockMovementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InventoryCommandResult"];
+                };
+            };
+        };
+    };
+    stockIn: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                merchantId: string;
+                locationVariantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockMovementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InventoryCommandResult"];
+                };
+            };
+        };
+    };
+    setStock: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                merchantId: string;
+                locationVariantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetStockRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InventoryCommandResult"];
+                };
+            };
+        };
+    };
+    bulkSet: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkSetStockRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BulkSetStockResult"];
+                };
+            };
+        };
+    };
+    list_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
             };
             cookie?: never;
         };
@@ -1567,7 +2243,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1593,7 +2269,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -1615,7 +2291,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_4: {
         parameters: {
             query?: never;
             header?: {
@@ -1846,7 +2522,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -1890,7 +2566,7 @@ export interface operations {
             };
         };
     };
-    create_4: {
+    create_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -1910,6 +2586,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ContactMethodResponse"];
+                };
+            };
+        };
+    };
+    add_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddCartItemRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CartResponse"];
                 };
             };
         };
@@ -1934,7 +2634,7 @@ export interface operations {
             };
         };
     };
-    create_5: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -1954,6 +2654,56 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UserAddressResponse"];
+                };
+            };
+        };
+    };
+    preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutPreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CheckoutPreviewResponse"];
+                };
+            };
+        };
+    };
+    commit: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutCommitRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderCreatedResponse"];
                 };
             };
         };
@@ -2090,6 +2840,7 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2191,6 +2942,7 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2252,6 +3004,114 @@ export interface operations {
     delete_1: {
         parameters: {
             query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                locationId: string;
+                policyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_3: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                locationId: string;
+                policyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShippingPolicyUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ShippingPolicyResponse"];
+                };
+            };
+        };
+    };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                locationId: string;
+                coverageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_4: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                merchantId: string;
+                locationId: string;
+                coverageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryCoverageUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DeliveryCoverageResponse"];
+                };
+            };
+        };
+    };
+    delete_3: {
+        parameters: {
+            query?: never;
             header?: never;
             path: {
                 merchantId: string;
@@ -2270,7 +3130,7 @@ export interface operations {
             };
         };
     };
-    update_3: {
+    update_5: {
         parameters: {
             query?: never;
             header?: {
@@ -2426,7 +3286,7 @@ export interface operations {
             };
         };
     };
-    update_4: {
+    update_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -2450,7 +3310,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2470,7 +3330,7 @@ export interface operations {
             };
         };
     };
-    update_5: {
+    update_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -2492,6 +3352,58 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ContactMethodResponse"];
+                };
+            };
+        };
+    };
+    delete_5: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                cartId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_8: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                cartId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCartItemRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CartResponse"];
                 };
             };
         };
@@ -2518,7 +3430,7 @@ export interface operations {
             };
         };
     };
-    delete_3: {
+    delete_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -2538,7 +3450,7 @@ export interface operations {
             };
         };
     };
-    update_6: {
+    update_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -2564,7 +3476,29 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InventoryItemResponse"][];
+                };
+            };
+        };
+    };
+    list_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -2580,6 +3514,48 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AuthSessionSummaryResponse"][];
+                };
+            };
+        };
+    };
+    list_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CartResponse"][];
+                };
+            };
+        };
+    };
+    get_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cartId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CartResponse"];
                 };
             };
         };
@@ -2626,7 +3602,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_8: {
         parameters: {
             query?: {
                 parentId?: string;
@@ -2711,6 +3687,8 @@ export interface operations {
                 sort?: string;
                 limit?: number;
                 cursor?: string;
+                canServe?: boolean;
+                shipping?: string;
             };
             header?: never;
             path?: never;
