@@ -52,6 +52,7 @@ public class CheckoutPreviewService {
         var location = locations.findById(candidate.merchantLocationId()).orElseThrow(
                 () -> error(ErrorCode.CHECKOUT_LOCATION_UNAVAILABLE, "Location unavailable."));
         long subtotal = 0;
+        java.util.List<CheckoutComparableItem> comparableItems = new java.util.ArrayList<>();
         for (var item : candidate.items()) {
             var offer = offers.findUsableById(item.locationVariantId()).orElseThrow(
                     () -> error(ErrorCode.CHECKOUT_ITEM_UNAVAILABLE, "Item unavailable."));
@@ -64,6 +65,7 @@ public class CheckoutPreviewService {
                 if (balance.availableQuantity() < item.quantity()) throw error(ErrorCode.INSUFFICIENT_INVENTORY, "Insufficient inventory.");
             }
             subtotal = Math.addExact(subtotal, Math.multiplyExact(offer.getPrice(), item.quantity()));
+            comparableItems.add(new CheckoutComparableItem(offer.getId(), item.quantity(), offer.getPrice(), true));
         }
         Long fee = 0L; Long total = subtotal; long known = subtotal;
         if (request.fulfillmentMethod() == FulfillmentMethod.SERVICE) {
@@ -77,7 +79,11 @@ public class CheckoutPreviewService {
         } else if (request.fulfillmentMethod() != FulfillmentMethod.PICKUP) {
             throw error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED, "Fulfillment method is required.");
         }
-        var stored = sessions.create(user, candidate.sourceType(), mapper.valueToTree(candidate), candidate.sourceCartVersion(), mapper.valueToTree(request), mapper.valueToTree(Map.of("subtotal", subtotal, "knownTotal", known)));
+        CheckoutComparableSnapshot comparableSnapshot = new CheckoutComparableSnapshot(candidate.sourceType(), location.getId(),
+                candidate.sourceCartVersion(), request.fulfillmentMethod(), request.addressId(), subtotal,
+                location.getCurrencyCode(), comparableItems);
+        var stored = sessions.create(user, candidate.sourceType(), mapper.valueToTree(candidate), candidate.sourceCartVersion(),
+                mapper.valueToTree(request), mapper.valueToTree(comparableSnapshot));
         return new CheckoutPreviewResponse(stored.checkoutToken(), stored.expiresAt(), location.getId(), subtotal, fee, total, known, location.getCurrencyCode(), request.fulfillmentMethod());
     }
 
