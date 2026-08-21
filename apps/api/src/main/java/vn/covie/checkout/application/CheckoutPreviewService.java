@@ -67,7 +67,7 @@ public class CheckoutPreviewService {
         UUID user = actors.currentActor().userId();
         CheckoutRevalidation revalidated = revalidate(user, request);
         var stored = sessions.create(user, revalidated.checkout().candidate().sourceType(),
-                mapper.valueToTree(revalidated.checkout().candidate()), revalidated.checkout().candidate().sourceCartVersion(),
+                revalidated.checkout().candidate().sourceContext(), revalidated.checkout().candidate().sourceCartVersion(),
                 mapper.valueToTree(request), mapper.valueToTree(revalidated.comparableSnapshot()));
         RevalidatedCheckout checkout = revalidated.checkout();
         return new CheckoutPreviewResponse(stored.checkoutToken(), stored.expiresAt(),

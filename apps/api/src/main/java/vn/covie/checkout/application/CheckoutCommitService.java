@@ -59,7 +59,7 @@ public class CheckoutCommitService {
             throw new ApiException(ErrorCode.CHECKOUT_SESSION_INVALID, HttpStatus.CONFLICT,
                     "Checkout session is invalid.");
         }
-        CartEntity cart = lockCartIfRequired(userId, session, request);
+        CartEntity cart = lockCartIfRequired(userId, session);
         CheckoutRevalidation initial = previews.revalidate(userId, request);
         Map<UUID, InventoryBalanceEntity> lockedBalances = lockTrackedBalances(initial);
         CheckoutRevalidation revalidated = previews.revalidate(userId, request, lockedBalances);
@@ -81,12 +81,17 @@ public class CheckoutCommitService {
         return new OrderCreatedResponse(created.id(), created.orderCode(), vn.covie.orders.model.OrderStatus.PENDING_CONFIRMATION, now);
     }
 
-    private CartEntity lockCartIfRequired(UUID userId, vn.covie.checkout.model.CheckoutSessionEntity session,
-            CheckoutPreviewRequest request) {
-        if (session.getSourceType() != vn.covie.checkout.model.CheckoutSourceType.CART || request.cartId() == null) {
+    private CartEntity lockCartIfRequired(UUID userId, vn.covie.checkout.model.CheckoutSessionEntity session) {
+        if (session.getSourceType() != vn.covie.checkout.model.CheckoutSourceType.CART) {
             return null;
         }
-        CartEntity cart = carts.findActiveByIdAndUserIdForUpdate(request.cartId(), userId)
+        UUID cartId;
+        try {
+            cartId = UUID.fromString(session.getSourceContext().required("cartId").asText());
+        } catch (RuntimeException exception) {
+            throw checkoutChanged("Cart is no longer available.");
+        }
+        CartEntity cart = carts.findActiveByIdAndUserIdForUpdate(cartId, userId)
                 .orElseThrow(() -> checkoutChanged("Cart is no longer available."));
         if (session.getCartVersion() == null || session.getCartVersion() != cart.getVersion()) {
             throw checkoutChanged("Cart has changed.");
