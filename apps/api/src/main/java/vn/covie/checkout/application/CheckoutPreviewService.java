@@ -51,6 +51,9 @@ public class CheckoutPreviewService {
         CheckoutCandidate candidate = candidates.resolve(user, request);
         var location = locations.findById(candidate.merchantLocationId()).orElseThrow(
                 () -> error(ErrorCode.CHECKOUT_LOCATION_UNAVAILABLE, "Location unavailable."));
+        if (request.fulfillmentMethod() == FulfillmentMethod.PICKUP && !location.isPickupEnabled()) {
+            throw error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED, "Pickup is not enabled at this location.");
+        }
         long subtotal = 0;
         java.util.List<CheckoutComparableItem> comparableItems = new java.util.ArrayList<>();
         for (var item : candidate.items()) {
