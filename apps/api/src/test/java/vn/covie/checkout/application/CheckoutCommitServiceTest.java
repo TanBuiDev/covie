@@ -75,7 +75,8 @@ class CheckoutCommitServiceTest {
     void checksOutTheLockedCartOnlyAfterOrderCreationSucceeds() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         UUID user = UUID.randomUUID(), cartId = UUID.randomUUID();
-        CheckoutPreviewRequest request = new CheckoutPreviewRequest(CheckoutSourceType.CART, cartId, null,
+        UUID replayedCartId = UUID.randomUUID();
+        CheckoutPreviewRequest request = new CheckoutPreviewRequest(CheckoutSourceType.CART, replayedCartId, null,
                 FulfillmentMethod.PICKUP, null, PaymentMethod.COD);
         CheckoutSessionEntity session = CheckoutSessionEntity.create(UUID.randomUUID(), "hash", user,
                 CheckoutSourceType.CART, mapper.createObjectNode().put("cartId", cartId.toString()), 0L, mapper.valueToTree(request),
@@ -106,5 +107,6 @@ class CheckoutCommitServiceTest {
 
         assertThat(cart.getCartStatus()).isEqualTo(CartStatus.CHECKED_OUT);
         verify(cartItems).deleteAllByCartId(cartId);
+        verify(carts).findActiveByIdAndUserIdForUpdate(cartId, user);
     }
 }
