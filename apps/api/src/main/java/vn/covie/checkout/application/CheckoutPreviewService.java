@@ -1,7 +1,9 @@
 package vn.covie.checkout.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Map;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,7 +16,9 @@ import vn.covie.checkout.api.dto.CheckoutPreviewRequest;
 import vn.covie.checkout.api.dto.CheckoutPreviewResponse;
 import vn.covie.checkout.model.FulfillmentMethod;
 import vn.covie.inventory.persistence.InventoryBalanceRepository;
+import vn.covie.merchants.model.MerchantLocationEntity;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
+import vn.covie.shipping.application.ShippingEvaluation;
 import vn.covie.shipping.application.ShippingEvaluator;
 import vn.covie.shipping.model.ShippingPolicyStatus;
 import vn.covie.shipping.persistence.ShippingPolicyRepository;
@@ -40,23 +44,42 @@ public class CheckoutPreviewService {
             InventoryBalanceRepository balances, ShippingPolicyRepository policies,
             ShippingRuleRepository rules, ShippingEvaluator shipping, CheckoutSessionService sessions,
             ObjectMapper mapper) {
-        this.actors = actors; this.candidates = candidates; this.offers = offers; this.locations = locations;
-        this.balances = balances; this.policies = policies; this.rules = rules; this.shipping = shipping;
-        this.sessions = sessions; this.mapper = mapper;
+        this.actors = actors;
+        this.candidates = candidates;
+        this.offers = offers;
+        this.locations = locations;
+        this.balances = balances;
+        this.policies = policies;
+        this.rules = rules;
+        this.shipping = shipping;
+        this.sessions = sessions;
+        this.mapper = mapper;
     }
 
     @Transactional
     public CheckoutPreviewResponse preview(CheckoutPreviewRequest request) {
         UUID user = actors.currentActor().userId();
+        CheckoutRevalidation revalidated = revalidate(user, request);
+        var stored = sessions.create(user, revalidated.checkout().candidate().sourceType(),
+                mapper.valueToTree(revalidated.checkout().candidate()), revalidated.checkout().candidate().sourceCartVersion(),
+                mapper.valueToTree(request), mapper.valueToTree(revalidated.comparableSnapshot()));
+        RevalidatedCheckout checkout = revalidated.checkout();
+        return new CheckoutPreviewResponse(stored.checkoutToken(), stored.expiresAt(),
+                checkout.candidate().merchantLocationId(), checkout.subtotal(), revalidated.shippingFee(),
+                revalidated.total(), revalidated.knownTotal(), checkout.currency(), checkout.fulfillmentMethod());
+    }
+
+    @Transactional(readOnly = true)
+    public CheckoutRevalidation revalidate(UUID user, CheckoutPreviewRequest request) {
         CheckoutCandidate candidate = candidates.resolve(user, request);
-        var location = locations.findById(candidate.merchantLocationId()).orElseThrow(
+        MerchantLocationEntity location = locations.findById(candidate.merchantLocationId()).orElseThrow(
                 () -> error(ErrorCode.CHECKOUT_LOCATION_UNAVAILABLE, "Location unavailable."));
-        if (request.fulfillmentMethod() == FulfillmentMethod.PICKUP && !location.isPickupEnabled()) {
-            throw error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED, "Pickup is not enabled at this location.");
-        }
+        validateFulfillmentCapability(request.fulfillmentMethod(), request.addressId(), location);
+
         long subtotal = 0;
-        java.util.List<CheckoutComparableItem> comparableItems = new java.util.ArrayList<>();
-        for (var item : candidate.items()) {
+        List<CheckoutComparableItem> comparableItems = new ArrayList<>();
+        List<RevalidatedCheckoutItem> revalidatedItems = new ArrayList<>();
+        for (CheckoutCandidateItem item : candidate.items()) {
             var offer = offers.findUsableById(item.locationVariantId()).orElseThrow(
                     () -> error(ErrorCode.CHECKOUT_ITEM_UNAVAILABLE, "Item unavailable."));
             if (!offer.isAvailable()) throw error(ErrorCode.CHECKOUT_ITEM_UNAVAILABLE, "Item unavailable.");
@@ -64,30 +87,72 @@ public class CheckoutPreviewService {
                 throw error(ErrorCode.CHECKOUT_ITEMS_INVALID, "Service quantity must be one.");
             }
             if (offer.getInventoryMode() == InventoryMode.TRACKED) {
-                var balance = balances.findById(offer.getId()).orElseThrow();
-                if (balance.availableQuantity() < item.quantity()) throw error(ErrorCode.INSUFFICIENT_INVENTORY, "Insufficient inventory.");
+                var balance = balances.findById(offer.getId()).orElseThrow(
+                        () -> error(ErrorCode.INSUFFICIENT_INVENTORY, "Insufficient inventory."));
+                if (balance.availableQuantity() < item.quantity()) {
+                    throw error(ErrorCode.INSUFFICIENT_INVENTORY, "Insufficient inventory.");
+                }
             }
             subtotal = Math.addExact(subtotal, Math.multiplyExact(offer.getPrice(), item.quantity()));
             comparableItems.add(new CheckoutComparableItem(offer.getId(), item.quantity(), offer.getPrice(), true));
+            ObjectNode itemSnapshot = mapper.createObjectNode()
+                    .put("locationVariantId", offer.getId().toString())
+                    .put("variantId", item.variantId().toString())
+                    .put("catalogItemId", item.catalogItemId().toString())
+                    .put("unitPrice", offer.getPrice())
+                    .put("currency", offer.getCurrencyCode());
+            revalidatedItems.add(new RevalidatedCheckoutItem(item, offer.getPrice(), itemSnapshot));
         }
-        Long fee = 0L; Long total = subtotal; long known = subtotal;
+
+        ShippingEvaluation evaluation = null;
+        Long fee = 0L;
+        Long total = subtotal;
+        long knownTotal = subtotal;
         if (request.fulfillmentMethod() == FulfillmentMethod.SERVICE) {
-            if (!location.isServiceEnabled() || request.addressId() == null) throw error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED, "Service requires an address and enabled service location.");
             fee = null;
         } else if (request.fulfillmentMethod() == FulfillmentMethod.SELLER_DELIVERY) {
-            if (!location.isSellerDeliveryEnabled() || request.addressId() == null) throw error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED, "Seller delivery requires an address and enabled delivery location.");
-            var policy = policies.findFirstByMerchantLocationIdAndPolicyStatus(location.getId(), ShippingPolicyStatus.ACTIVE).orElseThrow(() -> error(ErrorCode.CHECKOUT_LOCATION_UNAVAILABLE, "Shipping policy unavailable."));
-            var evaluation = shipping.evaluate(policy, rules.findByShippingPolicyIdOrderByPriority(policy.getId()), subtotal, 0);
-            fee = evaluation.shippingFeeMinor(); total = evaluation.totalMinor(); known = evaluation.knownTotalMinor();
-        } else if (request.fulfillmentMethod() != FulfillmentMethod.PICKUP) {
-            throw error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED, "Fulfillment method is required.");
+            var policy = policies.findFirstByMerchantLocationIdAndPolicyStatus(location.getId(), ShippingPolicyStatus.ACTIVE)
+                    .orElseThrow(() -> error(ErrorCode.CHECKOUT_LOCATION_UNAVAILABLE, "Shipping policy unavailable."));
+            evaluation = shipping.evaluate(policy, rules.findByShippingPolicyIdOrderByPriority(policy.getId()), subtotal, 0);
+            fee = evaluation.shippingFeeMinor();
+            total = evaluation.totalMinor();
+            knownTotal = evaluation.knownTotalMinor();
         }
-        CheckoutComparableSnapshot comparableSnapshot = new CheckoutComparableSnapshot(candidate.sourceType(), location.getId(),
+
+        ObjectNode locationSnapshot = mapper.createObjectNode().put("id", location.getId().toString())
+                .put("name", location.getName()).put("addressText", location.getAddressText());
+        ObjectNode buyerAddressSnapshot = request.addressId() == null ? null
+                : mapper.createObjectNode().put("id", request.addressId().toString());
+        FulfillmentSnapshots fulfillment = new FulfillmentSnapshots(request.addressId(), null, locationSnapshot,
+                buyerAddressSnapshot, mapper.createObjectNode(), mapper.createObjectNode(),
+                evaluation == null ? null : evaluation.policySnapshot());
+        RevalidatedCheckout checkout = new RevalidatedCheckout(candidate, request.fulfillmentMethod(), request.paymentMethod(),
+                List.copyOf(revalidatedItems), subtotal, location.getCurrencyCode(), evaluation, fulfillment);
+        CheckoutComparableSnapshot comparable = new CheckoutComparableSnapshot(candidate.sourceType(), location.getId(),
                 candidate.sourceCartVersion(), request.fulfillmentMethod(), request.addressId(), subtotal,
                 location.getCurrencyCode(), comparableItems);
-        var stored = sessions.create(user, candidate.sourceType(), mapper.valueToTree(candidate), candidate.sourceCartVersion(),
-                mapper.valueToTree(request), mapper.valueToTree(comparableSnapshot));
-        return new CheckoutPreviewResponse(stored.checkoutToken(), stored.expiresAt(), location.getId(), subtotal, fee, total, known, location.getCurrencyCode(), request.fulfillmentMethod());
+        return new CheckoutRevalidation(checkout, comparable, fee, total, knownTotal, evaluation);
+    }
+
+    private static void validateFulfillmentCapability(FulfillmentMethod method, UUID addressId,
+            MerchantLocationEntity location) {
+        if (method == FulfillmentMethod.PICKUP) {
+            if (!location.isPickupEnabled()) {
+                throw error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED, "Pickup is not enabled at this location.");
+            }
+        } else if (method == FulfillmentMethod.SELLER_DELIVERY) {
+            if (!location.isSellerDeliveryEnabled() || addressId == null) {
+                throw error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED,
+                        "Seller delivery requires an address and enabled delivery location.");
+            }
+        } else if (method == FulfillmentMethod.SERVICE) {
+            if (!location.isServiceEnabled() || addressId == null) {
+                throw error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED,
+                        "Service requires an address and enabled service location.");
+            }
+        } else {
+            throw error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED, "Fulfillment method is required.");
+        }
     }
 
     private static ApiException error(ErrorCode code, String message) {
