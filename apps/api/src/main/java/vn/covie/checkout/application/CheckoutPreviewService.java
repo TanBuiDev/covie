@@ -150,7 +150,8 @@ public class CheckoutPreviewService {
                 List.copyOf(revalidatedItems), subtotal, location.getCurrencyCode(), evaluation, fulfillment);
         CheckoutComparableSnapshot comparable = new CheckoutComparableSnapshot(candidate.sourceType(), location.getId(),
                 candidate.sourceCartVersion(), request.fulfillmentMethod(), request.addressId(),
-                buyerAddress == null ? null : buyerAddress.getVersion(), subtotal,
+                buyerAddress == null ? null : buyerAddress.getVersion(), subtotal, fee, total, knownTotal,
+                location.getMinimumDeliveryOrder(),
                 location.getCurrencyCode(), comparableItems);
         return new CheckoutRevalidation(checkout, comparable, fee, total, knownTotal, evaluation, Set.copyOf(trackedOfferIds));
     }

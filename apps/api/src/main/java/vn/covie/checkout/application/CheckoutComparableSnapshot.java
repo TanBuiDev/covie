@@ -14,6 +14,10 @@ public record CheckoutComparableSnapshot(
         UUID addressId,
         Long addressVersion,
         long subtotal,
+        Long shippingFee,
+        Long total,
+        long knownTotal,
+        Long minimumDeliveryOrder,
         String currency,
         List<CheckoutComparableItem> items) {
     public CheckoutComparableSnapshot {

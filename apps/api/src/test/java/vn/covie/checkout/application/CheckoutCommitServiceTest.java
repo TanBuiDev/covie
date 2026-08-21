@@ -43,7 +43,7 @@ class CheckoutCommitServiceTest {
         CheckoutSessionEntity session = CheckoutSessionEntity.create(UUID.randomUUID(), "hash", user,
                 CheckoutSourceType.DIRECT, mapper.createObjectNode(), null, mapper.valueToTree(request),
                 mapper.valueToTree(new CheckoutComparableSnapshot(CheckoutSourceType.DIRECT, UUID.randomUUID(), null,
-                        FulfillmentMethod.PICKUP, null, null, 10_000, "VND", List.of())),
+                        FulfillmentMethod.PICKUP, null, null, 10_000, 0L, 10_000L, 10_000L, null, "VND", List.of())),
                 Instant.parse("2026-08-22T00:15:00Z"), Instant.parse("2026-08-22T00:00:00Z"));
         CheckoutSessionService sessions = mock(CheckoutSessionService.class);
         when(sessions.lock("chk_test", user)).thenReturn(session);
@@ -80,7 +80,7 @@ class CheckoutCommitServiceTest {
         CheckoutSessionEntity session = CheckoutSessionEntity.create(UUID.randomUUID(), "hash", user,
                 CheckoutSourceType.CART, mapper.createObjectNode(), 0L, mapper.valueToTree(request),
                 mapper.valueToTree(new CheckoutComparableSnapshot(CheckoutSourceType.CART, UUID.randomUUID(), 0L,
-                        FulfillmentMethod.PICKUP, null, null, 10_000, "VND", List.of())),
+                        FulfillmentMethod.PICKUP, null, null, 10_000, 0L, 10_000L, 10_000L, null, "VND", List.of())),
                 Instant.parse("2026-08-22T00:15:00Z"), Instant.parse("2026-08-22T00:00:00Z"));
         CheckoutSessionService sessions = mock(CheckoutSessionService.class);
         when(sessions.lock("chk_test", user)).thenReturn(session);

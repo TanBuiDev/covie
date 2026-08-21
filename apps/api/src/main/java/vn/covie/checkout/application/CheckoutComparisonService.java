@@ -22,6 +22,14 @@ public class CheckoutComparisonService {
                 || !accepted.merchantLocationId().equals(current.merchantLocationId())) {
             changes.add(change(CheckoutChangeType.DELIVERY_COVERAGE_CHANGED));
         }
+        if (!java.util.Objects.equals(accepted.minimumDeliveryOrder(), current.minimumDeliveryOrder())) {
+            changes.add(change(CheckoutChangeType.MINIMUM_ORDER_CHANGED));
+        }
+        if (!java.util.Objects.equals(accepted.shippingFee(), current.shippingFee())
+                || !java.util.Objects.equals(accepted.total(), current.total())
+                || accepted.knownTotal() != current.knownTotal()) {
+            changes.add(change(CheckoutChangeType.SHIPPING_CHANGED));
+        }
 
         Map<UUID, CheckoutComparableItem> currentItems = byOffer(current.items());
         boolean cartChanged = false;
