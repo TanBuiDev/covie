@@ -35,6 +35,7 @@ import vn.covie.shared.web.ErrorCode;
 import vn.covie.shipping.application.ShippingEvaluator;
 import vn.covie.shipping.persistence.ShippingPolicyRepository;
 import vn.covie.shipping.persistence.ShippingRuleRepository;
+import vn.covie.users.persistence.UserAddressRepository;
 
 class CheckoutPreviewSnapshotTest {
     @Test
@@ -59,7 +60,7 @@ class CheckoutPreviewSnapshotTest {
         when(locations.findById(locationId)).thenReturn(Optional.of(location));
         CheckoutPreviewService service = new CheckoutPreviewService(actors, candidates, offers, locations,
                 mock(InventoryBalanceRepository.class), mock(ShippingPolicyRepository.class), mock(ShippingRuleRepository.class),
-                mock(ShippingEvaluator.class), mock(CheckoutSessionService.class), new ObjectMapper());
+                mock(ShippingEvaluator.class), mock(CheckoutSessionService.class), new ObjectMapper(), mock(UserAddressRepository.class));
 
         assertThatThrownBy(() -> service.preview(new CheckoutPreviewRequest(CheckoutSourceType.DIRECT, null,
                 List.of(new CheckoutPreviewRequest.DirectItem(offerId, 1)), FulfillmentMethod.PICKUP, null, PaymentMethod.COD)))
@@ -93,7 +94,7 @@ class CheckoutPreviewSnapshotTest {
                 new CreatedCheckoutSession(UUID.randomUUID(), "chk_test", Instant.parse("2026-08-22T00:15:00Z")));
         CheckoutPreviewService service = new CheckoutPreviewService(actors, candidates, offers, locations,
                 mock(InventoryBalanceRepository.class), mock(ShippingPolicyRepository.class), mock(ShippingRuleRepository.class),
-                mock(ShippingEvaluator.class), sessions, new ObjectMapper());
+                mock(ShippingEvaluator.class), sessions, new ObjectMapper(), mock(UserAddressRepository.class));
 
         service.preview(new CheckoutPreviewRequest(CheckoutSourceType.CART, UUID.randomUUID(), null,
                 FulfillmentMethod.PICKUP, null, PaymentMethod.COD));

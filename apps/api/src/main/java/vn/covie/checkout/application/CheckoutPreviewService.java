@@ -27,6 +27,8 @@ import vn.covie.shipping.persistence.ShippingPolicyRepository;
 import vn.covie.shipping.persistence.ShippingRuleRepository;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
+import vn.covie.users.model.UserAddressEntity;
+import vn.covie.users.persistence.UserAddressRepository;
 
 @Service
 public class CheckoutPreviewService {
@@ -40,12 +42,13 @@ public class CheckoutPreviewService {
     private final ShippingEvaluator shipping;
     private final CheckoutSessionService sessions;
     private final ObjectMapper mapper;
+    private final UserAddressRepository addresses;
 
     public CheckoutPreviewService(CurrentActorProvider actors, CheckoutCandidateResolverRegistry candidates,
             LocationVariantRepository offers, MerchantLocationRepository locations,
             InventoryBalanceRepository balances, ShippingPolicyRepository policies,
             ShippingRuleRepository rules, ShippingEvaluator shipping, CheckoutSessionService sessions,
-            ObjectMapper mapper) {
+            ObjectMapper mapper, UserAddressRepository addresses) {
         this.actors = actors;
         this.candidates = candidates;
         this.offers = offers;
@@ -56,6 +59,7 @@ public class CheckoutPreviewService {
         this.shipping = shipping;
         this.sessions = sessions;
         this.mapper = mapper;
+        this.addresses = addresses;
     }
 
     @Transactional
@@ -82,6 +86,9 @@ public class CheckoutPreviewService {
         MerchantLocationEntity location = locations.findById(candidate.merchantLocationId()).orElseThrow(
                 () -> error(ErrorCode.CHECKOUT_LOCATION_UNAVAILABLE, "Location unavailable."));
         validateFulfillmentCapability(request.fulfillmentMethod(), request.addressId(), location);
+        UserAddressEntity buyerAddress = request.addressId() == null ? null : addresses
+                .findByIdAndUserIdAndStatus(request.addressId(), user, "ACTIVE")
+                .orElseThrow(() -> error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED, "Delivery address is unavailable."));
 
         long subtotal = 0;
         List<CheckoutComparableItem> comparableItems = new ArrayList<>();
@@ -131,15 +138,19 @@ public class CheckoutPreviewService {
 
         ObjectNode locationSnapshot = mapper.createObjectNode().put("id", location.getId().toString())
                 .put("name", location.getName()).put("addressText", location.getAddressText());
-        ObjectNode buyerAddressSnapshot = request.addressId() == null ? null
-                : mapper.createObjectNode().put("id", request.addressId().toString());
+        ObjectNode buyerAddressSnapshot = buyerAddress == null ? null : mapper.createObjectNode()
+                .put("id", buyerAddress.getId().toString()).put("label", buyerAddress.getLabel())
+                .put("recipientName", buyerAddress.getRecipientName()).put("phone", buyerAddress.getPhone())
+                .put("addressText", buyerAddress.getAddressText()).put("latitude", buyerAddress.getGeoPoint().getY())
+                .put("longitude", buyerAddress.getGeoPoint().getX()).put("version", buyerAddress.getVersion());
         FulfillmentSnapshots fulfillment = new FulfillmentSnapshots(request.addressId(), null, locationSnapshot,
                 buyerAddressSnapshot, mapper.createObjectNode(), mapper.createObjectNode(),
                 evaluation == null ? null : evaluation.policySnapshot());
         RevalidatedCheckout checkout = new RevalidatedCheckout(candidate, request.fulfillmentMethod(), request.paymentMethod(),
                 List.copyOf(revalidatedItems), subtotal, location.getCurrencyCode(), evaluation, fulfillment);
         CheckoutComparableSnapshot comparable = new CheckoutComparableSnapshot(candidate.sourceType(), location.getId(),
-                candidate.sourceCartVersion(), request.fulfillmentMethod(), request.addressId(), subtotal,
+                candidate.sourceCartVersion(), request.fulfillmentMethod(), request.addressId(),
+                buyerAddress == null ? null : buyerAddress.getVersion(), subtotal,
                 location.getCurrencyCode(), comparableItems);
         return new CheckoutRevalidation(checkout, comparable, fee, total, knownTotal, evaluation, Set.copyOf(trackedOfferIds));
     }

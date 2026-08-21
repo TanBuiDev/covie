@@ -14,7 +14,8 @@ public class CheckoutComparisonService {
         if (!java.util.Objects.equals(accepted.sourceCartVersion(), current.sourceCartVersion())) {
             changes.add(change(CheckoutChangeType.CART_CHANGED));
         }
-        if (!java.util.Objects.equals(accepted.addressId(), current.addressId())) {
+        if (!java.util.Objects.equals(accepted.addressId(), current.addressId())
+                || !java.util.Objects.equals(accepted.addressVersion(), current.addressVersion())) {
             changes.add(change(CheckoutChangeType.ADDRESS_CHANGED));
         }
         if (accepted.fulfillmentMethod() != current.fulfillmentMethod()

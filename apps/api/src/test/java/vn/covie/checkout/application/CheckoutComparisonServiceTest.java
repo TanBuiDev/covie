@@ -33,6 +33,6 @@ class CheckoutComparisonServiceTest {
 
     private static CheckoutComparableSnapshot snapshot(UUID offerId, long price, Long cartVersion) {
         return new CheckoutComparableSnapshot(CheckoutSourceType.CART, LOCATION_ID, cartVersion,
-                FulfillmentMethod.PICKUP, null, 50_000L, "VND", List.of(new CheckoutComparableItem(offerId, 1, price, true)));
+                FulfillmentMethod.PICKUP, null, null, 50_000L, "VND", List.of(new CheckoutComparableItem(offerId, 1, price, true)));
     }
 }

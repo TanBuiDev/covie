@@ -12,6 +12,7 @@ public record CheckoutComparableSnapshot(
         Long sourceCartVersion,
         FulfillmentMethod fulfillmentMethod,
         UUID addressId,
+        Long addressVersion,
         long subtotal,
         String currency,
         List<CheckoutComparableItem> items) {
