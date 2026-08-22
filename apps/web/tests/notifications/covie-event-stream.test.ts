@@ -1,0 +1,5 @@
+import { expect, it, vi } from "vitest";
+import { connectCovieEventStream } from "@/features/notifications/covie-event-stream";
+const { refreshSession }=vi.hoisted(()=>({refreshSession:vi.fn()}));vi.mock("@/features/auth/auth-session",()=>({refreshSession}));
+class EventSourceMock { static instance:EventSourceMock; listeners=new Map<string,()=>void>(); onerror:((event:Event)=>void)|null=null; close=vi.fn(); constructor(){EventSourceMock.instance=this;} addEventListener(name:string,listener:()=>void){this.listeners.set(name,listener);} }
+it("invalidates notification state from lightweight SSE signals",()=>{vi.stubGlobal("EventSource",EventSourceMock);const notifications=vi.fn(),orders=vi.fn(),needs=vi.fn(),reviews=vi.fn();const stop=connectCovieEventStream({notifications,orders,needs,reviews});EventSourceMock.instance.listeners.get("notification.created")?.();expect(notifications).toHaveBeenCalledOnce();EventSourceMock.instance.listeners.get("sync-required")?.();expect(orders).toHaveBeenCalledOnce();expect(needs).toHaveBeenCalledOnce();expect(reviews).toHaveBeenCalledOnce();stop();expect(EventSourceMock.instance.close).toHaveBeenCalled();});

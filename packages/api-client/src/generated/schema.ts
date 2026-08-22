@@ -584,6 +584,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/{notificationId}/mark-read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/mark-all-read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/need-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_5"];
+        put?: never;
+        post: operations["create_6"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/need-requests/{needRequestId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancel_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/merchants": {
         parameters: {
             query?: never;
@@ -593,7 +673,7 @@ export interface paths {
         };
         get: operations["mine"];
         put?: never;
-        post: operations["create_5"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -610,7 +690,7 @@ export interface paths {
         /** List contact methods */
         get: operations["active_1"];
         put?: never;
-        post: operations["create_6"];
+        post: operations["create_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -647,7 +727,7 @@ export interface paths {
          * Create a saved address
          * @description Browser mutations use X-CSRF-Token.
          */
-        post: operations["create_7"];
+        post: operations["create_9"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1015,6 +1095,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/merchants/{merchantId}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["merchant"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{merchantId}/orders": {
         parameters: {
             query?: never;
@@ -1022,7 +1118,23 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        get: operations["list_6"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/need-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["discover"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1038,7 +1150,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1055,7 +1167,7 @@ export interface paths {
             cookie?: never;
         };
         /** List active sessions */
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1071,7 +1183,55 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_8"];
+        get: operations["list_9"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["inbox"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/need-requests/{needRequestId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["detail_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["events"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1087,7 +1247,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_9"];
+        get: operations["list_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1151,7 +1311,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_10"];
+        get: operations["list_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1167,7 +1327,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["detail_1"];
+        get: operations["detail_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1183,7 +1343,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["merchant"];
+        get: operations["merchant_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1199,7 +1359,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["discover"];
+        get: operations["discover_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1216,6 +1376,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["item"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/items/{itemId}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["catalog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1685,6 +1861,81 @@ export interface components {
             /** Format: date-time */
             expiresAt?: string;
         };
+        CreateReviewRequest: {
+            /** Format: uuid */
+            orderItemId: string;
+            /** Format: int32 */
+            rating?: number;
+            comment?: string;
+        };
+        ReviewResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            orderItemId?: string;
+            /** Format: int32 */
+            rating?: number;
+            comment?: string;
+            status?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        CreateNeedRequest: {
+            /** @enum {string} */
+            type: "PRODUCT" | "SERVICE";
+            /** Format: uuid */
+            categoryId: string;
+            title: string;
+            queryText: string;
+            description?: string;
+            /** Format: int64 */
+            requestedQuantity?: number;
+            /** Format: uuid */
+            addressId?: string;
+            /** Format: double */
+            lat?: number;
+            /** Format: double */
+            lng?: number;
+            /** Format: int32 */
+            radiusMeters?: number;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        NeedDetailResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** @enum {string} */
+            status?: "ACTIVE" | "FULFILLED" | "EXPIRED" | "CANCELLED";
+            /** Format: uuid */
+            categoryId?: string;
+            title?: string;
+            queryText?: string;
+            description?: string;
+            /** Format: int64 */
+            requestedQuantity?: number;
+            locationSummary?: components["schemas"]["NeedLocationSummaryResponse"];
+            /** Format: int32 */
+            radiusMeters?: number;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: int64 */
+            responseCount?: number;
+            /** Format: uuid */
+            fulfilledOrderId?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            closedAt?: string;
+        };
+        NeedLocationSummaryResponse: {
+            /** Format: uuid */
+            addressId?: string;
+            /** Format: uuid */
+            areaId?: string;
+            timezone?: string;
+        };
         CreateMerchantRequest: {
             name: string;
             description?: string;
@@ -1935,6 +2186,23 @@ export interface components {
             note?: string;
             defaultAddress?: boolean;
         };
+        BuyerReputationSummary: {
+            /** Format: int64 */
+            eligibleOrders?: number;
+            /** Format: int64 */
+            completedOrders?: number;
+            /** Format: int32 */
+            completionRateBasisPoints?: number;
+            warning?: boolean;
+        };
+        MerchantReputationSummary: {
+            /** Format: int64 */
+            eligibleOrders?: number;
+            /** Format: int64 */
+            completedOrders?: number;
+            /** Format: int32 */
+            completionRateBasisPoints?: number;
+        };
         OrderDetailResponse: {
             /** Format: uuid */
             id?: string;
@@ -1960,6 +2228,40 @@ export interface components {
             completedAt?: string;
             /** Format: date-time */
             closedAt?: string;
+            reputation?: components["schemas"]["OrderReputationContext"];
+        };
+        OrderReputationContext: {
+            merchant?: components["schemas"]["MerchantReputationSummary"];
+            buyer?: components["schemas"]["BuyerReputationSummary"];
+        };
+        PublicReviewResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: int32 */
+            rating?: number;
+            comment?: string;
+            reviewer?: components["schemas"]["PublicReviewerResponse"];
+            verifiedPurchase?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        PublicReviewerResponse: {
+            displayName?: string;
+            avatarUrl?: string;
+        };
+        RatingSummary: {
+            /** Format: int64 */
+            reviewCount?: number;
+            averageRating?: number;
+        };
+        ReviewPageInfo: {
+            hasMore?: boolean;
+            nextCursor?: string;
+        };
+        ReviewPageResponse: {
+            items?: components["schemas"]["PublicReviewResponse"][];
+            page?: components["schemas"]["ReviewPageInfo"];
+            rating?: components["schemas"]["RatingSummary"];
         };
         OrderPageResponse: {
             items?: components["schemas"]["OrderSummaryResponse"][];
@@ -1975,6 +2277,44 @@ export interface components {
             status?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
             /** Format: date-time */
             createdAt?: string;
+        };
+        BuyerArea: {
+            label?: string;
+        };
+        MerchantNeedCursorPage: {
+            items?: components["schemas"]["MerchantNeedMatchResponse"][];
+            hasMore?: boolean;
+            nextCursor?: string;
+        };
+        MerchantNeedMatchResponse: {
+            need?: components["schemas"]["Need"];
+            resolvedLocation?: components["schemas"]["ResolvedLocation"];
+            buyerArea?: components["schemas"]["BuyerArea"];
+            /** Format: int64 */
+            distanceMeters?: number;
+            alreadyResponded?: boolean;
+            responseConstraints?: components["schemas"]["ResponseConstraints"];
+        };
+        Need: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            title?: string;
+            description?: string;
+            /** Format: uuid */
+            categoryId?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+        };
+        ResolvedLocation: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+        };
+        ResponseConstraints: {
+            /** Format: int32 */
+            maxItems?: number;
         };
         InventoryItemResponse: {
             /** Format: uuid */
@@ -2023,6 +2363,50 @@ export interface components {
             lastUsedAt?: string;
             /** Format: date-time */
             expiresAt?: string;
+        };
+        NotificationPageResponse: {
+            items?: components["schemas"]["NotificationResponse"][];
+            nextCursor?: string;
+        };
+        NotificationResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "ORDER_NEW" | "ORDER_CONFIRMED" | "ORDER_REJECTED" | "ORDER_EXPIRED" | "ORDER_CANCELLED" | "ORDER_CANCELLATION_REQUESTED" | "ORDER_CANCELLATION_RESPONDED" | "ORDER_FULFILLMENT_UPDATED" | "ORDER_ISSUE_REPORTED" | "ORDER_COMPLETED" | "ORDER_CLOSED_WITH_ISSUE" | "NEED_MATCH_AVAILABLE" | "NEED_RESPONSE_RECEIVED" | "NEED_RESPONSE_UPDATED" | "NEED_RESPONSE_WITHDRAWN" | "NEED_FULFILLED" | "NEED_EXPIRED" | "REVIEW_RECEIVED";
+            data?: {
+                [key: string]: unknown;
+            };
+            read?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        NeedCursorPage: {
+            items?: components["schemas"]["NeedSummaryResponse"][];
+            hasMore?: boolean;
+            nextCursor?: string;
+        };
+        NeedSummaryResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** @enum {string} */
+            status?: "ACTIVE" | "FULFILLED" | "EXPIRED" | "CANCELLED";
+            /** Format: uuid */
+            categoryId?: string;
+            title?: string;
+            /** Format: int32 */
+            radiusMeters?: number;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: int64 */
+            responseCount?: number;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        SseEmitter: {
+            /** Format: int64 */
+            timeout?: number;
         };
         LocationAreaResponse: {
             /** Format: uuid */
@@ -2114,6 +2498,7 @@ export interface components {
             cover?: components["schemas"]["PublicMediaResponse"];
             locations?: components["schemas"]["ResolvedMerchantLocationResponse"][];
             contacts?: components["schemas"]["PublicMerchantContactResponse"][];
+            reputation?: components["schemas"]["MerchantReputationSummary"];
         };
         ResolvedMerchantLocationResponse: {
             /** Format: uuid */
@@ -3253,6 +3638,144 @@ export interface operations {
             };
         };
     };
+    create_5: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReviewResponse"];
+                };
+            };
+        };
+    };
+    markRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    markAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_5: {
+        parameters: {
+            query?: {
+                status?: "ACTIVE" | "FULFILLED" | "EXPIRED" | "CANCELLED";
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NeedCursorPage"];
+                };
+            };
+        };
+    };
+    create_6: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateNeedRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NeedDetailResponse"];
+                };
+            };
+        };
+    };
+    cancel_1: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                needRequestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NeedDetailResponse"];
+                };
+            };
+        };
+    };
     mine: {
         parameters: {
             query?: never;
@@ -3273,7 +3796,7 @@ export interface operations {
             };
         };
     };
-    create_5: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -3317,7 +3840,7 @@ export interface operations {
             };
         };
     };
-    create_6: {
+    create_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -3385,7 +3908,7 @@ export interface operations {
             };
         };
     };
-    create_7: {
+    create_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -4249,9 +4772,12 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    merchant: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
             header?: never;
             path: {
                 merchantId: string;
@@ -4266,7 +4792,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["OrderPageResponse"];
+                    "*/*": components["schemas"]["ReviewPageResponse"];
                 };
             };
         };
@@ -4288,16 +4814,22 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["InventoryItemResponse"][];
+                    "*/*": components["schemas"]["OrderPageResponse"];
                 };
             };
         };
     };
-    list_7: {
+    discover: {
         parameters: {
-            query?: never;
+            query?: {
+                locationId?: string;
+                limit?: number;
+                cursor?: string;
+            };
             header?: never;
-            path?: never;
+            path: {
+                merchantId: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -4308,7 +4840,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["AuthSessionSummaryResponse"][];
+                    "*/*": components["schemas"]["MerchantNeedCursorPage"];
+                };
+            };
+        };
+    };
+    list_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InventoryItemResponse"][];
                 };
             };
         };
@@ -4328,12 +4882,97 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["OrderPageResponse"];
+                    "*/*": components["schemas"]["AuthSessionSummaryResponse"][];
                 };
             };
         };
     };
     list_9: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderPageResponse"];
+                };
+            };
+        };
+    };
+    inbox: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NotificationPageResponse"];
+                };
+            };
+        };
+    };
+    detail_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                needRequestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NeedDetailResponse"];
+                };
+            };
+        };
+    };
+    events: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": components["schemas"]["SseEmitter"];
+                };
+            };
+        };
+    };
+    list_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -4417,7 +5056,7 @@ export interface operations {
             };
         };
     };
-    list_10: {
+    list_11: {
         parameters: {
             query?: {
                 parentId?: string;
@@ -4440,7 +5079,7 @@ export interface operations {
             };
         };
     };
-    detail_1: {
+    detail_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -4462,7 +5101,7 @@ export interface operations {
             };
         };
     };
-    merchant: {
+    merchant_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -4484,7 +5123,7 @@ export interface operations {
             };
         };
     };
-    discover: {
+    discover_1: {
         parameters: {
             query?: {
                 q?: string;
@@ -4545,6 +5184,31 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CatalogItemDetailResponse"];
+                };
+            };
+        };
+    };
+    catalog: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReviewPageResponse"];
                 };
             };
         };
