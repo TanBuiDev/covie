@@ -68,6 +68,8 @@ covie:
   sse:
     emitter-timeout-ms: 1800000
     heartbeat-delay-ms: 25000
+  notifications:
+    need-match-max-locations: 100
   needs:
     max-response-items: 3
   checkout:

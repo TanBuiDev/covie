@@ -18,5 +18,5 @@ public interface MediaAssetRepository extends JpaRepository<MediaAssetEntity, UU
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select media from MediaAssetEntity media where media.id = :id and media.ownerUserId = :ownerUserId")
     Optional<MediaAssetEntity> findByIdAndOwnerUserIdForUpdate(UUID id, UUID ownerUserId);
-    List<MediaAssetEntity> findByMediaStatusAndCreatedAtBeforeOrderByIdAsc(MediaStatus status, Instant before, Pageable pageable);
+    List<MediaAssetEntity> findByMediaStatusAndCreatedAtBeforeOrderByCreatedAtAscIdAsc(MediaStatus status, Instant before, Pageable pageable);
 }
