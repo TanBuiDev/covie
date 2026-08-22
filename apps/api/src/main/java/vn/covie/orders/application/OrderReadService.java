@@ -30,6 +30,10 @@ public class OrderReadService {
     public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, vn.covie.shared.time.AppClock clock, ReputationReadService reputation) {
         this.orders=orders;this.access=access;this.actions=actions;this.merchantAccess=merchantAccess;this.clock=clock;this.reputation=reputation;
     }
+    /** Compatibility constructor for focused unit tests without the optional trust read model. */
+    public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, vn.covie.shared.time.AppClock clock) {
+        this(orders, access, actions, merchantAccess, clock, null);
+    }
     public OrderDetailResponse detail(UUID id) { OrderEntity order=orders.findById(id).orElseThrow(this::notFound); return map(order,access.requireVisible(order)); }
     public OrderPageResponse myOrders(UUID buyerId) {
         List<OrderSummaryResponse> items=orders.findAllByBuyerUserIdOrderByCreatedAtDesc(buyerId).stream()
@@ -45,7 +49,7 @@ public class OrderReadService {
     private OrderDetailResponse map(OrderEntity order,OrderAccess actor) {
         Set<OrderAction> permitted=actions.allowedActions(new OrderActionContext(actor.actorType(),order.getOrderType(),order.getStatus(),null,order.getConfirmationExpiresAt(),null,clock.now()));
         if(permitted==null) permitted=Set.of();
-        OrderReputationContext trust = switch (actor.actorType()) {
+        OrderReputationContext trust = reputation == null ? null : switch (actor.actorType()) {
             case BUYER -> new OrderReputationContext(reputation.merchant(order.getMerchantProfileId()), null);
             case MERCHANT -> new OrderReputationContext(null, reputation.buyer(order.getBuyerUserId()));
             case ADMIN -> new OrderReputationContext(reputation.merchant(order.getMerchantProfileId()), reputation.buyer(order.getBuyerUserId()));
