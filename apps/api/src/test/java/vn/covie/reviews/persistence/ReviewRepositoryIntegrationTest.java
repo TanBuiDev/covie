@@ -66,7 +66,7 @@ class ReviewRepositoryIntegrationTest extends PostgresIntegrationTest {
                 .containsExactly(newer.getId(), older.getId());
     }
 
-    private record Fixture(UUID buyerId, UUID merchantId, UUID catalogItemId, UUID variantId,
+    record Fixture(UUID buyerId, UUID merchantId, UUID catalogItemId, UUID variantId,
                            UUID orderId, UUID orderItemId, UUID anotherOrderItemId) {
         static Fixture create(JdbcTemplate jdbc) {
             UUID buyerId = UUID.randomUUID();
