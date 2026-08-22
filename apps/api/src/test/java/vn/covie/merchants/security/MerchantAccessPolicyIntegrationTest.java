@@ -213,7 +213,9 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
                 || capability == MerchantCapability.MANAGE_LOCATION_OFFER
                 || capability == MerchantCapability.UPLOAD_MERCHANT_MEDIA
                 || capability == MerchantCapability.VIEW_ORDERS
-                || capability == MerchantCapability.PROCESS_ORDERS;
+                || capability == MerchantCapability.PROCESS_ORDERS
+                || capability == MerchantCapability.VIEW_NEEDS
+                || capability == MerchantCapability.RESPOND_TO_NEEDS;
     }
 
     private Fixture fixture(MerchantRole role) {
