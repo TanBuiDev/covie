@@ -4,7 +4,7 @@
 > Technical specification and implementation checklist. This document defines product behavior, data contracts, and verification criteria; it does not prescribe an agent, tool, or execution framework.
 
 **Plan:** 06 / 10  
-**Source document:** `docs/CoVie-technical-plan-06-need-requests-matching-v1.0.md`  
+**Source document:** `docs/CoVie-technical-plan-06-need-requests-matching-v1.0.md`
 **Version:** 1.0  
 **Date:** 2026-08-08  
 **Status:** In implementation
