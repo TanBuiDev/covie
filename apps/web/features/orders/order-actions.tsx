@@ -19,7 +19,11 @@ export function OrderActions({ order, onChanged }: { order: OrderDetail; onChang
   async function act(action: string) {
     const item = actionRoutes[action]; if (!item) return; setPending(action); setMessage(undefined);
     try {
-      const body = action === "REJECT" ? { reasonCode: "SELLER_UNAVAILABLE", note: "" } : action.includes("ISSUE") ? { reasonText: "Cần trao đổi thêm" } : undefined;
+      const body = action === "REJECT" ? { reasonCode: "SELLER_UNAVAILABLE", note: "" }
+        : action === "CANCEL" ? { reasonCode: "USER_CANCELLED", note: "" }
+        : action === "REQUEST_CANCELLATION" ? { reasonCode: "BUYER_REQUESTED", note: "" }
+        : action.includes("ISSUE") ? { reasonText: "Cần trao đổi thêm" }
+        : action === "CONTEST_NO_SHOW" ? { note: "Tôi cần trao đổi thêm." } : undefined;
       const response = await orderCommand(order.id, item.route, body);
       if (!response.ok) throw new Error("Đơn hàng vừa thay đổi.");
       await onChanged();
