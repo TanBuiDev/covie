@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.orders.api.dto.OrderDetailResponse;
 import vn.covie.orders.api.dto.OrderPageResponse;
@@ -27,6 +28,7 @@ import vn.covie.shared.web.ErrorCode;
 public class OrderReadService {
     private final OrderRepository orders; private final OrderAccessPolicy access; private final OrderAllowedActionService actions;
     private final MerchantAccessPolicy merchantAccess; private final vn.covie.shared.time.AppClock clock; private final ReputationReadService reputation;
+    @Autowired
     public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, vn.covie.shared.time.AppClock clock, ReputationReadService reputation) {
         this.orders=orders;this.access=access;this.actions=actions;this.merchantAccess=merchantAccess;this.clock=clock;this.reputation=reputation;
     }
