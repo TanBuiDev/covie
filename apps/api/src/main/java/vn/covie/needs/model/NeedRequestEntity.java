@@ -37,6 +37,60 @@ public class NeedRequestEntity {
 
     protected NeedRequestEntity() {}
 
+    public static NeedRequestEntity create(
+            UUID id, UUID buyerUserId, NeedType needType, UUID categoryId, String title, String queryText,
+            String description, Long requestedQuantity, UUID locationAreaId, Point geoPoint, JsonNode locationSnapshot,
+            int searchRadiusMeters, Instant expiresAt, Instant now) {
+        NeedRequestEntity entity = new NeedRequestEntity();
+        entity.id = id;
+        entity.buyerUserId = buyerUserId;
+        entity.needType = needType;
+        entity.categoryId = categoryId;
+        entity.title = normalizeRequired(title);
+        entity.queryText = normalizeRequired(queryText);
+        entity.description = normalizeOptional(description);
+        entity.requestedQuantity = requestedQuantity;
+        entity.locationAreaId = locationAreaId;
+        entity.geoPoint = geoPoint;
+        entity.locationSnapshot = locationSnapshot;
+        entity.searchRadiusMeters = searchRadiusMeters;
+        entity.requestStatus = NeedStatus.ACTIVE;
+        entity.expiresAt = expiresAt;
+        entity.createdAt = now;
+        entity.updatedAt = now;
+        return entity;
+    }
+
+    public void cancel(Instant now) {
+        if (requestStatus != NeedStatus.ACTIVE) {
+            throw new IllegalStateException("Only active needs can be cancelled.");
+        }
+        requestStatus = NeedStatus.CANCELLED;
+        closedAt = now;
+        updatedAt = now;
+    }
+
+    public void expire(Instant now) {
+        if (requestStatus == NeedStatus.ACTIVE) {
+            requestStatus = NeedStatus.EXPIRED;
+            closedAt = now;
+            updatedAt = now;
+        }
+    }
+
+    public boolean isActiveAt(Instant now) {
+        return requestStatus == NeedStatus.ACTIVE && expiresAt.isAfter(now);
+    }
+
+    private static String normalizeRequired(String value) {
+        if (value == null || value.strip().isEmpty()) throw new IllegalArgumentException("Value is required.");
+        return value.strip();
+    }
+
+    private static String normalizeOptional(String value) {
+        return value == null || value.strip().isEmpty() ? null : value.strip();
+    }
+
     public UUID getId() { return id; }
     public UUID getBuyerUserId() { return buyerUserId; }
     public NeedType getNeedType() { return needType; }

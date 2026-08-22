@@ -14,4 +14,6 @@ public interface NeedResponseRepository extends JpaRepository<NeedResponseEntity
 
     Optional<NeedResponseEntity> findByNeedRequestIdAndMerchantLocationIdAndResponseStatus(
             UUID needRequestId, UUID merchantLocationId, NeedResponseStatus responseStatus);
+
+    long countByNeedRequestIdAndResponseStatus(UUID needRequestId, NeedResponseStatus responseStatus);
 }
