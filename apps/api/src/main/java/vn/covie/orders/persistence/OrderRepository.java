@@ -18,4 +18,6 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
     Optional<OrderEntity> lockById(@Param("id") UUID id);
 
     List<OrderEntity> findAllByBuyerUserIdOrderByCreatedAtDesc(UUID buyerUserId);
+    List<OrderEntity> findTop100ByStatusAndConfirmationExpiresAtLessThanEqualOrderByConfirmationExpiresAtAsc(
+            vn.covie.orders.model.OrderStatus status, java.time.Instant now);
 }

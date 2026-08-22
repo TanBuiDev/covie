@@ -30,9 +30,10 @@ public class OrderController {
     private final OrderCancellationService cancellations; private final OrderFulfillmentService fulfillment;
     private final OrderCompletionService completion;
     private final vn.covie.orders.application.OrderIssueService issues;
+    private final vn.covie.orders.application.OrderNoShowService noShows;
     public OrderController(OrderReadService reads, OrderCommandService commands, OrderCancellationService cancellations,
-            OrderFulfillmentService fulfillment, OrderCompletionService completion, vn.covie.orders.application.OrderIssueService issues) {
-        this.reads=reads;this.commands=commands;this.cancellations=cancellations;this.fulfillment=fulfillment;this.completion=completion;this.issues=issues;
+            OrderFulfillmentService fulfillment, OrderCompletionService completion, vn.covie.orders.application.OrderIssueService issues, vn.covie.orders.application.OrderNoShowService noShows) {
+        this.reads=reads;this.commands=commands;this.cancellations=cancellations;this.fulfillment=fulfillment;this.completion=completion;this.issues=issues;this.noShows=noShows;
     }
     @GetMapping("/{orderId}") public OrderDetailResponse detail(@PathVariable UUID orderId){return reads.detail(orderId);}
     @PostMapping("/{orderId}/confirm") public OrderCommandResult confirm(@PathVariable UUID orderId,@RequestHeader(value="Idempotency-Key",required=false) String key){return commands.confirm(orderId,key);}
@@ -49,4 +50,6 @@ public class OrderController {
     @PostMapping("/{orderId}/confirm-completed") public ResponseEntity<Void> completed(@PathVariable UUID orderId){completion.confirmCompleted(orderId);return ResponseEntity.ok().build();}
     @PostMapping("/{orderId}/report-delivery-issue") public ResponseEntity<Void> deliveryIssue(@PathVariable UUID orderId,@Valid @RequestBody IssueRequest request){issues.reportDeliveryIssue(orderId,request);return ResponseEntity.ok().build();}
     @PostMapping("/{orderId}/report-service-issue") public ResponseEntity<Void> serviceIssue(@PathVariable UUID orderId,@Valid @RequestBody IssueRequest request){issues.reportServiceIssue(orderId,request);return ResponseEntity.ok().build();}
+    @PostMapping("/{orderId}/report-buyer-no-show") public ResponseEntity<Void> noShow(@PathVariable UUID orderId){noShows.reportBuyerNoShow(orderId);return ResponseEntity.ok().build();}
+    @PostMapping("/{orderId}/contest-no-show") public ResponseEntity<Void> contestNoShow(@PathVariable UUID orderId,@RequestBody(required=false) CancellationResponseBody body){noShows.contest(orderId,body==null?null:body.note());return ResponseEntity.ok().build();}
 }
