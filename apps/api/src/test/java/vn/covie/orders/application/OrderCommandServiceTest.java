@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -49,6 +50,31 @@ class OrderCommandServiceTest {
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
         assertThat(result.status()).isEqualTo(OrderStatus.CONFIRMED);
         assertThat(result.confirmedAt()).isEqualTo(Instant.parse("2026-08-22T00:01:00Z"));
+    }
+
+    @Test
+    void merchantRejectionReleasesTheCheckoutReservation() {
+        UUID merchantUser = UUID.randomUUID(); UUID orderId = UUID.randomUUID();
+        OrderEntity order = OrderEntity.pending(orderId, "CVTEST", OrderType.PRODUCT, UUID.randomUUID(),
+                UUID.randomUUID(), UUID.randomUUID(), PaymentMethod.COD, 10_000, OrderShippingFeeType.FREE,
+                0L, 10_000, 10_000L, "VND", Instant.parse("2026-08-22T00:30:00Z"), Instant.parse("2026-08-22T00:00:00Z"));
+        IdempotencyExecutor idempotency = mock(IdempotencyExecutor.class);
+        doAnswer(this::executeCommand).when(idempotency).execute(any(), any(), any(), any(), any(Integer.class), any(), any());
+        OrderTransitionService transitions = mock(OrderTransitionService.class);
+        when(transitions.lock(orderId)).thenReturn(new LockedOrder(order));
+        OrderAccessPolicy access = mock(OrderAccessPolicy.class);
+        when(access.requireMerchantProcessor(order)).thenReturn(new OrderAccess(merchantUser, OrderActorType.MERCHANT,
+                orderId, order.getMerchantProfileId(), order.getMerchantLocationId()));
+        CurrentActorProvider actors = mock(CurrentActorProvider.class);
+        when(actors.currentActor()).thenReturn(new CurrentActor(merchantUser, java.util.Set.of(SystemRole.USER), UUID.randomUUID()));
+        vn.covie.inventory.application.InventoryReservationService inventory = mock(vn.covie.inventory.application.InventoryReservationService.class);
+        OrderCommandService service = new OrderCommandService(idempotency, transitions, access, actors,
+                mock(OrderEventService.class), mock(OutboxEventWriter.class), inventory, () -> Instant.parse("2026-08-22T00:01:00Z"));
+
+        service.reject(orderId, "key-2", "OUT_OF_STOCK", "Unavailable");
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.REJECTED_BY_SELLER);
+        verify(inventory).releaseActiveForOrder(orderId, merchantUser, "OUT_OF_STOCK", Instant.parse("2026-08-22T00:01:00Z"));
     }
 
     @SuppressWarnings("unchecked")
