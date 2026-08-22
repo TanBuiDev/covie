@@ -40,14 +40,15 @@ public class OrderCreationService {
     private final OrderSnapshotFactory snapshots;
     private final UuidV7Generator ids;
     private final AppClock clock;
+    private final OrderPolicyProvider policyProvider;
 
     public OrderCreationService(OrderRepository orders, OrderItemRepository items,
             ProductFulfillmentRepository productFulfillments, ServiceFulfillmentRepository serviceFulfillments,
             OrderEventRepository events, OrderCodeGenerator orderCodes, OrderSnapshotFactory snapshots,
-            UuidV7Generator ids, AppClock clock) {
+            UuidV7Generator ids, AppClock clock, OrderPolicyProvider policyProvider) {
         this.orders = orders; this.items = items; this.productFulfillments = productFulfillments;
         this.serviceFulfillments = serviceFulfillments; this.events = events; this.orderCodes = orderCodes;
-        this.snapshots = snapshots; this.ids = ids; this.clock = clock;
+        this.snapshots = snapshots; this.ids = ids; this.clock = clock; this.policyProvider = policyProvider;
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -57,10 +58,12 @@ public class OrderCreationService {
         OrderMoney money = snapshots.money(type, checkout.fulfillmentMethod(), checkout.subtotal(), checkout.shipping());
         UUID orderId = ids.generate();
         String code = nextAvailableCode();
+        Instant confirmationExpiresAt = now.plus(policyProvider.resolve(
+                checkout.candidate().merchantProfileId(), checkout.candidate().merchantLocationId()).confirmationTimeout());
         OrderEntity order = OrderEntity.pending(orderId, code, type, checkout.candidate().buyerUserId(),
                 checkout.candidate().merchantProfileId(), checkout.candidate().merchantLocationId(), checkout.paymentMethod(),
                 checkout.subtotal(), money.shippingFeeType(), money.shippingFee(), money.knownTotal(), money.totalAmount(),
-                checkout.currency(), null, now);
+                checkout.currency(), confirmationExpiresAt, now);
         orders.save(order);
 
         Map<UUID, UUID> itemIdsByOffer = new LinkedHashMap<>();

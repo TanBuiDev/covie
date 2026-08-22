@@ -55,6 +55,11 @@ springdoc:
 covie:
   checkout:
     session-ttl: 15m
+  orders:
+    confirmation-timeout: PT30M
+    auto-complete-grace: PT24H
+    pickup-no-show-grace: PT2H
+    issue-close-timeout: P2D
   auth:
     issuer: ${COVIE_AUTH_ISSUER:https://covie.vn}
     access-token-ttl: PT15M
