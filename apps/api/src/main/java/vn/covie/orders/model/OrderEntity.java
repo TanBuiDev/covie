@@ -54,4 +54,10 @@ public class OrderEntity {
 
     public UUID getId() { return id; } public String getOrderCode() { return orderCode; }
     public OrderStatus getStatus() { return status; } public Instant getCreatedAt() { return createdAt; }
+    public Instant getConfirmationExpiresAt() { return confirmationExpiresAt; }
+
+    public void transitionTo(OrderStatus nextStatus, Instant now) {
+        this.status = nextStatus;
+        this.updatedAt = now;
+    }
 }
