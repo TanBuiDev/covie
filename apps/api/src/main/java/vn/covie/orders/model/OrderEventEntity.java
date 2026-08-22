@@ -19,6 +19,11 @@ public class OrderEventEntity {
     @Column(name = "order_id", nullable = false) private UUID orderId;
     @Enumerated(EnumType.STRING) @Column(name = "event_type", nullable = false) private OrderEventType eventType;
     @Column(name = "actor_user_id") private UUID actorUserId;
+    @Enumerated(EnumType.STRING) @Column(name = "actor_context") private OrderActorContext actorContext;
+    @Enumerated(EnumType.STRING) @Column(name = "from_status") private OrderStatus fromStatus;
+    @Enumerated(EnumType.STRING) @Column(name = "to_status") private OrderStatus toStatus;
+    @Column(name = "reason_code", length = 60) private String reasonCode;
+    @Column(name = "note") private String note;
     @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private JsonNode metadata;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     protected OrderEventEntity() {}
