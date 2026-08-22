@@ -38,6 +38,7 @@ public class UserEntity {
     public boolean isActive() { return accountStatus == AccountStatus.ACTIVE; }
     public UUID getId() { return id; }
     public String getDisplayName() { return displayName; }
+    public UUID getAvatarMediaId() { return avatarMediaId; }
     public AccountStatus getAccountStatus() { return accountStatus; }
     public long getVersion() { return version; }
     public void updateProfile(String displayName, UUID avatarMediaId, Instant now) { this.displayName = displayName; this.avatarMediaId = avatarMediaId; this.updatedAt = now; }
