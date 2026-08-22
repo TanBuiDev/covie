@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import vn.covie.auth.security.CurrentActorProvider;
@@ -30,6 +31,7 @@ import vn.covie.shared.web.ErrorCode;
 public class OrderReadService {
     private final OrderRepository orders; private final OrderAccessPolicy access; private final OrderAllowedActionService actions;
     private final MerchantAccessPolicy merchantAccess; private final ProductFulfillmentRepository products; private final ServiceFulfillmentRepository services; private final OrderEventRepository events; private final vn.covie.shared.time.AppClock clock;
+    private final OrderCursorCodec cursors=new OrderCursorCodec();
     @org.springframework.beans.factory.annotation.Autowired
     public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, ProductFulfillmentRepository products, ServiceFulfillmentRepository services, OrderEventRepository events, vn.covie.shared.time.AppClock clock) {
         this.orders=orders;this.access=access;this.actions=actions;this.merchantAccess=merchantAccess;this.products=products;this.services=services;this.events=events;this.clock=clock;
@@ -43,11 +45,18 @@ public class OrderReadService {
                 .map(order->new OrderSummaryResponse(order.getId(),order.getOrderCode(),order.getOrderType(),order.getStatus(),order.getCreatedAt())).toList();
         return new OrderPageResponse(items,null);
     }
+    public OrderPageResponse myOrders(UUID buyerId,int limit,String cursor) { var after=cursor(cursor); return page(orders.findBuyerPage(buyerId,after==null?null:after.createdAt(),after==null?null:after.id(),PageRequest.of(0,limit+1)),limit); }
     public OrderPageResponse merchantOrders(UUID merchantId) {
         merchantAccess.require(merchantId, MerchantCapability.VIEW_ORDERS);
         List<OrderSummaryResponse> items=orders.findAllByMerchantProfileIdOrderByCreatedAtDesc(merchantId).stream()
                 .map(order->new OrderSummaryResponse(order.getId(),order.getOrderCode(),order.getOrderType(),order.getStatus(),order.getCreatedAt())).toList();
         return new OrderPageResponse(items,null);
+    }
+    public OrderPageResponse merchantOrders(UUID merchantId,UUID locationId,int limit,String cursor) {
+        var after=cursor(cursor);
+        var allowed=merchantAccess.readableOrderLocations(merchantId); if(!allowed.isEmpty()&&(locationId==null||!allowed.contains(locationId))) throw notFound();
+        if(!allowed.isEmpty()) { var all=new java.util.ArrayList<OrderEntity>(); for(UUID id:allowed) all.addAll(orders.findMerchantPage(merchantId,id,after==null?null:after.createdAt(),after==null?null:after.id(),PageRequest.of(0,limit+1))); all.sort(java.util.Comparator.comparing(OrderEntity::getCreatedAt).reversed().thenComparing(OrderEntity::getId,java.util.Comparator.reverseOrder())); return page(all,limit); }
+        return page(orders.findMerchantPage(merchantId,locationId,after==null?null:after.createdAt(),after==null?null:after.id(),PageRequest.of(0,limit+1)),limit);
     }
     public List<OrderTimelineEventResponse> events(UUID orderId) {
         OrderEntity order=orders.findById(orderId).orElseThrow(this::notFound); access.requireVisible(order);
@@ -64,4 +73,6 @@ public class OrderReadService {
                 order.getBuyerUserId(),order.getMerchantProfileId(),order.getMerchantLocationId(),permitted,order.getCreatedAt(),order.getConfirmedAt(),order.getCompletedAt(),order.getClosedAt());
     }
     private ApiException notFound(){return new ApiException(ErrorCode.RESOURCE_NOT_FOUND,HttpStatus.NOT_FOUND,"Resource not found.");}
+    private OrderCursorCodec.Cursor cursor(String value){return cursors.decode(value);}
+    private OrderPageResponse page(List<OrderEntity> rows,int limit){boolean hasMore=rows.size()>limit;List<OrderEntity> visible=hasMore?rows.subList(0,limit):rows;List<OrderSummaryResponse> items=visible.stream().map(order->new OrderSummaryResponse(order.getId(),order.getOrderCode(),order.getOrderType(),order.getStatus(),order.getCreatedAt())).toList();String next=hasMore?cursors.encode(new OrderCursorCodec.Cursor(visible.getLast().getCreatedAt(),visible.getLast().getId())):null;return new OrderPageResponse(items,next);}
 }

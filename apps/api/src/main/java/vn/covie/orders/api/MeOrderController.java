@@ -12,5 +12,5 @@ import vn.covie.orders.application.OrderReadService;
 public class MeOrderController {
     private final OrderReadService reads; private final CurrentActorProvider actors;
     public MeOrderController(OrderReadService reads,CurrentActorProvider actors){this.reads=reads;this.actors=actors;}
-    @GetMapping public OrderPageResponse list(){return reads.myOrders(actors.currentActor().userId());}
+    @GetMapping public OrderPageResponse list(@org.springframework.web.bind.annotation.RequestParam(defaultValue="20") int limit,@org.springframework.web.bind.annotation.RequestParam(required=false) String cursor){return reads.myOrders(actors.currentActor().userId(),Math.min(50,Math.max(1,limit)),cursor);}
 }
