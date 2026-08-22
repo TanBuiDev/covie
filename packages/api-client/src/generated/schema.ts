@@ -1015,6 +1015,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orders/{orderId}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{merchantId}/orders": {
         parameters: {
             query?: never;
@@ -1961,6 +1977,24 @@ export interface components {
             /** Format: date-time */
             closedAt?: string;
         };
+        OrderTimelineEventResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            eventType?: "ORDER_CREATED" | "SELLER_CONFIRMED" | "SELLER_REJECTED" | "BUYER_CANCELLED_BEFORE_CONFIRMATION" | "BUYER_REQUESTED_CANCELLATION" | "SELLER_ACCEPTED_CANCELLATION" | "SELLER_REJECTED_CANCELLATION" | "SELLER_CANCELLED_AFTER_CONFIRMATION" | "SELLER_MARKED_OUT_FOR_DELIVERY" | "SELLER_MARKED_DELIVERED" | "SELLER_MARKED_READY_FOR_PICKUP" | "SELLER_MARKED_BUYER_NO_SHOW" | "BUYER_CONTESTED_NO_SHOW" | "PROVIDER_MARKED_PERFORMED" | "BUYER_CONFIRMED_RECEIVED" | "BUYER_CONFIRMED_SERVICE_COMPLETED" | "BUYER_REPORTED_NOT_RECEIVED" | "BUYER_REPORTED_SERVICE_NOT_COMPLETED" | "ORDER_EXPIRED" | "ORDER_AUTO_COMPLETED" | "ORDER_CLOSED_WITH_ISSUE";
+            /** Format: uuid */
+            actorUserId?: string;
+            /** @enum {string} */
+            actorContext?: "BUYER" | "MERCHANT" | "SYSTEM" | "ADMIN";
+            /** @enum {string} */
+            fromStatus?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
+            /** @enum {string} */
+            toStatus?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
+            reasonCode?: string;
+            note?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         OrderPageResponse: {
             items?: components["schemas"]["OrderSummaryResponse"][];
             nextCursor?: string;
@@ -2294,7 +2328,9 @@ export interface operations {
     requestCancellation: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2320,7 +2356,9 @@ export interface operations {
     serviceIssue: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2344,7 +2382,9 @@ export interface operations {
     deliveryIssue: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2368,7 +2408,9 @@ export interface operations {
     noShow: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2416,7 +2458,9 @@ export interface operations {
     rejectCancellation: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2442,7 +2486,9 @@ export interface operations {
     performed: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2462,7 +2508,9 @@ export interface operations {
     ready: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2482,7 +2530,9 @@ export interface operations {
     outForDelivery: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2502,7 +2552,9 @@ export interface operations {
     delivered: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2522,7 +2574,9 @@ export interface operations {
     contestNoShow: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2570,7 +2624,9 @@ export interface operations {
     received: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2590,7 +2646,9 @@ export interface operations {
     completed: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -2638,7 +2696,9 @@ export interface operations {
     acceptCancellation: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -4245,6 +4305,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["OrderDetailResponse"];
+                };
+            };
+        };
+    };
+    events: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderTimelineEventResponse"][];
                 };
             };
         };

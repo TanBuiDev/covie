@@ -42,7 +42,13 @@ public class OrderEventEntity {
         return event;
     }
 
+    public UUID getId() { return id; }
+    public UUID getActorUserId() { return actorUserId; }
+    public OrderActorContext getActorContext() { return actorContext; }
     public OrderEventType getEventType() { return eventType; }
     public OrderStatus getFromStatus() { return fromStatus; }
     public OrderStatus getToStatus() { return toStatus; }
+    public String getReasonCode() { return reasonCode; }
+    public String getNote() { return note; }
+    public Instant getCreatedAt() { return createdAt; }
 }

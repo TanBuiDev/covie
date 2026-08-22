@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.covie.inventory.application.InventoryReservationService;
 import vn.covie.orders.api.dto.CancellationRequestBody;
 import vn.covie.orders.api.dto.CancellationResponseBody;
+import vn.covie.orders.api.dto.CancelOrderRequest;
 import vn.covie.orders.api.dto.OrderCommandResult;
 import vn.covie.orders.model.OrderActorContext;
 import vn.covie.orders.model.OrderCancellationRequestEntity;
@@ -49,6 +50,26 @@ public class OrderCancellationService {
         outbox.append(intent(OrderOutboxEvents.ORDER_CANCELLATION_REQUESTED, order)); return result(order);
     }
     @Transactional
+    public OrderCommandResult cancel(UUID orderId, CancelOrderRequest body) {
+        OrderEntity order=transitions.lock(orderId).order(); var actorAccess=access.requireVisible(order);
+        CancelOrderRequest normalized=body==null?new CancelOrderRequest(null,null):body; Instant now=clock.now();
+        if(actorAccess.actorType()==vn.covie.orders.security.OrderActorType.BUYER){
+            transitions.requireStatus(order,OrderStatus.PENDING_CONFIRMATION);
+            if(order.getConfirmationExpiresAt()==null||!now.isBefore(order.getConfirmationExpiresAt()))throw conflict();
+            inventory.releaseActiveForOrder(orderId,actorAccess.actorUserId(),reason(normalized,"BUYER_CANCELLED"),now);
+            order.close(OrderStatus.CANCELLED_BEFORE_CONFIRMATION,now);
+            events.append(order,OrderEventType.BUYER_CANCELLED_BEFORE_CONFIRMATION,actorAccess.actorUserId(),OrderActorContext.BUYER,OrderStatus.PENDING_CONFIRMATION,order.getStatus(),normalized.reasonCode(),normalized.note(),Map.of());
+        }else{
+            UUID actor=access.requireMerchantProcessor(order).actorUserId();
+            transitions.requireStatus(order,OrderStatus.CONFIRMED,OrderStatus.OUT_FOR_DELIVERY,OrderStatus.READY_FOR_PICKUP);
+            if(normalized.reasonCode()==null||normalized.reasonCode().isBlank())throw invalid();
+            OrderStatus previous=order.getStatus(); inventory.releaseActiveForOrder(orderId,actor,normalized.reasonCode(),now);
+            order.close(OrderStatus.CANCELLED_BY_SELLER_AFTER_CONFIRMATION,now);
+            events.append(order,OrderEventType.SELLER_CANCELLED_AFTER_CONFIRMATION,actor,OrderActorContext.MERCHANT,previous,order.getStatus(),normalized.reasonCode(),normalized.note(),Map.of());
+        }
+        outbox.append(intent(OrderOutboxEvents.ORDER_CANCELLED,order)); return result(order);
+    }
+    @Transactional
     public OrderCommandResult accept(UUID orderId, CancellationResponseBody body) {
         OrderEntity order=transitions.lock(orderId).order(); UUID actor=access.requireMerchantProcessor(order).actorUserId();
         transitions.requireStatus(order, OrderStatus.CANCELLATION_REQUESTED); Instant now=clock.now();
@@ -72,5 +93,7 @@ public class OrderCancellationService {
     private OutboxEventIntent intent(String type, OrderEntity order) { return new OutboxEventIntent(type,"ORDER",order.getId(),Map.of("orderId",order.getId(),"orderCode",order.getOrderCode(),"status",order.getStatus().name())); }
     private OrderCommandResult result(OrderEntity order) { return new OrderCommandResult(order.getId(),order.getOrderCode(),order.getStatus(),order.getVersion(),order.getUpdatedAt(),order.getConfirmedAt(),order.getCompletedAt(),order.getClosedAt(),Set.of()); }
     private ApiException invalid() { return new ApiException(ErrorCode.VALIDATION_FAILED,HttpStatus.UNPROCESSABLE_ENTITY,"reasonCode is required."); }
+    private ApiException conflict() { return new ApiException(ErrorCode.ORDER_STATE_CONFLICT,HttpStatus.CONFLICT,"The order can no longer perform this action."); }
+    private static String reason(CancelOrderRequest request,String fallback){return request.reasonCode()==null||request.reasonCode().isBlank()?fallback:request.reasonCode();}
     private ApiException notPending() { return new ApiException(ErrorCode.ORDER_CANCELLATION_NOT_PENDING,HttpStatus.CONFLICT,"Cancellation request is not pending."); }
 }
