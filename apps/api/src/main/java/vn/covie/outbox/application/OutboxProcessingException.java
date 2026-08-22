@@ -1,0 +1,1 @@
+package vn.covie.outbox.application; import java.util.UUID; public class OutboxProcessingException extends RuntimeException {private final UUID eventId;public OutboxProcessingException(UUID eventId,Throwable cause){super(cause);this.eventId=eventId;}public UUID eventId(){return eventId;}}

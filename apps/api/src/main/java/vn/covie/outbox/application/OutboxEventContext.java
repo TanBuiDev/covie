@@ -1,0 +1,1 @@
+package vn.covie.outbox.application; import com.fasterxml.jackson.databind.JsonNode; import java.time.Instant; import java.util.UUID; public record OutboxEventContext(UUID eventId,String eventType,String aggregateType,UUID aggregateId,JsonNode payload,Instant occurredAt) {}

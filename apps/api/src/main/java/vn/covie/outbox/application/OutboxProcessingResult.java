@@ -1,0 +1,1 @@
+package vn.covie.outbox.application; import java.util.*; import vn.covie.realtime.SseSignal; public record OutboxProcessingResult(UUID eventId,List<SseSignal> signals){public static OutboxProcessingResult none(){return new OutboxProcessingResult(null,List.of());}public boolean found(){return eventId!=null;}}

@@ -1,0 +1,1 @@
+package vn.covie.outbox.application; import java.util.List; import vn.covie.realtime.SseSignal; public interface OutboxEventHandler {boolean supports(String eventType); List<SseSignal> handle(OutboxEventContext event);}

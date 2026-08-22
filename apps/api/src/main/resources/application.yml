@@ -65,6 +65,9 @@ covie:
     max-attempts: 10
     initial-backoff-seconds: 1
     max-backoff-seconds: 300
+  sse:
+    emitter-timeout-ms: 1800000
+    heartbeat-delay-ms: 25000
   needs:
     max-response-items: 3
   checkout:
