@@ -1,0 +1,1 @@
+package vn.covie.notifications.api.dto; import java.time.Instant; import java.util.Map; import java.util.UUID; import vn.covie.notifications.model.NotificationType; public record NotificationResponse(UUID id,NotificationType type,Map<String,Object> data,boolean read,Instant createdAt) {}
