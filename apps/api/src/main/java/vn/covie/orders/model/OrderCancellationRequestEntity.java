@@ -24,4 +24,23 @@ public class OrderCancellationRequestEntity {
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "responded_at") private Instant respondedAt;
     protected OrderCancellationRequestEntity() {}
+
+    public static OrderCancellationRequestEntity pending(UUID id, UUID orderId, UUID requestedByUserId,
+            String reasonCode, String reasonText, OrderStatus previousOrderStatus, Instant now) {
+        OrderCancellationRequestEntity request = new OrderCancellationRequestEntity();
+        request.id = id; request.orderId = orderId; request.requestedByUserId = requestedByUserId;
+        request.reasonCode = reasonCode; request.reasonText = reasonText; request.previousOrderStatus = previousOrderStatus;
+        request.requestStatus = CancellationRequestStatus.PENDING; request.createdAt = now;
+        return request;
+    }
+    public void accept(UUID actorUserId, String note, Instant now) { respond(CancellationRequestStatus.ACCEPTED, actorUserId, note, now); }
+    public void reject(UUID actorUserId, String note, Instant now) { respond(CancellationRequestStatus.REJECTED, actorUserId, note, now); }
+    private void respond(CancellationRequestStatus status, UUID actorUserId, String note, Instant now) {
+        if (requestStatus != CancellationRequestStatus.PENDING) throw new IllegalStateException("Cancellation request is not pending.");
+        requestStatus = status; respondedByUserId = actorUserId; responseNote = note; respondedAt = now;
+    }
+    public UUID getOrderId() { return orderId; }
+    public OrderStatus getPreviousOrderStatus() { return previousOrderStatus; }
+    public CancellationRequestStatus getRequestStatus() { return requestStatus; }
+    public Instant getRespondedAt() { return respondedAt; }
 }
