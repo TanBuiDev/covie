@@ -50,17 +50,19 @@ export function createApiClient(baseUrl = "") {
 type BrowserApiClient = {
   request(method: string, path: string, init?: {
     body?: unknown;
+    headers?: HeadersInit;
     credentials?: RequestCredentials;
     fetch?: (request: Request) => Promise<Response>;
   }): Promise<{ response: Response }>;
 };
 
 /** Sends an ungenerated endpoint through the same CSRF-aware browser client. */
-export async function requestBrowserApi(method: string, path: string, body?: unknown): Promise<Response> {
+export async function requestBrowserApi(method: string, path: string, body?: unknown, headers?: HeadersInit): Promise<Response> {
   const client = createApiClient() as unknown as BrowserApiClient;
   let rawResponse: Response | undefined;
   await client.request(method, path, {
     body,
+    headers,
     credentials: "include",
     fetch: async (request) => {
       rawResponse = await fetch(request);

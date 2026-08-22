@@ -16,19 +16,27 @@ import vn.covie.orders.persistence.OrderRepository;
 import vn.covie.orders.security.OrderAccess;
 import vn.covie.orders.security.OrderAccessPolicy;
 import vn.covie.orders.security.OrderActorType;
+import vn.covie.merchants.security.MerchantAccessPolicy;
+import vn.covie.merchants.security.MerchantCapability;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
 
 @Service
 public class OrderReadService {
     private final OrderRepository orders; private final OrderAccessPolicy access; private final OrderAllowedActionService actions;
-    private final vn.covie.shared.time.AppClock clock;
-    public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, vn.covie.shared.time.AppClock clock) {
-        this.orders=orders;this.access=access;this.actions=actions;this.clock=clock;
+    private final MerchantAccessPolicy merchantAccess; private final vn.covie.shared.time.AppClock clock;
+    public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, vn.covie.shared.time.AppClock clock) {
+        this.orders=orders;this.access=access;this.actions=actions;this.merchantAccess=merchantAccess;this.clock=clock;
     }
     public OrderDetailResponse detail(UUID id) { OrderEntity order=orders.findById(id).orElseThrow(this::notFound); return map(order,access.requireVisible(order)); }
     public OrderPageResponse myOrders(UUID buyerId) {
         List<OrderSummaryResponse> items=orders.findAllByBuyerUserIdOrderByCreatedAtDesc(buyerId).stream()
+                .map(order->new OrderSummaryResponse(order.getId(),order.getOrderCode(),order.getOrderType(),order.getStatus(),order.getCreatedAt())).toList();
+        return new OrderPageResponse(items,null);
+    }
+    public OrderPageResponse merchantOrders(UUID merchantId) {
+        merchantAccess.require(merchantId, MerchantCapability.VIEW_ORDERS);
+        List<OrderSummaryResponse> items=orders.findAllByMerchantProfileIdOrderByCreatedAtDesc(merchantId).stream()
                 .map(order->new OrderSummaryResponse(order.getId(),order.getOrderCode(),order.getOrderType(),order.getStatus(),order.getCreatedAt())).toList();
         return new OrderPageResponse(items,null);
     }

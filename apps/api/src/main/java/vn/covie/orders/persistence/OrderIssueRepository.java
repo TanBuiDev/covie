@@ -3,6 +3,7 @@ package vn.covie.orders.persistence;
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -16,4 +17,7 @@ public interface OrderIssueRepository extends JpaRepository<OrderIssueEntity, UU
             and i.issueStatus = vn.covie.orders.model.OrderIssueStatus.OPEN
             """)
     Optional<OrderIssueEntity> lockOpenByOrderId(@Param("orderId") UUID orderId);
+
+    List<OrderIssueEntity> findTop100ByIssueStatusAndCloseAfterAtLessThanEqualOrderByCloseAfterAtAsc(
+            vn.covie.orders.model.OrderIssueStatus issueStatus, java.time.Instant now);
 }
