@@ -17,6 +17,9 @@ import vn.covie.orders.persistence.OrderRepository;
 import vn.covie.orders.persistence.ProductFulfillmentRepository;
 import vn.covie.orders.persistence.ServiceFulfillmentRepository;
 import vn.covie.orders.persistence.OrderEventRepository;
+import vn.covie.orders.persistence.OrderItemRepository;
+import vn.covie.orders.persistence.OrderCancellationRequestRepository;
+import vn.covie.orders.persistence.OrderIssueRepository;
 import vn.covie.orders.api.dto.OrderTimelineEventResponse;
 import vn.covie.orders.model.ProductFulfillmentEntity;
 import vn.covie.orders.security.OrderAccess;
@@ -30,14 +33,14 @@ import vn.covie.shared.web.ErrorCode;
 @Service
 public class OrderReadService {
     private final OrderRepository orders; private final OrderAccessPolicy access; private final OrderAllowedActionService actions;
-    private final MerchantAccessPolicy merchantAccess; private final ProductFulfillmentRepository products; private final ServiceFulfillmentRepository services; private final OrderEventRepository events; private final vn.covie.shared.time.AppClock clock;
+    private final MerchantAccessPolicy merchantAccess; private final ProductFulfillmentRepository products; private final ServiceFulfillmentRepository services; private final OrderEventRepository events; private final OrderItemRepository items; private final OrderCancellationRequestRepository cancellations; private final OrderIssueRepository issues; private final vn.covie.shared.time.AppClock clock;
     private final OrderCursorCodec cursors=new OrderCursorCodec();
     @org.springframework.beans.factory.annotation.Autowired
-    public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, ProductFulfillmentRepository products, ServiceFulfillmentRepository services, OrderEventRepository events, vn.covie.shared.time.AppClock clock) {
-        this.orders=orders;this.access=access;this.actions=actions;this.merchantAccess=merchantAccess;this.products=products;this.services=services;this.events=events;this.clock=clock;
+    public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, ProductFulfillmentRepository products, ServiceFulfillmentRepository services, OrderEventRepository events, OrderItemRepository items, OrderCancellationRequestRepository cancellations, OrderIssueRepository issues, vn.covie.shared.time.AppClock clock) {
+        this.orders=orders;this.access=access;this.actions=actions;this.merchantAccess=merchantAccess;this.products=products;this.services=services;this.events=events;this.items=items;this.cancellations=cancellations;this.issues=issues;this.clock=clock;
     }
     public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, vn.covie.shared.time.AppClock clock) {
-        this(orders,access,actions,merchantAccess,null,null,null,clock);
+        this(orders,access,actions,merchantAccess,null,null,null,null,null,null,clock);
     }
     public OrderDetailResponse detail(UUID id) { OrderEntity order=orders.findById(id).orElseThrow(this::notFound); return map(order,access.requireVisible(order)); }
     public OrderPageResponse myOrders(UUID buyerId) {
@@ -69,9 +72,22 @@ public class OrderReadService {
         ProductFulfillmentEntity product=products==null?null:products.findById(order.getId()).orElse(null);
         Set<OrderAction> permitted=actions.allowedActions(new OrderActionContext(actor.actorType(),order.getOrderType(),order.getStatus(),product==null?null:product.getFulfillmentMethod(),order.getConfirmationExpiresAt(),product==null?null:product.getNoShowEligibleAt(),clock.now()));
         if(permitted==null) permitted=Set.of();
+        var service=services==null?null:services.findById(order.getId()).orElse(null);
         return new OrderDetailResponse(order.getId(),order.getOrderCode(),order.getOrderType(),order.getStatus(),order.getVersion(),
-                order.getBuyerUserId(),order.getMerchantProfileId(),order.getMerchantLocationId(),permitted,order.getCreatedAt(),order.getConfirmedAt(),order.getCompletedAt(),order.getClosedAt());
+                order.getSourceType(),new vn.covie.orders.api.dto.OrderPartyResponse(order.getBuyerUserId(),null,null),
+                new vn.covie.orders.api.dto.OrderPartyResponse(null,order.getMerchantProfileId(),order.getMerchantLocationId()),
+                items==null?List.of():items.findAllByOrderIdOrderByCreatedAtAscIdAsc(order.getId()).stream().map(item->new vn.covie.orders.api.dto.OrderItemResponse(item.getId(),item.getCatalogItemId(),item.getVariantId(),item.getLocationVariantId(),item.getItemType(),item.getQuantity(),item.getUnitPrice(),item.getLineTotal(),item.getCurrencyCode(),item.getItemSnapshot())).toList(),
+                new vn.covie.orders.api.dto.OrderPricingResponse(order.getSubtotal(),order.getShippingFeeType(),order.getShippingFee(),order.getKnownTotal(),order.getTotalAmount(),order.getCurrencyCode()),
+                fulfillment(product,service,actor),order.getPaymentMethod(),cancellation(order.getId()),issue(order.getId()),events==null?List.of():events(order.getId()),permitted,order.getCreatedAt(),order.getConfirmedAt(),order.getCompletedAt(),order.getClosedAt());
     }
+    private vn.covie.orders.api.dto.OrderFulfillmentResponse fulfillment(ProductFulfillmentEntity product,vn.covie.orders.model.ServiceFulfillmentEntity service,OrderAccess actor){
+        boolean sensitive=actor.actorType()==OrderActorType.BUYER||actor.actorType()==OrderActorType.MERCHANT||actor.actorType()==OrderActorType.ADMIN;
+        if(product!=null)return new vn.covie.orders.api.dto.OrderFulfillmentResponse(product.getFulfillmentMethod(),product.getPickupLocationId(),product.getBuyerAddressId(),product.getDistanceMeters(),product.getPickupLocationSnapshot(),sensitive?product.getDeliveryAddressSnapshot():null,sensitive?product.getBuyerContactSnapshot():null,product.getMerchantContactSnapshot(),product.getSellerMarkedReadyAt(),product.getOutForDeliveryAt(),product.getSellerMarkedDeliveredAt(),null,product.getAwaitingBuyerConfirmationAt(),product.getAutoCompleteAt(),product.getNoShowEligibleAt());
+        if(service!=null)return new vn.covie.orders.api.dto.OrderFulfillmentResponse(null,null,service.getServiceAddressId(),null,null,sensitive?service.getServiceAddressSnapshot():null,sensitive?service.getBuyerContactSnapshot():null,service.getMerchantContactSnapshot(),null,null,null,service.getProviderMarkedPerformedAt(),service.getAwaitingBuyerConfirmationAt(),service.getAutoCompleteAt(),null);
+        return null;
+    }
+    private vn.covie.orders.api.dto.OrderCancellationResponse cancellation(UUID orderId){if(cancellations==null)return null;return cancellations.findFirstByOrderIdOrderByCreatedAtDesc(orderId).map(c->new vn.covie.orders.api.dto.OrderCancellationResponse(c.getId(),c.getRequestedByUserId(),c.getReasonCode(),c.getReasonText(),c.getRequestStatus(),c.getPreviousOrderStatus(),c.getRespondedByUserId(),c.getResponseNote(),c.getCreatedAt(),c.getRespondedAt())).orElse(null);}
+    private vn.covie.orders.api.dto.OrderIssueResponse issue(UUID orderId){if(issues==null)return null;return issues.findFirstByOrderIdOrderByOpenedAtDesc(orderId).map(i->new vn.covie.orders.api.dto.OrderIssueResponse(i.getId(),i.getIssueType(),i.getReportedByUserId(),i.getReasonText(),i.getIssueStatus(),i.getOpenedAt(),i.getCloseAfterAt(),i.getResolvedAt(),i.getClosedAt())).orElse(null);}
     private ApiException notFound(){return new ApiException(ErrorCode.RESOURCE_NOT_FOUND,HttpStatus.NOT_FOUND,"Resource not found.");}
     private OrderCursorCodec.Cursor cursor(String value){return cursors.decode(value);}
     private OrderPageResponse page(List<OrderEntity> rows,int limit){boolean hasMore=rows.size()>limit;List<OrderEntity> visible=hasMore?rows.subList(0,limit):rows;List<OrderSummaryResponse> items=visible.stream().map(order->new OrderSummaryResponse(order.getId(),order.getOrderCode(),order.getOrderType(),order.getStatus(),order.getCreatedAt())).toList();String next=hasMore?cursors.encode(new OrderCursorCodec.Cursor(visible.getLast().getCreatedAt(),visible.getLast().getId())):null;return new OrderPageResponse(items,next);}

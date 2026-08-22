@@ -1951,6 +1951,26 @@ export interface components {
             note?: string;
             defaultAddress?: boolean;
         };
+        JsonNode: unknown;
+        OrderCancellationResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            requestedByUserId?: string;
+            reasonCode?: string;
+            reasonText?: string;
+            /** @enum {string} */
+            status?: "PENDING" | "ACCEPTED" | "REJECTED";
+            /** @enum {string} */
+            previousStatus?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
+            /** Format: uuid */
+            respondedByUserId?: string;
+            responseNote?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            respondedAt?: string;
+        };
         OrderDetailResponse: {
             /** Format: uuid */
             id?: string;
@@ -1961,12 +1981,18 @@ export interface components {
             status?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
             /** Format: int64 */
             version?: number;
-            /** Format: uuid */
-            buyerUserId?: string;
-            /** Format: uuid */
-            merchantId?: string;
-            /** Format: uuid */
-            merchantLocationId?: string;
+            /** @enum {string} */
+            source?: "MARKETPLACE" | "NEED_REQUEST";
+            buyer?: components["schemas"]["OrderPartyResponse"];
+            merchant?: components["schemas"]["OrderPartyResponse"];
+            items?: components["schemas"]["OrderItemResponse"][];
+            pricing?: components["schemas"]["OrderPricingResponse"];
+            fulfillment?: components["schemas"]["OrderFulfillmentResponse"];
+            /** @enum {string} */
+            paymentMethod?: "COD" | "BANK_TRANSFER_NEGOTIATED";
+            cancellation?: components["schemas"]["OrderCancellationResponse"];
+            issue?: components["schemas"]["OrderIssueResponse"];
+            timeline?: components["schemas"]["OrderTimelineEventResponse"][];
             allowedActions?: ("CONFIRM" | "REJECT" | "CANCEL" | "REQUEST_CANCELLATION" | "ACCEPT_CANCELLATION" | "REJECT_CANCELLATION" | "MARK_OUT_FOR_DELIVERY" | "MARK_DELIVERED" | "MARK_READY_FOR_PICKUP" | "REPORT_BUYER_NO_SHOW" | "CONTEST_NO_SHOW" | "MARK_SERVICE_PERFORMED" | "CONFIRM_RECEIVED" | "CONFIRM_COMPLETED" | "REPORT_DELIVERY_ISSUE" | "REPORT_SERVICE_ISSUE")[];
             /** Format: date-time */
             createdAt?: string;
@@ -1976,6 +2002,94 @@ export interface components {
             completedAt?: string;
             /** Format: date-time */
             closedAt?: string;
+        };
+        OrderFulfillmentResponse: {
+            /** @enum {string} */
+            productMethod?: "PICKUP" | "SELLER_DELIVERY";
+            /** Format: uuid */
+            pickupLocationId?: string;
+            /** Format: uuid */
+            addressId?: string;
+            /** Format: int32 */
+            distanceMeters?: number;
+            pickupLocation?: components["schemas"]["JsonNode"];
+            address?: components["schemas"]["JsonNode"];
+            buyerContact?: components["schemas"]["JsonNode"];
+            merchantContact?: components["schemas"]["JsonNode"];
+            /** Format: date-time */
+            sellerMarkedReadyAt?: string;
+            /** Format: date-time */
+            outForDeliveryAt?: string;
+            /** Format: date-time */
+            sellerMarkedDeliveredAt?: string;
+            /** Format: date-time */
+            providerMarkedPerformedAt?: string;
+            /** Format: date-time */
+            awaitingBuyerConfirmationAt?: string;
+            /** Format: date-time */
+            autoCompleteAt?: string;
+            /** Format: date-time */
+            noShowEligibleAt?: string;
+        };
+        OrderIssueResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "DELIVERY_NOT_RECEIVED" | "SERVICE_NOT_COMPLETED" | "BUYER_NO_SHOW_CONTESTED";
+            /** Format: uuid */
+            reportedByUserId?: string;
+            reasonText?: string;
+            /** @enum {string} */
+            status?: "OPEN" | "RESOLVED_BY_PARTIES" | "CLOSED_BY_TIMEOUT";
+            /** Format: date-time */
+            openedAt?: string;
+            /** Format: date-time */
+            closeAfterAt?: string;
+            /** Format: date-time */
+            resolvedAt?: string;
+            /** Format: date-time */
+            closedAt?: string;
+        };
+        OrderItemResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            catalogItemId?: string;
+            /** Format: uuid */
+            variantId?: string;
+            /** Format: uuid */
+            locationVariantId?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** Format: int64 */
+            quantity?: number;
+            /** Format: int64 */
+            unitPrice?: number;
+            /** Format: int64 */
+            lineTotal?: number;
+            currency?: string;
+            snapshot?: components["schemas"]["JsonNode"];
+        };
+        OrderPartyResponse: {
+            /** Format: uuid */
+            userId?: string;
+            /** Format: uuid */
+            merchantId?: string;
+            /** Format: uuid */
+            locationId?: string;
+        };
+        OrderPricingResponse: {
+            /** Format: int64 */
+            subtotal?: number;
+            /** @enum {string} */
+            shippingFeeType?: "FREE" | "FIXED" | "CONDITIONAL" | "NEGOTIATED" | "NOT_APPLICABLE";
+            /** Format: int64 */
+            shippingFee?: number;
+            /** Format: int64 */
+            knownTotal?: number;
+            /** Format: int64 */
+            totalAmount?: number;
+            currency?: string;
         };
         OrderTimelineEventResponse: {
             /** Format: uuid */
@@ -4333,7 +4447,11 @@ export interface operations {
     };
     list_5: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+                cursor?: string;
+                locationId?: string;
+            };
             header?: never;
             path: {
                 merchantId: string;
@@ -4397,7 +4515,10 @@ export interface operations {
     };
     list_8: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;

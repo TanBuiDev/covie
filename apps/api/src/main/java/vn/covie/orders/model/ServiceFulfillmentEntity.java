@@ -35,6 +35,9 @@ public class ServiceFulfillmentEntity {
         providerMarkedPerformedAt = now; awaitingBuyerConfirmationAt = now; autoCompleteAt = completionAt;
     }
     public Instant getProviderMarkedPerformedAt() { return providerMarkedPerformedAt; }
+    public UUID getServiceAddressId() { return serviceAddressId; } public JsonNode getServiceAddressSnapshot() { return serviceAddressSnapshot; }
+    public JsonNode getProviderLocationSnapshot() { return providerLocationSnapshot; } public JsonNode getBuyerContactSnapshot() { return buyerContactSnapshot; }
+    public JsonNode getMerchantContactSnapshot() { return merchantContactSnapshot; }
     public Instant getAwaitingBuyerConfirmationAt() { return awaitingBuyerConfirmationAt; }
     public Instant getAutoCompleteAt() { return autoCompleteAt; }
 }

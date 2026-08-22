@@ -30,6 +30,8 @@ public class OrderIssueEntity {
         issue.openedAt=now;issue.closeAfterAt=closeAfterAt;return issue;
     }
     public void closeByTimeout(Instant now){if(issueStatus==OrderIssueStatus.OPEN){issueStatus=OrderIssueStatus.CLOSED_BY_TIMEOUT;closedAt=now;}}
-    public UUID getOrderId(){return orderId;} public OrderIssueType getIssueType(){return issueType;}
+    public UUID getId(){return id;} public UUID getOrderId(){return orderId;} public OrderIssueType getIssueType(){return issueType;}
     public OrderIssueStatus getIssueStatus(){return issueStatus;} public Instant getCloseAfterAt(){return closeAfterAt;}
+    public UUID getReportedByUserId(){return reportedByUserId;} public String getReasonText(){return reasonText;}
+    public Instant getOpenedAt(){return openedAt;} public Instant getResolvedAt(){return resolvedAt;} public Instant getClosedAt(){return closedAt;}
 }

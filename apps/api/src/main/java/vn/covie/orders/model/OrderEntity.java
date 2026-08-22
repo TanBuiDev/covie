@@ -66,6 +66,12 @@ public class OrderEntity {
     public OrderType getOrderType() { return orderType; }
     public PaymentMethod getPaymentMethod() { return paymentMethod; }
     public String getCurrencyCode() { return currencyCode; }
+    public OrderSourceType getSourceType() { return sourceType; }
+    public long getSubtotal() { return subtotal; }
+    public OrderShippingFeeType getShippingFeeType() { return shippingFeeType; }
+    public Long getShippingFee() { return shippingFee; }
+    public long getKnownTotal() { return knownTotal; }
+    public Long getTotalAmount() { return totalAmount; }
     public UUID getBuyerUserId() { return buyerUserId; }
     public UUID getMerchantProfileId() { return merchantProfileId; }
     public UUID getMerchantLocationId() { return merchantLocationId; }
