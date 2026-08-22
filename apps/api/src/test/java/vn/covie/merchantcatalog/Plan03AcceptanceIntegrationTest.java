@@ -110,6 +110,7 @@ class Plan03AcceptanceIntegrationTest extends PostgresIntegrationTest {
         MvcResult discovery = mockMvc.perform(get("/api/v1/catalog/items")
                         .param("lat", "10.8")
                         .param("lng", "106.7")
+                        .param("categoryId", categoryId.toString())
                         .param("sort", "PRICE_ASC")
                         .param("limit", "5"))
                 .andExpect(status().isOk())

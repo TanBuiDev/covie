@@ -3,6 +3,7 @@ package vn.covie.checkout.concurrency;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -92,31 +93,107 @@ class CheckoutLastStockConcurrencyTest extends CheckoutRollbackInvariantTest {
         assertThat(jdbc.queryForObject("select reserved_quantity from inventory_balances where location_variant_id = ?", Long.class, fixture.offerId())).isEqualTo(1L);
     }
 
+    @Test
+    void reversedTrackedOfferOrderingAcrossConcurrentCommitsDoesNotDeadlock() throws Exception {
+        Fixture fixture = fixture();
+        TrackedOffer second = secondTrackedOffer(fixture);
+        UUID secondBuyer = UUID.randomUUID();
+        users.saveAndFlush(UserEntity.active(secondBuyer, "buyer-" + secondBuyer, Instant.now()));
+        List<CheckoutCandidateItem> buyerOneItems = List.of(item(fixture), item(second));
+        List<CheckoutCandidateItem> buyerTwoItems = List.of(item(second), item(fixture));
+        Map<UUID, CheckoutRevalidation> revalidations = Map.of(
+                fixture.buyerId(), revalidation(fixture, fixture.buyerId(), buyerOneItems),
+                secondBuyer, revalidation(fixture, secondBuyer, buyerTwoItems));
+        Map<String, CheckoutSessionEntity> tokens = Map.of(
+                "ordered", session(fixture.buyerId(), fixture, buyerOneItems),
+                "reversed", session(secondBuyer, fixture, buyerTwoItems));
+        org.mockito.Mockito.when(sessions.lock(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(call -> tokens.get(call.getArgument(0)));
+        org.mockito.Mockito.when(previews.revalidate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(call -> revalidations.get(call.getArgument(0)));
+        org.mockito.Mockito.when(previews.revalidate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyMap()))
+                .thenAnswer(call -> revalidations.get(call.getArgument(0)));
+        org.mockito.Mockito.when(comparison.compare(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(List.of());
+
+        CyclicBarrier ready = new CyclicBarrier(2);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            List<Future<Boolean>> results = pool.invokeAll(List.of(
+                    commit(ready, fixture.buyerId(), "ordered"), commit(ready, secondBuyer, "reversed")));
+            assertThat(results.stream().filter(CheckoutLastStockConcurrencyTest::get).count()).isEqualTo(1);
+        }
+        assertThat(jdbc.queryForObject("select count(*) from orders where buyer_user_id in (?, ?)", Integer.class,
+                fixture.buyerId(), secondBuyer)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select reserved_quantity from inventory_balances where location_variant_id = ?", Long.class,
+                fixture.offerId())).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("select reserved_quantity from inventory_balances where location_variant_id = ?", Long.class,
+                second.offerId())).isEqualTo(1L);
+    }
+
     private Callable<Boolean> commit(CyclicBarrier ready, UUID buyer, String token) {
         return () -> { ready.await(5, TimeUnit.SECONDS); try { commits.commit(buyer, token); return true; }
             catch (ApiException expected) { return false; } };
     }
 
     private CheckoutSessionEntity session(UUID buyer, Fixture fixture) {
+        return session(buyer, fixture, List.of(item(fixture)));
+    }
+
+    private CheckoutSessionEntity session(UUID buyer, Fixture fixture, List<CheckoutCandidateItem> items) {
         CheckoutPreviewRequest request = new CheckoutPreviewRequest(CheckoutSourceType.DIRECT, null,
-                List.of(new CheckoutPreviewRequest.DirectItem(fixture.offerId(), 1)), FulfillmentMethod.PICKUP, null, PaymentMethod.COD);
+                items.stream().map(candidate -> new CheckoutPreviewRequest.DirectItem(candidate.locationVariantId(), candidate.quantity())).toList(),
+                FulfillmentMethod.PICKUP, null, PaymentMethod.COD);
         return CheckoutSessionEntity.create(UUID.randomUUID(), "hash-" + buyer, buyer, CheckoutSourceType.DIRECT,
-                mapper.createObjectNode(), null, mapper.valueToTree(request), mapper.valueToTree(snapshot(fixture)), Instant.now().plusSeconds(300), Instant.now());
+                mapper.createObjectNode(), null, mapper.valueToTree(request), mapper.valueToTree(snapshot(fixture, items)), Instant.now().plusSeconds(300), Instant.now());
     }
 
     private CheckoutRevalidation revalidation(Fixture fixture, UUID buyer) {
+        return revalidation(fixture, buyer, List.of(item(fixture)));
+    }
+
+    private CheckoutRevalidation revalidation(Fixture fixture, UUID buyer, List<CheckoutCandidateItem> items) {
         CheckoutCandidate candidate = new CheckoutCandidate(CheckoutSourceType.DIRECT, buyer, fixture.merchantId(), fixture.locationId(),
-                CatalogItemType.PRODUCT, List.of(new CheckoutCandidateItem(fixture.offerId(), fixture.variantId(), fixture.itemId(), 1)), null, mapper.createObjectNode());
+                CatalogItemType.PRODUCT, items, null, mapper.createObjectNode());
         RevalidatedCheckout checkout = new RevalidatedCheckout(candidate, FulfillmentMethod.PICKUP, PaymentMethod.COD,
-                List.of(new RevalidatedCheckoutItem(candidate.items().getFirst(), 10_000, mapper.createObjectNode())), 10_000, "VND", null,
+                candidate.items().stream().map(item -> new RevalidatedCheckoutItem(item, 10_000, mapper.createObjectNode())).toList(),
+                10_000L * items.size(), "VND", null,
                 new FulfillmentSnapshots(null, null, mapper.createObjectNode(), null, mapper.createObjectNode(), mapper.createObjectNode(), null));
-        return new CheckoutRevalidation(checkout, snapshot(fixture), 0L, 10_000L, 10_000L, null, Set.of(fixture.offerId()));
+        return new CheckoutRevalidation(checkout, snapshot(fixture, items), 0L, 10_000L * items.size(), 10_000L * items.size(), null,
+                items.stream().map(CheckoutCandidateItem::locationVariantId).collect(java.util.stream.Collectors.toSet()));
     }
 
     private CheckoutComparableSnapshot snapshot(Fixture fixture) {
-        return new CheckoutComparableSnapshot(CheckoutSourceType.DIRECT, fixture.locationId(), null, FulfillmentMethod.PICKUP,
-                null, null, 10_000, 0L, 10_000L, 10_000L, null, "VND", List.of(new CheckoutComparableItem(fixture.offerId(), 1, 10_000, true)));
+        return snapshot(fixture, List.of(item(fixture)));
     }
+
+    private CheckoutComparableSnapshot snapshot(Fixture fixture, List<CheckoutCandidateItem> items) {
+        return new CheckoutComparableSnapshot(CheckoutSourceType.DIRECT, fixture.locationId(), null, FulfillmentMethod.PICKUP,
+                null, null, 10_000 * items.size(), 0L, 10_000L * items.size(), 10_000L * items.size(), null, "VND",
+                items.stream().map(item -> new CheckoutComparableItem(item.locationVariantId(), item.quantity(), 10_000, true)).toList());
+    }
+
+    private CheckoutCandidateItem item(Fixture fixture) {
+        return new CheckoutCandidateItem(fixture.offerId(), fixture.variantId(), fixture.itemId(), 1);
+    }
+
+    private CheckoutCandidateItem item(TrackedOffer offer) {
+        return new CheckoutCandidateItem(offer.offerId(), offer.variantId(), offer.itemId(), 1);
+    }
+
+    private TrackedOffer secondTrackedOffer(Fixture fixture) {
+        Instant now = Instant.now();
+        Timestamp timestamp = Timestamp.from(now);
+        UUID variantId = UUID.randomUUID();
+        UUID offerId = UUID.randomUUID();
+        jdbc.update("insert into variants(id,catalog_item_id,variant_name,is_default,variant_status,created_at,updated_at,version) values (?,?,?,false,'ACTIVE',?,?,0)",
+                variantId, fixture.itemId(), "Second", timestamp, timestamp);
+        jdbc.update("insert into location_variants(id,merchant_location_id,variant_id,price,currency_code,is_available,inventory_mode,created_at,updated_at,version) values (?,?,?,10000,'VND',true,'TRACKED',?,?,0)",
+                offerId, fixture.locationId(), variantId, timestamp, timestamp);
+        jdbc.update("insert into inventory_balances(location_variant_id,stock_on_hand,reserved_quantity,updated_at,version) values (?,?,?,?,0)",
+                offerId, 1, 0, timestamp);
+        return new TrackedOffer(fixture.itemId(), variantId, offerId);
+    }
+
+    private record TrackedOffer(UUID itemId, UUID variantId, UUID offerId) {}
 
     private static boolean get(Future<Boolean> future) {
         try { return future.get(5, TimeUnit.SECONDS); }
