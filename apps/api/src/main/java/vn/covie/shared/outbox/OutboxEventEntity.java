@@ -72,5 +72,5 @@ public class OutboxEventEntity {
     }
     public void markPublished(Instant now) { status=OutboxEventStatus.PUBLISHED; publishedAt=now; nextAttemptAt=null; lastError=null; }
     public void markFailed(int newAttempts, Instant nextAttemptAt, String sanitizedError) { attempts=newAttempts; status=OutboxEventStatus.FAILED; this.nextAttemptAt=nextAttemptAt; lastError=sanitizedError; }
-    public UUID getId(){return id;} public String getEventType(){return eventType;} public String getAggregateType(){return aggregateType;} public UUID getAggregateId(){return aggregateId;} public JsonNode getPayload(){return payload;} public Instant getOccurredAt(){return occurredAt;} public OutboxEventStatus getStatus(){return status;} public int getAttempts(){return attempts;}
+    public UUID getId(){return id;} public String getEventType(){return eventType;} public String getAggregateType(){return aggregateType;} public UUID getAggregateId(){return aggregateId;} public JsonNode getPayload(){return payload;} public Instant getOccurredAt(){return occurredAt;} public OutboxEventStatus getStatus(){return status;} public int getAttempts(){return attempts;} public Instant getNextAttemptAt(){return nextAttemptAt;} public String getLastError(){return lastError;}
 }
