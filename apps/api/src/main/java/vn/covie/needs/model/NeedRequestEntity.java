@@ -25,7 +25,7 @@ public class NeedRequestEntity {
     @Column(columnDefinition = "text") private String description;
     @Column(name = "requested_quantity") private Long requestedQuantity;
     @Column(name = "location_area_id") private UUID locationAreaId;
-    @Column(name = "geo_point", nullable = false, columnDefinition = "geography(Point,4326)") private Point geoPoint;
+    @JdbcTypeCode(SqlTypes.GEOGRAPHY) @Column(name = "geo_point", nullable = false, columnDefinition = "geography(Point,4326)") private Point geoPoint;
     @JdbcTypeCode(SqlTypes.JSON) @Column(name = "location_snapshot", nullable = false, columnDefinition = "jsonb") private JsonNode locationSnapshot;
     @Column(name = "search_radius_meters", nullable = false) private int searchRadiusMeters;
     @Enumerated(EnumType.STRING) @Column(name = "request_status", nullable = false) private NeedStatus requestStatus;

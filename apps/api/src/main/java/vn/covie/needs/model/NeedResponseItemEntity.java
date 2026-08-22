@@ -22,7 +22,7 @@ public class NeedResponseItemEntity {
     @Column(name = "location_variant_id", nullable = false) private UUID locationVariantId;
     @Enumerated(EnumType.STRING) @Column(name = "item_status", nullable = false) private NeedResponseItemStatus itemStatus;
     @Column(name = "price_snapshot", nullable = false) private long priceSnapshot;
-    @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode;
+    @JdbcTypeCode(java.sql.Types.CHAR) @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode;
     @JdbcTypeCode(SqlTypes.JSON) @Column(name = "availability_snapshot", nullable = false, columnDefinition = "jsonb") private JsonNode availabilitySnapshot;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "retired_at") private Instant retiredAt;
