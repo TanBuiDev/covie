@@ -3,7 +3,9 @@ package vn.covie.reputation.application;
 import vn.covie.orders.model.OrderStatus;
 import vn.covie.reputation.model.BuyerReputationOutcome;
 import vn.covie.reputation.model.MerchantReputationOutcome;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ReputationOutcomeClassifier {
     public ReputationContribution classify(OrderStatus status) {
         return switch (status) {
