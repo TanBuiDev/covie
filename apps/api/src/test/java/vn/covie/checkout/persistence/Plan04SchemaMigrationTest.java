@@ -17,7 +17,7 @@ class Plan04SchemaMigrationTest extends PostgresIntegrationTest {
     @Test
     void appliesPlan04MigrationsAndCreatesAllCreationTables() throws Exception {
         try (Connection c = dataSource.getConnection()) {
-            assertThat(currentFlywayVersion(c)).isEqualTo("009");
+            assertThat(currentFlywayVersion(c)).isEqualTo("010");
             for (String table : new String[] {
                 "delivery_coverages", "shipping_policies", "inventory_balances",
                 "inventory_reservations", "inventory_movements", "carts", "cart_items",
