@@ -23,4 +23,13 @@ public class OrderIssueEntity {
     @Column(name = "resolved_at") private Instant resolvedAt;
     @Column(name = "closed_at") private Instant closedAt;
     protected OrderIssueEntity() {}
+    public static OrderIssueEntity open(UUID id, UUID orderId, OrderIssueType type, UUID reporter, String reason,
+            Instant now, Instant closeAfterAt) {
+        OrderIssueEntity issue=new OrderIssueEntity(); issue.id=id;issue.orderId=orderId;issue.issueType=type;
+        issue.reportedByUserId=reporter;issue.reasonText=reason;issue.issueStatus=OrderIssueStatus.OPEN;
+        issue.openedAt=now;issue.closeAfterAt=closeAfterAt;return issue;
+    }
+    public void closeByTimeout(Instant now){if(issueStatus==OrderIssueStatus.OPEN){issueStatus=OrderIssueStatus.CLOSED_BY_TIMEOUT;closedAt=now;}}
+    public UUID getOrderId(){return orderId;} public OrderIssueType getIssueType(){return issueType;}
+    public OrderIssueStatus getIssueStatus(){return issueStatus;} public Instant getCloseAfterAt(){return closeAfterAt;}
 }
