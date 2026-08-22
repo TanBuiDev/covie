@@ -31,6 +31,9 @@ public class OrderEntity {
     @Column(name = "total_amount") private Long totalAmount;
     @JdbcTypeCode(java.sql.Types.CHAR) @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode;
     @Column(name = "confirmation_expires_at") private Instant confirmationExpiresAt;
+    @Column(name = "confirmed_at") private Instant confirmedAt;
+    @Column(name = "completed_at") private Instant completedAt;
+    @Column(name = "closed_at") private Instant closedAt;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
     @Version @Column(nullable = false) private long version;
@@ -55,6 +58,14 @@ public class OrderEntity {
     public UUID getId() { return id; } public String getOrderCode() { return orderCode; }
     public OrderStatus getStatus() { return status; } public Instant getCreatedAt() { return createdAt; }
     public Instant getConfirmationExpiresAt() { return confirmationExpiresAt; }
+    public Instant getConfirmedAt() { return confirmedAt; }
+    public Instant getCompletedAt() { return completedAt; }
+    public Instant getClosedAt() { return closedAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public long getVersion() { return version; }
+    public OrderType getOrderType() { return orderType; }
+    public PaymentMethod getPaymentMethod() { return paymentMethod; }
+    public String getCurrencyCode() { return currencyCode; }
     public UUID getBuyerUserId() { return buyerUserId; }
     public UUID getMerchantProfileId() { return merchantProfileId; }
     public UUID getMerchantLocationId() { return merchantLocationId; }
@@ -62,5 +73,21 @@ public class OrderEntity {
     public void transitionTo(OrderStatus nextStatus, Instant now) {
         this.status = nextStatus;
         this.updatedAt = now;
+    }
+
+    public void confirm(Instant now) {
+        transitionTo(OrderStatus.CONFIRMED, now);
+        this.confirmedAt = now;
+    }
+
+    public void complete(Instant now) {
+        transitionTo(OrderStatus.COMPLETED, now);
+        this.completedAt = now;
+        this.closedAt = now;
+    }
+
+    public void close(OrderStatus terminalStatus, Instant now) {
+        transitionTo(terminalStatus, now);
+        this.closedAt = now;
     }
 }
