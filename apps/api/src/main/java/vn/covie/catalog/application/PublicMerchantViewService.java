@@ -28,6 +28,7 @@ import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
+import vn.covie.reputation.application.ReputationReadService;
 
 @Service
 public class PublicMerchantViewService {
@@ -36,14 +37,16 @@ public class PublicMerchantViewService {
     private final MerchantContactMethodRepository contacts;
     private final MediaAssetRepository media;
     private final MediaUrlResolver urls;
+    private final ReputationReadService reputation;
 
     public PublicMerchantViewService(MerchantProfileRepository merchants, MerchantLocationRepository locations,
-            MerchantContactMethodRepository contacts, MediaAssetRepository media, MediaUrlResolver urls) {
+            MerchantContactMethodRepository contacts, MediaAssetRepository media, MediaUrlResolver urls, ReputationReadService reputation) {
         this.merchants = merchants;
         this.locations = locations;
         this.contacts = contacts;
         this.media = media;
         this.urls = urls;
+        this.reputation = reputation;
     }
 
     public PublicMerchantResponse get(UUID merchantId) {
@@ -73,7 +76,7 @@ public class PublicMerchantViewService {
                 .toList();
         return new PublicMerchantResponse(merchant.getId(), merchant.getName(), merchant.getSlug(),
                 merchant.getDescription(), publicMedia(merchant.getLogoMediaId()), publicMedia(merchant.getCoverMediaId()),
-                activeLocations, publicContacts);
+                activeLocations, publicContacts, reputation.merchant(merchant.getId()));
     }
 
     public PublicMerchantSummary summary(MerchantProfileEntity merchant) {

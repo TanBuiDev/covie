@@ -9,4 +9,4 @@ import vn.covie.orders.model.OrderType;
 
 public record OrderDetailResponse(UUID id, String orderCode, OrderType type, OrderStatus status, long version,
         UUID buyerUserId, UUID merchantId, UUID merchantLocationId, Set<OrderAction> allowedActions,
-        Instant createdAt, Instant confirmedAt, Instant completedAt, Instant closedAt) {}
+        Instant createdAt, Instant confirmedAt, Instant completedAt, Instant closedAt, OrderReputationContext reputation) {}

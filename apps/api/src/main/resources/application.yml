@@ -55,6 +55,10 @@ springdoc:
 covie:
   reviews:
     creation-enabled: true
+  reputation:
+    buyer-warning-threshold-basis-points: 8000
+    minimum-eligible-orders-for-warning: 3
+    allow-maintenance-rebuild: false
   needs:
     max-response-items: 3
   checkout:
