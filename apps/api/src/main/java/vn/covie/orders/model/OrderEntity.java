@@ -55,6 +55,9 @@ public class OrderEntity {
     public UUID getId() { return id; } public String getOrderCode() { return orderCode; }
     public OrderStatus getStatus() { return status; } public Instant getCreatedAt() { return createdAt; }
     public Instant getConfirmationExpiresAt() { return confirmationExpiresAt; }
+    public UUID getBuyerUserId() { return buyerUserId; }
+    public UUID getMerchantProfileId() { return merchantProfileId; }
+    public UUID getMerchantLocationId() { return merchantLocationId; }
 
     public void transitionTo(OrderStatus nextStatus, Instant now) {
         this.status = nextStatus;

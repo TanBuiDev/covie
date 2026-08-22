@@ -61,6 +61,7 @@ public final class MerchantAccessPolicy {
             case MANAGER -> capability != MerchantCapability.GRANT_OWNER;
             case STAFF -> switch (capability) {
                 case VIEW_MERCHANT, MANAGE_LOCATION_OFFER, UPLOAD_MERCHANT_MEDIA -> true;
+                case VIEW_ORDERS, PROCESS_ORDERS -> true;
                 case EDIT_PROFILE, MANAGE_MEMBERS, GRANT_OWNER, MANAGE_LOCATIONS, MANAGE_HOURS_CONTACTS,
                         MANAGE_CATALOG_STRUCTURE, PUBLISH_CATALOG -> false;
             };
