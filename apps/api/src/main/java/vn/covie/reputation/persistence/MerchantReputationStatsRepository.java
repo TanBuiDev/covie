@@ -1,3 +1,3 @@
 package vn.covie.reputation.persistence;
-import java.util.UUID; import org.springframework.data.jpa.repository.JpaRepository; import vn.covie.reputation.model.MerchantReputationStatsEntity;
-public interface MerchantReputationStatsRepository extends JpaRepository<MerchantReputationStatsEntity, UUID> {}
+import jakarta.persistence.LockModeType; import java.util.Optional; import java.util.UUID; import org.springframework.data.jpa.repository.JpaRepository; import org.springframework.data.jpa.repository.Lock; import org.springframework.data.jpa.repository.Query; import org.springframework.data.repository.query.Param; import vn.covie.reputation.model.MerchantReputationStatsEntity;
+public interface MerchantReputationStatsRepository extends JpaRepository<MerchantReputationStatsEntity, UUID> { @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select s from MerchantReputationStatsEntity s where s.merchantProfileId=:merchantId") Optional<MerchantReputationStatsEntity> findForUpdate(@Param("merchantId") UUID merchantId); }

@@ -1,3 +1,3 @@
 package vn.covie.reputation.persistence;
-import java.util.UUID; import org.springframework.data.jpa.repository.JpaRepository; import vn.covie.reputation.model.UserReputationStatsEntity;
-public interface UserReputationStatsRepository extends JpaRepository<UserReputationStatsEntity, UUID> {}
+import jakarta.persistence.LockModeType; import java.util.Optional; import java.util.UUID; import org.springframework.data.jpa.repository.JpaRepository; import org.springframework.data.jpa.repository.Lock; import org.springframework.data.jpa.repository.Query; import org.springframework.data.repository.query.Param; import vn.covie.reputation.model.UserReputationStatsEntity;
+public interface UserReputationStatsRepository extends JpaRepository<UserReputationStatsEntity, UUID> { @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select s from UserReputationStatsEntity s where s.userId=:userId") Optional<UserReputationStatsEntity> findForUpdate(@Param("userId") UUID userId); }
