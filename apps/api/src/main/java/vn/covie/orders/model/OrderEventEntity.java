@@ -31,4 +31,18 @@ public class OrderEventEntity {
         OrderEventEntity event = new OrderEventEntity(); event.id=id; event.orderId=orderId; event.eventType=OrderEventType.ORDER_CREATED;
         event.actorUserId=actorUserId; event.metadata=metadata; event.createdAt=now; return event;
     }
+
+    public static OrderEventEntity lifecycle(UUID id, UUID orderId, OrderEventType eventType, UUID actorUserId,
+            OrderActorContext actorContext, OrderStatus fromStatus, OrderStatus toStatus, String reasonCode,
+            String note, JsonNode metadata, Instant now) {
+        OrderEventEntity event = new OrderEventEntity();
+        event.id = id; event.orderId = orderId; event.eventType = eventType; event.actorUserId = actorUserId;
+        event.actorContext = actorContext; event.fromStatus = fromStatus; event.toStatus = toStatus;
+        event.reasonCode = reasonCode; event.note = note; event.metadata = metadata; event.createdAt = now;
+        return event;
+    }
+
+    public OrderEventType getEventType() { return eventType; }
+    public OrderStatus getFromStatus() { return fromStatus; }
+    public OrderStatus getToStatus() { return toStatus; }
 }
