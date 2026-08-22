@@ -20,15 +20,23 @@ import vn.covie.shared.id.UuidV7Generator;
 public class InventoryReservationService {
     private final InventoryReservationRepository reservations;
     private final InventoryMovementRepository movements;
+    private final InventoryLockService locks;
     private final UuidV7Generator ids;
     private final vn.covie.shared.time.AppClock clock;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public InventoryReservationService(InventoryReservationRepository reservations, InventoryMovementRepository movements,
-            UuidV7Generator ids, vn.covie.shared.time.AppClock clock) {
+            InventoryLockService locks, UuidV7Generator ids, vn.covie.shared.time.AppClock clock) {
         this.reservations = reservations;
         this.movements = movements;
+        this.locks = locks;
         this.ids = ids;
         this.clock = clock;
+    }
+
+    public InventoryReservationService(InventoryReservationRepository reservations, InventoryMovementRepository movements,
+            UuidV7Generator ids, vn.covie.shared.time.AppClock clock) {
+        this(reservations, movements, null, ids, clock);
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -59,5 +67,40 @@ public class InventoryReservationService {
                     line.quantity(), line.orderId(), line.orderItemId(), reservation.getId(), actorUserId,
                     "CHECKOUT_RESERVATION", null, now));
         }
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void releaseActiveForOrder(UUID orderId, UUID actorUserId, String reasonCode, Instant now) {
+        List<InventoryReservationEntity> active = reservations.findActiveByOrderIdOrdered(orderId);
+        if (active.isEmpty()) return;
+        Map<UUID, InventoryBalanceEntity> balances = lockedBalances(active);
+        for (InventoryReservationEntity reservation : active) {
+            balances.get(reservation.getLocationVariantId()).releaseReserved(reservation.getQuantity(), now);
+            reservation.markReleased(now);
+            movements.save(InventoryMovementEntity.create(ids.generate(), reservation.getLocationVariantId(),
+                    InventoryMovementType.RELEASE_RESERVATION, reservation.getQuantity(), orderId,
+                    reservation.getOrderItemId(), reservation.getId(), actorUserId, reasonCode, null, now));
+        }
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void commitActiveForOrder(UUID orderId, UUID actorUserId, Instant now) {
+        List<InventoryReservationEntity> active = reservations.findActiveByOrderIdOrdered(orderId);
+        if (active.isEmpty()) return;
+        Map<UUID, InventoryBalanceEntity> balances = lockedBalances(active);
+        for (InventoryReservationEntity reservation : active) {
+            balances.get(reservation.getLocationVariantId()).commitReservedSale(reservation.getQuantity(), now);
+            reservation.markCommitted(now);
+            movements.save(InventoryMovementEntity.create(ids.generate(), reservation.getLocationVariantId(),
+                    InventoryMovementType.SALE, reservation.getQuantity(), orderId, reservation.getOrderItemId(),
+                    reservation.getId(), actorUserId, "ORDER_COMPLETED", null, now));
+        }
+    }
+
+    private Map<UUID, InventoryBalanceEntity> lockedBalances(List<InventoryReservationEntity> reservationsForOrder) {
+        if (locks == null) throw new IllegalStateException("Inventory locks are required for reservation outcomes.");
+        return locks.lockTrackedBalances(reservationsForOrder.stream()
+                .map(InventoryReservationEntity::getLocationVariantId).collect(java.util.stream.Collectors.toSet()))
+                .stream().collect(java.util.stream.Collectors.toMap(InventoryBalanceEntity::getLocationVariantId, balance -> balance));
     }
 }
