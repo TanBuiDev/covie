@@ -15,6 +15,12 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, UUID> {
     Optional<ReviewEntity> findByOrderItemId(UUID orderItemId);
     boolean existsByOrderItemId(UUID orderItemId);
 
+    @Query("select count(r), coalesce(sum(r.rating), 0) from ReviewEntity r where r.catalogItemId = :catalogItemId and r.reviewStatus = 'ACTIVE' and r.deletedAt is null")
+    List<Object[]> aggregateActiveCatalogReviews(@Param("catalogItemId") UUID catalogItemId);
+
+    @Query("select count(r), coalesce(sum(r.rating), 0) from ReviewEntity r where r.merchantProfileId = :merchantProfileId and r.reviewStatus = 'ACTIVE' and r.deletedAt is null")
+    List<Object[]> aggregateActiveMerchantReviews(@Param("merchantProfileId") UUID merchantProfileId);
+
     @Query("""
             select r from ReviewEntity r where r.catalogItemId = :catalogItemId
             and r.reviewStatus = 'ACTIVE' and r.deletedAt is null
