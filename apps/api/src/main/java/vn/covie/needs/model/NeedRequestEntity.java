@@ -25,8 +25,12 @@ public class NeedRequestEntity {
     @Column(columnDefinition = "text") private String description;
     @Column(name = "requested_quantity") private Long requestedQuantity;
     @Column(name = "location_area_id") private UUID locationAreaId;
-    @JdbcTypeCode(SqlTypes.GEOGRAPHY) @Column(name = "geo_point", nullable = false, columnDefinition = "geography(Point,4326)") private Point geoPoint;
-    @JdbcTypeCode(SqlTypes.JSON) @Column(name = "location_snapshot", nullable = false, columnDefinition = "jsonb") private JsonNode locationSnapshot;
+    @JdbcTypeCode(SqlTypes.GEOGRAPHY)
+    @Column(name = "geo_point", nullable = false, columnDefinition = "geography(Point,4326)")
+    private Point geoPoint;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "location_snapshot", nullable = false, columnDefinition = "jsonb")
+    private JsonNode locationSnapshot;
     @Column(name = "search_radius_meters", nullable = false) private int searchRadiusMeters;
     @Enumerated(EnumType.STRING) @Column(name = "request_status", nullable = false) private NeedStatus requestStatus;
     @Column(name = "expires_at", nullable = false) private Instant expiresAt;
@@ -62,10 +66,16 @@ public class NeedRequestEntity {
     }
 
     public void cancel(Instant now) {
-        if (requestStatus != NeedStatus.ACTIVE) {
-            throw new IllegalStateException("Only active needs can be cancelled.");
-        }
+        requireStatus(NeedStatus.ACTIVE);
         requestStatus = NeedStatus.CANCELLED;
+        closedAt = now;
+        updatedAt = now;
+    }
+
+    public void fulfill(UUID orderId, Instant now) {
+        requireStatus(NeedStatus.ACTIVE);
+        requestStatus = NeedStatus.FULFILLED;
+        fulfilledOrderId = orderId;
         closedAt = now;
         updatedAt = now;
     }
@@ -80,6 +90,12 @@ public class NeedRequestEntity {
 
     public boolean isActiveAt(Instant now) {
         return requestStatus == NeedStatus.ACTIVE && expiresAt.isAfter(now);
+    }
+
+    private void requireStatus(NeedStatus expected) {
+        if (requestStatus != expected) {
+            throw new IllegalStateException("Need status must be " + expected + ".");
+        }
     }
 
     private static String normalizeRequired(String value) {
