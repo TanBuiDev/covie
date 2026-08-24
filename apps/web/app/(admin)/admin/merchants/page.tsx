@@ -1,0 +1,1 @@
+import { AdminReadTable } from "@/features/admin/admin-read-table"; export default function MerchantsPage(){return <AdminReadTable title="Merchants" path="/api/v1/admin/merchants" columns={["id","name","status","moderationStatus","createdAt"]}/>;}

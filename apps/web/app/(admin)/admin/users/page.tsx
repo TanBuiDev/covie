@@ -1,0 +1,1 @@
+import { AdminReadTable } from "@/features/admin/admin-read-table"; export default function UsersPage(){return <AdminReadTable title="Users" path="/api/v1/admin/users" columns={["id","displayName","status","createdAt"]}/>;}
