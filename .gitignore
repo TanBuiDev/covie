@@ -2,9 +2,16 @@
 .env
 .env.local
 .env.*.local
+infra/deploy/*.env
+!infra/deploy/prod.env.example
 *.pem
 *.key
 infra/secrets/
+
+# Runtime/release evidence
+infra/releases/
+backups/
+build/
 
 # Node
 node_modules/
