@@ -35,7 +35,7 @@ import vn.covie.users.model.UserEntity;
 import vn.covie.users.persistence.UserRepository;
 
 class ReviewNotificationEndToEndIntegrationTest extends PostgresIntegrationTest {
-    @Autowired ReviewService reviews; @Autowired OutboxProcessor processor; @Autowired OutboxEventRepository outbox; @Autowired NotificationRepository notifications;
+    @Autowired ReviewService reviews; @Autowired ReviewReadService reviewRead; @Autowired OutboxProcessor processor; @Autowired OutboxEventRepository outbox; @Autowired NotificationRepository notifications;
     @Autowired UserRepository users; @Autowired MerchantProfileRepository merchants; @Autowired MerchantLocationRepository locations; @Autowired MerchantMembershipRepository memberships;
     @Autowired OrderRepository orders; @Autowired OrderItemRepository orderItems; @Autowired JdbcTemplate jdbc; @Autowired TransactionTemplate transactions;
 
@@ -47,6 +47,7 @@ class ReviewNotificationEndToEndIntegrationTest extends PostgresIntegrationTest 
 
         assertThat(outbox.findById(fixture.eventId()).orElseThrow().getStatus()).isEqualTo(OutboxEventStatus.PUBLISHED);
         assertThat(notifications.findBySourceOutboxEventIdAndUserIdAndNotificationType(fixture.eventId(),fixture.owner(),NotificationType.REVIEW_RECEIVED)).isPresent();
+        assertThat(reviewRead.catalog(fixture.catalog(),10,null).items()).singleElement().satisfies(review -> assertThat(review.verifiedPurchase()).isTrue());
     }
 
     private Fixture createReviewFixture() {
@@ -60,8 +61,8 @@ class ReviewNotificationEndToEndIntegrationTest extends PostgresIntegrationTest 
         var item=orderItems.saveAndFlush(OrderItemEntity.create(UUID.randomUUID(),order.getId(),catalog,variant,null,CatalogItemType.PRODUCT,1,100,"VND",NullNode.getInstance(),now));
         UUID reviewId=reviews.createInsideTransaction(buyer,new CreateReviewRequest(item.getId(),5,"Excellent")).id();
         UUID eventId=outbox.findAll().stream().filter(event -> event.getAggregateId().equals(reviewId)).findFirst().orElseThrow().getId();
-        return new Fixture(eventId,owner);
+        return new Fixture(eventId,owner,catalog);
     }
 
-    private record Fixture(UUID eventId, UUID owner) {}
+    private record Fixture(UUID eventId, UUID owner, UUID catalog) {}
 }
