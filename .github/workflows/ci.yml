@@ -66,3 +66,17 @@ jobs:
         run: ./infra/scripts/test-secret-hygiene.sh
       - name: Reject tracked secrets
         run: ./infra/scripts/verify-secret-hygiene.sh
+
+  release-security-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install pnpm
+        run: npm install --global pnpm@10
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Trivy 0.72.0 source, misconfiguration and secret scan
+        run: ./infra/scripts/security-scan.sh
