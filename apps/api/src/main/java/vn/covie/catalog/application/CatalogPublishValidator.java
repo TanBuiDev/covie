@@ -19,6 +19,7 @@ import vn.covie.catalog.persistence.VariantRepository;
 import vn.covie.media.model.MediaStatus;
 import vn.covie.merchants.model.MerchantLocationStatus;
 import vn.covie.merchants.model.MerchantStatus;
+import vn.covie.merchants.model.MerchantModerationStatus;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
 import vn.covie.shared.web.ApiException;
@@ -51,6 +52,8 @@ public class CatalogPublishValidator {
                 .orElseThrow(() -> invalid(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Merchant was not found."));
         if (merchant.getMerchantStatus() != MerchantStatus.ACTIVE)
             throw invalid(ErrorCode.MERCHANT_ACTION_NOT_ALLOWED, HttpStatus.UNPROCESSABLE_ENTITY, "Merchant must be active to publish catalog items.");
+        if (merchant.getModerationStatus() != MerchantModerationStatus.NOT_REQUIRED && merchant.getModerationStatus() != MerchantModerationStatus.APPROVED)
+            throw invalid(ErrorCode.MERCHANT_ACTION_NOT_ALLOWED, HttpStatus.UNPROCESSABLE_ENTITY, "Merchant is not publicly visible.");
         var category = categories.findByIdAndStatusAndDeletedAtIsNull(item.getPrimaryCategoryId(), CategoryStatus.ACTIVE)
                 .orElseThrow(() -> invalid(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Category was not found."));
         if (!category.getCatalogType().supports(item.getItemType()))

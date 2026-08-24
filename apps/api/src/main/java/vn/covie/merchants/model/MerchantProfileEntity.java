@@ -21,6 +21,7 @@ public class MerchantProfileEntity {
     @Column(name = "cover_media_id") private UUID coverMediaId;
     @Enumerated(EnumType.STRING) @Column(name = "merchant_status", nullable = false, length = 30) private MerchantStatus merchantStatus;
     @Enumerated(EnumType.STRING) @Column(name = "moderation_status", nullable = false, length = 30) private MerchantModerationStatus moderationStatus;
+    @Enumerated(EnumType.STRING) @Column(name = "status_before_suspension") private MerchantStatus statusBeforeSuspension;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
     @Column(name = "deleted_at") private Instant deletedAt;
@@ -60,6 +61,24 @@ public class MerchantProfileEntity {
             throw new IllegalStateException("Merchant cannot be restored.");
         }
         moderationStatus = MerchantModerationStatus.APPROVED;
+        updatedAt = now;
+    }
+
+    public void suspend(Instant now) {
+        if (merchantStatus != MerchantStatus.ACTIVE && merchantStatus != MerchantStatus.PAUSED) {
+            throw new IllegalStateException("Merchant cannot be suspended from " + merchantStatus);
+        }
+        statusBeforeSuspension = merchantStatus;
+        merchantStatus = MerchantStatus.SUSPENDED;
+        updatedAt = now;
+    }
+
+    public void restore(Instant now) {
+        if (merchantStatus != MerchantStatus.SUSPENDED || statusBeforeSuspension == null) {
+            throw new IllegalStateException("Merchant is not restorable");
+        }
+        merchantStatus = statusBeforeSuspension;
+        statusBeforeSuspension = null;
         updatedAt = now;
     }
 
