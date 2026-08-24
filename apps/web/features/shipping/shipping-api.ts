@@ -7,6 +7,11 @@ async function dataOrThrow<T>(response: Response, data: T | undefined): Promise<
   return data;
 }
 
+export async function listLocationAreas() {
+  const { data, response } = await createApiClient().GET("/api/v1/location-areas");
+  return dataOrThrow(response, data);
+}
+
 export async function createShippingPolicy(merchantId: string, locationId: string, input: components["schemas"]["ShippingPolicyUpsertRequest"]) {
   const { data, response } = await createApiClient().POST("/api/v1/merchants/{merchantId}/locations/{locationId}/shipping-policies", { params: { path: { merchantId, locationId } }, body: input });
   return dataOrThrow(response, data);
