@@ -22,6 +22,8 @@ jobs:
         working-directory: apps/api
     steps:
       - uses: actions/checkout@v4
+      - name: Restore Maven wrapper executable bit
+        run: chmod +x mvnw
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -34,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Restore Maven wrapper executable bit
+        run: chmod +x apps/api/mvnw
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
