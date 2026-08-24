@@ -1,0 +1,12 @@
+package vn.covie.notifications.application;
+import com.fasterxml.jackson.databind.ObjectMapper; import java.time.Instant; import java.util.Map; import java.util.UUID; import org.springframework.jdbc.core.JdbcTemplate; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Propagation; import org.springframework.transaction.annotation.Transactional; import vn.covie.notifications.model.*; import vn.covie.notifications.persistence.*; import vn.covie.shared.id.UuidV7Generator; import vn.covie.shared.time.AppClock;
+@Service public class NotificationService {
+ private final JdbcTemplate jdbc; private final NotificationRepository notifications; private final NotificationDeliveryRepository deliveries; private final UuidV7Generator ids; private final AppClock clock; private final ObjectMapper json;
+ public NotificationService(JdbcTemplate jdbc,NotificationRepository notifications,NotificationDeliveryRepository deliveries,UuidV7Generator ids,AppClock clock,ObjectMapper json){this.jdbc=jdbc;this.notifications=notifications;this.deliveries=deliveries;this.ids=ids;this.clock=clock;this.json=json;}
+ @Transactional(propagation=Propagation.MANDATORY) public NotificationCreationResult createFromOutbox(UUID source,UUID userId,NotificationType type,String title,String body,String relatedType,UUID relatedId,Map<String,Object> data){
+  Instant now=clock.now(); UUID id=ids.generate(); String payload=serialize(data); UUID inserted=jdbc.query("insert into notifications (id,user_id,notification_type,title,body,related_entity_type,related_entity_id,payload,source_outbox_event_id,created_at) values (?,?,?,?,?,?,?,cast(? as jsonb),?,?) on conflict (source_outbox_event_id,user_id,notification_type) where source_outbox_event_id is not null do nothing returning id", rs -> rs.next()?UUID.fromString(rs.getString(1)):null,id,userId,type.name(),title,body,relatedType,relatedId,payload,source,java.sql.Timestamp.from(now));
+  if(inserted==null){ UUID existing=notifications.findBySourceOutboxEventIdAndUserIdAndNotificationType(source,userId,type).orElseThrow().getId(); return new NotificationCreationResult(existing,false); }
+  deliveries.save(NotificationDeliveryEntity.deliveredInApp(ids.generate(),inserted,now)); return new NotificationCreationResult(inserted,true);
+ }
+ private String serialize(Map<String,Object> data){try{return json.writeValueAsString(data==null?Map.of():data);}catch(Exception e){throw new IllegalArgumentException("Notification payload cannot be serialized.",e);}}
+}

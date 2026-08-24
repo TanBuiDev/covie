@@ -41,7 +41,9 @@ class OrderCreationServiceTest {
         OrderEventRepository events = mock(OrderEventRepository.class);
         OrderCreationService service = new OrderCreationService(orders, items, productFulfillments,
                 mock(ServiceFulfillmentRepository.class), events, new OrderCodeGenerator(() -> Instant.parse("2026-08-22T00:00:00Z")),
-                new OrderSnapshotFactory(), new UuidV7Generator(), () -> Instant.parse("2026-08-22T00:00:00Z"));
+                new OrderSnapshotFactory(), new UuidV7Generator(), () -> Instant.parse("2026-08-22T00:00:00Z"),
+                (merchantId, locationId) -> new OrderPolicySnapshot(java.time.Duration.ofMinutes(30),
+                        java.time.Duration.ofHours(24), java.time.Duration.ofHours(2), java.time.Duration.ofDays(2)));
         ObjectMapper mapper = new ObjectMapper();
         UUID buyer = UUID.randomUUID();
         UUID location = UUID.randomUUID();
@@ -62,6 +64,7 @@ class OrderCreationServiceTest {
         verify(events).save(savedEvent.capture());
         verify(productFulfillments).save(any());
         assertThat(savedOrder.getValue().getStatus()).isEqualTo(OrderStatus.PENDING_CONFIRMATION);
+        assertThat(savedOrder.getValue().getConfirmationExpiresAt()).isEqualTo(Instant.parse("2026-08-22T00:30:00Z"));
         assertThat(created.orderItemIdsByLocationVariant()).hasSize(2);
     }
 }

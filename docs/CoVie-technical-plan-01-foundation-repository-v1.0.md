@@ -7,7 +7,9 @@
 **Target repo path:** `docs/superpowers/plans/2026-08-08-covie-foundation.md`  
 **Version:** 1.0  
 **Date:** 2026-08-08  
-**Status:** Ready for implementation review  
+**Status:** Closed — historically accepted
+
+> **Execution closure — 2026-08-25:** Historically accepted and integrated. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md` for closure evidence.
 
 **Goal:** Bootstrap the CoVie monorepo and create the smallest production-shaped technical foundation that every later plan can build on: Next.js web app, Spring Boot modular-monolith shell, PostgreSQL/PostGIS migrations, Redis/MinIO local infrastructure, shared primitives, standard API errors/request IDs, OpenAPI generation, typed TypeScript client, Nginx routing skeleton, and CI baseline.
 

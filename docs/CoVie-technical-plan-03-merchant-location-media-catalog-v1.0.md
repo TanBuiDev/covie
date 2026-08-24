@@ -7,7 +7,9 @@
 **Target repo path:** `docs/superpowers/plans/2026-08-08-covie-merchant-catalog.md`  
 **Version:** 1.0  
 **Date:** 2026-08-08  
-**Status:** Ready for implementation review  
+**Status:** Closed — locally verified
+
+> **Execution closure — 2026-08-25:** Implemented and locally verified by the fresh backend regression and the closure audit. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md`.
 
 **Goal:** Build the first marketplace slice on top of Plan 01–02: merchant ownership/staff/location authorization, location hierarchy and schedules, direct-to-object-storage media uploads, categories, catalog/options/variants/location offers, seller lifecycle commands, and public location-aware catalog discovery/detail where every purchasable result resolves to one concrete `MerchantLocation` and `locationVariantId`.
 

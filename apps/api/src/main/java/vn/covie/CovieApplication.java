@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import vn.covie.shared.id.UuidV7Generator;
 import vn.covie.shared.time.AppClock;
 import vn.covie.shared.time.SystemAppClock;
 
 @SpringBootApplication
+@EnableScheduling
 public class CovieApplication {
 
     public static void main(String[] args) {

@@ -2,6 +2,10 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status:** Closed — locally verified
+
+> **Execution closure — 2026-08-25:** Implemented and locally verified. The post-confirmation merchant-cancel carry-over is covered by unit and HTTP/integration tests. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md`.
+
 **Goal:** Implement the complete CoVie V1 Order lifecycle on top of Plan 04's real `PENDING_CONFIRMATION` Order foundation: authorization-aware read models, explicit state commands, cancellation, Product delivery/pickup, Service completion, issues/no-show, scheduled transitions, reservation release/commit, append-only events, outbox intents, and minimal buyer/seller web flows.
 
 **Architecture:** Keep Orders inside the Spring Boot modular monolith. Every state-changing command enters through one canonical `/api/v1/orders/{orderId}/...` command surface, executes inside an idempotent transaction, locks the Order row first, revalidates actor + current state, performs inventory/cancellation/issue side effects, appends an immutable `order_events` record, and writes an outbox intent atomically. REST/database remain authoritative; Plan 07 will dispatch outbox events to Notifications/SSE and Plan 08 will replace bootstrap order-policy properties with dynamic `SystemSetting` resolution.

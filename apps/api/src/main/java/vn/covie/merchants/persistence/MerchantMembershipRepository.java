@@ -77,4 +77,23 @@ public interface MerchantMembershipRepository extends JpaRepository<MerchantMemb
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update MerchantMembershipEntity membership set membership.version = membership.version + 1 where membership.id = :id and membership.version = :version")
     int incrementVersion(@Param("id") UUID id, @Param("version") long version);
+
+    @Query("""
+            select distinct membership.userId from MerchantMembershipEntity membership
+            where membership.merchantProfileId=:merchantId
+              and membership.membershipStatus=vn.covie.merchants.model.MembershipStatus.ACTIVE
+              and (membership.role in (vn.covie.merchants.model.MerchantRole.OWNER, vn.covie.merchants.model.MerchantRole.MANAGER)
+                   or (membership.role=vn.covie.merchants.model.MerchantRole.STAFF and exists (
+                       select assignment.id from MerchantMemberLocationEntity assignment
+                       where assignment.membershipId=membership.id and assignment.merchantLocationId=:locationId)))
+            """)
+    List<UUID> findActiveProcessorUserIds(@Param("merchantId") UUID merchantId, @Param("locationId") UUID locationId);
+
+    @Query("""
+            select membership.userId from MerchantMembershipEntity membership
+            where membership.merchantProfileId = :merchantId
+              and membership.membershipStatus = vn.covie.merchants.model.MembershipStatus.ACTIVE
+              and membership.role in (vn.covie.merchants.model.MerchantRole.OWNER, vn.covie.merchants.model.MerchantRole.MANAGER)
+            """)
+    List<UUID> findActiveOwnerAndManagerUserIds(@Param("merchantId") UUID merchantId);
 }

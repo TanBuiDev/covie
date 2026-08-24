@@ -1,19 +1,23 @@
-import Link from "next/link";
-import { MerchantForm } from "@/features/merchant/merchant-form";
-import { getMerchantForServer } from "@/features/merchant/merchant-server-api";
-import { requireUser } from "@/lib/auth/require-user";
+import { SellerDashboard } from "@/features/seller/seller-dashboard";
+import { listLocationsForServer } from "@/features/merchant/merchant-server-api";
+import { readApiError } from "@/lib/api/api-error";
+import { createServerReadClient } from "@/lib/api/server-api-client";
 
 export default async function MerchantPage({ params }: { params: Promise<{ merchantId: string }> }) {
-  await requireUser();
   const { merchantId } = await params;
-  const merchant = await getMerchantForServer(merchantId);
-  return <main>
-    <h1>{merchant.data.name}</h1>
-    <p>Trạng thái: {merchant.data.status}</p>
-    <nav>
-      <Link href={`/seller/${merchantId}/locations`}>Địa điểm</Link>{" · "}
-      <Link href={`/seller/${merchantId}/catalog`}>Catalog</Link>
-    </nav>
-    <MerchantForm merchant={merchant} />
-  </main>;
+  const client = await createServerReadClient();
+  const [orderResult, locations] = await Promise.all([
+    client.GET("/api/v1/merchants/{merchantId}/orders", { params: { path: { merchantId } } }),
+    listLocationsForServer(merchantId),
+  ]);
+
+  if (!orderResult.response.ok || !orderResult.data) throw await readApiError(orderResult.response);
+
+  return (
+    <SellerDashboard
+      merchantId={merchantId}
+      orders={orderResult.data.items ?? []}
+      locations={locations}
+    />
+  );
 }

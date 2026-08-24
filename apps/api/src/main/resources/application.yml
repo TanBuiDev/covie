@@ -53,8 +53,42 @@ springdoc:
     enabled: false
 
 covie:
+  rate-limit:
+    enabled: false
+    hmac-key: ${COVIE_RATE_LIMIT_HMAC_KEY:}
+  retention:
+    enabled: false
+    batch-size: 500
+    expired-record-grace: 7d
+    published-outbox-retention: 30d
+    initial-delay: 2m
+    interval: 15m
+  reviews:
+    creation-enabled: true
+  reputation:
+    buyer-warning-threshold-basis-points: 8000
+    minimum-eligible-orders-for-warning: 3
+    allow-maintenance-rebuild: false
+  outbox:
+    poll-delay-ms: 500
+    max-events-per-poll: 50
+    max-attempts: 10
+    initial-backoff-seconds: 1
+    max-backoff-seconds: 300
+  sse:
+    emitter-timeout-ms: 1800000
+    heartbeat-delay-ms: 25000
+  notifications:
+    need-match-max-locations: 100
+  needs:
+    max-response-items: 3
   checkout:
     session-ttl: 15m
+  orders:
+    confirmation-timeout: PT30M
+    auto-complete-grace: PT24H
+    pickup-no-show-grace: PT2H
+    issue-close-timeout: P2D
   auth:
     issuer: ${COVIE_AUTH_ISSUER:https://covie.vn}
     access-token-ttl: PT15M

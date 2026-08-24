@@ -1,8 +1,27 @@
+export type BrowseLocation =
+  | { kind: "coordinates"; lat: number; lng: number; label: string }
+  | { kind: "address"; addressId: string; label: string };
+
+/** Legacy Plan 03 discovery shape kept while Plan 09 migrates screens incrementally. */
 export type DiscoveryLocation =
   | { kind: "coordinates"; lat: number; lng: number }
   | { kind: "saved-address"; addressId: string };
 
 export type DiscoveryLocationQuery = Record<string, string | number>;
+
+export function toCatalogLocationParams(location: BrowseLocation | null | undefined): DiscoveryLocationQuery {
+  if (!location) return {};
+  return location.kind === "address"
+    ? { addressId: location.addressId }
+    : { lat: location.lat, lng: location.lng };
+}
+
+export function toDiscoveryLocation(location: BrowseLocation | null | undefined): DiscoveryLocation | undefined {
+  if (!location) return undefined;
+  return location.kind === "address"
+    ? { kind: "saved-address", addressId: location.addressId }
+    : { kind: "coordinates", lat: location.lat, lng: location.lng };
+}
 
 export function locationToQuery(location: DiscoveryLocation | undefined): DiscoveryLocationQuery {
   if (!location) return {};

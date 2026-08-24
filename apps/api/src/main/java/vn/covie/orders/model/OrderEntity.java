@@ -1,57 +1,10 @@
 package vn.covie.orders.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
-import java.time.Instant;
-import java.util.UUID;
-import org.hibernate.annotations.JdbcTypeCode;
-import vn.covie.shared.commerce.PaymentMethod;
-
-@Entity
-@Table(name = "orders")
-public class OrderEntity {
-    @Id private UUID id;
-    @Column(name = "order_code", nullable = false, unique = true, length = 32) private String orderCode;
-    @Enumerated(EnumType.STRING) @Column(name = "order_type", nullable = false) private OrderType orderType;
-    @Column(name = "buyer_user_id", nullable = false) private UUID buyerUserId;
-    @Column(name = "merchant_profile_id", nullable = false) private UUID merchantProfileId;
-    @Column(name = "merchant_location_id", nullable = false) private UUID merchantLocationId;
-    @Enumerated(EnumType.STRING) @Column(nullable = false) private OrderStatus status;
-    @Enumerated(EnumType.STRING) @Column(name = "source_type", nullable = false) private OrderSourceType sourceType;
-    @Enumerated(EnumType.STRING) @Column(name = "payment_method", nullable = false) private PaymentMethod paymentMethod;
-    @Column(nullable = false) private long subtotal;
-    @Enumerated(EnumType.STRING) @Column(name = "shipping_fee_type") private OrderShippingFeeType shippingFeeType;
-    @Column(name = "shipping_fee") private Long shippingFee;
-    @Column(name = "known_total", nullable = false) private long knownTotal;
-    @Column(name = "total_amount") private Long totalAmount;
-    @JdbcTypeCode(java.sql.Types.CHAR) @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode;
-    @Column(name = "confirmation_expires_at") private Instant confirmationExpiresAt;
-    @Column(name = "created_at", nullable = false) private Instant createdAt;
-    @Column(name = "updated_at", nullable = false) private Instant updatedAt;
-    @Version @Column(nullable = false) private long version;
-
-    protected OrderEntity() {}
-
-    public static OrderEntity pending(UUID id, String orderCode, OrderType orderType, UUID buyerUserId,
-            UUID merchantProfileId, UUID merchantLocationId, PaymentMethod paymentMethod, long subtotal,
-            OrderShippingFeeType shippingFeeType, Long shippingFee, long knownTotal, Long totalAmount,
-            String currencyCode, Instant confirmationExpiresAt, Instant now) {
-        OrderEntity order = new OrderEntity();
-        order.id = id; order.orderCode = orderCode; order.orderType = orderType; order.buyerUserId = buyerUserId;
-        order.merchantProfileId = merchantProfileId; order.merchantLocationId = merchantLocationId;
-        order.status = OrderStatus.PENDING_CONFIRMATION; order.sourceType = OrderSourceType.MARKETPLACE;
-        order.paymentMethod = paymentMethod; order.subtotal = subtotal; order.shippingFeeType = shippingFeeType;
-        order.shippingFee = shippingFee; order.knownTotal = knownTotal; order.totalAmount = totalAmount;
-        order.currencyCode = currencyCode; order.confirmationExpiresAt = confirmationExpiresAt;
-        order.createdAt = now; order.updatedAt = now;
-        return order;
-    }
-
-    public UUID getId() { return id; } public String getOrderCode() { return orderCode; }
-    public OrderStatus getStatus() { return status; } public Instant getCreatedAt() { return createdAt; }
+import jakarta.persistence.*;import java.time.Instant;import java.util.UUID;import org.hibernate.annotations.JdbcTypeCode;import vn.covie.shared.commerce.PaymentMethod;
+@Entity @Table(name="orders") public class OrderEntity {
+@Id private UUID id;@Column(name="order_code",nullable=false,unique=true,length=32)private String orderCode;@Enumerated(EnumType.STRING)@Column(name="order_type",nullable=false)private OrderType orderType;@Column(name="buyer_user_id",nullable=false)private UUID buyerUserId;@Column(name="merchant_profile_id",nullable=false)private UUID merchantProfileId;@Column(name="merchant_location_id",nullable=false)private UUID merchantLocationId;@Enumerated(EnumType.STRING)@Column(nullable=false)private OrderStatus status;@Enumerated(EnumType.STRING)@Column(name="source_type",nullable=false)private OrderSourceType sourceType;@Column(name="source_need_request_id")private UUID sourceNeedRequestId;@Column(name="source_need_response_item_id")private UUID sourceNeedResponseItemId;@Enumerated(EnumType.STRING)@Column(name="payment_method",nullable=false)private PaymentMethod paymentMethod;@Column(nullable=false)private long subtotal;@Enumerated(EnumType.STRING)@Column(name="shipping_fee_type")private OrderShippingFeeType shippingFeeType;@Column(name="shipping_fee")private Long shippingFee;@Column(name="known_total",nullable=false)private long knownTotal;@Column(name="total_amount")private Long totalAmount;@JdbcTypeCode(java.sql.Types.CHAR)@Column(name="currency_code",nullable=false,length=3)private String currencyCode;@Column(name="confirmation_expires_at")private Instant confirmationExpiresAt;@Column(name="confirmed_at")private Instant confirmedAt;@Column(name="completed_at")private Instant completedAt;@Column(name="closed_at")private Instant closedAt;@Column(name="created_at",nullable=false)private Instant createdAt;@Column(name="updated_at",nullable=false)private Instant updatedAt;@Version@Column(nullable=false)private long version;protected OrderEntity(){}
+public static OrderEntity pending(UUID id,String code,OrderType type,UUID buyer,UUID merchant,UUID location,PaymentMethod payment,long subtotal,OrderShippingFeeType feeType,Long fee,long known,Long total,String currency,Instant confirmationExpiresAt,Instant now){return pending(id,code,type,buyer,merchant,location,OrderSourceType.MARKETPLACE,null,null,payment,subtotal,feeType,fee,known,total,currency,confirmationExpiresAt,now);}
+public static OrderEntity pending(UUID id,String code,OrderType type,UUID buyer,UUID merchant,UUID location,OrderSourceType sourceType,UUID needId,UUID needItemId,PaymentMethod payment,long subtotal,OrderShippingFeeType feeType,Long fee,long known,Long total,String currency,Instant confirmationExpiresAt,Instant now){OrderEntity o=new OrderEntity();o.id=id;o.orderCode=code;o.orderType=type;o.buyerUserId=buyer;o.merchantProfileId=merchant;o.merchantLocationId=location;o.status=OrderStatus.PENDING_CONFIRMATION;o.sourceType=sourceType;o.sourceNeedRequestId=needId;o.sourceNeedResponseItemId=needItemId;o.paymentMethod=payment;o.subtotal=subtotal;o.shippingFeeType=feeType;o.shippingFee=fee;o.knownTotal=known;o.totalAmount=total;o.currencyCode=currency;o.confirmationExpiresAt=confirmationExpiresAt;o.createdAt=now;o.updatedAt=now;return o;}
+public UUID getId(){return id;}public String getOrderCode(){return orderCode;}public OrderStatus getStatus(){return status;}public Instant getCreatedAt(){return createdAt;}public Instant getConfirmationExpiresAt(){return confirmationExpiresAt;}public Instant getConfirmedAt(){return confirmedAt;}public Instant getCompletedAt(){return completedAt;}public Instant getClosedAt(){return closedAt;}public Instant getUpdatedAt(){return updatedAt;}public long getVersion(){return version;}public OrderType getOrderType(){return orderType;}public PaymentMethod getPaymentMethod(){return paymentMethod;}public String getCurrencyCode(){return currencyCode;}public long getSubtotal(){return subtotal;}public OrderShippingFeeType getShippingFeeType(){return shippingFeeType;}public Long getShippingFee(){return shippingFee;}public long getKnownTotal(){return knownTotal;}public Long getTotalAmount(){return totalAmount;}public UUID getBuyerUserId(){return buyerUserId;}public UUID getMerchantProfileId(){return merchantProfileId;}public UUID getMerchantLocationId(){return merchantLocationId;}public OrderSourceType getSourceType(){return sourceType;}public UUID getSourceNeedRequestId(){return sourceNeedRequestId;}public UUID getSourceNeedResponseItemId(){return sourceNeedResponseItemId;}
+public void transitionTo(OrderStatus next,Instant now){status=next;updatedAt=now;}public void confirm(Instant now){transitionTo(OrderStatus.CONFIRMED,now);confirmedAt=now;}public void complete(Instant now){transitionTo(OrderStatus.COMPLETED,now);completedAt=now;closedAt=now;}public void close(OrderStatus terminal,Instant now){transitionTo(terminal,now);closedAt=now;}
 }

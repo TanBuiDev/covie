@@ -21,6 +21,7 @@ public class MerchantProfileEntity {
     @Column(name = "cover_media_id") private UUID coverMediaId;
     @Enumerated(EnumType.STRING) @Column(name = "merchant_status", nullable = false, length = 30) private MerchantStatus merchantStatus;
     @Enumerated(EnumType.STRING) @Column(name = "moderation_status", nullable = false, length = 30) private MerchantModerationStatus moderationStatus;
+    @Enumerated(EnumType.STRING) @Column(name = "status_before_suspension") private MerchantStatus statusBeforeSuspension;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
     @Column(name = "deleted_at") private Instant deletedAt;
@@ -45,6 +46,40 @@ public class MerchantProfileEntity {
         this.logoMediaId = logoMediaId;
         this.coverMediaId = coverMediaId;
         this.updatedAt = now;
+    }
+
+    public void hide(Instant now) {
+        if (moderationStatus != MerchantModerationStatus.NOT_REQUIRED && moderationStatus != MerchantModerationStatus.APPROVED) {
+            throw new IllegalStateException("Merchant is not visible.");
+        }
+        moderationStatus = MerchantModerationStatus.HIDDEN;
+        updatedAt = now;
+    }
+
+    public void restoreVisibility(Instant now) {
+        if (moderationStatus != MerchantModerationStatus.HIDDEN && moderationStatus != MerchantModerationStatus.REJECTED) {
+            throw new IllegalStateException("Merchant cannot be restored.");
+        }
+        moderationStatus = MerchantModerationStatus.APPROVED;
+        updatedAt = now;
+    }
+
+    public void suspend(Instant now) {
+        if (merchantStatus != MerchantStatus.ACTIVE && merchantStatus != MerchantStatus.PAUSED) {
+            throw new IllegalStateException("Merchant cannot be suspended from " + merchantStatus);
+        }
+        statusBeforeSuspension = merchantStatus;
+        merchantStatus = MerchantStatus.SUSPENDED;
+        updatedAt = now;
+    }
+
+    public void restore(Instant now) {
+        if (merchantStatus != MerchantStatus.SUSPENDED || statusBeforeSuspension == null) {
+            throw new IllegalStateException("Merchant is not restorable");
+        }
+        merchantStatus = statusBeforeSuspension;
+        statusBeforeSuspension = null;
+        updatedAt = now;
     }
 
     public UUID getId() { return id; }

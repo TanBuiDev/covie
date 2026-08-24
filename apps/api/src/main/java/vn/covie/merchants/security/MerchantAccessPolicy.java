@@ -1,12 +1,16 @@
 package vn.covie.merchants.security;
 
 import java.util.UUID;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.merchants.model.MerchantLocationEntity;
 import vn.covie.merchants.model.MerchantMembershipEntity;
+import vn.covie.merchants.model.MerchantMemberLocationEntity;
 import vn.covie.merchants.model.MerchantRole;
+import vn.covie.merchants.model.MerchantLocationStatus;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.persistence.MerchantMemberLocationRepository;
 import vn.covie.merchants.persistence.MerchantMembershipRepository;
@@ -55,12 +59,32 @@ public final class MerchantAccessPolicy {
         return new MerchantAccess(actor.userId(), merchantId, membership.getId(), membership.role());
     }
 
+    public Set<UUID> allowedLocationIds(UUID merchantId, MerchantCapability capability) {
+        MerchantAccess access = require(merchantId, capability);
+        if (access.role() == MerchantRole.STAFF) {
+            return memberLocations.findAllByMembershipId(access.membershipId()).stream()
+                    .map(vn.covie.merchants.model.MerchantMemberLocationEntity::getMerchantLocationId)
+                    .collect(Collectors.toUnmodifiableSet());
+        }
+        return locations.findAllByMerchantProfileIdAndLocationStatusAndDeletedAtIsNull(merchantId, MerchantLocationStatus.ACTIVE)
+                .stream().map(MerchantLocationEntity::getId).collect(Collectors.toUnmodifiableSet());
+    }
+
+    /** Empty means the member can read every location of this merchant. */
+    public Set<UUID> readableOrderLocations(UUID merchantId) {
+        MerchantAccess access = require(merchantId, MerchantCapability.VIEW_ORDERS);
+        if (access.role() != MerchantRole.STAFF) return Set.of();
+        return memberLocations.findAllByMembershipId(access.membershipId()).stream()
+                .map(MerchantMemberLocationEntity::getMerchantLocationId).collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
     static boolean allows(MerchantRole role, MerchantCapability capability) {
         return switch (role) {
             case OWNER -> true;
             case MANAGER -> capability != MerchantCapability.GRANT_OWNER;
             case STAFF -> switch (capability) {
                 case VIEW_MERCHANT, MANAGE_LOCATION_OFFER, UPLOAD_MERCHANT_MEDIA -> true;
+                case VIEW_ORDERS, PROCESS_ORDERS, VIEW_NEEDS, RESPOND_TO_NEEDS -> true;
                 case EDIT_PROFILE, MANAGE_MEMBERS, GRANT_OWNER, MANAGE_LOCATIONS, MANAGE_HOURS_CONTACTS,
                         MANAGE_CATALOG_STRUCTURE, PUBLISH_CATALOG -> false;
             };

@@ -1,4 +1,4 @@
-import type { components, operations } from "@covie/api-client";
+import type { components, paths } from "@covie/api-client";
 import { createApiClient } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
 import { locationToQuery, type DiscoveryLocation } from "@/features/location/location-context";
@@ -16,7 +16,7 @@ export async function createCatalogItem(merchantId: string, idempotencyKey: stri
   return requireData(response, data);
 }
 
-type DiscoveryQuery = NonNullable<operations["discover"]["parameters"]["query"]>;
+type DiscoveryQuery = NonNullable<paths["/api/v1/catalog/items"]["get"]>["parameters"] extends { query?: infer Query } ? NonNullable<Query> : never;
 export type CatalogDiscoveryFilters = Omit<DiscoveryQuery, "lat" | "lng" | "addressId"> & {
   location?: DiscoveryLocation;
 };

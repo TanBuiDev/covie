@@ -1,0 +1,2 @@
+# Written atomically by postgres-backup.sh after a verified logical dump.
+covie_postgres_backup_timestamp_seconds 0

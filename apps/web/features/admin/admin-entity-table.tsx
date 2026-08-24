@@ -1,0 +1,8 @@
+"use client";
+import { useCallback, useEffect, useState } from "react";
+import { requestBrowserApi } from "@/lib/api/api-client";
+import { readApiError } from "@/lib/api/api-error";
+import { AdminSuspensionAction } from "./admin-suspension-action";
+import { AdminTable } from "./admin-table";
+type Row = Record<string, unknown> & { id: string; status: string };
+export function AdminEntityTable({ type, title, columns }: { type: "users" | "merchants"; title: string; columns: string[] }) { const [items,setItems]=useState<Row[]>([]); const [error,setError]=useState<string>(); const load=useCallback(()=>requestBrowserApi("GET",`/api/v1/admin/${type}`).then(async response=>{if(!response.ok)throw await readApiError(response);const page=await response.json() as {items?:Row[]};setItems(page.items??[]);}).catch(cause=>setError(cause instanceof Error?cause.message:"Unable to load data")),[type]); useEffect(()=>{void load();},[load]); async function mutate(id:string,operation:"suspend"|"restore",reason?:string){const response=await requestBrowserApi("POST",`/api/v1/admin/${type}/${id}/${operation}`,reason?{reasonCode:reason}:undefined,{"Idempotency-Key":crypto.randomUUID(),"Content-Type":"application/json"});if(!response.ok)throw await readApiError(response);await load();} return <AdminTable title={title}>{error?<p role="alert">{error}</p>:<table><thead><tr>{columns.map(column=><th key={column}>{column}</th>)}<th>Action</th></tr></thead><tbody>{items.map(item=><tr key={item.id}>{columns.map(column=><td key={column}>{String(item[column]??"")}</td>)}<td><AdminSuspensionAction status={item.status} onSubmit={(operation,reason)=>mutate(item.id,operation,reason)} /></td></tr>)}</tbody></table>}</AdminTable>; }

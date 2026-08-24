@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
 import vn.covie.merchants.model.MerchantLocationEntity;
+import vn.covie.merchants.model.MerchantLocationStatus;
 
 public interface MerchantLocationRepository extends JpaRepository<MerchantLocationEntity, UUID> {
     Optional<MerchantLocationEntity> findByIdAndMerchantProfileIdAndDeletedAtIsNull(UUID id, UUID merchantProfileId);
@@ -24,6 +25,9 @@ public interface MerchantLocationRepository extends JpaRepository<MerchantLocati
             @Param("merchantId") UUID merchantId);
 
     List<MerchantLocationEntity> findAllByMerchantProfileIdAndDeletedAtIsNullOrderByNameAscIdAsc(UUID merchantId);
+
+    List<MerchantLocationEntity> findAllByMerchantProfileIdAndLocationStatusAndDeletedAtIsNull(
+            UUID merchantId, MerchantLocationStatus locationStatus);
 
     @Query("""
             select location from MerchantMemberLocationEntity assignment

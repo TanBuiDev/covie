@@ -6,7 +6,9 @@
 **Target repo path:** `docs/superpowers/plans/2026-08-08-covie-pilot-hardening.md`  
 **Version:** 1.0  
 **Date:** 2026-08-08  
-**Status:** Ready for implementation review
+**Status:** Closed — local verification passed; staging carry-over
+
+> **Execution closure — 2026-08-25:** Local implementation and release-equivalent checks are complete. The real HTTPS staging rehearsal, security-exception approval (if needed) and release decision remain external gates. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md`.
 
 **Goal:** Đưa CoVie V1 từ trạng thái feature-complete của Plans 01–09 thành một release candidate có thể vận hành pilot an toàn: production images, same-domain HTTPS deployment, startup safety, rate limiting, metrics/alerts, retention, backup/restore, performance/security gates, Grand Park bootstrap, immutable release/rollback và staging rehearsal có bằng chứng.
 

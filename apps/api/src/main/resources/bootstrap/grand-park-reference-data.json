@@ -1,0 +1,17 @@
+{
+  "locationAreas": [
+    {"parentSlug": null, "slug": "vinhomes-grand-park", "name": "Vinhomes Grand Park", "areaType": "COMMUNITY", "sortOrder": 10},
+    {"parentSlug": "vinhomes-grand-park", "slug": "the-rainbow", "name": "The Rainbow", "areaType": "ZONE", "sortOrder": 10},
+    {"parentSlug": "vinhomes-grand-park", "slug": "the-origami", "name": "The Origami", "areaType": "ZONE", "sortOrder": 20},
+    {"parentSlug": "vinhomes-grand-park", "slug": "the-beverly", "name": "The Beverly", "areaType": "ZONE", "sortOrder": 30}
+  ],
+  "categories": [
+    {"parentSlug": null, "slug": "food-drink", "name": "Ăn uống", "catalogType": "PRODUCT", "sortOrder": 10},
+    {"parentSlug": null, "slug": "grocery", "name": "Tạp hóa", "catalogType": "PRODUCT", "sortOrder": 20},
+    {"parentSlug": null, "slug": "home-personal", "name": "Nhà cửa & cá nhân", "catalogType": "PRODUCT", "sortOrder": 30},
+    {"parentSlug": null, "slug": "services", "name": "Dịch vụ", "catalogType": "SERVICE", "sortOrder": 40},
+    {"parentSlug": "services", "slug": "cleaning", "name": "Vệ sinh", "catalogType": "SERVICE", "sortOrder": 10},
+    {"parentSlug": "services", "slug": "repair", "name": "Sửa chữa", "catalogType": "SERVICE", "sortOrder": 20},
+    {"parentSlug": "services", "slug": "other-services", "name": "Dịch vụ khác", "catalogType": "SERVICE", "sortOrder": 90}
+  ]
+}

@@ -42,6 +42,8 @@ Verify:
 - http://localhost:3000/
 - http://localhost:9001/
 
+Plan 07 runs its PostgreSQL outbox worker in the API process. It polls every 500 ms by default and emits best-effort authenticated SSE updates at `/api/v1/me/events`; SSE is only an invalidation hint, so browser clients must refetch REST state after reconnecting or receiving `sync-required`.
+
 Regenerate the contract on macOS/Linux/Git Bash:
 
 ```bash
@@ -82,3 +84,17 @@ pnpm infra:down
 ```
 
 Production secrets never go in `.env.example`. Keep local secrets in `.env.local`, which is gitignored. Generate disposable local JWT keys with `./infra/scripts/generate-dev-jwt-keys.sh`; test runs generate their own RSA keypair in memory.
+
+## Production operations
+
+Plan 10 keeps production operator values out of this README. Use the source-controlled runbooks as the entrypoint:
+
+- [Deployment and rollback](docs/operations/deploy-rollback.md)
+- [Production secrets](docs/operations/secrets.md)
+- [PostgreSQL backup and restore](docs/operations/backup-restore.md)
+- [Metrics and alerting](docs/operations/alerting-and-metrics.md)
+- [Incident runbook](docs/operations/incident-runbook.md)
+- [Staging rehearsal](docs/operations/staging-rehearsal.md)
+- [Pilot launch checklist](docs/operations/pilot-launch-checklist.md)
+
+A pilot release is not approved merely because the repository builds: the staging clean-migration, security/load, backup/restore, rollback and alert rehearsal evidence in the checklist must also be green.

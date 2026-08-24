@@ -7,7 +7,9 @@
 **Target repo path:** `docs/superpowers/plans/2026-08-08-covie-auth-user.md`  
 **Version:** 1.0  
 **Date:** 2026-08-08  
-**Status:** Ready for implementation review  
+**Status:** Closed — historically accepted
+
+> **Execution closure — 2026-08-25:** Historically accepted and integrated. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md` for closure evidence.
 
 **Goal:** Implement CoVie V1 identity, authentication, account/session security, `/me`, contact methods and saved addresses on top of Plan 01 so that a new user can register only through Google, set a CoVie password, later log in by Google or Email/Password, rotate refresh tokens safely, manage multiple sessions, recover a password through fresh Google authentication, and expose a stable authenticated `CurrentActor` for all later plans.
 

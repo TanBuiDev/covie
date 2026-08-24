@@ -20,6 +20,10 @@ public class CatalogItemEntity {
     }
     public void publish(Instant now){listingStatus=ListingStatus.ACTIVE;moderationStatus=CatalogModerationStatus.NOT_REQUIRED;updatedAt=now;}
     public void requireModeration(Instant now){moderationStatus=CatalogModerationStatus.PENDING;updatedAt=now;}
+    public void approveModeration(Instant now){if(moderationStatus!=CatalogModerationStatus.PENDING)throw new IllegalStateException("Catalog item is not pending moderation.");moderationStatus=CatalogModerationStatus.APPROVED;listingStatus=ListingStatus.ACTIVE;updatedAt=now;}
+    public void rejectModeration(Instant now){if(moderationStatus!=CatalogModerationStatus.PENDING)throw new IllegalStateException("Catalog item is not pending moderation.");moderationStatus=CatalogModerationStatus.REJECTED;updatedAt=now;}
+    public void hide(Instant now){if(moderationStatus!=CatalogModerationStatus.NOT_REQUIRED&&moderationStatus!=CatalogModerationStatus.APPROVED)throw new IllegalStateException("Catalog item is not visible.");moderationStatus=CatalogModerationStatus.HIDDEN;updatedAt=now;}
+    public void restoreVisibility(Instant now){if(moderationStatus!=CatalogModerationStatus.HIDDEN&&moderationStatus!=CatalogModerationStatus.REJECTED)throw new IllegalStateException("Catalog item cannot be restored.");moderationStatus=CatalogModerationStatus.APPROVED;updatedAt=now;}
     public void pause(Instant now){listingStatus=ListingStatus.PAUSED;updatedAt=now;}
     public void activate(Instant now){listingStatus=ListingStatus.ACTIVE;updatedAt=now;}
     public void delete(Instant now){listingStatus=ListingStatus.DELETED;deletedAt=now;updatedAt=now;}

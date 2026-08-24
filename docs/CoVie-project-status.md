@@ -1,8 +1,8 @@
 # CoVie V1 — Project Status Dashboard
 
-**Last verified:** 2026-08-12
-**Overall status:** Planning, UI design, Plan 01 foundation, and Plan 02 identity/auth/user are complete; Plan 03 is ready to begin.
-**Current implementation plan:** Plan 03 — Merchant, Location, Media & Catalog.
+**Last verified:** 2026-08-24
+**Overall status:** Plans 01–10 are closed for replanning on the integration branch; acceptance/release verification remains open.
+**Current implementation plan:** Verification and carry-over hardening — see `CoVie-plan-closure-audit-2026-08-24.md`.
 
 ## Purpose
 
@@ -21,9 +21,9 @@ This is the single progress dashboard for CoVie V1. It records completed work on
 |---|---|---|
 | Product, UX, database, API and technical planning | Complete | Approved documents in `docs/` |
 | Figma foundations, components and P0 screens | Complete | Figma cover records 37/37 production units `FROZEN`; cross-screen QA and critical prototypes `PASS` |
-| Repository implementation | Foundation complete | Plan 01 acceptance passed on `codex/plan-01-foundation` (commit `4590072`) |
+| Repository implementation | Integrated through Plan 10 | Integration branch contains Plans 05–10 and Flyway V001–V013; not merged to `main` pending fresh gates |
 | Identity, auth and user implementation | Complete | Plan 02 Task 16 fresh gate: backend `clean verify` (84 tests), regenerated OpenAPI/client, web lint/typecheck/test/build (20 web tests), Flyway V001–V003 and secret hygiene checks (2026-08-12) |
-| Production / pilot | Not started | Depends on successful completion of Plans 01–10 |
+| Production / pilot | Not started | Depends on the carry-over verification and rehearsal gates |
 
 ## Delivery checklist
 
@@ -31,14 +31,14 @@ This is the single progress dashboard for CoVie V1. It records completed work on
 |---|---|---|---|
 | 01 | Foundation & Repository | Complete | Local infra, API/web boot, OpenAPI client and CI acceptance gate green (2026-08-09) |
 | 02 | Identity, Auth & User | Complete | Task 16 fresh CI/documentation/acceptance gate is green (2026-08-12) |
-| 03 | Merchant, Location, Media & Catalog | Ready | Guest discovery and seller catalog management work end-to-end |
-| 04 | Shipping, Cart, Inventory & Checkout | Blocked by Plan 03 | Atomic order creation; concurrent last-stock test has one success and one conflict |
-| 05 | Orders & Fulfillment | Blocked by Plan 04 | Product delivery, pickup and service critical transitions pass |
-| 06 | Need Requests & Matching | Blocked by Plan 05 | Need fulfillment rules verified through source orders |
-| 07 | Reviews, Reputation, Outbox, Notifications & SSE | Blocked by Plan 06 | Outbox retry cannot duplicate projection or notification |
-| 08 | Moderation, Settings & Admin | Blocked by Plan 07 | Runtime policy change works; admin cannot force order state |
-| 09 | Web Completion / PWA | Blocked by Plan 08 | Figma P0 journeys use generated API client and Playwright E2E passes |
-| 10 | Production Hardening & Pilot Launch | Blocked by Plan 09 | Clean staging rehearsal, backup restore, smoke and rollback evidence pass |
+| 03 | Merchant, Location, Media & Catalog | Closed — verification pending | Included in integrated regression scope |
+| 04 | Shipping, Cart, Inventory & Checkout | Closed — verification pending | Included in integrated regression/concurrency scope |
+| 05 | Orders & Fulfillment | Closed — verification pending | `V010` integrated |
+| 06 | Need Requests & Matching | Closed — verification pending | `V011` integrated |
+| 07 | Reviews, Reputation, Outbox, Notifications & SSE | Closed — verification pending | `V012` integrated |
+| 08 | Moderation, Settings & Admin | Closed — verification pending | `V013` integrated |
+| 09 | Web Completion / PWA | Closed — carry-over required | Typecheck, lint, test, E2E and remaining surfaces are open |
+| 10 | Production Hardening & Pilot Launch | Closed — carry-over required | Staging rehearsal and release evidence are open |
 
 ## Update protocol
 

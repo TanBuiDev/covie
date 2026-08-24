@@ -32,7 +32,7 @@ public class MediaCleanupService {
     }
     private List<String> claimExpired(int limit) {
         Instant now = clock.now();
-        List<MediaAssetEntity> assets = repository.findByMediaStatusAndCreatedAtBeforeOrderByIdAsc(
+        List<MediaAssetEntity> assets = repository.findByMediaStatusAndCreatedAtBeforeOrderByCreatedAtAscIdAsc(
                 MediaStatus.PENDING_UPLOAD, now.minus(Duration.ofHours(24)), PageRequest.of(0, limit));
         assets.forEach(asset -> asset.markDeleted(now));
         repository.flush();

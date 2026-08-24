@@ -2,6 +2,10 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status:** Closed — locally verified
+
+> **Execution closure — 2026-08-25:** Implemented and locally verified by fresh backend regression, authorization and API contract coverage. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md`.
+
 **Goal:** Implement CoVie V1 runtime business settings, moderation/report workflows, admin operations/read models, safe suspension, maintenance diagnostics, and the policy adapters that replace bootstrap configuration from Plans 03–07 without introducing Admin Order force-state or dispute arbitration.
 
 **Architecture:** Keep Admin/Moderation inside the existing Spring Boot modular monolith. `system_settings` is a small allowlisted policy store with deterministic scope resolution; business modules continue consuming their existing provider interfaces. Moderation is a separate case/action system whose target handlers change visibility/suspension state without rewriting Order/Need/Catalog business lifecycles. PostgreSQL remains authoritative; every important admin/moderation mutation writes audit + outbox in the same transaction and Plan 07 dispatches resulting notifications/SSE signals.

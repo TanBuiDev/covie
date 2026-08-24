@@ -6,7 +6,9 @@
 **Target repo path:** `docs/superpowers/plans/2026-08-08-covie-web-completion.md`  
 **Version:** 1.0  
 **Date:** 2026-08-08  
-**Status:** Ready for implementation review
+**Status:** Closed — local verification passed; staging carry-over
+
+> **Execution closure — 2026-08-25:** Local implementation gates are green (typecheck, lint, build, unit tests and guest Playwright). Normal authenticated and privileged P0 journeys remain a staging release gate. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md`.
 
 **Goal:** Hoàn thiện CoVie V1 Web App/PWA để các P0 journey Guest → Buyer, Seller/Provider và Admin sử dụng được xuyên suốt trên mobile/desktop, toàn bộ UI nối với generated API client và không sao chép business rule của Spring Boot.
 
@@ -2756,3 +2758,33 @@ Recommended execution:
 ```
 
 Do not start Plan 10 hardening/pilot implementation until Task 20 has fresh green evidence.
+
+---
+
+## Final Maximum-Completion Handoff — 2026-08-24
+
+**Branch:** `feat/plan-09-web-completion`  
+**Draft verification PR:** `#3`  
+**Status:** **maximum safe completion on the currently available prerequisites; not 100% Plan 09 acceptance-complete.**
+
+### Đã triển khai
+
+- PWA/responsive shells, BrowseLocation and canonical public search foundations.
+- Account/logout and Saved Address create/edit/default/delete-confirm UX.
+- Multi-cart overview/detail with Product/Service separation, Service quantity=1, `If-Match` and stale refetch behavior.
+- Buyer/Seller Order UX uses generated Order contracts and authoritative backend `allowedActions`; no frontend state machine; destructive/irreversible actions use confirmation/reason UX.
+- Seller Center merchant switcher/route context/actionable dashboard.
+- Merchant Location edit plus radius/selected-area coverage and FREE/FIXED/NEGOTIATED/CONDITIONAL shipping with ANY/ALL rules.
+- Shared error/status/loading/empty/confirm/formatting primitives and safe unknown-enum fallbacks.
+- CI Linux Maven-wrapper executable-bit fix.
+- No Plan 09 Flyway migration.
+
+### Blocker / cần làm tiếp
+
+- Available prerequisite branch ends at `V011`; required Plan 07 `V012` and final Plan 08 `V013` are absent, blocking Review/Reputation/Notification/SSE/Admin and final acceptance.
+- Generated Need client is stale; do not extend handwritten Need DTOs. Fix backend test compilation, export OpenAPI, regenerate `@covie/api-client`, then finish Need Tasks 13–14.
+- CI currently fails during Maven `testCompile` because inherited `OrderScheduledTransitionIntegrationTest` calls nonexistent `OrderRepository.createPending(UUID, UUID, OrderType, Instant)`. Fix the test fixture using the current valid Order creation/entity contract rather than adding a fake production helper.
+- TanStack Query/RHF/Playwright dependencies still require a real pnpm install so `package.json` and `pnpm-lock.yaml` update together.
+- After prerequisites are integrated, finish Tasks 15–17/19 and run Task 20 gates: Maven verify, OpenAPI drift, API-client check, web typecheck/lint/test/build, Playwright.
+
+Full Task 1–20 status, CI evidence and exact continuation commands: [`CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md`](./CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md).

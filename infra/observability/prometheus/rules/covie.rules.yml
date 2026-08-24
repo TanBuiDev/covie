@@ -1,0 +1,38 @@
+groups:
+  - name: covie-pilot
+    rules:
+      - alert: CoVieApiDown
+        expr: up{job="covie-api"} == 0
+        for: 2m
+        labels: { severity: page }
+        annotations: { summary: "CoVie API metrics endpoint is down" }
+      - alert: CoVieHigh5xxRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count[5m])), 1) > 0.02
+        for: 5m
+        labels: { severity: page }
+        annotations: { summary: "CoVie 5xx ratio is above 2%" }
+      - alert: CoVieRateLimiterDegraded
+        expr: increase(covie_ratelimit_requests_total{outcome="degraded_fail_open"}[10m]) > 0
+        for: 1m
+        labels: { severity: warn }
+        annotations: { summary: "A fail-open rate-limit group is degraded" }
+      - alert: CoVieRetentionStalled
+        expr: covie_retention_last_success_unixtime > 0 and time() - covie_retention_last_success_unixtime > 7200
+        for: 15m
+        labels: { severity: warn }
+        annotations: { summary: "Technical retention has not completed for two hours" }
+      - alert: CoVieOutboxBacklog
+        expr: covie_outbox_backlog > 1000
+        for: 15m
+        labels: { severity: warn }
+        annotations: { summary: "Outbox backlog is above pilot threshold" }
+      - alert: CoVieDiskLow
+        expr: node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"} < 0.15
+        for: 15m
+        labels: { severity: warn }
+        annotations: { summary: "Host filesystem has less than 15% free space" }
+      - alert: CoVieBackupTooOld
+        expr: absent(covie_postgres_backup_timestamp_seconds) or time() - covie_postgres_backup_timestamp_seconds > 93600
+        for: 15m
+        labels: { severity: page }
+        annotations: { summary: "Latest verified PostgreSQL backup is older than 26 hours" }

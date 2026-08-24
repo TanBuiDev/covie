@@ -1,0 +1,17 @@
+package vn.covie.ratelimit;
+
+public enum RateLimitGroup {
+    AUTH_LOGIN_IP,
+    AUTH_LOGIN_EMAIL,
+    AUTH_GOOGLE_START,
+    AUTH_REFRESH_IP,
+    AUTH_REFRESH_TOKEN,
+    PUBLIC_DISCOVERY,
+    CHECKOUT,
+    ORDER_COMMAND,
+    NEED_CREATE,
+    NEED_RESPONSE,
+    REPORT,
+    MEDIA_UPLOAD,
+    ADMIN
+}

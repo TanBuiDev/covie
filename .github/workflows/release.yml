@@ -1,0 +1,189 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_staging:
+        description: Deploy the built digest to staging
+        type: boolean
+        default: false
+      deploy_production:
+        description: Deploy the exact staging-approved digest to production
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: ${{ github.repository_owner }}/covie
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_OAUTH_CLIENT_ID: ci-test-client
+      GOOGLE_OAUTH_CLIENT_SECRET: ci-test-secret
+      GOOGLE_OAUTH_REDIRECT_URI: http://localhost:3000/api/v1/auth/google/callback/google
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install pnpm
+        run: npm install --global pnpm@10
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Backend verify
+        working-directory: apps/api
+        run: ./mvnw verify
+      - name: Export and verify OpenAPI
+        run: |
+          ./infra/scripts/export-openapi.sh
+          pnpm api-client:generate
+          git diff --exit-code -- packages/api-client/openapi/openapi.json packages/api-client/src/generated/schema.ts
+          pnpm api-client:check
+      - name: Frontend verify
+        run: |
+          pnpm --filter @covie/web typecheck
+          pnpm --filter @covie/web lint
+          pnpm --filter @covie/web test
+          pnpm --filter @covie/web build
+      - name: Security and secret gate
+        run: ./infra/scripts/security-scan.sh
+
+  build-release:
+    needs: quality
+    runs-on: ubuntu-latest
+    outputs:
+      api_image: ${{ steps.images.outputs.api_image }}
+      web_image: ${{ steps.images.outputs.web_image }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Registry login
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login "$REGISTRY" -u "$GITHUB_ACTOR" --password-stdin
+      - name: Build and push SHA-tagged images
+        id: images
+        run: |
+          set -euo pipefail
+          api_tag="$REGISTRY/$IMAGE_NAMESPACE/api:$GITHUB_SHA"
+          web_tag="$REGISTRY/$IMAGE_NAMESPACE/web:$GITHUB_SHA"
+          docker build -f apps/api/Dockerfile -t "$api_tag" .
+          docker build -f apps/web/Dockerfile -t "$web_tag" .
+          docker push "$api_tag"
+          docker push "$web_tag"
+          api_digest="$(docker inspect --format='{{index .RepoDigests 0}}' "$api_tag")"
+          web_digest="$(docker inspect --format='{{index .RepoDigests 0}}' "$web_tag")"
+          [[ "$api_digest" =~ @sha256:[0-9a-f]{64}$ ]]
+          [[ "$web_digest" =~ @sha256:[0-9a-f]{64}$ ]]
+          echo "api_image=$api_digest" >> "$GITHUB_OUTPUT"
+          echo "web_image=$web_digest" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install pnpm
+        run: npm install --global pnpm@10
+      - name: Install workspace for OpenAPI generation
+        run: pnpm install --frozen-lockfile
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Export release OpenAPI
+        run: ./infra/scripts/export-openapi.sh
+      - name: Scan runtime images and generate SBOM
+        env:
+          COVIE_API_IMAGE: ${{ steps.images.outputs.api_image }}
+          COVIE_WEB_IMAGE: ${{ steps.images.outputs.web_image }}
+        run: |
+          ./infra/scripts/security-scan.sh
+          ./infra/scripts/generate-sbom.sh
+      - name: Create release manifest
+        env:
+          COVIE_API_IMAGE: ${{ steps.images.outputs.api_image }}
+          COVIE_WEB_IMAGE: ${{ steps.images.outputs.web_image }}
+          GIT_SHA: ${{ github.sha }}
+        run: ./infra/scripts/create-release-manifest.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: covie-release-${{ github.sha }}
+          path: |
+            build/release/release-manifest.env
+            build/sbom/api.cdx.json
+            build/sbom/web.cdx.json
+            build/sbom/SHA256SUMS
+          if-no-files-found: error
+
+  deploy-staging:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_staging }}
+    needs: build-release
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: covie-release-${{ github.sha }}
+          path: build/release-artifact
+      - name: Configure staging SSH trust
+        env:
+          SSH_KEY: ${{ secrets.STAGING_DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.STAGING_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0644 ~/.ssh/known_hosts
+      - name: Deploy exact digest to staging
+        env:
+          HOST: ${{ secrets.STAGING_DEPLOY_HOST }}
+          USER: ${{ secrets.STAGING_DEPLOY_USER }}
+        run: |
+          scp build/release-artifact/release-manifest.env "$USER@$HOST:/tmp/covie-release-manifest.env"
+          ssh "$USER@$HOST" 'sudo /opt/covie/current/infra/deploy/deploy.sh /tmp/covie-release-manifest.env'
+
+  deploy-production:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_production && inputs.deploy_staging }}
+    needs: [build-release, deploy-staging]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: covie-release-${{ github.sha }}
+          path: build/release-artifact
+      - name: Configure production SSH trust
+        env:
+          SSH_KEY: ${{ secrets.PROD_DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.PROD_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0644 ~/.ssh/known_hosts
+      - name: Deploy staging-approved digest to production
+        env:
+          HOST: ${{ secrets.PROD_DEPLOY_HOST }}
+          USER: ${{ secrets.PROD_DEPLOY_USER }}
+        run: |
+          scp build/release-artifact/release-manifest.env "$USER@$HOST:/tmp/covie-release-manifest.env"
+          ssh "$USER@$HOST" 'sudo /opt/covie/current/infra/deploy/deploy.sh /tmp/covie-release-manifest.env'
