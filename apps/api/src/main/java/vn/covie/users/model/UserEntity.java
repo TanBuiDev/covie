@@ -50,6 +50,8 @@ public class UserEntity {
     public String getDisplayName() { return displayName; }
     public UUID getAvatarMediaId() { return avatarMediaId; }
     public AccountStatus getAccountStatus() { return accountStatus; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
     public long getVersion() { return version; }
     public void updateProfile(String displayName, UUID avatarMediaId, Instant now) { this.displayName = displayName; this.avatarMediaId = avatarMediaId; this.updatedAt = now; }
     public void updateDisplayName(String displayName, Instant now) { this.displayName = displayName; this.updatedAt = now; }
