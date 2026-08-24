@@ -1,0 +1,2 @@
+package vn.covie.moderation.api.dto; import java.util.UUID; import vn.covie.moderation.model.ModerationCaseStatus;
+public record BulkModerationItemResult(UUID caseId,boolean success,ModerationCaseStatus status,String errorCode){public static BulkModerationItemResult success(UUID id,ModerationCaseStatus s){return new BulkModerationItemResult(id,true,s,null);}public static BulkModerationItemResult failure(UUID id,String e){return new BulkModerationItemResult(id,false,null,e);}}
