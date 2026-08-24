@@ -10,4 +10,6 @@ public interface SystemRoleAssignmentRepository extends JpaRepository<SystemRole
     List<SystemRoleAssignmentEntity> findAllByUserId(UUID userId);
     @org.springframework.data.jpa.repository.Query("select count(a) from SystemRoleAssignmentEntity a join UserEntity u on u.id = a.userId where a.role = :role and u.accountStatus = vn.covie.users.model.AccountStatus.ACTIVE")
     long countActiveUsersWithRole(@org.springframework.data.repository.query.Param("role") SystemRole role);
+    @org.springframework.data.jpa.repository.Query("select a.userId from SystemRoleAssignmentEntity a where a.role = :role")
+    List<UUID> findUserIdsByRole(@org.springframework.data.repository.query.Param("role") SystemRole role);
 }
