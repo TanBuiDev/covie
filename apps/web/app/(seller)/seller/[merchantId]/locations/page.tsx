@@ -1,16 +1,20 @@
-import Link from "next/link";
 import { LocationForm } from "@/features/merchant/location-form";
 import { listLocationsForServer } from "@/features/merchant/merchant-server-api";
-import { requireUser } from "@/lib/auth/require-user";
+import { LocationList } from "@/features/seller/location-list";
 
 export default async function LocationsPage({ params }: { params: Promise<{ merchantId: string }> }) {
-  await requireUser();
   const { merchantId } = await params;
   const locations = await listLocationsForServer(merchantId);
-  return <main>
-    <Link href={`/seller/${merchantId}`}>← Cửa hàng</Link>
-    <h1>Địa điểm</h1>
-    <ul>{locations.map((location) => <li key={location.id}>{location.name} — {location.status}</li>)}</ul>
-    <LocationForm merchantId={merchantId} />
-  </main>;
+
+  return (
+    <section>
+      <header className="surface-header">
+        <p className="eyebrow">Seller Center / Locations</p>
+        <h1>Điểm bán & phục vụ</h1>
+        <p>Mỗi location là một ranh giới vận hành riêng cho giá, giao hàng, tồn kho và quyền nhân viên.</p>
+      </header>
+      <LocationList merchantId={merchantId} locations={locations} />
+      <LocationForm merchantId={merchantId} />
+    </section>
+  );
 }
