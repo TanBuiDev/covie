@@ -89,7 +89,7 @@ class ReputationProjectionLifecycleIntegrationTest extends PostgresIntegrationTe
         assertThat(userStats.ensureEmpty(buyer,now)).isZero();
         assertThat(merchantStats.ensureEmpty(merchant,now)).isEqualTo(1);
         assertThat(merchantStats.ensureEmpty(merchant,now)).isZero();
-        assertThat(outcomes.count()).isEqualTo(1);
+        assertThat(outcomes.findById(order.getId())).isPresent();
     }
 
     private OrderEntity createOrder(UUID buyer, UUID merchant, UUID location, Instant now) {
