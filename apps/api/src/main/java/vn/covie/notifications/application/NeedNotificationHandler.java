@@ -7,6 +7,8 @@ import java.util.TreeMap;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vn.covie.delivery.application.DeliveryCoverageEvaluator;
 import vn.covie.delivery.model.CoverageType;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
@@ -22,6 +24,7 @@ import vn.covie.realtime.SseSignal;
 
 @Component
 public class NeedNotificationHandler implements OutboxEventHandler {
+    private static final Logger log = LoggerFactory.getLogger(NeedNotificationHandler.class);
     private final NeedRequestRepository needs; private final NotificationService notifications; private final NeedAudienceRepository audience;
     private final MerchantLocationRepository locations; private final NeedLocationContextFactory needLocation;
     private final DeliveryCoverageEvaluator coverage; private final MerchantNotificationRecipientResolver recipients; private final int maxLocations;
@@ -44,6 +47,9 @@ public class NeedNotificationHandler implements OutboxEventHandler {
             var location=locations.findById(candidate.merchantLocationId()).orElse(null); if(location==null) continue;
             boolean eligible=need.getNeedType()==NeedType.PRODUCT ? location.isPickupEnabled() || coverage.evaluate(location.getId(),CoverageType.PRODUCT_DELIVERY,locationContext).eligible() : coverage.evaluate(location.getId(),CoverageType.SERVICE_AREA,locationContext).eligible();
             if (eligible) for(UUID user:recipients.processorsForLocation(candidate.merchantProfileId(),location.getId())) userLocations.putIfAbsent(user,location.getId());
+        }
+        if (userLocations.size() > 500) {
+            log.warn("needNotificationAudienceCapped=true needRequestId={} recipientCount={} cap=500", need.getId(), userLocations.size());
         }
         var signals=new ArrayList<SseSignal>(); int sent=0;
         for(var recipient:userLocations.entrySet()) { if(sent++>=500) break; var created=notifications.createFromOutbox(event.eventId(),recipient.getKey(),NotificationType.NEED_MATCH_AVAILABLE,"Matching need available","A nearby request may match your offer.","NEED_REQUEST",need.getId(),Map.of("needRequestId",need.getId().toString(),"merchantLocationId",recipient.getValue().toString())); if(created.created()) signals.add(new SseSignal(recipient.getKey(),"notification.created",Map.of("notificationId",created.notificationId().toString()))); signals.add(new SseSignal(recipient.getKey(),"sync-required",Map.of("needRequestId",need.getId().toString()))); }
