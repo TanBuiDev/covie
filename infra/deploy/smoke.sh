@@ -16,7 +16,9 @@ grep -qi '^x-content-type-options:[[:space:]]*nosniff' "$headers"
 grep -qi '^x-frame-options:[[:space:]]*DENY' "$headers"
 
 curl --fail --silent --show-error --max-time 10 "$base/api/v1/health" >/dev/null
-curl --fail --silent --show-error --max-time 10 "$base/api/v1/catalog/items?limit=1" >/dev/null
+smoke_lat="${COVIE_SMOKE_LAT:-10.7769}"
+smoke_lng="${COVIE_SMOKE_LNG:-106.7009}"
+curl --fail --silent --show-error --max-time 10 "$base/api/v1/catalog/items?limit=1&lat=$smoke_lat&lng=$smoke_lng" >/dev/null
 
 actuator_code="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 10 "$base/actuator/health")"
 [[ "$actuator_code" == "404" || "$actuator_code" == "403" ]] || {

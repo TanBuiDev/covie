@@ -7,7 +7,9 @@
 **Source document:** `docs/CoVie-technical-plan-06-need-requests-matching-v1.0.md`
 **Version:** 1.0  
 **Date:** 2026-08-08  
-**Status:** In implementation
+**Status:** Closed — locally verified
+
+> **Execution closure — 2026-08-25:** Implemented and locally verified by the fresh regression, focused Need concurrency and query-plan gates. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md`.
 
 **Goal:** Implement CoVie V1 structured Need Requests, PostgreSQL/PostGIS seller matching, MerchantLocation-scoped catalog responses, Direct Checkout attribution, Order-confirmation fulfillment, Need expiration, OpenAPI/client integration, and minimal buyer/seller web slices without introducing AI matching, chat, or a separate search service.
 

@@ -2,6 +2,10 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status:** Closed — locally verified
+
+> **Execution closure — 2026-08-25:** Implemented and locally verified by fresh backend regression and outbox/notification coverage. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md`.
+
 **Goal:** Implement CoVie V1 trust and event-delivery layer: verified-purchase Reviews, rebuildable rating aggregates, outcome-based buyer/merchant Reputation, transactional Outbox claiming/retry, database-backed Notifications, best-effort SSE, and minimal web surfaces that refetch authoritative REST state.
 
 **Architecture:** Keep Reviews, Reputation, Notifications and Outbox processing inside the Spring Boot modular monolith. Review creation is synchronous and idempotent; the review row and rating aggregate update commit together, then a lightweight `REVIEW_CREATED` outbox intent is appended. Reputation is an asynchronous projection from authoritative Order state: each relevant outbox event recomputes the current contribution for one Order and diffs it against a persisted `reputation_order_outcomes` row, so `BUYER_NO_SHOW -> NO_SHOW_CONTESTED -> COMPLETED` never double-counts. Outbox database side effects run under one PostgreSQL transaction per event using `FOR UPDATE SKIP LOCKED`; SSE is emitted only after commit and remains best-effort.

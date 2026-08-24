@@ -6,7 +6,9 @@
 **Target repo path:** `docs/superpowers/plans/2026-08-08-covie-web-completion.md`  
 **Version:** 1.0  
 **Date:** 2026-08-08  
-**Status:** Ready for implementation review
+**Status:** Closed — local verification passed; staging carry-over
+
+> **Execution closure — 2026-08-25:** Local implementation gates are green (typecheck, lint, build, unit tests and guest Playwright). Normal authenticated and privileged P0 journeys remain a staging release gate. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md`.
 
 **Goal:** Hoàn thiện CoVie V1 Web App/PWA để các P0 journey Guest → Buyer, Seller/Provider và Admin sử dụng được xuyên suốt trên mobile/desktop, toàn bộ UI nối với generated API client và không sao chép business rule của Spring Boot.
 

@@ -7,7 +7,9 @@
 **Target repo path:** `docs/superpowers/plans/2026-08-08-covie-checkout-inventory.md`  
 **Version:** 1.0  
 **Date:** 2026-08-08  
-**Status:** Ready for implementation review  
+**Status:** Closed — locally verified
+
+> **Execution closure — 2026-08-25:** Implemented and locally verified by clean migration, backend regression and PostgreSQL concurrency gates. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md`.
 
 **Goal:** Build the complete pre-fulfillment transaction slice: MerchantLocation delivery coverage and shipping policies, tracked/untracked inventory, multi-cart behavior, unified CART/DIRECT checkout Preview/Commit, short-lived server-side checkout sessions, atomic Order creation, and PostgreSQL row-locking that prevents overselling.
 
@@ -3099,4 +3101,3 @@ After this plan is saved to `docs/superpowers/plans/2026-08-08-covie-checkout-in
 2. **Inline Execution** — use `superpowers:executing-plans`, execute task batches with explicit checkpoints.
 
 Do not begin Plan 05 implementation until the Plan 04 Acceptance Checklist has fresh evidence.
-

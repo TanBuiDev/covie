@@ -17,6 +17,8 @@ build/
 node_modules/
 .next/
 coverage/
+test-results/
+playwright-report/
 .pnpm-store/
 *.tsbuildinfo
 

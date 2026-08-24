@@ -13,7 +13,7 @@ tables=(orders order_items order_events inventory_movements need_requests review
 
 gather() {
   for table in "${tables[@]}"; do
-    exists="$(psql -XAtq -v ON_ERROR_STOP=1 -d "$PGDATABASE" -v table="$table" -c "select to_regclass('public.' || :'table') is not null")"
+    exists="$(psql -XAtq -v ON_ERROR_STOP=1 -d "$PGDATABASE" -c "select to_regclass('public.$table') is not null")"
     [[ "$exists" == "t" ]] || { echo "Required invariant table missing: $table" >&2; return 1; }
     count="$(psql -XAtq -v ON_ERROR_STOP=1 -d "$PGDATABASE" -c "select count(*) from \"$table\"")"
     printf '%s=%s\n' "$table" "$count"

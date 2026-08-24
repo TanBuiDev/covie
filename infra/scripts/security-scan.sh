@@ -15,16 +15,33 @@ run_trivy() {
     trivy "$@"
   else
     command -v docker >/dev/null 2>&1 || { echo "trivy or docker is required" >&2; exit 2; }
-    docker run --rm -v "$repo_root:/work" -w /work "aquasec/trivy:${TRIVY_VERSION}" "$@"
+    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$repo_root:/work" -w /work \
+      "aquasec/trivy:${TRIVY_VERSION}" "$@"
   fi
 }
 
 cd "$repo_root"
-run_trivy fs --scanners vuln,misconfig,secret --severity HIGH,CRITICAL --exit-code 1 \
-  --skip-dirs '**/target' --skip-dirs '**/.next' --skip-dirs '**/node_modules' .
+release_source="$(mktemp -d "$repo_root/build/security-source.XXXXXX")"
+cleanup_release_source() { rm -rf "$release_source"; }
+trap cleanup_release_source EXIT
+
+# Scan exactly the release source, including uncommitted non-ignored changes,
+# without traversing Git metadata, local worktrees, caches or test evidence.
+git ls-files --cached --others --exclude-standard -z \
+  | tar --null --files-from=- --create --file=- \
+  | tar --extract --file=- --directory="$release_source"
+
+# Dependency vulnerability checks are performed on the immutable runtime images
+# below.  Scanning source POM files makes Trivy resolve remote Maven metadata,
+# turning the release gate into a Maven Central availability check.
+run_trivy fs --offline-scan --timeout 15m --scanners misconfig,secret --severity HIGH,CRITICAL --exit-code 1 \
+  --skip-dirs '**/target' --skip-dirs '**/.next' --skip-dirs '**/node_modules' "build/$(basename "$release_source")"
 
 if command -v pnpm >/dev/null 2>&1; then
-  pnpm audit --prod --audit-level=high
+  case "$(uname -s)" in
+    MINGW*|MSYS*) powershell.exe -NoProfile -Command "pnpm audit --prod --audit-level=high" ;;
+    *) pnpm audit --prod --audit-level=high ;;
+  esac
 else
   echo "pnpm not installed; Node production audit must run in CI/release job" >&2
 fi

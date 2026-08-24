@@ -1,7 +1,9 @@
 export const scenarios = {
   "public-search": {
     method: "GET",
-    path: "/api/v1/catalog/items?q=coffee&limit=20",
+    // Discovery requires a location context. Ho Chi Minh City is the pilot
+    // baseline; override it when the deployment under test uses another area.
+    path: `/api/v1/catalog/items?q=coffee&limit=20${process.env.COVIE_LOAD_LOCATION_QUERY ?? "&lat=10.7769&lng=106.7009"}`,
     expected: [200],
     p95Ms: 500,
     maxErrorRatio: 0.01,

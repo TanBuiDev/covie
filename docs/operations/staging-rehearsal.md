@@ -18,7 +18,7 @@ Plan 10's automation deliberately refuses `https://covie.vn` and requires `COVIE
 
 The clean database must migrate successfully through V013 (or an explicitly reviewed later migration). `verify-clean-migration.sh` requires a complete successful 1..13 sequence by default. Enable the committed Grand Park reference bootstrap once, verify idempotency, then disable it. Bootstrap the first staging Admin only after normal Google + local email/password onboarding and remove the bootstrap email immediately after the grant.
 
-The current Plan 10 branch does not contain Plan 09's Playwright dependency/fixtures. Therefore `run-staging-rehearsal.sh` requires `COVIE_STAGING_P0_CMD` to be supplied after the Plan 09 prerequisite is merged; the rehearsal is not allowed to substitute a fake in-memory/browser test.
+The repository contains guest Playwright coverage, but it is not evidence for a normal authenticated staging journey. `run-staging-rehearsal.sh` therefore requires `COVIE_STAGING_P0_CMD` to be supplied with a real Buyer/Seller/Admin staging flow; the rehearsal is not allowed to substitute a test-support login, fake browser test, or guest-only suite.
 
 ## Full gate
 

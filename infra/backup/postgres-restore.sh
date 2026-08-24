@@ -24,7 +24,7 @@ actual="$(sha256sum "$backup" | awk '{print $1}')"
 [[ -n "$expected" && "$expected" == "$actual" ]] || { echo "Backup checksum mismatch" >&2; exit 1; }
 pg_restore --list "$backup" >/dev/null
 
-object_count="$(psql -XAtq -v ON_ERROR_STOP=1 -d "$PGDATABASE" -c "select count(*) from pg_catalog.pg_class where relnamespace not in (select oid from pg_namespace where nspname in ('pg_catalog','information_schema'))")"
+object_count="$(psql -XAtq -v ON_ERROR_STOP=1 -d "$PGDATABASE" -c "select count(*) from pg_catalog.pg_class where relnamespace not in (select oid from pg_namespace where nspname in ('pg_catalog','information_schema','pg_toast'))")"
 [[ "$object_count" == "0" ]] || { echo "Target database is not empty" >&2; exit 1; }
 
 pg_restore --exit-on-error --no-owner --no-acl --dbname "$PGDATABASE" "$backup"
