@@ -29,6 +29,23 @@ public class NeedResponseItemEntity {
 
     protected NeedResponseItemEntity() {}
 
+    public static NeedResponseItemEntity active(UUID id, UUID responseId, UUID catalogItemId, UUID variantId,
+            UUID locationVariantId, long priceSnapshot, String currencyCode, JsonNode availabilitySnapshot,
+            Instant now) {
+        NeedResponseItemEntity entity = new NeedResponseItemEntity();
+        entity.id = id;
+        entity.needResponseId = responseId;
+        entity.catalogItemId = catalogItemId;
+        entity.variantId = variantId;
+        entity.locationVariantId = locationVariantId;
+        entity.itemStatus = NeedResponseItemStatus.ACTIVE;
+        entity.priceSnapshot = priceSnapshot;
+        entity.currencyCode = currencyCode;
+        entity.availabilitySnapshot = availabilitySnapshot.deepCopy();
+        entity.createdAt = now;
+        return entity;
+    }
+
     public void retire(Instant now) {
         if (itemStatus == NeedResponseItemStatus.ACTIVE) {
             itemStatus = NeedResponseItemStatus.RETIRED;
