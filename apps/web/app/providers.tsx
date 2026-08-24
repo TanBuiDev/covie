@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { BrowseLocationProvider } from "@/features/location/browse-location-provider";
 import { RegisterServiceWorker } from "@/lib/pwa/register-service-worker";
 
 /**
@@ -9,9 +10,9 @@ import { RegisterServiceWorker } from "@/lib/pwa/register-service-worker";
  */
 export function Providers({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <>
+    <BrowseLocationProvider>
       <RegisterServiceWorker />
       {children}
-    </>
+    </BrowseLocationProvider>
   );
 }
