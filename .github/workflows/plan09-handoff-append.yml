@@ -1,89 +1,12 @@
-name: Plan 09 handoff append
+# Deprecated: final Plan 09 handoff is performed by the one-shot job staged in ci.yml.
+# This file is intentionally inert and will be deleted by that job.
+name: Plan 09 handoff helper (deprecated)
 
 on:
-  push:
-    branches:
-      - feat/plan-09-web-completion
-
-permissions:
-  contents: write
+  workflow_dispatch:
 
 jobs:
-  append-handoff:
-    if: github.actor != 'github-actions[bot]'
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feat/plan-09-web-completion
-          fetch-depth: 0
-      - name: Append Plan 09 handoff and remove helper workflow
-        shell: bash
-        run: |
-          set -euo pipefail
-          PLAN="docs/CoVie-technical-plan-09-web-completion-v1.0.md"
-          MARKER="## Implementation Handoff — 2026-08-24"
-          if ! grep -Fq "$MARKER" "$PLAN"; then
-            cat >> "$PLAN" <<'EOF'
-
----
-
-## Implementation Handoff — 2026-08-24
-
-**Implementation branch:** `feat/plan-09-web-completion`  
-**Base used:** `a4b0193f565b01565d4d670d23ea7a68156fcf69` (`codex/plan-08-moderation-system-settings-admin`)  
-**Status:** **PARTIAL / BLOCKED BY PREREQUISITES** — do not mark Plan 09 complete yet.
-
-### Đã triển khai trên branch
-
-- Task 1 partial: stable query keys, backend field-error mapper, stable Vietnamese error copy, root provider boundary.
-- Task 2 substantial: manifest/icon/offline shell/service worker, production SW registration, consumer/seller/admin shells, responsive/safe-area CSS, buyer/public layouts.
-- Task 3 partial: explicit `BrowseLocation`, privacy-safe versioned persistence, provider/hook, user-initiated GPS + manual chooser, compatibility with existing discovery context.
-- Task 4 partial: canonical `/search`, generated-client-backed catalog discovery, safe URL filter validation, empty/error/loading states, `/explore` redirects to `/search`.
-- Task 5 partial: session-only 15-minute purchase intent, one-time consume, service quantity helper, sanitized internal return path.
-- Task 8 partial: safe `CART` / `DIRECT` / `NEED_REQUEST` checkout-source parser.
-- Task 16 partial: notification deep links derived only from trusted type + typed entity IDs; arbitrary payload URLs are ignored by design.
-- Task 18 partial: shared loading/empty/error/confirm/status/warning/action primitives plus money/time/status formatters and safe unknown-enum copy.
-- Added focused Vitest coverage for field errors, browse-location storage, purchase intent, checkout-source, notification deep links, formatters and PWA cache policy.
-- No database migration was added.
-
-### Blockers đã xác nhận
-
-The branch available when Plan 09 started is not a completed Plan 08 prerequisite:
-
-- highest migration currently inherited is `V011__need_matching.sql`;
-- `V012__reviews_reputation_outbox_notifications.sql` is absent;
-- `V013__moderation_system_settings_admin.sql` is absent;
-- Plan 07 Review/Notification/SSE frontend foundation is absent;
-- Plan 08 Admin frontend/contracts are incomplete;
-- therefore Tasks 15–17 and final Task 20 acceptance cannot be completed truthfully yet.
-
-The remote GitHub editing environment also cannot safely run `pnpm add` for this private workspace, so Task 1 TanStack Query/RHF dependencies and Task 19 Playwright dependency/lockfile were deliberately not hand-edited.
-
-### Cần làm tiếp
-
-1. Finish/integrate Plan 07 and final Plan 08 into this branch first.
-2. Locally install dependencies so `package.json` and `pnpm-lock.yaml` change together:
-
-```bash
-pnpm --filter @covie/web add @tanstack/react-query@^5 react-hook-form@^7 @hookform/resolvers@^5
-pnpm --filter @covie/web add -D @playwright/test@^1
-pnpm --filter @covie/web exec playwright install chromium
-```
-
-3. Add `query-client.ts` + `QueryClientProvider`, then migrate temporary effect-based reads to TanStack Query.
-4. Continue Tasks 3–14 workflow wiring, then Task 15 Review eligibility/OpenAPI, Task 16 SSE, Task 17 Admin, Task 19 E2E harness and Task 20 P0 acceptance.
-5. Run full lint/typecheck/unit/build/OpenAPI/Maven/Playwright gates before checking any whole task as complete.
-
-**Detailed file-by-file handoff and exact continuation commands:** [`CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md`](./CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md).
-EOF
-          fi
-
-          rm -f .github/workflows/plan09-handoff-append.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$PLAN" docs/CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md .github/workflows/plan09-handoff-append.yml
-          if ! git diff --cached --quiet; then
-            git commit -m "docs(plan09): embed implementation handoff"
-            git push origin HEAD:feat/plan-09-web-completion
-          fi
+      - run: echo "Deprecated helper; no repository mutation."
