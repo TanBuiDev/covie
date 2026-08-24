@@ -47,6 +47,22 @@ public class MerchantProfileEntity {
         this.updatedAt = now;
     }
 
+    public void hide(Instant now) {
+        if (moderationStatus != MerchantModerationStatus.NOT_REQUIRED && moderationStatus != MerchantModerationStatus.APPROVED) {
+            throw new IllegalStateException("Merchant is not visible.");
+        }
+        moderationStatus = MerchantModerationStatus.HIDDEN;
+        updatedAt = now;
+    }
+
+    public void restoreVisibility(Instant now) {
+        if (moderationStatus != MerchantModerationStatus.HIDDEN && moderationStatus != MerchantModerationStatus.REJECTED) {
+            throw new IllegalStateException("Merchant cannot be restored.");
+        }
+        moderationStatus = MerchantModerationStatus.APPROVED;
+        updatedAt = now;
+    }
+
     public UUID getId() { return id; }
     public String getName() { return name; }
     public String getSlug() { return slug; }
