@@ -1,6 +1,7 @@
 package vn.covie.needs.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -74,6 +75,41 @@ class NeedFulfillmentOnOrderConfirmIntegrationTest {
         participant.onConfirmed(laterOrder, UUID.randomUUID());
 
         assertThat(need.getFulfilledOrderId()).isEqualTo(firstOrderId);
+        verify(outbox, never()).append(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void cancelledNeedIsNeverResurrectedByOldSourceOrder() {
+        NeedRequestEntity need = activeNeed(now.plusSeconds(3600));
+        need.cancel(now.minusSeconds(10));
+        OrderEntity order = sourceOrder(UUID.randomUUID(), need);
+        stubSourceChain(order, need);
+
+        participant.onConfirmed(order, UUID.randomUUID());
+
+        assertThat(need.getRequestStatus()).isEqualTo(NeedStatus.CANCELLED);
+        assertThat(need.getFulfilledOrderId()).isNull();
+        verify(outbox, never()).append(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void mismatchedSourceChainIsAnInvariantFailure() {
+        NeedRequestEntity need = activeNeed(now.plusSeconds(3600));
+        OrderEntity order = sourceOrder(UUID.randomUUID(), need);
+        UUID itemId = order.getSourceNeedResponseItemId();
+        UUID responseId = UUID.randomUUID();
+        NeedResponseItemEntity item = mock(NeedResponseItemEntity.class);
+        NeedResponseEntity response = mock(NeedResponseEntity.class);
+        when(needs.lockById(need.getId())).thenReturn(Optional.of(need));
+        when(items.findById(itemId)).thenReturn(Optional.of(item));
+        when(item.getNeedResponseId()).thenReturn(responseId);
+        when(responses.findById(responseId)).thenReturn(Optional.of(response));
+        when(response.getNeedRequestId()).thenReturn(UUID.randomUUID());
+
+        assertThatThrownBy(() -> participant.onConfirmed(order, UUID.randomUUID()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("source chain");
+        assertThat(need.getRequestStatus()).isEqualTo(NeedStatus.ACTIVE);
         verify(outbox, never()).append(org.mockito.ArgumentMatchers.any());
     }
 
