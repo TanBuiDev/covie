@@ -1,7 +1,6 @@
 "use client";
 
 import type { components } from "@covie/api-client";
-import { useEffect, useState } from "react";
 
 type CartItem = components["schemas"]["CartItemResponse"];
 
@@ -12,16 +11,11 @@ export function CartItemRow({ item, cartType, disabled = false, onQuantityChange
   onQuantityChange(quantity: number): void;
   onRemove(): void;
 }) {
-  const [quantity, setQuantity] = useState(item.quantity ?? 1);
+  const quantity = item.quantity ?? 1;
   const isService = cartType === "SERVICE";
-
-  useEffect(() => {
-    setQuantity(item.quantity ?? 1);
-  }, [item.quantity]);
 
   const update = (next: number) => {
     const safe = isService ? 1 : Math.max(1, next);
-    setQuantity(safe);
     onQuantityChange(safe);
   };
 

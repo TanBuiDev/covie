@@ -21,7 +21,7 @@ export function SellerDashboard({
       <header className="surface-header">
         <p className="eyebrow">Seller Center</p>
         <h1>Tổng quan vận hành</h1>
-        <p>Hiển thị các mục gần đây để xử lý, không phải báo cáo doanh thu hay tổng số toàn hệ thống.</p>
+        <p>Hiển thị các mục gần đây để xử lý theo quyền của điểm bán hiện tại.</p>
       </header>
 
       <section aria-labelledby="seller-orders-title">

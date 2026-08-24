@@ -12,7 +12,7 @@ const items = [
 ] as const;
 
 export function ConsumerBottomNav() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   return (
     <nav className="consumer-bottom-nav" aria-label="Điều hướng chính">
       {items.map((item) => {

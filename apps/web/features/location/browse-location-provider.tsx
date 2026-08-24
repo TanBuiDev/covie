@@ -18,8 +18,11 @@ export function BrowseLocationProvider({ children }: Readonly<{ children: ReactN
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setLocationState(readBrowseLocation(window.localStorage));
-    setHydrated(true);
+    const timer = window.setTimeout(() => {
+      setLocationState(readBrowseLocation(window.localStorage));
+      setHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const setLocation = useCallback((next: BrowseLocation) => {

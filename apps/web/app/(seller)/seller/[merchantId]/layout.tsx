@@ -16,22 +16,21 @@ export default async function MerchantSellerLayout({
   await requireUser();
   const { merchantId } = await params;
 
-  try {
-    const [merchant, merchants] = await Promise.all([
+  const merchantAndMerchants = await Promise.all([
       getMerchantForServer(merchantId),
       listMyMerchantsForServer(),
-    ]);
-    return (
-      <SellerShell
-        merchantId={merchantId}
-        merchantName={merchant.data.name}
-        switcher={<MerchantSwitcher merchants={merchants} currentMerchantId={merchantId} />}
-      >
-        {children}
-      </SellerShell>
-    );
-  } catch (error) {
+    ]).catch((error: unknown) => {
     if (error instanceof CovieApiError && error.status === 404) redirect("/seller");
     throw error;
-  }
+  });
+  const [merchant, merchants] = merchantAndMerchants;
+  return (
+    <SellerShell
+      merchantId={merchantId}
+      merchantName={merchant.data.name}
+      switcher={<MerchantSwitcher merchants={merchants} currentMerchantId={merchantId} />}
+    >
+      {children}
+    </SellerShell>
+  );
 }

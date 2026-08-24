@@ -37,20 +37,23 @@ export function SearchResults({ initial }: { initial: SearchInitialFilters }) {
 
   useEffect(() => {
     if (!discoveryLocation) {
-      setPage(undefined);
       return;
     }
     let cancelled = false;
-    setLoading(true);
-    setError(false);
-    discoverCatalogItems({
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setError(false);
+      return discoverCatalogItems({
       q: filters.q || undefined,
       type: filters.type || undefined,
       categoryId: filters.categoryId || undefined,
       sort: filters.sort ?? "RELEVANCE",
       limit: 20,
       location: discoveryLocation,
+      });
     }).then((result) => {
+      if (!result) return;
       if (!cancelled) setPage(result.page);
     }).catch(() => {
       if (!cancelled) setError(true);
@@ -59,6 +62,8 @@ export function SearchResults({ initial }: { initial: SearchInitialFilters }) {
     });
     return () => { cancelled = true; };
   }, [discoveryLocation, filters]);
+
+  const visiblePage = discoveryLocation ? page : undefined;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,7 +78,7 @@ export function SearchResults({ initial }: { initial: SearchInitialFilters }) {
   }
 
   async function loadNext() {
-    if (!discoveryLocation || !page?.hasMore || !page.nextCursor) return;
+    if (!discoveryLocation || !visiblePage?.hasMore || !visiblePage.nextCursor) return;
     setLoading(true);
     setError(false);
     try {
@@ -83,7 +88,7 @@ export function SearchResults({ initial }: { initial: SearchInitialFilters }) {
         categoryId: filters.categoryId || undefined,
         sort: filters.sort ?? "RELEVANCE",
         limit: 20,
-        cursor: page.nextCursor,
+        cursor: visiblePage.nextCursor,
         location: discoveryLocation,
       });
       setPage((current) => ({
@@ -117,13 +122,13 @@ export function SearchResults({ initial }: { initial: SearchInitialFilters }) {
       {!location && <EmptyState title="Chọn khu vực để xem kết quả gần bạn" description="CoVie chỉ định vị khi bạn chủ động chọn hoặc cho phép GPS." />}
       {loading && <LoadingState />}
       {error && <ErrorState description="Không thể tải kết quả quanh khu vực này. Vui lòng thử lại." />}
-      {location && !loading && !error && page?.items?.length === 0 && (
+      {location && !loading && !error && visiblePage?.items?.length === 0 && (
         <EmptyState title="Chưa có kết quả phù hợp" action={<Link href="/needs/new">Đăng nhu cầu cần mua</Link>} />
       )}
       <section className="catalog-grid" aria-label="Kết quả tìm kiếm">
-        {page?.items?.map((item) => <CatalogCard key={item.id} item={item} location={discoveryLocation} />)}
+        {visiblePage?.items?.map((item) => <CatalogCard key={item.id} item={item} location={discoveryLocation} />)}
       </section>
-      {page?.hasMore && <button type="button" onClick={loadNext} disabled={loading}>Tải thêm</button>}
+      {visiblePage?.hasMore && <button type="button" onClick={loadNext} disabled={loading}>Tải thêm</button>}
     </section>
   );
 }

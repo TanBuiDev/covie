@@ -6,7 +6,7 @@ const { createDeliveryCoverage, listLocationAreas } = vi.hoisted(() => ({
   listLocationAreas: vi.fn(),
 }));
 
-vi.mock("@/features/shipping/shipping-api", () => ({
+vi.mock("../../features/shipping/shipping-api", () => ({
   createDeliveryCoverage,
   listLocationAreas,
 }));
@@ -22,8 +22,8 @@ describe("delivery coverage configuration", () => {
 
   it("supports selected backend location areas without inventing a third coverage mode", async () => {
     render(<CoverageForm merchantId="merchant-1" locationId="location-1" />);
-    await waitFor(() => expect(screen.getByText("Khu A")).toBeInTheDocument());
     fireEvent.click(screen.getByLabelText("Khu vực được chọn"));
+    await waitFor(() => expect(screen.getByText("Khu A")).toBeInTheDocument());
     fireEvent.click(screen.getByLabelText("Khu A"));
     expect(screen.getByRole("button", { name: "Lưu vùng phục vụ" })).toBeEnabled();
   });

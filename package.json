@@ -16,5 +16,12 @@
     "web:build": "pnpm --filter @covie/web build",
     "api-client:generate": "pnpm --filter @covie/api-client generate",
     "api-client:check": "pnpm --filter @covie/api-client check"
+  },
+  "pnpm": {
+    "overrides": {
+      "sharp": "0.35.0",
+      "tar": "7.5.21",
+      "undici": "6.27.0"
+    }
   }
 }

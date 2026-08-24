@@ -1,80 +1,22 @@
+import type { components } from "@covie/api-client";
 import { readApiError } from "@/lib/api/api-error";
 import { requestBrowserApi } from "@/lib/api/api-client";
 
-export type NeedType = "PRODUCT" | "SERVICE";
-export type NeedStatus = "ACTIVE" | "FULFILLED" | "EXPIRED" | "CANCELLED";
+type GeneratedRequired<T> = T extends Array<infer Item>
+  ? GeneratedRequired<Item>[]
+  : T extends object
+    ? { [Key in keyof T]-?: GeneratedRequired<NonNullable<T[Key]>> }
+    : T;
 
-export type NeedSummary = {
-  id: string;
-  type: NeedType;
-  status: NeedStatus;
-  categoryId: string;
-  title: string;
-  radiusMeters: number;
-  expiresAt: string;
-  responseCount: number;
-  createdAt: string;
-};
-
-export type NeedDetail = NeedSummary & {
-  queryText: string;
-  description?: string | null;
-  requestedQuantity?: number | null;
-  locationSummary?: { addressId?: string | null; locationAreaId?: string | null; timezone?: string | null } | null;
-  fulfilledOrderId?: string | null;
-  closedAt?: string | null;
-};
-
-export type NeedResponseItem = {
-  id: string;
-  locationVariantId: string;
-  catalogItemId: string;
-  variantId: string;
-  priceAtResponse?: { amount: number; currency: string } | null;
-  currentPrice?: { amount: number; currency: string } | null;
-  available: boolean;
-  actionable: boolean;
-};
-
-export type NeedResponse = {
-  id: string;
-  needRequestId: string;
-  merchantId: string;
-  merchantName?: string | null;
-  merchantLocationId: string;
-  merchantLocationName?: string | null;
-  distanceMeters?: number | null;
-  status: "ACTIVE" | "WITHDRAWN";
-  note?: string | null;
-  version: number;
-  createdAt: string;
-  items: NeedResponseItem[];
-};
-
-export type MerchantNeedMatch = {
-  need: { id: string; type: NeedType; title: string; description?: string | null; categoryId: string; expiresAt: string };
-  resolvedLocation: { id: string; name: string };
-  buyerArea?: { label?: string | null } | null;
-  distanceMeters: number;
-  alreadyResponded: boolean;
-  responseConstraints: { maxItems: number };
-};
-
+export type NeedType = NonNullable<components["schemas"]["NeedSummaryResponse"]["type"]>;
+export type NeedStatus = NonNullable<components["schemas"]["NeedSummaryResponse"]["status"]>;
+export type NeedSummary = GeneratedRequired<components["schemas"]["NeedSummaryResponse"]>;
+export type NeedDetail = GeneratedRequired<components["schemas"]["NeedDetailResponse"]>;
+export type NeedResponseItem = GeneratedRequired<components["schemas"]["NeedResponseItemResponse"]>;
+export type NeedResponse = GeneratedRequired<components["schemas"]["NeedResponseResponse"]>;
+export type MerchantNeedMatch = GeneratedRequired<components["schemas"]["MerchantNeedMatchResponse"]>;
 type CursorPage<T> = { items: T[]; hasMore: boolean; nextCursor?: string | null };
-
-export type CreateNeedInput = {
-  type: NeedType;
-  categoryId: string;
-  title: string;
-  queryText: string;
-  description?: string;
-  requestedQuantity?: number;
-  addressId?: string;
-  lat?: number;
-  lng?: number;
-  radiusMeters: number;
-  expiresAt: string;
-};
+export type CreateNeedInput = components["schemas"]["CreateNeedRequest"];
 
 async function jsonOrThrow<T>(response: Response): Promise<T> {
   if (!response.ok) throw await readApiError(response);

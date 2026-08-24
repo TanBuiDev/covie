@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { OrderAction } from "./order-api";
 
@@ -34,13 +34,22 @@ export function OrderActionDialog({
   onCancel(): void;
   onSubmit(input: { reasonCode?: string; note?: string }): void;
 }) {
-  const [reason, setReason] = useState("");
-
-  useEffect(() => {
-    if (action) setReason("");
-  }, [action]);
-
   if (!action) return null;
+  return <OrderActionDialogForm key={action} action={action} pending={pending} onCancel={onCancel} onSubmit={onSubmit} />;
+}
+
+function OrderActionDialogForm({
+  action,
+  pending,
+  onCancel,
+  onSubmit,
+}: {
+  action: OrderAction;
+  pending?: boolean;
+  onCancel(): void;
+  onSubmit(input: { reasonCode?: string; note?: string }): void;
+}) {
+  const [reason, setReason] = useState("");
   const copy = actionCopy[action];
   const trimmed = reason.trim();
   const reasonRequired = copy.reason === "required";

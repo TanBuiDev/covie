@@ -2,7 +2,7 @@
 
 import type { components } from "@covie/api-client";
 import { FormEvent, useEffect, useState } from "react";
-import { createDeliveryCoverage, listLocationAreas } from "./shipping-api";
+import { createDeliveryCoverage, listLocationAreas } from "@/features/shipping/shipping-api";
 
 type CoverageMode = "RADIUS" | "SELECTED_AREAS";
 type LocationArea = components["schemas"]["LocationAreaResponse"];
