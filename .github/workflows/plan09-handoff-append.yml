@@ -1,6 +1,4 @@
-# Deprecated: final Plan 09 handoff is performed by the one-shot job staged in ci.yml.
-# This file is intentionally inert and will be deleted by that job.
-name: Plan 09 handoff helper (deprecated)
+name: Plan 09 deprecated helper
 
 on:
   workflow_dispatch:
@@ -9,4 +7,4 @@ jobs:
   noop:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Deprecated helper; no repository mutation."
+      - run: echo "Final handoff is managed by the one-shot CI job; this file will be removed."
