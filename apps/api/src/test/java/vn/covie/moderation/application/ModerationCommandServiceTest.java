@@ -1,8 +1,10 @@
 package vn.covie.moderation.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -42,5 +44,18 @@ class ModerationCommandServiceTest {
 
         assertThat(result.status()).isEqualTo(ModerationCaseStatus.RESOLVED);
         verify(handler).apply(targetId, ModerationActionType.APPROVE, now);
+    }
+
+    @Test
+    void secondConflictingActionSeesResolvedCaseAndDoesNotMutateTargetAgain() {
+        UUID caseId = UUID.randomUUID(); UUID targetId = UUID.randomUUID(); Instant now = Instant.parse("2026-08-24T00:00:00Z");
+        ModerationCaseEntity moderationCase = ModerationCaseEntity.preApprovalCatalog(caseId, targetId, now);
+        ModerationCaseRepository cases = Mockito.mock(ModerationCaseRepository.class); when(cases.findByIdForUpdate(caseId)).thenReturn(java.util.Optional.of(moderationCase));
+        ModerationTargetHandler handler = Mockito.mock(ModerationTargetHandler.class); when(handler.supports()).thenReturn(vn.covie.moderation.model.ModerationTargetType.CATALOG_ITEM);
+        AdminAccessPolicy access = Mockito.mock(AdminAccessPolicy.class); when(access.requireAdmin()).thenReturn(new CurrentActor(UUID.randomUUID(), java.util.Set.of(), UUID.randomUUID()));
+        ModerationCommandService service = new ModerationCommandService(access,cases,Mockito.mock(ModerationActionRepository.class),new ModerationTargetHandlerRegistry(java.util.List.of(handler)),Mockito.mock(vn.covie.audit.AuditLogWriter.class),Mockito.mock(vn.covie.shared.outbox.OutboxEventWriter.class),new UuidV7Generator(),()->now,Mockito.mock(vn.covie.shared.web.RequestIdAccessor.class));
+        service.executeWithoutIdempotency(caseId,ModerationActionType.APPROVE,new ModerationActionRequest(null,null));
+        assertThatThrownBy(()->service.executeWithoutIdempotency(caseId,ModerationActionType.REJECT,new ModerationActionRequest("policy",null))).isInstanceOf(vn.covie.shared.web.ApiException.class).extracting(error->((vn.covie.shared.web.ApiException)error).code()).isEqualTo(vn.covie.shared.web.ErrorCode.MODERATION_CASE_STATE_CONFLICT);
+        verify(handler,times(1)).apply(targetId,ModerationActionType.APPROVE,now);
     }
 }
