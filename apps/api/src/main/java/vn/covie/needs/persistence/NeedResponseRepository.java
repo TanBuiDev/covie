@@ -1,7 +1,10 @@
 package vn.covie.needs.persistence;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,4 +19,19 @@ public interface NeedResponseRepository extends JpaRepository<NeedResponseEntity
             UUID needRequestId, UUID merchantLocationId, NeedResponseStatus responseStatus);
 
     long countByNeedRequestIdAndResponseStatus(UUID needRequestId, NeedResponseStatus responseStatus);
+
+    @Query("""
+            select r from NeedResponseEntity r
+            where r.needRequestId = :needId
+              and r.responseStatus = :status
+              and (:afterCreatedAt is null
+                   or r.createdAt < :afterCreatedAt
+                   or (r.createdAt = :afterCreatedAt and r.id < :afterId))
+            order by r.createdAt desc, r.id desc
+            """)
+    List<NeedResponseEntity> findPage(@Param("needId") UUID needId,
+            @Param("status") NeedResponseStatus status,
+            @Param("afterCreatedAt") Instant afterCreatedAt,
+            @Param("afterId") UUID afterId,
+            Pageable pageable);
 }

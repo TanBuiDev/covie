@@ -27,6 +27,44 @@ public class NeedResponseEntity {
 
     protected NeedResponseEntity() {}
 
+    public static NeedResponseEntity active(UUID id, UUID needRequestId, UUID merchantProfileId,
+            UUID merchantLocationId, UUID createdByUserId, String note, Instant now) {
+        NeedResponseEntity entity = new NeedResponseEntity();
+        entity.id = id;
+        entity.needRequestId = needRequestId;
+        entity.merchantProfileId = merchantProfileId;
+        entity.merchantLocationId = merchantLocationId;
+        entity.createdByUserId = createdByUserId;
+        entity.note = normalizeNote(note);
+        entity.responseStatus = NeedResponseStatus.ACTIVE;
+        entity.createdAt = now;
+        entity.updatedAt = now;
+        return entity;
+    }
+
+    public void replaceNote(String note, Instant now) {
+        requireActive();
+        this.note = normalizeNote(note);
+        this.updatedAt = now;
+    }
+
+    public void withdraw(Instant now) {
+        requireActive();
+        this.responseStatus = NeedResponseStatus.WITHDRAWN;
+        this.withdrawnAt = now;
+        this.updatedAt = now;
+    }
+
+    private void requireActive() {
+        if (responseStatus != NeedResponseStatus.ACTIVE) {
+            throw new IllegalStateException("Need response is not active.");
+        }
+    }
+
+    private static String normalizeNote(String note) {
+        return note == null || note.strip().isEmpty() ? null : note.strip();
+    }
+
     public UUID getId() { return id; }
     public UUID getNeedRequestId() { return needRequestId; }
     public UUID getMerchantProfileId() { return merchantProfileId; }
