@@ -1,0 +1,54 @@
+services:
+  api:
+    image: ${COVIE_API_IMAGE:?COVIE_API_IMAGE is required}
+    env_file:
+      - ${COVIE_ENV_FILE:?COVIE_ENV_FILE is required}
+    volumes:
+      - ${COVIE_JWT_SECRET_DIR:?COVIE_JWT_SECRET_DIR is required}:/run/covie-secrets:ro
+    expose:
+      - "8080"
+      - "9091"
+    networks: [internal]
+    restart: unless-stopped
+    stop_grace_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  web:
+    image: ${COVIE_WEB_IMAGE:?COVIE_WEB_IMAGE is required}
+    env_file:
+      - ${COVIE_ENV_FILE:?COVIE_ENV_FILE is required}
+    expose:
+      - "3000"
+    networks: [internal]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  nginx:
+    image: nginx:1.28-alpine
+    depends_on: [api, web]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../docker/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ../docker/security-headers.conf:/etc/nginx/security-headers.conf:ro
+      - ${COVIE_TLS_CERT_DIR:?COVIE_TLS_CERT_DIR is required}:/etc/nginx/tls:ro
+    networks: [internal]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+networks:
+  internal:
+    name: covie_internal

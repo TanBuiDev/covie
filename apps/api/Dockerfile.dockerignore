@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+**/target
+**/.next
+**/node_modules
+infra/secrets
+**/*.pem
+**/*.key

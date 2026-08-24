@@ -3,7 +3,9 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'codex/plan-10-*'
 
 permissions:
   contents: read
@@ -27,6 +29,8 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
+      - name: Restore Maven wrapper executable bit
+        run: chmod +x mvnw
       - name: Verify backend with test OIDC fixtures and ephemeral RSA keys
         run: ./mvnw verify
 
@@ -44,6 +48,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: Restore repository script executable bits
+        run: chmod +x apps/api/mvnw infra/scripts/*.sh infra/deploy/*.sh infra/backup/*.sh infra/perf/*.sh
       - name: Install pnpm
         run: npm install --global pnpm@10
       - name: Install workspace
@@ -69,62 +75,18 @@ jobs:
       - name: Reject tracked secrets
         run: ./infra/scripts/verify-secret-hygiene.sh
 
-# PLAN09_FINAL_HANDOFF_JOB_BEGIN
-  plan09-final-handoff:
-    if: github.event_name == 'pull_request' && github.head_ref == 'feat/plan-09-web-completion'
+  release-security-source:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          ref: feat/plan-09-web-completion
-          fetch-depth: 0
-      - name: Append and push final Plan 09 handoff
-        shell: bash
-        run: |
-          set -euo pipefail
-          PLAN="docs/CoVie-technical-plan-09-web-completion-v1.0.md"
-          MARKER="## Final Maximum-Completion Handoff — 2026-08-24"
-          if grep -Fq "$MARKER" "$PLAN"; then
-            echo "Plan 09 handoff already present."
-            exit 0
-          fi
-          cat >> "$PLAN" <<'EOF'
-          
-          ---
-          
-          ## Final Maximum-Completion Handoff — 2026-08-24
-          
-          **Branch:** `feat/plan-09-web-completion`  
-          **Draft verification PR:** `#3`  
-          **Status:** **maximum safe completion on the currently available prerequisites; not 100% Plan 09 acceptance-complete.**
-          
-          ### Đã triển khai
-          
-          - PWA/responsive shells, BrowseLocation and canonical public search foundations.
-          - Account/logout and Saved Address create/edit/default/delete-confirm UX.
-          - Multi-cart overview/detail with Product/Service separation, Service quantity=1, `If-Match` and stale refetch behavior.
-          - Buyer/Seller Order UX uses generated Order contracts and authoritative backend `allowedActions`; no frontend state machine; destructive/irreversible actions use confirmation/reason UX.
-          - Seller Center merchant switcher/route context/actionable dashboard.
-          - Merchant Location edit plus radius/selected-area coverage and FREE/FIXED/NEGOTIATED/CONDITIONAL shipping with ANY/ALL rules.
-          - Shared error/status/loading/empty/confirm/formatting primitives and safe unknown-enum fallbacks.
-          - CI Linux Maven-wrapper executable-bit fix.
-          - No Plan 09 Flyway migration.
-          
-          ### Blocker / cần làm tiếp
-          
-          - Available prerequisite branch ends at `V011`; required Plan 07 `V012` and final Plan 08 `V013` are absent, blocking Review/Reputation/Notification/SSE/Admin and final acceptance.
-          - Generated Need client is stale; do not extend handwritten Need DTOs. Fix backend test compilation, export OpenAPI, regenerate `@covie/api-client`, then finish Need Tasks 13–14.
-          - CI currently fails during Maven `testCompile` because inherited `OrderScheduledTransitionIntegrationTest` calls nonexistent `OrderRepository.createPending(UUID, UUID, OrderType, Instant)`. Fix the test fixture using the current valid Order creation/entity contract rather than adding a fake production helper.
-          - TanStack Query/RHF/Playwright dependencies still require a real pnpm install so `package.json` and `pnpm-lock.yaml` update together.
-          - After prerequisites are integrated, finish Tasks 15–17/19 and run Task 20 gates: Maven verify, OpenAPI drift, API-client check, web typecheck/lint/test/build, Playwright.
-          
-          Full Task 1–20 status, CI evidence and exact continuation commands: [`CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md`](./CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md).
-          EOF
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$PLAN"
-          git commit -m "docs(plan09): append maximum-completion handoff"
-          git push origin HEAD:feat/plan-09-web-completion
-# PLAN09_FINAL_HANDOFF_JOB_END
+          node-version: "24"
+      - name: Restore repository script executable bits
+        run: chmod +x infra/scripts/*.sh
+      - name: Install pnpm
+        run: npm install --global pnpm@10
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Trivy 0.72.0 source, misconfiguration and secret scan
+        run: ./infra/scripts/security-scan.sh
