@@ -48,3 +48,20 @@ covie:
   production:
     public-url: ${COVIE_PUBLIC_URL:https://covie.vn}
     e2e-support-enabled: ${COVIE_E2E_SUPPORT_ENABLED:false}
+  rate-limit:
+    enabled: true
+    hmac-key: ${COVIE_RATE_LIMIT_HMAC_KEY:}
+    policies:
+      AUTH_LOGIN_IP: { capacity: 10, refill-tokens: 10, refill-period: 1m, fail-closed: true }
+      AUTH_LOGIN_EMAIL: { capacity: 5, refill-tokens: 5, refill-period: 1m, fail-closed: true }
+      AUTH_GOOGLE_START: { capacity: 20, refill-tokens: 20, refill-period: 1m, fail-closed: true }
+      AUTH_REFRESH_IP: { capacity: 30, refill-tokens: 30, refill-period: 1m, fail-closed: true }
+      AUTH_REFRESH_TOKEN: { capacity: 30, refill-tokens: 30, refill-period: 1m, fail-closed: true }
+      PUBLIC_DISCOVERY: { capacity: 120, refill-tokens: 120, refill-period: 1m, fail-closed: false }
+      CHECKOUT: { capacity: 30, refill-tokens: 30, refill-period: 1m, fail-closed: false }
+      ORDER_COMMAND: { capacity: 60, refill-tokens: 60, refill-period: 1m, fail-closed: false }
+      NEED_CREATE: { capacity: 10, refill-tokens: 10, refill-period: 1h, fail-closed: true }
+      NEED_RESPONSE: { capacity: 30, refill-tokens: 30, refill-period: 1h, fail-closed: true }
+      REPORT: { capacity: 10, refill-tokens: 10, refill-period: 1h, fail-closed: true }
+      MEDIA_UPLOAD: { capacity: 30, refill-tokens: 30, refill-period: 1h, fail-closed: true }
+      ADMIN: { capacity: 120, refill-tokens: 120, refill-period: 1m, fail-closed: true }

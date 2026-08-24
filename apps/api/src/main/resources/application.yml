@@ -53,6 +53,10 @@ springdoc:
     enabled: false
 
 covie:
+  rate-limit:
+    enabled: false
+    hmac-key: ${COVIE_RATE_LIMIT_HMAC_KEY:}
+    policies: {}
   needs:
     max-response-items: 3
   checkout:
