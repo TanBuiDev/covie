@@ -30,7 +30,7 @@ public class JdbcNeedAudienceRepository implements NeedAudienceRepository {
               and (n.need_type='SERVICE' or lv.inventory_mode='UNTRACKED' or (lv.inventory_mode='TRACKED' and ib.stock_on_hand-ib.reserved_quantity>0))
             order by distance_meters asc, ml.merchant_profile_id asc, ml.id asc limit :limit
             """;
-        var p = new MapSqlParameterSource().addValue("needId", needId).addValue("now", Instant.now()).addValue("limit", limit);
+        var p = new MapSqlParameterSource().addValue("needId", needId).addValue("now", java.sql.Timestamp.from(Instant.now())).addValue("limit", limit);
         return jdbc.query(sql, p, (rs, i) -> new NeedAudienceLocation(rs.getObject(1, UUID.class), rs.getObject(2, UUID.class), rs.getLong(3)));
     }
 }
