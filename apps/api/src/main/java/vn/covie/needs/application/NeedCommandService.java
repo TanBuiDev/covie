@@ -23,10 +23,10 @@ import vn.covie.needs.persistence.CategoryHierarchyRepository;
 import vn.covie.needs.persistence.NeedRequestRepository;
 import vn.covie.shared.id.UuidV7Generator;
 import vn.covie.shared.idempotency.IdempotencyExecutor;
-import vn.covie.shared.moderation.ModerationCaseWriter;
-import vn.covie.shared.moderation.ModerationTargetRef;
 import vn.covie.shared.outbox.OutboxEventIntent;
 import vn.covie.shared.outbox.OutboxEventWriter;
+import vn.covie.shared.moderation.ModerationCaseWriter;
+import vn.covie.shared.moderation.ModerationTargetRef;
 import vn.covie.shared.time.AppClock;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
@@ -39,19 +39,19 @@ public class NeedCommandService {
     private final NeedLocationSnapshotFactory snapshots;
     private final NeedRequestRepository needs;
     private final IdempotencyExecutor idempotency;
+    private final OutboxEventWriter outbox;
     private final ModerationDecisionService moderation;
     private final ModerationCaseWriter moderationCases;
-    private final OutboxEventWriter outbox;
     private final UuidV7Generator ids;
     private final AppClock clock;
 
     public NeedCommandService(CurrentActorProvider actors, LocationContextResolver locations,
             CategoryHierarchyRepository categories, NeedLocationSnapshotFactory snapshots, NeedRequestRepository needs,
-            IdempotencyExecutor idempotency, ModerationDecisionService moderation, ModerationCaseWriter moderationCases,
-            OutboxEventWriter outbox, UuidV7Generator ids, AppClock clock) {
+            IdempotencyExecutor idempotency, OutboxEventWriter outbox, ModerationDecisionService moderation,
+            ModerationCaseWriter moderationCases, UuidV7Generator ids, AppClock clock) {
         this.actors = actors; this.locations = locations; this.categories = categories; this.snapshots = snapshots;
-        this.needs = needs; this.idempotency = idempotency; this.moderation = moderation; this.moderationCases = moderationCases;
-        this.outbox = outbox; this.ids = ids; this.clock = clock;
+        this.needs = needs; this.idempotency = idempotency; this.outbox = outbox; this.moderation = moderation;
+        this.moderationCases = moderationCases; this.ids = ids; this.clock = clock;
     }
 
     public IdempotencyExecutor.Execution<NeedDetailResponse> create(String key, CreateNeedRequest request) {
@@ -78,22 +78,18 @@ public class NeedCommandService {
         } catch (RuntimeException exception) {
             throw invalid(ErrorCode.NEED_LOCATION_INVALID, "Need location is invalid.");
         }
-        NeedRequestEntity need = needs.saveAndFlush(NeedRequestEntity.create(ids.generate(), buyerId, request.type(), request.categoryId(),
+        NeedRequestEntity need = needs.save(NeedRequestEntity.create(ids.generate(), buyerId, request.type(), request.categoryId(),
                 request.title(), request.queryText(), request.description(), request.requestedQuantity(), location.locationAreaId(),
                 location.point(), snapshots.snapshot(location), request.radiusMeters(), request.expiresAt(), now));
-        ModerationDecision decision = moderation.decide(new ModerationSubject(
-                ModerationTargetType.NEED_REQUEST, buyerId, null, request.categoryId(), location.locationAreaId()));
-        if (decision == ModerationDecision.REQUIRE_MODERATION) {
+        if (moderation.decide(new ModerationSubject(ModerationTargetType.NEED_REQUEST, buyerId, null,
+                need.getCategoryId(), need.getLocationAreaId())) == ModerationDecision.REQUIRE_MODERATION) {
             need.requireModeration(now);
-            needs.saveAndFlush(need);
-            moderationCases.openPreApproval(
-                    new ModerationTargetRef(ModerationTargetType.NEED_REQUEST, need.getId()),
+            moderationCases.openPreApproval(new ModerationTargetRef(ModerationTargetType.NEED_REQUEST, need.getId()),
                     "PUBLISH_REQUIRES_MODERATION");
-        } else {
-            outbox.append(new OutboxEventIntent("NEED_CREATED", "NEED_REQUEST", need.getId(), Map.of(
-                    "needRequestId", need.getId().toString(), "buyerUserId", buyerId.toString(),
-                    "needType", need.getNeedType().name(), "categoryId", need.getCategoryId().toString())));
         }
+        outbox.append(new OutboxEventIntent("NEED_CREATED", "NEED_REQUEST", need.getId(), Map.of(
+                "needRequestId", need.getId().toString(), "buyerUserId", buyerId.toString(),
+                "needType", need.getNeedType().name(), "categoryId", need.getCategoryId().toString())));
         return detail(need, now, 0);
     }
 
@@ -127,10 +123,12 @@ public class NeedCommandService {
     static NeedStatus effectiveStatus(NeedRequestEntity need, Instant now) {
         return need.getRequestStatus() == NeedStatus.ACTIVE && !need.getExpiresAt().isAfter(now) ? NeedStatus.EXPIRED : need.getRequestStatus();
     }
+
     private static UUID parseUuid(NeedRequestEntity need, String field) {
         String value = need.getLocationSnapshot().path(field).asText(null);
         return value == null || value.isBlank() ? null : UUID.fromString(value);
     }
+
     private static ApiException invalid(ErrorCode code, String message) {
         return new ApiException(code, HttpStatus.UNPROCESSABLE_ENTITY, message);
     }

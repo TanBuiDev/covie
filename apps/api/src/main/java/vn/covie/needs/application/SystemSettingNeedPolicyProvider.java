@@ -10,14 +10,6 @@ import vn.covie.settings.application.SystemSettingResolver;
 @Primary
 public final class SystemSettingNeedPolicyProvider implements NeedPolicyProvider {
     private final SystemSettingResolver settings;
-
-    public SystemSettingNeedPolicyProvider(SystemSettingResolver settings) {
-        this.settings = settings;
-    }
-
-    @Override
-    public NeedPolicySnapshot resolve(UUID merchantId, UUID categoryId, UUID locationAreaId) {
-        SystemSettingContext context = new SystemSettingContext(merchantId, categoryId, locationAreaId);
-        return new NeedPolicySnapshot(settings.integer("need_request.max_response_items_per_location", context));
-    }
+    public SystemSettingNeedPolicyProvider(SystemSettingResolver settings) { this.settings = settings; }
+    @Override public NeedPolicySnapshot resolve(UUID merchantId, UUID categoryId, UUID locationAreaId) { return new NeedPolicySnapshot(settings.integer("need_request.max_response_items_per_location", new SystemSettingContext(merchantId, categoryId, locationAreaId))); }
 }

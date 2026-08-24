@@ -40,6 +40,7 @@ public class ReviewEntity {
 
     public boolean contributesToRating() { return reviewStatus == ReviewStatus.ACTIVE && deletedAt == null; }
     public void hide(Instant now) { reviewStatus = ReviewStatus.HIDDEN; updatedAt = now; }
+    public void restore(Instant now) { if (reviewStatus != ReviewStatus.HIDDEN) throw new IllegalStateException("Only hidden reviews can be restored."); reviewStatus = ReviewStatus.ACTIVE; updatedAt = now; }
     public UUID getId() { return id; }
     public UUID getOrderItemId() { return orderItemId; }
     public UUID getOrderId() { return orderId; }

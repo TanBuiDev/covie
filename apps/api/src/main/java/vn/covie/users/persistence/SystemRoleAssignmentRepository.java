@@ -3,15 +3,13 @@ package vn.covie.users.persistence;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import vn.covie.shared.security.SystemRole;
 import vn.covie.users.model.SystemRoleAssignmentEntity;
+import vn.covie.shared.security.SystemRole;
 
 public interface SystemRoleAssignmentRepository extends JpaRepository<SystemRoleAssignmentEntity, UUID> {
     List<SystemRoleAssignmentEntity> findAllByUserId(UUID userId);
-    boolean existsByUserIdAndRole(UUID userId, SystemRole role);
-
-    @Query("select count(a) from SystemRoleAssignmentEntity a join UserEntity u on u.id=a.userId where a.role=vn.covie.shared.security.SystemRole.ADMIN and u.accountStatus=vn.covie.users.model.AccountStatus.ACTIVE")
-    long countActiveAdmins();
+    @org.springframework.data.jpa.repository.Query("select count(a) from SystemRoleAssignmentEntity a join UserEntity u on u.id = a.userId where a.role = :role and u.accountStatus = vn.covie.users.model.AccountStatus.ACTIVE")
+    long countActiveUsersWithRole(@org.springframework.data.repository.query.Param("role") SystemRole role);
+    @org.springframework.data.jpa.repository.Query("select a.userId from SystemRoleAssignmentEntity a where a.role = :role")
+    List<UUID> findUserIdsByRole(@org.springframework.data.repository.query.Param("role") SystemRole role);
 }

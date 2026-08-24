@@ -14,67 +14,36 @@ import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
 
 @Component
-public final class SystemSettingRegistry {
-    private static final JsonNodeFactory JSON = JsonNodeFactory.instance;
+public class SystemSettingRegistry {
+    private static final List<SettingScopeType> GLOBAL = List.of(SettingScopeType.GLOBAL);
+    private static final List<SettingScopeType> MERCHANT_CATEGORY_AREA_GLOBAL = List.of(SettingScopeType.MERCHANT, SettingScopeType.CATEGORY, SettingScopeType.LOCATION_AREA, SettingScopeType.GLOBAL);
+    private static final List<SettingScopeType> MERCHANT_AREA_GLOBAL = List.of(SettingScopeType.MERCHANT, SettingScopeType.LOCATION_AREA, SettingScopeType.GLOBAL);
     private final Map<String, SystemSettingDefinition> definitions;
-
     public SystemSettingRegistry() {
-        LinkedHashMap<String, SystemSettingDefinition> defs = new LinkedHashMap<>();
-        register(defs, bool("review.enabled", true, SettingScopeType.GLOBAL));
-        register(defs, integer("reputation.warning_threshold_basis_points", 8000, 0, 10000, SettingScopeType.GLOBAL));
-        register(defs, integer("reputation.minimum_eligible_orders_for_warning", 3, 0, 100000, SettingScopeType.GLOBAL));
-        register(defs, integerScoped("need_request.max_response_items_per_location", 3, 1, 10,
-                List.of(SettingScopeType.MERCHANT, SettingScopeType.CATEGORY, SettingScopeType.LOCATION_AREA, SettingScopeType.GLOBAL)));
-        register(defs, integerScoped("order.confirmation_timeout_minutes", 30, 5, 1440,
-                List.of(SettingScopeType.MERCHANT, SettingScopeType.LOCATION_AREA, SettingScopeType.GLOBAL)));
-        register(defs, integerScoped("order.auto_complete_hours", 24, 1, 168,
-                List.of(SettingScopeType.MERCHANT, SettingScopeType.LOCATION_AREA, SettingScopeType.GLOBAL)));
-        register(defs, integerScoped("order.long_issue_timeout_hours", 48, 1, 720,
-                List.of(SettingScopeType.MERCHANT, SettingScopeType.LOCATION_AREA, SettingScopeType.GLOBAL)));
-        register(defs, integerScoped("pickup.no_show_grace_minutes", 120, 1, 1440,
-                List.of(SettingScopeType.MERCHANT, SettingScopeType.LOCATION_AREA, SettingScopeType.GLOBAL)));
-        register(defs, new SystemSettingDefinition(
-                "moderation.mode", SettingValueType.ENUM, JSON.textNode("AUTO_PUBLISH"),
-                Set.of(SettingScopeType.MERCHANT, SettingScopeType.CATEGORY, SettingScopeType.LOCATION_AREA, SettingScopeType.GLOBAL),
-                List.of(SettingScopeType.MERCHANT, SettingScopeType.CATEGORY, SettingScopeType.LOCATION_AREA, SettingScopeType.GLOBAL),
-                value -> value != null && value.isTextual() && Set.of("AUTO_PUBLISH", "PRE_APPROVAL", "HYBRID").contains(value.textValue())));
-        register(defs, integer("moderation.hybrid_adverse_lookback_days", 90, 1, 3650, SettingScopeType.GLOBAL));
-        register(defs, integer("bulk.max_items", 100, 1, 500, SettingScopeType.GLOBAL));
-        definitions = Map.copyOf(defs);
+        JsonNodeFactory json = JsonNodeFactory.instance;
+        Map<String, SystemSettingDefinition> values = new LinkedHashMap<>();
+        add(values, bool("review.enabled", true));
+        add(values, integer("reputation.warning_threshold_basis_points", 8000, 0, 10000, GLOBAL));
+        add(values, integer("reputation.minimum_eligible_orders_for_warning", 3, 0, 100000, GLOBAL));
+        add(values, integer("need_request.max_response_items_per_location", 3, 1, 10, MERCHANT_CATEGORY_AREA_GLOBAL));
+        add(values, integer("order.confirmation_timeout_minutes", 30, 5, 1440, MERCHANT_AREA_GLOBAL));
+        add(values, integer("order.auto_complete_hours", 24, 1, 168, MERCHANT_AREA_GLOBAL));
+        add(values, integer("order.long_issue_timeout_hours", 48, 1, 720, MERCHANT_AREA_GLOBAL));
+        add(values, integer("pickup.no_show_grace_minutes", 120, 1, 1440, MERCHANT_AREA_GLOBAL));
+        add(values, new SystemSettingDefinition("moderation.mode", SettingValueType.ENUM, json.textNode("AUTO_PUBLISH"), Set.copyOf(MERCHANT_CATEGORY_AREA_GLOBAL), MERCHANT_CATEGORY_AREA_GLOBAL, value -> value.isTextual() && Set.of("AUTO_PUBLISH", "PRE_APPROVAL", "HYBRID").contains(value.textValue())));
+        add(values, integer("moderation.hybrid_adverse_lookback_days", 90, 1, 3650, GLOBAL));
+        add(values, integer("bulk.max_items", 100, 1, 500, GLOBAL));
+        definitions = Map.copyOf(values);
     }
-
-    public SystemSettingDefinition require(String key) {
-        SystemSettingDefinition definition = definitions.get(key);
-        if (definition == null) {
-            throw new ApiException(ErrorCode.SYSTEM_SETTING_KEY_NOT_ALLOWED, HttpStatus.UNPROCESSABLE_ENTITY,
-                    "System setting key is not allowlisted.");
-        }
-        return definition;
-    }
-
-    public List<SystemSettingDefinition> all() { return List.copyOf(definitions.values()); }
-
-    private static void register(Map<String, SystemSettingDefinition> defs, SystemSettingDefinition def) {
-        if (defs.putIfAbsent(def.key(), def) != null) throw new IllegalStateException("Duplicate system setting key: " + def.key());
-    }
-
-    private static SystemSettingDefinition bool(String key, boolean defaultValue, SettingScopeType scope) {
-        return new SystemSettingDefinition(key, SettingValueType.BOOLEAN, JSON.booleanNode(defaultValue),
-                Set.of(scope), List.of(scope), value -> value != null && value.isBoolean());
-    }
-
-    private static SystemSettingDefinition integer(String key, int defaultValue, int min, int max, SettingScopeType scope) {
-        return new SystemSettingDefinition(key, SettingValueType.INTEGER, JSON.numberNode(defaultValue),
-                Set.of(scope), List.of(scope), integerRange(min, max));
-    }
-
-    private static SystemSettingDefinition integerScoped(String key, int defaultValue, int min, int max, List<SettingScopeType> order) {
-        return new SystemSettingDefinition(key, SettingValueType.INTEGER, JSON.numberNode(defaultValue),
-                Set.copyOf(order), order, integerRange(min, max));
-    }
-
-    private static java.util.function.Predicate<JsonNode> integerRange(int min, int max) {
-        return value -> value != null && value.isIntegralNumber() && value.canConvertToInt()
-                && value.intValue() >= min && value.intValue() <= max;
-    }
+    public SystemSettingDefinition require(String key) { SystemSettingDefinition definition = definitions.get(key); if (definition == null) throw invalidKey(key); return definition; }
+    public List<SystemSettingDefinition> definitions() { return definitions.values().stream().toList(); }
+    public boolean isValidValue(String key, JsonNode value) { return require(key).validator().test(value); }
+    public void validateValue(String key, JsonNode value) { if (!require(key).validator().test(value)) throw invalidValue(key); }
+    public void validateScope(String key, SettingScopeType scope) { if (!require(key).allowedScopes().contains(scope)) throw invalidScope(key); }
+    private static SystemSettingDefinition bool(String key, boolean defaultValue) { return new SystemSettingDefinition(key, SettingValueType.BOOLEAN, JsonNodeFactory.instance.booleanNode(defaultValue), Set.of(SettingScopeType.GLOBAL), GLOBAL, JsonNode::isBoolean); }
+    private static SystemSettingDefinition integer(String key, int defaultValue, int min, int max, List<SettingScopeType> scopes) { return new SystemSettingDefinition(key, SettingValueType.INTEGER, JsonNodeFactory.instance.numberNode(defaultValue), Set.copyOf(scopes), scopes, value -> value.isIntegralNumber() && value.canConvertToInt() && value.intValue() >= min && value.intValue() <= max); }
+    private static void add(Map<String, SystemSettingDefinition> values, SystemSettingDefinition definition) { values.put(definition.key(), definition); }
+    private static ApiException invalidKey(String key) { return new ApiException(ErrorCode.SYSTEM_SETTING_KEY_NOT_ALLOWED, HttpStatus.UNPROCESSABLE_ENTITY, "System setting key is not allowed.", Map.of("key", key)); }
+    private static ApiException invalidValue(String key) { return new ApiException(ErrorCode.SYSTEM_SETTING_VALUE_INVALID, HttpStatus.UNPROCESSABLE_ENTITY, "System setting value is invalid.", Map.of("key", key)); }
+    private static ApiException invalidScope(String key) { return new ApiException(ErrorCode.SYSTEM_SETTING_SCOPE_NOT_ALLOWED, HttpStatus.UNPROCESSABLE_ENTITY, "System setting scope is not allowed.", Map.of("key", key)); }
 }

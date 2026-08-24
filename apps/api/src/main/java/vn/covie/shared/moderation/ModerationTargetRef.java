@@ -6,7 +6,7 @@ import vn.covie.moderation.model.ModerationTargetType;
 
 public record ModerationTargetRef(ModerationTargetType type, UUID id) {
     public ModerationTargetRef {
-        Objects.requireNonNull(type, "type");
-        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(type, "type is required");
+        Objects.requireNonNull(id, "id is required");
     }
 }

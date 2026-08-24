@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function AdminHome() { return <section><p>CoVie operations</p><h1>Admin console</h1><nav style={{display:"flex",gap:16,flexWrap:"wrap"}}><Link href="/admin/settings">System settings</Link><Link href="/admin/moderation">Moderation</Link><Link href="/admin/users">Users</Link><Link href="/admin/merchants">Merchants</Link><Link href="/admin/orders">Orders</Link></nav></section>; }

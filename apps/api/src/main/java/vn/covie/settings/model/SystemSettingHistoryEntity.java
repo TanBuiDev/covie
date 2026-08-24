@@ -21,30 +21,9 @@ public class SystemSettingHistoryEntity {
     @Column(name = "new_version", nullable = false) private long newVersion;
     @Column(name = "changed_by_user_id", nullable = false) private UUID changedByUserId;
     @Column(name = "changed_at", nullable = false) private Instant changedAt;
-
     protected SystemSettingHistoryEntity() {}
-
-    public static SystemSettingHistoryEntity create(
-            UUID id, UUID settingId, JsonNode oldValue, JsonNode newValue,
-            long oldVersion, long newVersion, UUID actorId, Instant changedAt) {
-        SystemSettingHistoryEntity entity = new SystemSettingHistoryEntity();
-        entity.id = id;
-        entity.settingId = settingId;
-        entity.oldValueJson = oldValue == null ? null : oldValue.deepCopy();
-        entity.newValueJson = newValue.deepCopy();
-        entity.oldVersion = oldVersion;
-        entity.newVersion = newVersion;
-        entity.changedByUserId = actorId;
-        entity.changedAt = changedAt;
-        return entity;
+    public static SystemSettingHistoryEntity create(UUID id, UUID settingId, JsonNode oldValue, JsonNode newValue, long oldVersion, long newVersion, UUID actor, Instant now) {
+        SystemSettingHistoryEntity history = new SystemSettingHistoryEntity(); history.id = id; history.settingId = settingId; history.oldValueJson = oldValue; history.newValueJson = newValue; history.oldVersion = oldVersion; history.newVersion = newVersion; history.changedByUserId = actor; history.changedAt = now; return history;
     }
-
-    public UUID getId() { return id; }
-    public UUID getSettingId() { return settingId; }
-    public JsonNode getOldValueJson() { return oldValueJson; }
-    public JsonNode getNewValueJson() { return newValueJson; }
-    public long getOldVersion() { return oldVersion; }
-    public long getNewVersion() { return newVersion; }
-    public UUID getChangedByUserId() { return changedByUserId; }
-    public Instant getChangedAt() { return changedAt; }
+    public UUID getId() { return id; } public UUID getSettingId() { return settingId; } public JsonNode getOldValueJson() { return oldValueJson; } public JsonNode getNewValueJson() { return newValueJson; } public long getOldVersion() { return oldVersion; } public long getNewVersion() { return newVersion; } public UUID getChangedByUserId() { return changedByUserId; } public Instant getChangedAt() { return changedAt; }
 }

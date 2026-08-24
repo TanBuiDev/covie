@@ -1,0 +1,1 @@
+import { AdminReadTable } from "@/features/admin/admin-read-table"; export default function OrdersPage(){return <AdminReadTable title="Orders" path="/api/v1/admin/orders" columns={["orderCode","type","status","buyerUserId","merchantId","createdAt"]}/>;}

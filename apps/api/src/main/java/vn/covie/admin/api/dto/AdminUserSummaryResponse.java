@@ -1,9 +1,3 @@
 package vn.covie.admin.api.dto;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-
-public record AdminUserSummaryResponse(UUID id,String displayName,String email,String accountStatus,List<String> globalRoles,long activeSessionCount,Instant createdAt,Instant updatedAt){
-    public AdminUserSummaryResponse { globalRoles=List.copyOf(globalRoles); }
-}
+import java.time.Instant; import java.util.Set; import java.util.UUID; import vn.covie.users.model.AccountStatus;
+public record AdminUserSummaryResponse(UUID id,String displayName,AccountStatus status,Set<String> globalRoles,Instant createdAt,Instant updatedAt) {}

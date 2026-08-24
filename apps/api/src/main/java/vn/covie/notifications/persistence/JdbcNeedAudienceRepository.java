@@ -25,7 +25,7 @@ public class JdbcNeedAudienceRepository implements NeedAudienceRepository {
                 and ci.moderation_status in ('NOT_REQUIRED','APPROVED') and ci.deleted_at is null
               join category_paths cp on cp.descendant_id=ci.primary_category_id and cp.ancestor_id=n.category_id
               left join inventory_balances ib on ib.location_variant_id=lv.id
-            where n.id=:needId and n.request_status='ACTIVE' and n.expires_at>:now
+            where n.id=:needId and n.request_status='ACTIVE' and n.moderation_status in ('NOT_REQUIRED','APPROVED') and n.expires_at>:now
               and st_dwithin(n.geo_point,ml.geo_point,n.search_radius_meters)
               and (n.need_type='SERVICE' or lv.inventory_mode='UNTRACKED' or (lv.inventory_mode='TRACKED' and ib.stock_on_hand-ib.reserved_quantity>0))
             order by distance_meters asc, ml.merchant_profile_id asc, ml.id asc limit :limit

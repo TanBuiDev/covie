@@ -12,21 +12,9 @@ import vn.covie.moderation.model.ModerationTargetType;
 @Primary
 public final class SystemSettingCatalogPublishPolicy implements CatalogPublishPolicy {
     private final ModerationDecisionService moderation;
-
-    public SystemSettingCatalogPublishPolicy(ModerationDecisionService moderation) {
-        this.moderation = moderation;
-    }
-
-    @Override
-    public CatalogPublishDecision decide(CatalogItemEntity item) {
-        ModerationDecision decision = moderation.decide(new ModerationSubject(
-                ModerationTargetType.CATALOG_ITEM,
-                null,
-                item.getMerchantProfileId(),
-                item.getPrimaryCategoryId(),
-                null));
-        return decision == ModerationDecision.PUBLISH_NOW
-                ? CatalogPublishDecision.PUBLISH_NOW
-                : CatalogPublishDecision.REQUIRE_MODERATION;
+    public SystemSettingCatalogPublishPolicy(ModerationDecisionService moderation) { this.moderation = moderation; }
+    @Override public CatalogPublishDecision decide(CatalogItemEntity item) {
+        ModerationDecision decision = moderation.decide(new ModerationSubject(ModerationTargetType.CATALOG_ITEM, null, item.getMerchantProfileId(), item.getPrimaryCategoryId(), null));
+        return decision == ModerationDecision.PUBLISH_NOW ? CatalogPublishDecision.PUBLISH_NOW : CatalogPublishDecision.REQUIRE_MODERATION;
     }
 }

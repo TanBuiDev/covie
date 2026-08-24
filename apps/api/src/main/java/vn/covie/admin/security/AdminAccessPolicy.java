@@ -11,19 +11,10 @@ import vn.covie.shared.web.ErrorCode;
 @Service
 public final class AdminAccessPolicy {
     private final CurrentActorProvider actors;
-
-    public AdminAccessPolicy(CurrentActorProvider actors) {
-        this.actors = actors;
-    }
-
+    public AdminAccessPolicy(CurrentActorProvider actors) { this.actors = actors; }
     public CurrentActor requireAdmin() {
         CurrentActor actor = actors.currentActor();
-        if (!actor.globalRoles().contains(SystemRole.ADMIN)) {
-            throw new ApiException(
-                    ErrorCode.ADMIN_ROLE_REQUIRED,
-                    HttpStatus.FORBIDDEN,
-                    "Administrator role is required.");
-        }
+        if (!actor.globalRoles().contains(SystemRole.ADMIN)) throw new ApiException(ErrorCode.ADMIN_ROLE_REQUIRED, HttpStatus.FORBIDDEN, "Administrator role is required.");
         return actor;
     }
 }
