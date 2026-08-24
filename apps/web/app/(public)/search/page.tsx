@@ -2,6 +2,8 @@ import { SearchResults, type SearchInitialFilters } from "@/features/discovery/s
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
+const SORT_VALUES = new Set(["RELEVANCE", "DISTANCE", "PRICE_ASC", "PRICE_DESC", "NEWEST"]);
+
 function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -14,7 +16,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     q: first(params.q),
     type: type === "PRODUCT" || type === "SERVICE" ? type : "",
     categoryId: first(params.categoryId),
-    sort: sort as SearchInitialFilters["sort"],
+    sort: sort && SORT_VALUES.has(sort) ? sort as SearchInitialFilters["sort"] : "RELEVANCE",
   };
   return <SearchResults initial={initial} />;
 }
