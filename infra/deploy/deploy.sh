@@ -32,6 +32,7 @@ highest="$(value HIGHEST_FLYWAY)"
 command -v docker >/dev/null 2>&1 || { echo "docker is required" >&2; exit 2; }
 docker compose version >/dev/null
 "$repo_root/infra/deploy/verify-runtime-env.sh" "$env_file"
+"$repo_root/infra/scripts/verify-nginx-prod.sh"
 [[ -r "$tls_dir/fullchain.pem" && -r "$tls_dir/privkey.pem" ]] || { echo "TLS certificate/key missing" >&2; exit 1; }
 
 free_pct="$(df -Pk "$repo_root" | awk 'NR==2 {gsub(/%/,"",$5); print 100-$5}')"
@@ -55,12 +56,6 @@ docker pull "$COVIE_API_IMAGE"
 docker pull "$COVIE_WEB_IMAGE"
 docker compose -f "$compose" config >/dev/null
 
-docker run --rm \
-  -v "$repo_root/infra/docker/nginx.prod.conf:/etc/nginx/nginx.conf:ro" \
-  -v "$repo_root/infra/docker/security-headers.conf:/etc/nginx/security-headers.conf:ro" \
-  -v "$tls_dir:/etc/nginx/tls:ro" \
-  nginx:1.28-alpine nginx -t >/dev/null
-
 rollback_on_error() {
   local status=$?
   if (( status != 0 )) && [[ -f "$previous" ]] && [[ "${COVIE_ROLLBACK_IN_PROGRESS:-false}" != "true" ]]; then
@@ -71,7 +66,14 @@ rollback_on_error() {
 }
 trap rollback_on_error ERR
 
-docker compose -f "$compose" up -d --remove-orphans
+# Bring the private application services up first so Nginx's upstream DNS names exist.
+# This also lets the API perform forward-only Flyway migration before public ingress is changed.
+docker compose -f "$compose" up -d api web
+
+# Validate the exact mounted Nginx configuration on the Compose network before starting/reloading ingress.
+docker compose -f "$compose" run --rm --no-deps nginx nginx -t >/dev/null
+
+docker compose -f "$compose" up -d nginx --remove-orphans
 
 for _ in $(seq 1 60); do
   if curl --fail --silent --show-error --max-time 5 "$public_url/api/v1/health" >/dev/null 2>&1; then break; fi
