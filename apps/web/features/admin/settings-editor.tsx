@@ -7,6 +7,7 @@ export type AdminSettingDefinition = {
   valueType: string;
   defaultValue: string;
   allowedScopes: string[];
+  effectiveValue?: unknown;
 };
 
 export function SettingsEditor({ definitions, onSave }: { definitions: AdminSettingDefinition[]; onSave?: (key: string, value: string) => Promise<void> }) {
@@ -24,7 +25,7 @@ export function SettingsEditor({ definitions, onSave }: { definitions: AdminSett
 }
 
 function SettingRow({ definition, onSave }: { definition: AdminSettingDefinition; onSave?: (key: string, value: string) => Promise<void> }) {
-  const [value, setValue] = useState(definition.defaultValue);
+  const [value, setValue] = useState(String(definition.effectiveValue ?? definition.defaultValue));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const canEditGlobal = definition.allowedScopes.includes("GLOBAL") && onSave;

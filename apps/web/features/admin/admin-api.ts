@@ -8,6 +8,13 @@ export async function loadAdminSettingDefinitions(): Promise<AdminSettingDefinit
   return (await response.json()) as AdminSettingDefinition[];
 }
 
+export type AdminSettingDetail = { effectiveValue: unknown; effectiveSource?: { version: number }; persistedOverrides: Array<{ scopeType: string; version: number }> };
+export async function loadAdminSettingDetail(key: string): Promise<AdminSettingDetail> {
+  const response = await requestBrowserApi("GET", `/api/v1/admin/settings/${encodeURIComponent(key)}`);
+  if (!response.ok) throw await readApiError(response);
+  return (await response.json()) as AdminSettingDetail;
+}
+
 export async function updateGlobalAdminSetting(key: string, value: string, etag?: string): Promise<string | undefined> {
   let jsonValue: unknown;
   try {
