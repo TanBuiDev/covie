@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.List;
@@ -41,6 +42,9 @@ import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.persistence.MerchantMembershipRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
 import vn.covie.shared.outbox.OutboxEventRepository;
+import vn.covie.shared.moderation.ModerationCaseWriter;
+import vn.covie.shared.moderation.ModerationTargetRef;
+import vn.covie.moderation.model.ModerationTargetType;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
 import vn.covie.support.PostgresIntegrationTest;
@@ -60,6 +64,7 @@ class CatalogLifecycleServiceIntegrationTest extends PostgresIntegrationTest {
     @Autowired LocationVariantRepository offers;
     @Autowired OutboxEventRepository outbox;
     @MockitoBean CatalogPublishPolicy policy;
+    @MockitoBean ModerationCaseWriter moderationCases;
 
     @AfterEach void clearActor() { SecurityContextHolder.clearContext(); }
 
@@ -94,6 +99,8 @@ class CatalogLifecycleServiceIntegrationTest extends PostgresIntegrationTest {
         assertThat(item.getListingStatus()).isEqualTo(ListingStatus.DRAFT);
         assertThat(item.getModerationStatus().name()).isEqualTo("PENDING");
         assertThat(outbox.count()).isEqualTo(eventsBefore);
+        verify(moderationCases).openPreApproval(new ModerationTargetRef(ModerationTargetType.CATALOG_ITEM, fixture.itemId()),
+                "PUBLISH_REQUIRES_MODERATION");
     }
 
     @Test

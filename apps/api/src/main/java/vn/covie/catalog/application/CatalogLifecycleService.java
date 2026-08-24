@@ -15,6 +15,9 @@ import vn.covie.catalog.policy.CatalogPublishPolicy;
 import vn.covie.merchants.security.MerchantAccessPolicy;
 import vn.covie.merchants.security.MerchantCapability;
 import vn.covie.shared.concurrency.VersionPrecondition;
+import vn.covie.moderation.model.ModerationTargetType;
+import vn.covie.shared.moderation.ModerationCaseWriter;
+import vn.covie.shared.moderation.ModerationTargetRef;
 import vn.covie.shared.outbox.OutboxEventIntent;
 import vn.covie.shared.outbox.OutboxEventWriter;
 import vn.covie.shared.time.AppClock;
@@ -28,11 +31,12 @@ public class CatalogLifecycleService {
     private final CatalogPublishValidator validator;
     private final CatalogPublishPolicy policy;
     private final OutboxEventWriter outbox;
+    private final ModerationCaseWriter moderationCases;
     private final AppClock clock;
 
     public CatalogLifecycleService(MerchantAccessPolicy access, CatalogItemRepository items, CatalogPublishValidator validator,
-            CatalogPublishPolicy policy, OutboxEventWriter outbox, AppClock clock) {
-        this.access = access; this.items = items; this.validator = validator; this.policy = policy; this.outbox = outbox; this.clock = clock;
+            CatalogPublishPolicy policy, OutboxEventWriter outbox, ModerationCaseWriter moderationCases, AppClock clock) {
+        this.access = access; this.items = items; this.validator = validator; this.policy = policy; this.outbox = outbox; this.moderationCases = moderationCases; this.clock = clock;
     }
 
     @Transactional
@@ -44,6 +48,8 @@ public class CatalogLifecycleService {
         Instant now = clock.now();
         if (policy.decide(item) == CatalogPublishDecision.REQUIRE_MODERATION) {
             item.requireModeration(now);
+            moderationCases.openPreApproval(new ModerationTargetRef(ModerationTargetType.CATALOG_ITEM, item.getId()),
+                    "PUBLISH_REQUIRES_MODERATION");
             return saved(item);
         }
         item.publish(now);
