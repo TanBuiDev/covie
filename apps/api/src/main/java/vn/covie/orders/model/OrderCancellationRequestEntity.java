@@ -40,7 +40,11 @@ public class OrderCancellationRequestEntity {
         requestStatus = status; respondedByUserId = actorUserId; responseNote = note; respondedAt = now;
     }
     public UUID getOrderId() { return orderId; }
+    public UUID getId() { return id; } public UUID getRequestedByUserId() { return requestedByUserId; }
+    public String getReasonCode() { return reasonCode; } public String getReasonText() { return reasonText; }
     public OrderStatus getPreviousOrderStatus() { return previousOrderStatus; }
     public CancellationRequestStatus getRequestStatus() { return requestStatus; }
     public Instant getRespondedAt() { return respondedAt; }
+    public UUID getRespondedByUserId() { return respondedByUserId; } public String getResponseNote() { return responseNote; }
+    public Instant getCreatedAt() { return createdAt; }
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.merchants.model.MerchantLocationEntity;
 import vn.covie.merchants.model.MerchantMembershipEntity;
+import vn.covie.merchants.model.MerchantMemberLocationEntity;
 import vn.covie.merchants.model.MerchantRole;
 import vn.covie.merchants.model.MerchantLocationStatus;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
@@ -67,6 +68,14 @@ public final class MerchantAccessPolicy {
         }
         return locations.findAllByMerchantProfileIdAndLocationStatusAndDeletedAtIsNull(merchantId, MerchantLocationStatus.ACTIVE)
                 .stream().map(MerchantLocationEntity::getId).collect(Collectors.toUnmodifiableSet());
+    }
+
+    /** Empty means the member can read every location of this merchant. */
+    public Set<UUID> readableOrderLocations(UUID merchantId) {
+        MerchantAccess access = require(merchantId, MerchantCapability.VIEW_ORDERS);
+        if (access.role() != MerchantRole.STAFF) return Set.of();
+        return memberLocations.findAllByMembershipId(access.membershipId()).stream()
+                .map(MerchantMemberLocationEntity::getMerchantLocationId).collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
     static boolean allows(MerchantRole role, MerchantCapability capability) {

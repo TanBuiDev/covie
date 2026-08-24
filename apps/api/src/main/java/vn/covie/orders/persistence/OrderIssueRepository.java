@@ -20,4 +20,5 @@ public interface OrderIssueRepository extends JpaRepository<OrderIssueEntity, UU
 
     List<OrderIssueEntity> findTop100ByIssueStatusAndCloseAfterAtLessThanEqualOrderByCloseAfterAtAsc(
             vn.covie.orders.model.OrderIssueStatus issueStatus, java.time.Instant now);
+    Optional<OrderIssueEntity> findFirstByOrderIdOrderByOpenedAtDesc(UUID orderId);
 }

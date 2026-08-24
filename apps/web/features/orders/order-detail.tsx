@@ -55,14 +55,12 @@ export function OrderDetailView({ orderId, sellerMerchantId }: { orderId: string
         closedAt={order.closedAt}
       />
 
-      <section aria-labelledby="order-context-title">
-        <h2 id="order-context-title">Thông tin giao dịch</h2>
-        <dl className="detail-list">
-          {order.merchantLocationId ? <><dt>Điểm bán</dt><dd>{order.merchantLocationId}</dd></> : null}
-          {sellerMerchantId && order.buyerUserId ? <><dt>Người mua</dt><dd>Mã người dùng {order.buyerUserId}</dd></> : null}
-        </dl>
-        {sellerMerchantId ? <Link href={`/seller/${encodeURIComponent(sellerMerchantId)}/orders`}>Quay lại danh sách đơn</Link> : null}
-      </section>
+      {sellerMerchantId ? (
+        <section aria-labelledby="order-context-title">
+          <h2 id="order-context-title">Thông tin giao dịch</h2>
+          <Link href={`/seller/${encodeURIComponent(sellerMerchantId)}/orders`}>Quay lại danh sách đơn</Link>
+        </section>
+      ) : null}
 
       <OrderActions order={order} onChanged={refresh} />
     </article>

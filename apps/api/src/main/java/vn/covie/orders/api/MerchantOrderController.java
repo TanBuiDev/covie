@@ -16,5 +16,5 @@ public class MerchantOrderController {
     public MerchantOrderController(OrderReadService reads) { this.reads = reads; }
 
     @GetMapping
-    public OrderPageResponse list(@PathVariable UUID merchantId) { return reads.merchantOrders(merchantId); }
+    public OrderPageResponse list(@PathVariable UUID merchantId,@org.springframework.web.bind.annotation.RequestParam(defaultValue="20") int limit,@org.springframework.web.bind.annotation.RequestParam(required=false) String cursor,@org.springframework.web.bind.annotation.RequestParam(required=false) UUID locationId) { return reads.merchantOrders(merchantId,locationId,Math.min(50,Math.max(1,limit)),cursor); }
 }

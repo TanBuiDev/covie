@@ -1367,6 +1367,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orders/{orderId}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{merchantId}/reviews": {
         parameters: {
             query?: never;
@@ -1519,7 +1535,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["events"];
+        get: operations["events_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1827,7 +1843,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["events_1"];
+        get: operations["events_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2854,6 +2870,25 @@ export interface components {
             /** Format: int32 */
             completionRateBasisPoints?: number;
         };
+        OrderCancellationResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            requestedByUserId?: string;
+            reasonCode?: string;
+            reasonText?: string;
+            /** @enum {string} */
+            status?: "PENDING" | "ACCEPTED" | "REJECTED";
+            /** @enum {string} */
+            previousStatus?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
+            /** Format: uuid */
+            respondedByUserId?: string;
+            responseNote?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            respondedAt?: string;
+        };
         OrderDetailResponse: {
             /** Format: uuid */
             id?: string;
@@ -2864,12 +2899,18 @@ export interface components {
             status?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
             /** Format: int64 */
             version?: number;
-            /** Format: uuid */
-            buyerUserId?: string;
-            /** Format: uuid */
-            merchantId?: string;
-            /** Format: uuid */
-            merchantLocationId?: string;
+            /** @enum {string} */
+            source?: "MARKETPLACE" | "NEED_REQUEST";
+            buyer?: components["schemas"]["OrderPartyResponse"];
+            merchant?: components["schemas"]["OrderPartyResponse"];
+            items?: components["schemas"]["OrderItemResponse"][];
+            pricing?: components["schemas"]["OrderPricingResponse"];
+            fulfillment?: components["schemas"]["OrderFulfillmentResponse"];
+            /** @enum {string} */
+            paymentMethod?: "COD" | "BANK_TRANSFER_NEGOTIATED";
+            cancellation?: components["schemas"]["OrderCancellationResponse"];
+            issue?: components["schemas"]["OrderIssueResponse"];
+            timeline?: components["schemas"]["OrderTimelineEventResponse"][];
             allowedActions?: ("CONFIRM" | "REJECT" | "CANCEL" | "REQUEST_CANCELLATION" | "ACCEPT_CANCELLATION" | "REJECT_CANCELLATION" | "MARK_OUT_FOR_DELIVERY" | "MARK_DELIVERED" | "MARK_READY_FOR_PICKUP" | "REPORT_BUYER_NO_SHOW" | "CONTEST_NO_SHOW" | "MARK_SERVICE_PERFORMED" | "CONFIRM_RECEIVED" | "CONFIRM_COMPLETED" | "REPORT_DELIVERY_ISSUE" | "REPORT_SERVICE_ISSUE")[];
             /** Format: date-time */
             createdAt?: string;
@@ -2881,9 +2922,115 @@ export interface components {
             closedAt?: string;
             reputation?: components["schemas"]["OrderReputationContext"];
         };
+        OrderFulfillmentResponse: {
+            /** @enum {string} */
+            productMethod?: "PICKUP" | "SELLER_DELIVERY";
+            /** Format: uuid */
+            pickupLocationId?: string;
+            /** Format: uuid */
+            addressId?: string;
+            /** Format: int32 */
+            distanceMeters?: number;
+            pickupLocation?: components["schemas"]["JsonNode"];
+            address?: components["schemas"]["JsonNode"];
+            buyerContact?: components["schemas"]["JsonNode"];
+            merchantContact?: components["schemas"]["JsonNode"];
+            /** Format: date-time */
+            sellerMarkedReadyAt?: string;
+            /** Format: date-time */
+            outForDeliveryAt?: string;
+            /** Format: date-time */
+            sellerMarkedDeliveredAt?: string;
+            /** Format: date-time */
+            providerMarkedPerformedAt?: string;
+            /** Format: date-time */
+            awaitingBuyerConfirmationAt?: string;
+            /** Format: date-time */
+            autoCompleteAt?: string;
+            /** Format: date-time */
+            noShowEligibleAt?: string;
+        };
+        OrderIssueResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "DELIVERY_NOT_RECEIVED" | "SERVICE_NOT_COMPLETED" | "BUYER_NO_SHOW_CONTESTED";
+            /** Format: uuid */
+            reportedByUserId?: string;
+            reasonText?: string;
+            /** @enum {string} */
+            status?: "OPEN" | "RESOLVED_BY_PARTIES" | "CLOSED_BY_TIMEOUT";
+            /** Format: date-time */
+            openedAt?: string;
+            /** Format: date-time */
+            closeAfterAt?: string;
+            /** Format: date-time */
+            resolvedAt?: string;
+            /** Format: date-time */
+            closedAt?: string;
+        };
+        OrderItemResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            catalogItemId?: string;
+            /** Format: uuid */
+            variantId?: string;
+            /** Format: uuid */
+            locationVariantId?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** Format: int64 */
+            quantity?: number;
+            /** Format: int64 */
+            unitPrice?: number;
+            /** Format: int64 */
+            lineTotal?: number;
+            currency?: string;
+            snapshot?: components["schemas"]["JsonNode"];
+        };
+        OrderPartyResponse: {
+            /** Format: uuid */
+            userId?: string;
+            /** Format: uuid */
+            merchantId?: string;
+            /** Format: uuid */
+            locationId?: string;
+        };
+        OrderPricingResponse: {
+            /** Format: int64 */
+            subtotal?: number;
+            /** @enum {string} */
+            shippingFeeType?: "FREE" | "FIXED" | "CONDITIONAL" | "NEGOTIATED" | "NOT_APPLICABLE";
+            /** Format: int64 */
+            shippingFee?: number;
+            /** Format: int64 */
+            knownTotal?: number;
+            /** Format: int64 */
+            totalAmount?: number;
+            currency?: string;
+        };
         OrderReputationContext: {
             merchant?: components["schemas"]["MerchantReputationSummary"];
             buyer?: components["schemas"]["BuyerReputationSummary"];
+        };
+        OrderTimelineEventResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            eventType?: "ORDER_CREATED" | "SELLER_CONFIRMED" | "SELLER_REJECTED" | "BUYER_CANCELLED_BEFORE_CONFIRMATION" | "BUYER_REQUESTED_CANCELLATION" | "SELLER_ACCEPTED_CANCELLATION" | "SELLER_REJECTED_CANCELLATION" | "SELLER_CANCELLED_AFTER_CONFIRMATION" | "SELLER_MARKED_OUT_FOR_DELIVERY" | "SELLER_MARKED_DELIVERED" | "SELLER_MARKED_READY_FOR_PICKUP" | "SELLER_MARKED_BUYER_NO_SHOW" | "BUYER_CONTESTED_NO_SHOW" | "PROVIDER_MARKED_PERFORMED" | "BUYER_CONFIRMED_RECEIVED" | "BUYER_CONFIRMED_SERVICE_COMPLETED" | "BUYER_REPORTED_NOT_RECEIVED" | "BUYER_REPORTED_SERVICE_NOT_COMPLETED" | "ORDER_EXPIRED" | "ORDER_AUTO_COMPLETED" | "ORDER_CLOSED_WITH_ISSUE";
+            /** Format: uuid */
+            actorUserId?: string;
+            /** @enum {string} */
+            actorContext?: "BUYER" | "MERCHANT" | "SYSTEM" | "ADMIN";
+            /** @enum {string} */
+            fromStatus?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
+            /** @enum {string} */
+            toStatus?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
+            reasonCode?: string;
+            note?: string;
+            /** Format: date-time */
+            createdAt?: string;
         };
         PublicReviewResponse: {
             /** Format: uuid */
@@ -3299,10 +3446,10 @@ export interface components {
             updatedAt?: string;
         };
         PageSystemSettingHistoryResponse: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["SystemSettingHistoryResponse"][];
@@ -3312,25 +3459,25 @@ export interface components {
             numberOfElements?: number;
             first?: boolean;
             last?: boolean;
-            sort?: components["schemas"]["SortObject"];
             pageable?: components["schemas"]["PageableObject"];
+            sort?: components["schemas"]["SortObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
-            paged?: boolean;
-            sort?: components["schemas"]["SortObject"];
-            unpaged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            paged?: boolean;
+            sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
             unsorted?: boolean;
+            sorted?: boolean;
         };
         SystemSettingHistoryResponse: {
             /** Format: uuid */
@@ -3407,10 +3554,10 @@ export interface components {
             resolvedAt?: string;
         };
         PageModerationCaseSummaryResponse: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["ModerationCaseSummaryResponse"][];
@@ -3420,8 +3567,8 @@ export interface components {
             numberOfElements?: number;
             first?: boolean;
             last?: boolean;
-            sort?: components["schemas"]["SortObject"];
             pageable?: components["schemas"]["PageableObject"];
+            sort?: components["schemas"]["SortObject"];
             empty?: boolean;
         };
         ModerationActionResponse: {
@@ -3480,10 +3627,10 @@ export interface components {
             createdAt?: string;
         };
         PageAdminAuditLogResponse: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["AdminAuditLogResponse"][];
@@ -3493,8 +3640,8 @@ export interface components {
             numberOfElements?: number;
             first?: boolean;
             last?: boolean;
-            sort?: components["schemas"]["SortObject"];
             pageable?: components["schemas"]["PageableObject"];
+            sort?: components["schemas"]["SortObject"];
             empty?: boolean;
         };
     };
@@ -3641,7 +3788,9 @@ export interface operations {
     requestCancellation: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3667,7 +3816,9 @@ export interface operations {
     serviceIssue: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3691,7 +3842,9 @@ export interface operations {
     deliveryIssue: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3715,7 +3868,9 @@ export interface operations {
     noShow: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3763,7 +3918,9 @@ export interface operations {
     rejectCancellation: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3789,7 +3946,9 @@ export interface operations {
     performed: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3809,7 +3968,9 @@ export interface operations {
     ready: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3829,7 +3990,9 @@ export interface operations {
     outForDelivery: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3849,7 +4012,9 @@ export interface operations {
     delivered: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3869,7 +4034,9 @@ export interface operations {
     contestNoShow: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3917,7 +4084,9 @@ export interface operations {
     received: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3937,7 +4106,9 @@ export interface operations {
     completed: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -3985,7 +4156,9 @@ export interface operations {
     acceptCancellation: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
             path: {
                 orderId: string;
             };
@@ -6165,6 +6338,28 @@ export interface operations {
             };
         };
     };
+    events: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderTimelineEventResponse"][];
+                };
+            };
+        };
+    };
     merchant: {
         parameters: {
             query?: {
@@ -6192,7 +6387,11 @@ export interface operations {
     };
     list_6: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+                cursor?: string;
+                locationId?: string;
+            };
             header?: never;
             path: {
                 merchantId: string;
@@ -6282,7 +6481,10 @@ export interface operations {
     };
     list_9: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6370,7 +6572,7 @@ export interface operations {
             };
         };
     };
-    events: {
+    events_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -6817,7 +7019,7 @@ export interface operations {
             };
         };
     };
-    events_1: {
+    events_2: {
         parameters: {
             query?: never;
             header?: never;

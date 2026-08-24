@@ -42,6 +42,9 @@ class OpenApiExportTest extends PostgresIntegrationTest {
         assertThat(json).contains("/api/v1/health");
 
         assertHeaderParameter(paths, "/api/v1/merchants/{merchantId}/catalog-items", "post", "Idempotency-Key");
+        assertHeaderParameter(paths, "/api/v1/orders/{orderId}/confirm", "post", "Idempotency-Key");
+        assertHeaderParameter(paths, "/api/v1/orders/{orderId}/mark-delivered", "post", "Idempotency-Key");
+        assertHeaderParameter(paths, "/api/v1/orders/{orderId}/report-delivery-issue", "post", "Idempotency-Key");
         assertHeaderParameter(paths, "/api/v1/media/{mediaId}/complete", "post", "Idempotency-Key");
         assertHeaderParameter(paths, "/api/v1/merchants/{merchantId}/locations/{locationId}", "patch", "If-Match");
         assertHeaderParameter(paths, "/api/v1/merchants/{merchantId}/catalog-items/{itemId}", "patch", "If-Match");

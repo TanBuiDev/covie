@@ -21,6 +21,10 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
 
     List<OrderEntity> findAllByBuyerUserIdOrderByCreatedAtDesc(UUID buyerUserId);
     List<OrderEntity> findAllByMerchantProfileIdOrderByCreatedAtDesc(UUID merchantProfileId);
+    @Query("select o from OrderEntity o where o.buyerUserId=:buyerId and (:createdAt is null or o.createdAt < :createdAt or (o.createdAt=:createdAt and o.id < :id)) order by o.createdAt desc,o.id desc")
+    List<OrderEntity> findBuyerPage(@Param("buyerId") UUID buyerId,@Param("createdAt") java.time.Instant createdAt,@Param("id") UUID id,Pageable page);
+    @Query("select o from OrderEntity o where o.merchantProfileId=:merchantId and (:locationId is null or o.merchantLocationId=:locationId) and (:createdAt is null or o.createdAt < :createdAt or (o.createdAt=:createdAt and o.id < :id)) order by o.createdAt desc,o.id desc")
+    List<OrderEntity> findMerchantPage(@Param("merchantId") UUID merchantId,@Param("locationId") UUID locationId,@Param("createdAt") java.time.Instant createdAt,@Param("id") UUID id,Pageable page);
     List<OrderEntity> findTop500ByOrderByIdAsc();
     List<OrderEntity> findTop500ByIdGreaterThanOrderByIdAsc(UUID afterId);
     List<OrderEntity> findTop100ByStatusAndConfirmationExpiresAtLessThanEqualOrderByConfirmationExpiresAtAsc(

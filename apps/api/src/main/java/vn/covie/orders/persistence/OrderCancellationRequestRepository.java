@@ -16,4 +16,5 @@ public interface OrderCancellationRequestRepository extends JpaRepository<OrderC
             and r.requestStatus = vn.covie.orders.model.CancellationRequestStatus.PENDING
             """)
     Optional<OrderCancellationRequestEntity> lockPendingByOrderId(@Param("orderId") UUID orderId);
+    Optional<OrderCancellationRequestEntity> findFirstByOrderIdOrderByCreatedAtDesc(UUID orderId);
 }

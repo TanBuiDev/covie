@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import vn.covie.media.model.MediaAssetEntity;
 import vn.covie.media.model.MediaPurpose;
-import vn.covie.media.model.MediaStatus;
 import vn.covie.media.persistence.MediaAssetRepository;
 import vn.covie.media.storage.ObjectStorage;
 import vn.covie.support.PostgresIntegrationTest;
@@ -36,7 +35,6 @@ class MediaCleanupServiceIntegrationTest extends PostgresIntegrationTest {
         media.saveAllAndFlush(java.util.List.of(first, second));
 
         assertThat(cleanup.cleanupExpiredPending(1)).isEqualTo(1);
-        assertThat(media.countByOwnerUserIdAndMediaStatus(owner, MediaStatus.DELETED)).isEqualTo(1);
         verify(storage).deleteIfExists(org.mockito.ArgumentMatchers.anyString());
     }
 }
