@@ -48,6 +48,13 @@ covie:
   production:
     public-url: ${COVIE_PUBLIC_URL:https://covie.vn}
     e2e-support-enabled: ${COVIE_E2E_SUPPORT_ENABLED:false}
+  retention:
+    enabled: true
+    batch-size: ${COVIE_RETENTION_BATCH_SIZE:500}
+    expired-record-grace: ${COVIE_RETENTION_EXPIRED_GRACE:7d}
+    published-outbox-retention: ${COVIE_RETENTION_OUTBOX:30d}
+    initial-delay: ${COVIE_RETENTION_INITIAL_DELAY:2m}
+    interval: ${COVIE_RETENTION_INTERVAL:15m}
   rate-limit:
     enabled: true
     hmac-key: ${COVIE_RATE_LIMIT_HMAC_KEY:}

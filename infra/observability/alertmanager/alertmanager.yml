@@ -1,0 +1,11 @@
+route:
+  receiver: covie-ops
+  group_by: [alertname]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+receivers:
+  - name: covie-ops
+    webhook_configs:
+      - url_file: /run/covie-secrets/alert-webhook-url
+        send_resolved: true

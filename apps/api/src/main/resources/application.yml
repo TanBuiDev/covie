@@ -57,6 +57,13 @@ covie:
     enabled: false
     hmac-key: ${COVIE_RATE_LIMIT_HMAC_KEY:}
     policies: {}
+  retention:
+    enabled: false
+    batch-size: 500
+    expired-record-grace: 7d
+    published-outbox-retention: 30d
+    initial-delay: 2m
+    interval: 15m
   needs:
     max-response-items: 3
   checkout:
