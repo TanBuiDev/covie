@@ -21,6 +21,7 @@ public class MerchantProfileEntity {
     @Column(name = "cover_media_id") private UUID coverMediaId;
     @Enumerated(EnumType.STRING) @Column(name = "merchant_status", nullable = false, length = 30) private MerchantStatus merchantStatus;
     @Enumerated(EnumType.STRING) @Column(name = "moderation_status", nullable = false, length = 30) private MerchantModerationStatus moderationStatus;
+    @Enumerated(EnumType.STRING) @Column(name = "status_before_suspension", length = 30) private MerchantStatus statusBeforeSuspension;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
     @Column(name = "deleted_at") private Instant deletedAt;
@@ -28,35 +29,28 @@ public class MerchantProfileEntity {
 
     protected MerchantProfileEntity() {}
 
-    public static MerchantProfileEntity create(UUID id, String name, String slug, Instant now) {
-        return create(id, name, slug, null, now);
-    }
-
+    public static MerchantProfileEntity create(UUID id, String name, String slug, Instant now) { return create(id,name,slug,null,now); }
     public static MerchantProfileEntity create(UUID id, String name, String slug, String description, Instant now) {
-        MerchantProfileEntity profile = new MerchantProfileEntity();
-        profile.id = id; profile.name = name; profile.slug = slug; profile.description = description; profile.merchantStatus = MerchantStatus.ACTIVE;
-        profile.moderationStatus = MerchantModerationStatus.NOT_REQUIRED; profile.createdAt = now; profile.updatedAt = now;
-        return profile;
+        MerchantProfileEntity profile=new MerchantProfileEntity(); profile.id=id; profile.name=name; profile.slug=slug; profile.description=description;
+        profile.merchantStatus=MerchantStatus.ACTIVE; profile.moderationStatus=MerchantModerationStatus.NOT_REQUIRED; profile.createdAt=now; profile.updatedAt=now; return profile;
     }
 
-    public void update(String name, String description, UUID logoMediaId, UUID coverMediaId, Instant now) {
-        this.name = name;
-        this.description = description;
-        this.logoMediaId = logoMediaId;
-        this.coverMediaId = coverMediaId;
-        this.updatedAt = now;
+    public void suspend(Instant now) {
+        if (merchantStatus != MerchantStatus.ACTIVE && merchantStatus != MerchantStatus.PAUSED) {
+            throw new IllegalStateException("Merchant cannot be suspended from " + merchantStatus + ".");
+        }
+        statusBeforeSuspension = merchantStatus; merchantStatus = MerchantStatus.SUSPENDED; updatedAt = now;
     }
 
-    public UUID getId() { return id; }
-    public String getName() { return name; }
-    public String getSlug() { return slug; }
-    public String getDescription() { return description; }
-    public UUID getLogoMediaId() { return logoMediaId; }
-    public UUID getCoverMediaId() { return coverMediaId; }
-    public MerchantStatus getMerchantStatus() { return merchantStatus; }
-    public MerchantModerationStatus getModerationStatus() { return moderationStatus; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
-    public Instant getDeletedAt() { return deletedAt; }
-    public long getVersion() { return version; }
+    public void restore(Instant now) {
+        if (merchantStatus != MerchantStatus.SUSPENDED || statusBeforeSuspension == null) throw new IllegalStateException("Merchant is not restorable.");
+        merchantStatus = statusBeforeSuspension; statusBeforeSuspension = null; updatedAt = now;
+    }
+
+    public boolean isModerationVisible() { return moderationStatus == MerchantModerationStatus.NOT_REQUIRED || moderationStatus == MerchantModerationStatus.APPROVED; }
+    public void update(String name,String description,UUID logoMediaId,UUID coverMediaId,Instant now){this.name=name;this.description=description;this.logoMediaId=logoMediaId;this.coverMediaId=coverMediaId;this.updatedAt=now;}
+    public UUID getId(){return id;} public String getName(){return name;} public String getSlug(){return slug;} public String getDescription(){return description;}
+    public UUID getLogoMediaId(){return logoMediaId;} public UUID getCoverMediaId(){return coverMediaId;} public MerchantStatus getMerchantStatus(){return merchantStatus;}
+    public MerchantModerationStatus getModerationStatus(){return moderationStatus;} public MerchantStatus getStatusBeforeSuspension(){return statusBeforeSuspension;}
+    public Instant getCreatedAt(){return createdAt;} public Instant getUpdatedAt(){return updatedAt;} public Instant getDeletedAt(){return deletedAt;} public long getVersion(){return version;}
 }
