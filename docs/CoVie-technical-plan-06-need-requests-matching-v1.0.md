@@ -1,13 +1,13 @@
 
-# CoVie — Plan 06: Need Requests & Matching Implementation Plan
+# CoVie — Plan 06: Need Requests & Matching
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> Technical specification and implementation checklist. This document defines product behavior, data contracts, and verification criteria; it does not prescribe an agent, tool, or execution framework.
 
 **Plan:** 06 / 10  
-**Target repo path:** `docs/superpowers/plans/2026-08-08-covie-needs-matching.md`  
+**Source document:** `docs/CoVie-technical-plan-06-need-requests-matching-v1.0.md`
 **Version:** 1.0  
 **Date:** 2026-08-08  
-**Status:** Ready for implementation review
+**Status:** In implementation
 
 **Goal:** Implement CoVie V1 structured Need Requests, PostgreSQL/PostGIS seller matching, MerchantLocation-scoped catalog responses, Direct Checkout attribution, Order-confirmation fulfillment, Need expiration, OpenAPI/client integration, and minimal buyer/seller web slices without introducing AI matching, chat, or a separate search service.
 
@@ -3819,23 +3819,8 @@ Plan 07 must not renumber or edit V011.
 
 ---
 
-# Execution Handoff
+# Implementation and Handoff
 
-When Plan 06 implementation begins, create/use the isolated worktree required by the repository's Superpowers workflow.
+Implement Tasks 1–20 in dependency order on an isolated feature branch. Keep each change reviewable, verify the focused tests for the affected task, then run the Task 20 acceptance suite before integration.
 
-Recommended execution:
-
-```text
-1. Subagent-Driven Development
-   - fresh subagent per Task
-   - spec review after each Task
-   - code-quality review after spec review
-   - fresh focused tests before completion claims
-
-2. Inline Executing Plans
-   - execute Tasks 1 → 20 in dependency order
-   - stop at review checkpoints
-   - keep fresh verification evidence
-```
-
-Do not start Plan 07 implementation until Task 20 acceptance evidence is green.
+Plan 06 is complete only when Task 20 acceptance evidence is green. Plan 07 begins from migration `V012` and leaves `V011__need_matching.sql` unchanged.

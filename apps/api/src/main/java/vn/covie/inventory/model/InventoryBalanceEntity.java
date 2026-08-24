@@ -46,6 +46,14 @@ public class InventoryBalanceEntity {
         updatedAt = now;
     }
 
+    public void releaseReserved(long quantity, Instant now) {
+        adjust(0, -quantity, now);
+    }
+
+    public void commitReservedSale(long quantity, Instant now) {
+        adjust(-quantity, -quantity, now);
+    }
+
     public UUID getLocationVariantId() { return locationVariantId; }
     public long getStockOnHand() { return stockOnHand; }
     public long getReservedQuantity() { return reservedQuantity; }

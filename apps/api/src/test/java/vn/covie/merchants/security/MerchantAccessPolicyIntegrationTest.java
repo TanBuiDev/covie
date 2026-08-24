@@ -211,7 +211,9 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
         if (role == MerchantRole.MANAGER) return capability != MerchantCapability.GRANT_OWNER;
         return capability == MerchantCapability.VIEW_MERCHANT
                 || capability == MerchantCapability.MANAGE_LOCATION_OFFER
-                || capability == MerchantCapability.UPLOAD_MERCHANT_MEDIA;
+                || capability == MerchantCapability.UPLOAD_MERCHANT_MEDIA
+                || capability == MerchantCapability.VIEW_ORDERS
+                || capability == MerchantCapability.PROCESS_ORDERS;
     }
 
     private Fixture fixture(MerchantRole role) {

@@ -36,6 +36,262 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orders/{orderId}/request-cancellation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["requestCancellation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/report-service-issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["serviceIssue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/report-delivery-issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["deliveryIssue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/report-buyer-no-show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["noShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/reject-cancellation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["rejectCancellation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/mark-service-performed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["performed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/mark-ready-for-pickup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ready"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/mark-out-for-delivery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["outForDelivery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/mark-delivered": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["delivered"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/contest-no-show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["contestNoShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/confirm-received": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["received"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/confirm-completed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["completed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{orderId}/accept-cancellation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["acceptCancellation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{merchantId}/members": {
         parameters: {
             query?: never;
@@ -743,7 +999,23 @@ export interface paths {
         patch: operations["update_9"];
         trace?: never;
     };
-    "/api/v1/merchants/{merchantId}/inventory": {
+    "/api/v1/orders/{orderId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/orders": {
         parameters: {
             query?: never;
             header?: never;
@@ -751,6 +1023,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["list_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -767,7 +1055,23 @@ export interface paths {
             cookie?: never;
         };
         /** List active sessions */
-        get: operations["list_6"];
+        get: operations["list_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -783,7 +1087,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_7"];
+        get: operations["list_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -847,7 +1151,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_8"];
+        get: operations["list_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -863,7 +1167,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["detail"];
+        get: operations["detail_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1002,6 +1306,42 @@ export interface components {
             /** Format: uuid */
             merchantLocationId?: string;
             days?: components["schemas"]["DayScheduleRequest"][];
+        };
+        CancellationRequestBody: {
+            reasonCode: string;
+            note?: string;
+        };
+        OrderCommandResult: {
+            /** Format: uuid */
+            id?: string;
+            orderCode?: string;
+            /** @enum {string} */
+            status?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
+            /** Format: int64 */
+            version?: number;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: date-time */
+            confirmedAt?: string;
+            /** Format: date-time */
+            completedAt?: string;
+            /** Format: date-time */
+            closedAt?: string;
+            allowedActions?: ("CONFIRM" | "REJECT" | "CANCEL" | "REQUEST_CANCELLATION" | "ACCEPT_CANCELLATION" | "REJECT_CANCELLATION" | "MARK_OUT_FOR_DELIVERY" | "MARK_DELIVERED" | "MARK_READY_FOR_PICKUP" | "REPORT_BUYER_NO_SHOW" | "CONTEST_NO_SHOW" | "MARK_SERVICE_PERFORMED" | "CONFIRM_RECEIVED" | "CONFIRM_COMPLETED" | "REPORT_DELIVERY_ISSUE" | "REPORT_SERVICE_ISSUE")[];
+        };
+        IssueRequest: {
+            reasonText: string;
+        };
+        ReasonRequest: {
+            reasonCode: string;
+            note?: string;
+        };
+        CancellationResponseBody: {
+            note?: string;
+        };
+        CancelOrderRequest: {
+            reasonCode?: string;
+            note?: string;
         };
         AddMerchantMemberRequest: {
             /** Format: email */
@@ -1488,7 +1828,7 @@ export interface components {
             id?: string;
             orderCode?: string;
             /** @enum {string} */
-            status?: "PENDING_CONFIRMATION";
+            status?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
             /** Format: date-time */
             createdAt?: string;
         };
@@ -1594,6 +1934,47 @@ export interface components {
             pinSource: "GPS" | "GEOCODED" | "USER_ADJUSTED";
             note?: string;
             defaultAddress?: boolean;
+        };
+        OrderDetailResponse: {
+            /** Format: uuid */
+            id?: string;
+            orderCode?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** @enum {string} */
+            status?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
+            /** Format: int64 */
+            version?: number;
+            /** Format: uuid */
+            buyerUserId?: string;
+            /** Format: uuid */
+            merchantId?: string;
+            /** Format: uuid */
+            merchantLocationId?: string;
+            allowedActions?: ("CONFIRM" | "REJECT" | "CANCEL" | "REQUEST_CANCELLATION" | "ACCEPT_CANCELLATION" | "REJECT_CANCELLATION" | "MARK_OUT_FOR_DELIVERY" | "MARK_DELIVERED" | "MARK_READY_FOR_PICKUP" | "REPORT_BUYER_NO_SHOW" | "CONTEST_NO_SHOW" | "MARK_SERVICE_PERFORMED" | "CONFIRM_RECEIVED" | "CONFIRM_COMPLETED" | "REPORT_DELIVERY_ISSUE" | "REPORT_SERVICE_ISSUE")[];
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            confirmedAt?: string;
+            /** Format: date-time */
+            completedAt?: string;
+            /** Format: date-time */
+            closedAt?: string;
+        };
+        OrderPageResponse: {
+            items?: components["schemas"]["OrderSummaryResponse"][];
+            nextCursor?: string;
+        };
+        OrderSummaryResponse: {
+            /** Format: uuid */
+            id?: string;
+            orderCode?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** @enum {string} */
+            status?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
+            /** Format: date-time */
+            createdAt?: string;
         };
         InventoryItemResponse: {
             /** Format: uuid */
@@ -1906,6 +2287,376 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MerchantHoursResponse"];
+                };
+            };
+        };
+    };
+    requestCancellation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancellationRequestBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderCommandResult"];
+                };
+            };
+        };
+    };
+    serviceIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deliveryIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    noShow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reject: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderCommandResult"];
+                };
+            };
+        };
+    };
+    rejectCancellation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancellationResponseBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderCommandResult"];
+                };
+            };
+        };
+    };
+    performed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ready: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    outForDelivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delivered: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    contestNoShow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancellationResponseBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    confirm: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderCommandResult"];
+                };
+            };
+        };
+    };
+    received: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    completed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    cancel: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancelOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderCommandResult"];
+                };
+            };
+        };
+    };
+    acceptCancellation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancellationResponseBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderCommandResult"];
                 };
             };
         };
@@ -3476,7 +4227,51 @@ export interface operations {
             };
         };
     };
+    detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderDetailResponse"];
+                };
+            };
+        };
+    };
     list_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderPageResponse"];
+                };
+            };
+        };
+    };
+    list_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -3498,7 +4293,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -3518,7 +4313,27 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderPageResponse"];
+                };
+            };
+        };
+    };
+    list_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -3602,7 +4417,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_10: {
         parameters: {
             query?: {
                 parentId?: string;
@@ -3625,7 +4440,7 @@ export interface operations {
             };
         };
     };
-    detail: {
+    detail_1: {
         parameters: {
             query?: never;
             header?: never;

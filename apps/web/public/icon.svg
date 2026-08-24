@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">CoVie</title>
+  <rect width="128" height="128" rx="28" fill="#ffffff"/>
+  <path d="M92 43c-7-10-17-16-30-16-21 0-38 17-38 38s17 38 38 38c13 0 24-6 31-16" fill="none" stroke="#17233c" stroke-width="14" stroke-linecap="round"/>
+  <path d="M87 43c0-10 8-18 18-18s18 8 18 18c0 13-18 31-18 31S87 56 87 43Z" fill="#e85d4a"/>
+  <circle cx="105" cy="43" r="6" fill="#ffffff"/>
+</svg>

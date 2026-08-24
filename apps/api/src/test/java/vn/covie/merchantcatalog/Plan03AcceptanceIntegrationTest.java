@@ -47,7 +47,7 @@ import vn.covie.users.model.UserEntity;
 import vn.covie.users.persistence.UserRepository;
 
 class Plan03AcceptanceIntegrationTest extends PostgresIntegrationTest {
-    private static final Instant NOW = Instant.parse("2026-01-01T00:00:00Z");
+    private static final Instant NOW = Instant.now();
     private static final byte[] PNG = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
 
     @Autowired WebApplicationContext web;
