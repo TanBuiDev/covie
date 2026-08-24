@@ -70,3 +70,101 @@ jobs:
         run: ./infra/scripts/test-secret-hygiene.sh
       - name: Reject tracked secrets
         run: ./infra/scripts/verify-secret-hygiene.sh
+
+# PLAN09_FINAL_HANDOFF_JOB_BEGIN
+  plan09-final-handoff:
+    if: github.event_name == 'pull_request' && github.head_ref == 'feat/plan-09-web-completion'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/plan-09-web-completion
+          fetch-depth: 0
+      - name: Append final Plan 09 handoff, remove temporary automation, and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          PLAN="docs/CoVie-technical-plan-09-web-completion-v1.0.md"
+          MARKER="## Final Maximum-Completion Handoff — 2026-08-24"
+          if ! grep -Fq "$MARKER" "$PLAN"; then
+            cat >> "$PLAN" <<'EOF'
+
+---
+
+## Final Maximum-Completion Handoff — 2026-08-24
+
+**Implementation branch:** `feat/plan-09-web-completion`  
+**Draft verification PR:** `#1`  
+**Base used:** `a4b0193f565b01565d4d670d23ea7a68156fcf69` (`codex/plan-08-moderation-system-settings-admin`)  
+**Final status:** **maximum safe completion on the prerequisites currently available; Plan 09 is not 100% acceptance-complete.**
+
+### Đã triển khai
+
+- PWA/application shells, responsive/safe-area foundation, shared loading/error/empty/confirm/status/action primitives and safe presentation formatters.
+- BrowseLocation privacy-safe persistence/provider/chooser; canonical `/search`; `/explore` redirects to `/search`; safe purchase-intent and checkout-source primitives.
+- Account overview/logout and Saved Address create/edit/default/delete-confirm UX with generated contracts and backend field-error mapping.
+- Multi-cart overview + per-cart detail, Product/Service separation, Service quantity fixed to 1, version-safe `If-Match` mutation and stale-data refetch UX.
+- Buyer/Seller Order UI normalized to generated Order contracts and authoritative backend `allowedActions`; no frontend Order state machine; reason/confirmation dialogs, stable mutation intent handling, irreversible completion copy and unknown-status fallback.
+- Seller Center merchant route context/switcher, responsive navigation, actionable dashboard based on real APIs and separate Settings surface.
+- Merchant Location detail/edit, radius/selected-area delivery coverage, FREE/FIXED/NEGOTIATED/CONDITIONAL shipping and ANY/ALL conditional rules. Negotiated shipping is never displayed as zero-cost.
+- Catalog/Need/Checkout foundations already present were preserved; handwritten Order DTO duplication was removed where Plan 09 touched the Order layer.
+- CI was fixed to restore the Maven wrapper executable bit on Linux.
+- No Plan 09 Flyway migration was created.
+
+### Chưa thể hoàn thành an toàn
+
+- Task 1 TanStack Query/RHF runtime + lockfile and Task 19 Playwright dependency/harness require dependency installation with a regenerated `pnpm-lock.yaml`; this was not hand-edited remotely.
+- Tasks 13–14 Need completion must wait for a fresh generated OpenAPI client; the checked-in Need frontend currently contains earlier handwritten DTOs and Plan 09 forbids extending that duplication.
+- Task 15 Review/Reputation/Report and Task 16 Notification/SSE completion require the missing Plan 07 foundation / `V012__reviews_reputation_outbox_notifications.sql`.
+- Task 17 Admin completion requires the missing final Plan 08 / `V013__moderation_system_settings_admin.sql` contracts/frontend.
+- Task 20 full P0 acceptance cannot be truthfully claimed until the prerequisite plans and E2E harness exist.
+
+### CI blocker đã xác nhận
+
+Draft PR CI now gets past the old `mvnw: Permission denied` problem, but Maven `testCompile` fails in an inherited prerequisite test:
+
+```text
+apps/api/src/test/java/vn/covie/orders/application/OrderScheduledTransitionIntegrationTest.java
+cannot find symbol: OrderRepository.createPending(UUID, UUID, OrderType, Instant)
+```
+
+The production `OrderRepository` has no such method. No fake production helper was added solely to satisfy the stale test because required merchant/location semantics cannot be inferred safely. Since `infra/scripts/export-openapi.sh` runs Maven test compilation first, this test drift blocks OpenAPI regeneration and therefore the generated-client drift check, API/web typecheck, lint, Vitest and production build steps in that CI run.
+
+### Việc cần làm tiếp theo
+
+1. Integrate completed Plan 07 and Plan 08 so the repository contains reviewed V012/V013 contracts; do not create fake/empty migrations.
+2. Fix `OrderScheduledTransitionIntegrationTest` fixture to create a valid pending Order through the current Order/entity creation contract rather than adding a test-only production repository API.
+3. Run `./mvnw verify`, then `./infra/scripts/export-openapi.sh` and regenerate `@covie/api-client`.
+4. Replace handwritten Need DTOs with generated types and finish Tasks 13–14.
+5. Install TanStack Query/RHF/Playwright with pnpm so package and lockfile change together; then finish Tasks 1, 8 and 19.
+6. After Plan 07/08 integration, finish Tasks 15–17 and execute Task 20 P0 Playwright acceptance.
+7. Run final gates: backend verify, OpenAPI drift, API-client check, web typecheck/lint/test/build and Playwright.
+
+Detailed task-by-task status and exact continuation commands are in [`CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md`](./CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md).
+EOF
+          fi
+
+          rm -f .github/workflows/plan09-handoff-append.yml
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/ci.yml')
+          text = p.read_text()
+          start = text.index('# PLAN09_FINAL_HANDOFF_JOB_BEGIN')
+          end = text.index('# PLAN09_FINAL_HANDOFF_JOB_END') + len('# PLAN09_FINAL_HANDOFF_JOB_END')
+          cleaned = text[:start].rstrip() + '\n'
+          if text[end:].strip():
+              cleaned += text[end:].lstrip()
+          p.write_text(cleaned)
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A "$PLAN" docs/CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md .github/workflows
+          if ! git diff --cached --quiet; then
+            git commit -m "docs(plan09): finalize maximum-completion handoff"
+            git push origin HEAD:feat/plan-09-web-completion
+          fi
+# PLAN09_FINAL_HANDOFF_JOB_END
