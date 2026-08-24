@@ -64,6 +64,23 @@ covie:
     published-outbox-retention: 30d
     initial-delay: 2m
     interval: 15m
+  reviews:
+    creation-enabled: true
+  reputation:
+    buyer-warning-threshold-basis-points: 8000
+    minimum-eligible-orders-for-warning: 3
+    allow-maintenance-rebuild: false
+  outbox:
+    poll-delay-ms: 500
+    max-events-per-poll: 50
+    max-attempts: 10
+    initial-backoff-seconds: 1
+    max-backoff-seconds: 300
+  sse:
+    emitter-timeout-ms: 1800000
+    heartbeat-delay-ms: 25000
+  notifications:
+    need-match-max-locations: 100
   needs:
     max-response-items: 3
   checkout:

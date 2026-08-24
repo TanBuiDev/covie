@@ -1,0 +1,5 @@
+"use client";
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+import { useEffect, useState } from "react";
+import { listCatalogReviews, type PublicReview } from "./review-api";
+export function ReviewList({ itemId }: { itemId: string }) { const [items,setItems]=useState<PublicReview[]>([]); const [cursor,setCursor]=useState<string>(); const [error,setError]=useState<string>(); async function load(next?:string){try{const page=await listCatalogReviews(itemId,next);setItems((current)=>next?[...current,...(page.items??[])]:page.items??[]);setCursor(page.page?.nextCursor);}catch{setError("Không thể tải đánh giá.");}} useEffect(()=>{void load();},[itemId]); if(error)return <p role="alert">{error}</p>; return <section className="review-list"><h2>Đánh giá đã xác thực</h2>{items.length===0?<p>Chưa có đánh giá nào.</p>:items.map((review)=><article key={review.id}><strong>{"★".repeat(review.rating??0)}</strong><p>{review.comment}</p><small>{review.reviewer?.displayName ?? "Người mua CoVie"} · Đã mua hàng</small></article>)}{cursor&&<button type="button" onClick={()=>void load(cursor)}>Xem thêm</button>}</section>; }

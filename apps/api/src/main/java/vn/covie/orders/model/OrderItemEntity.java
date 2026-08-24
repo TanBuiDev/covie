@@ -34,6 +34,6 @@ public class OrderItemEntity {
         item.unitPrice=unitPrice; item.lineTotal=Math.multiplyExact(quantity, unitPrice); item.currencyCode=currencyCode;
         item.itemSnapshot=itemSnapshot; item.createdAt=now; return item;
     }
-    public UUID getId() { return id; } public UUID getLocationVariantId() { return locationVariantId; }
+    public UUID getId() { return id; } public UUID getOrderId() { return orderId; } public UUID getCatalogItemId() { return catalogItemId; } public UUID getVariantId() { return variantId; } public UUID getLocationVariantId() { return locationVariantId; }
     public long getQuantity() { return quantity; }
 }

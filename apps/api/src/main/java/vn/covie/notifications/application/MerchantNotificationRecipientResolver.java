@@ -1,0 +1,3 @@
+package vn.covie.notifications.application;
+import java.util.LinkedHashSet; import java.util.Set; import java.util.UUID; import org.springframework.stereotype.Service; import vn.covie.merchants.persistence.MerchantMembershipRepository;
+@Service public class MerchantNotificationRecipientResolver {private final MerchantMembershipRepository memberships;public MerchantNotificationRecipientResolver(MerchantMembershipRepository memberships){this.memberships=memberships;}public Set<UUID> processorsForLocation(UUID merchantId,UUID locationId){return Set.copyOf(new LinkedHashSet<>(memberships.findActiveProcessorUserIds(merchantId,locationId)));}}

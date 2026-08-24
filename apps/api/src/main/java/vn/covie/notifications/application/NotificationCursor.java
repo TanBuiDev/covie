@@ -1,0 +1,1 @@
+package vn.covie.notifications.application; import java.time.Instant; import java.util.UUID; public record NotificationCursor(int v, Instant createdAt, UUID notificationId) { public NotificationCursor(Instant createdAt,UUID notificationId){this(1,createdAt,notificationId);} }

@@ -28,7 +28,7 @@ class MediaCleanupServiceIntegrationTest extends PostgresIntegrationTest {
     void claimsOnlyTheRequestedBoundOfOldPendingUploadsBeforeBestEffortDeletion() {
         UUID owner = UUID.randomUUID();
         users.saveAndFlush(UserEntity.active(owner, "Cleanup", Instant.now()));
-        Instant old = Instant.now().minus(25, ChronoUnit.HOURS);
+        Instant old = Instant.now().minus(365, ChronoUnit.DAYS);
         MediaAssetEntity first = MediaAssetEntity.pending(new UUID(0, 1), owner, "users/a.png", MediaPurpose.USER_AVATAR,
                 "image/png", 8, old.plusSeconds(600), old);
         MediaAssetEntity second = MediaAssetEntity.pending(new UUID(0, 2), owner, "users/b.png", MediaPurpose.USER_AVATAR,

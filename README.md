@@ -42,6 +42,8 @@ Verify:
 - http://localhost:3000/
 - http://localhost:9001/
 
+Plan 07 runs its PostgreSQL outbox worker in the API process. It polls every 500 ms by default and emits best-effort authenticated SSE updates at `/api/v1/me/events`; SSE is only an invalidation hint, so browser clients must refetch REST state after reconnecting or receiving `sync-required`.
+
 Regenerate the contract on macOS/Linux/Git Bash:
 
 ```bash

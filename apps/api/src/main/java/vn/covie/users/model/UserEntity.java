@@ -42,6 +42,7 @@ public class UserEntity {
     public boolean isActive() { return accountStatus == AccountStatus.ACTIVE; }
     public UUID getId() { return id; }
     public String getDisplayName() { return displayName; }
+    public UUID getAvatarMediaId() { return avatarMediaId; }
     public AccountStatus getAccountStatus() { return accountStatus; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }

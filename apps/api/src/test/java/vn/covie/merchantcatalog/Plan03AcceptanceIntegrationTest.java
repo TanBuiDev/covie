@@ -111,6 +111,7 @@ class Plan03AcceptanceIntegrationTest extends PostgresIntegrationTest {
                         .param("lat", "10.8")
                         .param("lng", "106.7")
                         .param("categoryId", categoryId.toString())
+                        .param("q", "Caramel Latte")
                         .param("sort", "PRICE_ASC")
                         .param("limit", "5"))
                 .andExpect(status().isOk())

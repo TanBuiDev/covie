@@ -1,0 +1,1 @@
+package vn.covie.realtime; import java.util.Collection; import org.springframework.stereotype.Component; @Component public class SseSignalPublisher {private final SseConnectionRegistry registry;public SseSignalPublisher(SseConnectionRegistry registry){this.registry=registry;}public void publish(Collection<SseSignal> signals){signals.forEach(registry::publish);}}
