@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.locationtech.jts.geom.Point;
+import vn.covie.moderation.model.ContentModerationStatus;
 
 @Entity
 @Table(name = "need_requests")
@@ -29,6 +30,7 @@ public class NeedRequestEntity {
     @JdbcTypeCode(SqlTypes.JSON) @Column(name = "location_snapshot", nullable = false, columnDefinition = "jsonb") private JsonNode locationSnapshot;
     @Column(name = "search_radius_meters", nullable = false) private int searchRadiusMeters;
     @Enumerated(EnumType.STRING) @Column(name = "request_status", nullable = false) private NeedStatus requestStatus;
+    @Enumerated(EnumType.STRING) @Column(name = "moderation_status", nullable = false) private ContentModerationStatus moderationStatus;
     @Column(name = "expires_at", nullable = false) private Instant expiresAt;
     @Column(name = "fulfilled_order_id") private UUID fulfilledOrderId;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
@@ -55,6 +57,7 @@ public class NeedRequestEntity {
         entity.locationSnapshot = locationSnapshot;
         entity.searchRadiusMeters = searchRadiusMeters;
         entity.requestStatus = NeedStatus.ACTIVE;
+        entity.moderationStatus = ContentModerationStatus.NOT_REQUIRED;
         entity.expiresAt = expiresAt;
         entity.createdAt = now;
         entity.updatedAt = now;
@@ -77,6 +80,12 @@ public class NeedRequestEntity {
             updatedAt = now;
         }
     }
+
+    public void requireModeration(Instant now) { moderationStatus = ContentModerationStatus.PENDING; updatedAt = now; }
+    public void approveModeration(Instant now) { moderationStatus = ContentModerationStatus.APPROVED; updatedAt = now; }
+    public void rejectModeration(Instant now) { moderationStatus = ContentModerationStatus.REJECTED; updatedAt = now; }
+    public void hide(Instant now) { moderationStatus = ContentModerationStatus.HIDDEN; updatedAt = now; }
+    public void restoreVisibility(Instant now) { moderationStatus = ContentModerationStatus.APPROVED; updatedAt = now; }
 
     public boolean isActiveAt(Instant now) {
         return requestStatus == NeedStatus.ACTIVE && expiresAt.isAfter(now);
@@ -104,6 +113,7 @@ public class NeedRequestEntity {
     public JsonNode getLocationSnapshot() { return locationSnapshot; }
     public int getSearchRadiusMeters() { return searchRadiusMeters; }
     public NeedStatus getRequestStatus() { return requestStatus; }
+    public ContentModerationStatus getModerationStatus() { return moderationStatus; }
     public Instant getExpiresAt() { return expiresAt; }
     public UUID getFulfilledOrderId() { return fulfilledOrderId; }
     public Instant getCreatedAt() { return createdAt; }
