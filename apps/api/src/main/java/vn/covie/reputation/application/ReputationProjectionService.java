@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.covie.orders.persistence.OrderRepository;
 import vn.covie.reputation.model.BuyerReputationOutcome;
 import vn.covie.reputation.model.MerchantReputationOutcome;
+import vn.covie.reputation.model.ReputationOrderOutcomeEntity;
 import vn.covie.reputation.persistence.ReputationOrderOutcomeRepository;
 import vn.covie.shared.time.AppClock;
 

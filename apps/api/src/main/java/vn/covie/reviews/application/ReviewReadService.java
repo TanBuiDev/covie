@@ -3,6 +3,7 @@ package vn.covie.reviews.application;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.media.application.MediaUrlResolver;
@@ -17,6 +18,8 @@ import vn.covie.reviews.persistence.CatalogItemRatingStatsRepository;
 import vn.covie.reviews.persistence.MerchantRatingStatsRepository;
 import vn.covie.reviews.persistence.ReviewRepository;
 import vn.covie.users.persistence.UserRepository;
+import vn.covie.shared.web.ApiException;
+import vn.covie.shared.web.ErrorCode;
 
 @Service
 public class ReviewReadService {
@@ -36,7 +39,11 @@ public class ReviewReadService {
         return page(merchantId, requestedLimit, cursor, false);
     }
     private ReviewPageResponse page(UUID id, Integer requestedLimit, String cursorValue, boolean catalog) {
-        int limit = requestedLimit == null ? 20 : Math.max(1, Math.min(50, requestedLimit));
+        int limit = requestedLimit == null ? 20 : requestedLimit;
+        if (limit < 1 || limit > 50) {
+            throw new ApiException(ErrorCode.VALIDATION_FAILED, HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Review limit must be between 1 and 50.");
+        }
         ReviewCursor cursor = cursors.decode(cursorValue);
         List<ReviewEntity> rows = catalog ? reviews.findActiveCatalogReviews(id, cursor == null ? null : cursor.createdAt(), cursor == null ? null : cursor.reviewId(), limit + 1)
                 : reviews.findActiveMerchantReviews(id, cursor == null ? null : cursor.createdAt(), cursor == null ? null : cursor.reviewId(), limit + 1);
