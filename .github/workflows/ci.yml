@@ -29,6 +29,8 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
+      - name: Restore Maven wrapper executable bit
+        run: chmod +x mvnw
       - name: Verify backend with test OIDC fixtures and ephemeral RSA keys
         run: ./mvnw verify
 
@@ -44,6 +46,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: Restore repository script executable bits
+        run: chmod +x apps/api/mvnw infra/scripts/*.sh infra/deploy/*.sh infra/backup/*.sh infra/perf/*.sh
       - name: Install pnpm
         run: npm install --global pnpm@10
       - name: Install workspace
@@ -76,6 +80,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: Restore repository script executable bits
+        run: chmod +x infra/scripts/*.sh
       - name: Install pnpm
         run: npm install --global pnpm@10
       - name: Install workspace
