@@ -39,10 +39,11 @@ public class SystemSettingRegistry {
     public List<SystemSettingDefinition> definitions() { return definitions.values().stream().toList(); }
     public boolean isValidValue(String key, JsonNode value) { return require(key).validator().test(value); }
     public void validateValue(String key, JsonNode value) { if (!require(key).validator().test(value)) throw invalidValue(key); }
-    public void validateScope(String key, SettingScopeType scope) { if (!require(key).allowedScopes().contains(scope)) throw invalidValue(key); }
+    public void validateScope(String key, SettingScopeType scope) { if (!require(key).allowedScopes().contains(scope)) throw invalidScope(key); }
     private static SystemSettingDefinition bool(String key, boolean defaultValue) { return new SystemSettingDefinition(key, SettingValueType.BOOLEAN, JsonNodeFactory.instance.booleanNode(defaultValue), Set.of(SettingScopeType.GLOBAL), GLOBAL, JsonNode::isBoolean); }
     private static SystemSettingDefinition integer(String key, int defaultValue, int min, int max, List<SettingScopeType> scopes) { return new SystemSettingDefinition(key, SettingValueType.INTEGER, JsonNodeFactory.instance.numberNode(defaultValue), Set.copyOf(scopes), scopes, value -> value.isIntegralNumber() && value.canConvertToInt() && value.intValue() >= min && value.intValue() <= max); }
     private static void add(Map<String, SystemSettingDefinition> values, SystemSettingDefinition definition) { values.put(definition.key(), definition); }
     private static ApiException invalidKey(String key) { return new ApiException(ErrorCode.SYSTEM_SETTING_KEY_NOT_ALLOWED, HttpStatus.UNPROCESSABLE_ENTITY, "System setting key is not allowed.", Map.of("key", key)); }
     private static ApiException invalidValue(String key) { return new ApiException(ErrorCode.SYSTEM_SETTING_VALUE_INVALID, HttpStatus.UNPROCESSABLE_ENTITY, "System setting value is invalid.", Map.of("key", key)); }
+    private static ApiException invalidScope(String key) { return new ApiException(ErrorCode.SYSTEM_SETTING_SCOPE_NOT_ALLOWED, HttpStatus.UNPROCESSABLE_ENTITY, "System setting scope is not allowed.", Map.of("key", key)); }
 }
