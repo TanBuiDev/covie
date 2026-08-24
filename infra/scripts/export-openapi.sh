@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Bash scripts require LF line endings; `.gitattributes` enforces this on checkout.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
