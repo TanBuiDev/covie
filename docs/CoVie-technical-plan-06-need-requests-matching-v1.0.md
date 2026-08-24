@@ -9,6 +9,55 @@
 **Date:** 2026-08-08  
 **Status:** In implementation
 
+<!-- PLAN06_IMPLEMENTATION_STATUS_START -->
+
+## Implementation Status Note — 2026-08-24
+
+> Branch: `codex/plan-06-needs-matching`. This is a progress checkpoint for the implementation already pushed to the remote branch. Plan 06 is **not accepted yet** until the remaining verification/generation work below is green.
+
+### Implemented on the branch
+
+- **Tasks 1–13:** previously implemented on this Plan 06 branch, including `V011__need_matching.sql`, Need schema/domain/API, seller matching, response lifecycle, Need checkout source integration and Order source attribution.
+- **Task 14 — Order confirmation fulfillment:** production integration is implemented through `OrderConfirmedParticipant` / `NeedFulfillmentOnOrderConfirm` and wired into Order confirmation. The Need source chain is validated; an ACTIVE non-stale Need becomes FULFILLED; a stale ACTIVE Need becomes EXPIRED instead of being fulfilled; FULFILLED/CANCELLED/EXPIRED Needs are not resurrected; and the first serialized confirming sourced Order keeps `fulfilled_order_id`. Focused fulfillment tests were added.
+- **Task 15 — expiration scheduler:** `NeedScheduledTransitionService`, `NeedExpirationScheduler`, and the repository claim query using `FOR UPDATE SKIP LOCKED` are implemented. Expiration mutation and `NEED_EXPIRED` outbox intent are performed transactionally in bounded batches.
+- **Task 16 — error/authorization contract:** the Plan 06 `NEED_*` public error codes were already present in `ErrorCode`; buyer-private owner reads/cancel use 404 visibility semantics and seller response authorization continues through `MerchantAccessPolicy.RESPOND_TO_NEEDS`. Additional authorization-contract coverage was added.
+- **Task 17 — OpenAPI contract:** `NeedOpenApiContractTest` was added to lock the expected Need endpoints and checkout source shape.
+- **Task 18 — buyer web slice:** buyer routes `/needs`, `/needs/new`, `/needs/[needId]` and Need create/list/detail/response/Need-checkout components were added.
+- **Task 19 — seller web slice:** seller Need discovery and response creation UI were added under `/seller/[merchantId]/needs`.
+- **Task 20 — acceptance coverage:** additional fulfillment, expiration, concurrency/end-to-end and query/index-plan test coverage was added. Migration ordering remains locked at `V011`; Plan 07 must begin at `V012` only after Plan 06 acceptance is green.
+
+### Still required before Plan 06 can be marked complete
+
+1. **Fix the Task 14 test fixture before running Maven.** `apps/api/src/test/java/vn/covie/orders/application/OrderConfirmNeedIntegrationTest.java` currently mocks `OrderAccessPolicy.requireMerchantProcessor()` with the wrong return type. It must use `OrderAccess` rather than `OrderActionContext`, or the test should be rewritten around the real service contract.
+2. **Run backend verification after the fixture fix.** Run the focused Need/Order tests and then `cd apps/api && ./mvnw verify`. Any compile, migration, concurrency, transaction or rollback failure blocks completion.
+3. **Regenerate the OpenAPI snapshot and typed client.** Run `./infra/scripts/export-openapi.sh`, then `pnpm api-client:generate` and `pnpm api-client:check`. `packages/api-client/openapi/openapi.json` and `packages/api-client/src/generated/schema.ts` must contain the Plan 06 Need endpoints/types with no drift.
+4. **Remove the temporary ungenerated Need API typing.** `apps/web/features/needs/need-api.ts` currently uses the shared CSRF-aware `requestBrowserApi`, but manually duplicates Need DTO/enums because the generated client is stale. After Task 17 generation, migrate it to generated `@covie/api-client` paths/components only, as required by Task 18.
+5. **Complete buyer frontend verification.** Add/finish `apps/web/tests/needs/buyer-needs.test.tsx` coverage for create validation, ACTIVE cancel visibility, terminal-state cancel hiding, unavailable response CTA, Need checkout source and `CHECKOUT_CHANGED` refresh behavior.
+6. **Complete seller frontend behavior/tests.** Add/finish `apps/web/tests/needs/seller-needs.test.tsx`; verify exact buyer address/coordinates are never rendered; finish response edit/withdraw with `If-Match`, version-conflict refetch behavior, and ensure only existing LocationVariants can be submitted.
+7. **Finish Task 16 structured audit/log verification.** Confirm Need operations emit the agreed structured metadata (`requestId`, `userId`, merchant/location/need/response IDs where applicable, operation, result/errorCode) without leaking private buyer location data.
+8. **Run the full frontend/contract gate.** Run API-client check plus web typecheck, lint, tests and build; the generated-contract drift check must be clean.
+9. **Run/strengthen Task 20 acceptance tests.** Confirm multi-replica `SKIP LOCKED` behavior, concurrent source-Order confirmation first-wins semantics, rollback on invalid source chain, Need checkout source locking before inventory, and real PostgreSQL query-plan/index evidence rather than index-existence checks alone.
+10. **Only after all gates are green:** mark Tasks 14–20 complete, update this note to accepted, and allow Plan 07 work to start from migration `V012`. Do not modify `V011__need_matching.sql` after Plan 06 acceptance.
+
+### Recommended execution order from this checkpoint
+
+```text
+fix OrderConfirmNeedIntegrationTest
+→ run focused backend tests
+→ ./mvnw verify
+→ export OpenAPI
+→ regenerate @covie/api-client
+→ migrate need-api.ts to generated types
+→ finish buyer/seller tests + edit/withdraw UX
+→ pnpm api-client:check
+→ web typecheck + lint + test + build
+→ strengthen/run Task 20 concurrency/query-plan/end-to-end gate
+→ mark Plan 06 accepted
+→ Plan 07 may start at V012
+```
+
+<!-- PLAN06_IMPLEMENTATION_STATUS_END -->
+
 **Goal:** Implement CoVie V1 structured Need Requests, PostgreSQL/PostGIS seller matching, MerchantLocation-scoped catalog responses, Direct Checkout attribution, Order-confirmation fulfillment, Need expiration, OpenAPI/client integration, and minimal buyer/seller web slices without introducing AI matching, chat, or a separate search service.
 
 **Architecture:** Need is a first-class domain module in the existing Spring Boot modular monolith. PostgreSQL/PostGIS remains authoritative for Need state, geospatial filtering, response uniqueness, source attribution and scheduled expiration. Matching uses category/type, PostgreSQL FTS/trigram signals, distance, delivery/service coverage, current LocationVariant availability and tracked inventory; the application layer owns final eligibility. Need-origin checkout plugs into the Plan 04 `CheckoutCandidateResolver` SPI and reuses the existing Preview → Commit engine. Need fulfillment is a synchronous transaction participant in Plan 05 seller/provider confirmation so `ACTIVE -> FULFILLED` is committed atomically with the confirming Order.
@@ -630,7 +679,7 @@ Expected: V001 → V011 all PASS with `outOfOrder=false`.
 ```bash
 git add apps/api/src/main/resources/db/migration/V011__need_matching.sql \
         apps/api/src/test/java/vn/covie/needs/persistence \
-        apps/api/src/test/java/vn/covie/support
+        apps/api/src/test/java/vn/covie/needs/support
 git commit -m "feat(needs): add need matching schema"
 ```
 
