@@ -25,6 +25,21 @@ import vn.covie.outbox.application.OutboxEventContext;
 
 class NeedNotificationHandlerTest {
     @Test
+    void retryOfNeedResponseCreatesOnlyOneBuyerNotificationSignal() {
+        var needs=mock(NeedRequestRepository.class); var notifications=mock(NotificationService.class); UUID needId=UUID.randomUUID(), buyer=UUID.randomUUID(), eventId=UUID.randomUUID();
+        var need=mock(NeedRequestEntity.class); when(need.getId()).thenReturn(needId); when(need.getBuyerUserId()).thenReturn(buyer); when(needs.findById(needId)).thenReturn(Optional.of(need));
+        when(notifications.createFromOutbox(eq(eventId),eq(buyer),eq(NotificationType.NEED_RESPONSE_RECEIVED),anyString(),anyString(),eq("NEED_REQUEST"),eq(needId),anyMap()))
+                .thenReturn(new NotificationCreationResult(UUID.randomUUID(),true),new NotificationCreationResult(UUID.randomUUID(),false));
+        var handler=new NeedNotificationHandler(needs,notifications,mock(NeedAudienceRepository.class),mock(MerchantLocationRepository.class),mock(NeedLocationContextFactory.class),mock(DeliveryCoverageEvaluator.class),mock(MerchantNotificationRecipientResolver.class),100);
+        var event=new OutboxEventContext(eventId,"NEED_RESPONSE_CREATED","NEED_REQUEST",needId,JsonNodeFactory.instance.objectNode(),Instant.now());
+
+        var first=handler.handle(event); var retry=handler.handle(event);
+
+        assertThat(first).extracting(signal -> signal.eventName()).contains("notification.created");
+        assertThat(retry).extracting(signal -> signal.eventName()).doesNotContain("notification.created");
+    }
+
+    @Test
     void sendsOnePrivacySafeMatchNotificationWhenSameSellerIsEligibleThroughTwoLocations() {
         var needs=mock(NeedRequestRepository.class); var notifications=mock(NotificationService.class); var audience=mock(NeedAudienceRepository.class);
         var locations=mock(MerchantLocationRepository.class); var needLocation=mock(NeedLocationContextFactory.class); var coverage=mock(DeliveryCoverageEvaluator.class); var recipients=mock(MerchantNotificationRecipientResolver.class);
