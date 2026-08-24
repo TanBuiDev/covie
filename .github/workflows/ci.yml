@@ -80,14 +80,17 @@ jobs:
         with:
           ref: feat/plan-09-web-completion
           fetch-depth: 0
-      - name: Append final Plan 09 handoff and self-clean
+      - name: Append and push final Plan 09 handoff
         shell: bash
         run: |
           set -euo pipefail
           PLAN="docs/CoVie-technical-plan-09-web-completion-v1.0.md"
           MARKER="## Final Maximum-Completion Handoff — 2026-08-24"
-          if ! grep -Fq "$MARKER" "$PLAN"; then
-            cat >> "$PLAN" <<'EOF'
+          if grep -Fq "$MARKER" "$PLAN"; then
+            echo "Plan 09 handoff already present."
+            exit 0
+          fi
+          cat >> "$PLAN" <<'EOF'
           
           ---
           
@@ -119,21 +122,9 @@ jobs:
           
           Full Task 1–20 status, CI evidence and exact continuation commands: [`CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md`](./CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md).
           EOF
-          fi
-          rm -f .github/workflows/plan09-handoff-append.yml
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('.github/workflows/ci.yml')
-          text = p.read_text()
-          start = text.index('# PLAN09_FINAL_HANDOFF_JOB_BEGIN')
-          end = text.index('# PLAN09_FINAL_HANDOFF_JOB_END') + len('# PLAN09_FINAL_HANDOFF_JOB_END')
-          p.write_text(text[:start].rstrip() + '\n' + text[end:].lstrip())
-          PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A "$PLAN" docs/CoVie-technical-plan-09-web-completion-v1.0-HANDOFF.md .github/workflows
-          if ! git diff --cached --quiet; then
-            git commit -m "docs(plan09): finalize maximum-completion handoff"
-            git push origin HEAD:feat/plan-09-web-completion
-          fi
+          git add "$PLAN"
+          git commit -m "docs(plan09): append maximum-completion handoff"
+          git push origin HEAD:feat/plan-09-web-completion
 # PLAN09_FINAL_HANDOFF_JOB_END
