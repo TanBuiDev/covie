@@ -85,6 +85,10 @@ class ReputationProjectionLifecycleIntegrationTest extends PostgresIntegrationTe
 
         assertThat(outcomes.ensureNeutral(order.getId(),buyer,merchant,order.getStatus().name(),null,now)).isEqualTo(1);
         assertThat(outcomes.ensureNeutral(order.getId(),buyer,merchant,order.getStatus().name(),null,now)).isZero();
+        assertThat(userStats.ensureEmpty(buyer,now)).isEqualTo(1);
+        assertThat(userStats.ensureEmpty(buyer,now)).isZero();
+        assertThat(merchantStats.ensureEmpty(merchant,now)).isEqualTo(1);
+        assertThat(merchantStats.ensureEmpty(merchant,now)).isZero();
         assertThat(outcomes.count()).isEqualTo(1);
     }
 
