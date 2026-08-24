@@ -1,4 +1,4 @@
-name: Plan 09 deprecated helper
+name: Deprecated Plan 09 helper
 
 on:
   workflow_dispatch:
@@ -7,4 +7,4 @@ jobs:
   noop:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Final handoff is managed by the one-shot CI job; this file will be removed."
+      - run: echo "Deprecated; remove after final handoff append."
