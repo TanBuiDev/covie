@@ -36,6 +36,16 @@ public class UserEntity {
     }
 
     public boolean isActive() { return accountStatus == AccountStatus.ACTIVE; }
+    public void suspend(Instant now) {
+        if (accountStatus != AccountStatus.ACTIVE) throw new IllegalStateException("User is not ACTIVE");
+        accountStatus = AccountStatus.SUSPENDED;
+        updatedAt = now;
+    }
+    public void restore(Instant now) {
+        if (accountStatus != AccountStatus.SUSPENDED) throw new IllegalStateException("User is not SUSPENDED");
+        accountStatus = AccountStatus.ACTIVE;
+        updatedAt = now;
+    }
     public UUID getId() { return id; }
     public String getDisplayName() { return displayName; }
     public UUID getAvatarMediaId() { return avatarMediaId; }
