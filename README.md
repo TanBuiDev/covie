@@ -82,3 +82,17 @@ pnpm infra:down
 ```
 
 Production secrets never go in `.env.example`. Keep local secrets in `.env.local`, which is gitignored. Generate disposable local JWT keys with `./infra/scripts/generate-dev-jwt-keys.sh`; test runs generate their own RSA keypair in memory.
+
+## Production operations
+
+Plan 10 keeps production operator values out of this README. Use the source-controlled runbooks as the entrypoint:
+
+- [Deployment and rollback](docs/operations/deploy-rollback.md)
+- [Production secrets](docs/operations/secrets.md)
+- [PostgreSQL backup and restore](docs/operations/backup-restore.md)
+- [Metrics and alerting](docs/operations/alerting-and-metrics.md)
+- [Incident runbook](docs/operations/incident-runbook.md)
+- [Staging rehearsal](docs/operations/staging-rehearsal.md)
+- [Pilot launch checklist](docs/operations/pilot-launch-checklist.md)
+
+A pilot release is not approved merely because the repository builds: the staging clean-migration, security/load, backup/restore, rollback and alert rehearsal evidence in the checklist must also be green.
