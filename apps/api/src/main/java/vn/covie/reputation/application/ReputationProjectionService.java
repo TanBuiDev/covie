@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.covie.orders.persistence.OrderRepository;
 import vn.covie.reputation.model.BuyerReputationOutcome;
 import vn.covie.reputation.model.MerchantReputationOutcome;
-import vn.covie.reputation.model.ReputationOrderOutcomeEntity;
 import vn.covie.reputation.persistence.ReputationOrderOutcomeRepository;
 import vn.covie.shared.time.AppClock;
 
@@ -25,7 +24,8 @@ public class ReputationProjectionService {
     }
     private void project(vn.covie.orders.model.OrderEntity order, UUID sourceOutboxEventId) {
         Instant now=clock.now(); ReputationContribution next=classifier.classify(order.getStatus());
-        outcomes.findById(order.getId()).orElseGet(() -> outcomes.saveAndFlush(ReputationOrderOutcomeEntity.create(order.getId(), order.getBuyerUserId(), order.getMerchantProfileId(), BuyerReputationOutcome.NONE, MerchantReputationOutcome.NONE, order.getStatus().name(), sourceOutboxEventId, now)));
+        outcomes.ensureNeutral(order.getId(), order.getBuyerUserId(), order.getMerchantProfileId(),
+                order.getStatus().name(), sourceOutboxEventId, now);
         ReputationOrderOutcomeEntity outcome=outcomes.findForUpdate(order.getId()).orElseThrow();
         if (outcome.getBuyerOutcome()==next.buyer() && outcome.getMerchantOutcome()==next.merchant()) { outcome.replace(next.buyer(), next.merchant(), order.getStatus().name(), sourceOutboxEventId, now); return; }
         var buyer=stats.user(order.getBuyerUserId(),now); var merchant=stats.merchant(order.getMerchantProfileId(),now);

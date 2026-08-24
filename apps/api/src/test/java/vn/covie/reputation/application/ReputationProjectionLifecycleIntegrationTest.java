@@ -18,6 +18,7 @@ import vn.covie.orders.model.OrderStatus;
 import vn.covie.orders.model.OrderType;
 import vn.covie.orders.persistence.OrderRepository;
 import vn.covie.reputation.persistence.MerchantReputationStatsRepository;
+import vn.covie.reputation.persistence.ReputationOrderOutcomeRepository;
 import vn.covie.reputation.persistence.UserReputationStatsRepository;
 import vn.covie.shared.commerce.PaymentMethod;
 import vn.covie.support.PostgresIntegrationTest;
@@ -32,6 +33,7 @@ class ReputationProjectionLifecycleIntegrationTest extends PostgresIntegrationTe
     @Autowired MerchantLocationRepository locations;
     @Autowired UserReputationStatsRepository userStats;
     @Autowired MerchantReputationStatsRepository merchantStats;
+    @Autowired ReputationOrderOutcomeRepository outcomes;
     @Autowired JdbcTemplate jdbc;
 
     @Test @Transactional
@@ -72,6 +74,18 @@ class ReputationProjectionLifecycleIntegrationTest extends PostgresIntegrationTe
         var merchantRow=jdbc.queryForMap("select eligible_order_count,completed_order_count,seller_cancel_after_confirm_count,excluded_issue_count,completion_rate_basis_points from merchant_reputation_stats where merchant_profile_id=?",merchant);
         assertThat(buyerRow).containsEntry("eligible_order_count",2L).containsEntry("completed_order_count",2L).containsEntry("excluded_issue_count",1L).containsEntry("completion_rate_basis_points",10000);
         assertThat(merchantRow).containsEntry("eligible_order_count",3L).containsEntry("completed_order_count",2L).containsEntry("seller_cancel_after_confirm_count",1L).containsEntry("excluded_issue_count",1L).containsEntry("completion_rate_basis_points",6666);
+    }
+
+    @Test @Transactional
+    void atomicallyEnsuresOneNeutralOutcomeRowForRepeatedFirstProjection() {
+        Instant now=Instant.parse("2026-08-24T00:00:00Z"); UUID buyer=UUID.randomUUID(), merchant=UUID.randomUUID();
+        users.save(UserEntity.active(buyer,"buyer-"+buyer,now)); merchants.save(MerchantProfileEntity.create(merchant,"Merchant","merchant-"+merchant,now));
+        UUID location=locations.save(MerchantLocationEntity.create(UUID.randomUUID(),merchant,"Main","1 Street",10.8,106.7,now)).getId();
+        var order=createOrder(buyer,merchant,location,now);
+
+        assertThat(outcomes.ensureNeutral(order.getId(),buyer,merchant,order.getStatus().name(),null,now)).isEqualTo(1);
+        assertThat(outcomes.ensureNeutral(order.getId(),buyer,merchant,order.getStatus().name(),null,now)).isZero();
+        assertThat(outcomes.count()).isEqualTo(1);
     }
 
     private OrderEntity createOrder(UUID buyer, UUID merchant, UUID location, Instant now) {
