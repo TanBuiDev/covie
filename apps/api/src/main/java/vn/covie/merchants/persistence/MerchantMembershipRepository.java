@@ -88,4 +88,12 @@ public interface MerchantMembershipRepository extends JpaRepository<MerchantMemb
                        where assignment.membershipId=membership.id and assignment.merchantLocationId=:locationId)))
             """)
     List<UUID> findActiveProcessorUserIds(@Param("merchantId") UUID merchantId, @Param("locationId") UUID locationId);
+
+    @Query("""
+            select membership.userId from MerchantMembershipEntity membership
+            where membership.merchantProfileId = :merchantId
+              and membership.membershipStatus = vn.covie.merchants.model.MembershipStatus.ACTIVE
+              and membership.role in (vn.covie.merchants.model.MerchantRole.OWNER, vn.covie.merchants.model.MerchantRole.MANAGER)
+            """)
+    List<UUID> findActiveOwnerAndManagerUserIds(@Param("merchantId") UUID merchantId);
 }
