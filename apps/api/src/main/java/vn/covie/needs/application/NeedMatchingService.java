@@ -46,6 +46,21 @@ public class NeedMatchingService {
         }
         return new MerchantNeedCursorPage(List.copyOf(out),hasMore,hasMore&&after!=null?cursors.encode(after):null);
     }
+    /** Visibility-only variant used by reporting; it never exposes buyer location or response data. */
+    public boolean canViewNeed(UUID merchantId, UUID needId) {
+        Set<UUID> allowed = access.allowedLocationIds(merchantId, MerchantCapability.VIEW_NEEDS);
+        NeedDiscoveryCursor after = null;
+        for (int rounds = 0; rounds < 100; rounds++) {
+            List<NeedMatchRow> rows = discovery.findCandidates(merchantId, allowed, null, clock.now(), after, 150);
+            if (rows.isEmpty()) return false;
+            for (NeedMatchRow row : rows) {
+                after = new NeedDiscoveryCursor(row.textRank(), row.distanceMeters(), row.needId(), row.merchantLocationId());
+                if (row.needId().equals(needId) && eligible(row)) return true;
+            }
+            if (rows.size() < 150) return false;
+        }
+        return false;
+    }
     private boolean eligible(NeedMatchRow row) {
         if(row.type()==NeedType.PRODUCT && row.pickupEnabled()) return true;
         var need=needs.findById(row.needId()).orElse(null); if(need==null) return false;
