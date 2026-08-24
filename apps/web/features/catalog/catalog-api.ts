@@ -16,7 +16,7 @@ export async function createCatalogItem(merchantId: string, idempotencyKey: stri
   return requireData(response, data);
 }
 
-type DiscoveryQuery = NonNullable<operations["discover"]["parameters"]["query"]>;
+type DiscoveryQuery = NonNullable<operations["discover_1"]["parameters"]["query"]>;
 export type CatalogDiscoveryFilters = Omit<DiscoveryQuery, "lat" | "lng" | "addressId"> & {
   location?: DiscoveryLocation;
 };

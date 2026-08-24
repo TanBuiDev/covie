@@ -1,80 +1,25 @@
 import { readApiError } from "@/lib/api/api-error";
 import { requestBrowserApi } from "@/lib/api/api-client";
+import type { components } from "@covie/api-client";
 
-export type NeedType = "PRODUCT" | "SERVICE";
-export type NeedStatus = "ACTIVE" | "FULFILLED" | "EXPIRED" | "CANCELLED";
-
-export type NeedSummary = {
-  id: string;
-  type: NeedType;
-  status: NeedStatus;
-  categoryId: string;
-  title: string;
-  radiusMeters: number;
-  expiresAt: string;
-  responseCount: number;
-  createdAt: string;
+export type NeedType = components["schemas"]["CreateNeedRequest"]["type"];
+export type NeedStatus = NonNullable<components["schemas"]["NeedSummaryResponse"]["status"]>;
+export type NeedSummary = Required<components["schemas"]["NeedSummaryResponse"]>;
+export type NeedDetail = Required<components["schemas"]["NeedDetailResponse"]>;
+export type NeedResponseItem = Omit<Required<components["schemas"]["NeedResponseItemResponse"]>, "priceAtResponse" | "currentPrice"> & {
+  priceAtResponse?: Required<components["schemas"]["MoneyResponse"]>;
+  currentPrice?: Required<components["schemas"]["MoneyResponse"]>;
 };
-
-export type NeedDetail = NeedSummary & {
-  queryText: string;
-  description?: string | null;
-  requestedQuantity?: number | null;
-  locationSummary?: { addressId?: string | null; locationAreaId?: string | null; timezone?: string | null } | null;
-  fulfilledOrderId?: string | null;
-  closedAt?: string | null;
-};
-
-export type NeedResponseItem = {
-  id: string;
-  locationVariantId: string;
-  catalogItemId: string;
-  variantId: string;
-  priceAtResponse?: { amount: number; currency: string } | null;
-  currentPrice?: { amount: number; currency: string } | null;
-  available: boolean;
-  actionable: boolean;
-};
-
-export type NeedResponse = {
-  id: string;
-  needRequestId: string;
-  merchantId: string;
-  merchantName?: string | null;
-  merchantLocationId: string;
-  merchantLocationName?: string | null;
-  distanceMeters?: number | null;
-  status: "ACTIVE" | "WITHDRAWN";
-  note?: string | null;
-  version: number;
-  createdAt: string;
+export type NeedResponse = Omit<Required<components["schemas"]["NeedResponseResponse"]>, "items"> & {
   items: NeedResponseItem[];
 };
-
-export type MerchantNeedMatch = {
-  need: { id: string; type: NeedType; title: string; description?: string | null; categoryId: string; expiresAt: string };
-  resolvedLocation: { id: string; name: string };
-  buyerArea?: { label?: string | null } | null;
-  distanceMeters: number;
-  alreadyResponded: boolean;
-  responseConstraints: { maxItems: number };
+export type MerchantNeedMatch = Omit<Required<components["schemas"]["MerchantNeedMatchResponse"]>, "need" | "resolvedLocation" | "responseConstraints"> & {
+  need: Required<components["schemas"]["Need"]>;
+  resolvedLocation: Required<components["schemas"]["ResolvedLocation"]>;
+  responseConstraints: Required<components["schemas"]["ResponseConstraints"]>;
 };
-
-type CursorPage<T> = { items: T[]; hasMore: boolean; nextCursor?: string | null };
-
-export type CreateNeedInput = {
-  type: NeedType;
-  categoryId: string;
-  title: string;
-  queryText: string;
-  description?: string;
-  requestedQuantity?: number;
-  addressId?: string;
-  lat?: number;
-  lng?: number;
-  radiusMeters: number;
-  expiresAt: string;
-};
+type CursorPage<T> = { items: T[]; hasMore: boolean; nextCursor?: string };
+export type CreateNeedInput = components["schemas"]["CreateNeedRequest"];
 
 async function jsonOrThrow<T>(response: Response): Promise<T> {
   if (!response.ok) throw await readApiError(response);

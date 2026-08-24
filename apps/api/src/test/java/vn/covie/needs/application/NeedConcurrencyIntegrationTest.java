@@ -6,6 +6,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
@@ -48,23 +49,23 @@ class NeedConcurrencyIntegrationTest extends PostgresIntegrationTest {
     void seed() {
         Instant now = Instant.parse("2026-08-24T12:00:00Z");
         jdbc.update("insert into users(id,display_name,account_status,created_at,updated_at) values (?,?, 'ACTIVE',?,?)",
-                buyerId, "Buyer", now, now);
+                buyerId, "Buyer", Timestamp.from(now), Timestamp.from(now));
         jdbc.update("insert into categories(id,name,slug,catalog_type,status,sort_order) values (?,?,?,'PRODUCT','ACTIVE',0)",
                 categoryId, "Plan 06 category", "plan-06-" + categoryId);
         jdbc.update("insert into merchant_profiles(id,name,slug,merchant_status,moderation_status,created_at,updated_at) values (?,?,?,'ACTIVE','NOT_REQUIRED',?,?)",
-                merchantId, "Merchant", "merchant-" + merchantId, now, now);
+                merchantId, "Merchant", "merchant-" + merchantId, Timestamp.from(now), Timestamp.from(now));
         jdbc.update("""
                 insert into merchant_locations(id,merchant_profile_id,name,address_text,geo_point,pin_source,timezone,location_status,
                     pickup_enabled,seller_delivery_enabled,service_enabled,currency_code,created_at,updated_at)
                 values (?,?,?, ?, ST_SetSRID(ST_MakePoint(106.7,10.8),4326)::geography,'GPS','Asia/Ho_Chi_Minh','ACTIVE',true,true,false,'VND',?,?)
-                """, locationId, merchantId, "Location", "Ho Chi Minh City", now, now);
-        insertPlaceholderOrder(orderOneId, "P06-A-" + orderOneId, now);
-        insertPlaceholderOrder(orderTwoId, "P06-B-" + orderTwoId, now);
+                """, locationId, merchantId, "Location", "Ho Chi Minh City", Timestamp.from(now), Timestamp.from(now));
+        insertPlaceholderOrder(orderOneId, shortOrderCode("P06A", orderOneId), now);
+        insertPlaceholderOrder(orderTwoId, shortOrderCode("P06B", orderTwoId), now);
         jdbc.update("""
                 insert into need_requests(id,buyer_user_id,need_type,category_id,title,query_text,requested_quantity,geo_point,
                     location_snapshot,search_radius_meters,request_status,expires_at,created_at,updated_at)
                 values (?,?, 'PRODUCT',?,?,?,1,ST_SetSRID(ST_MakePoint(106.7,10.8),4326)::geography,'{}'::jsonb,5000,'ACTIVE',?,?,?)
-                """, needId, buyerId, categoryId, "Need", "query", now.plusSeconds(3600), now, now);
+                """, needId, buyerId, categoryId, "Need", "query", Timestamp.from(now.plusSeconds(3600)), Timestamp.from(now), Timestamp.from(now));
     }
 
     @AfterEach
@@ -117,7 +118,7 @@ class NeedConcurrencyIntegrationTest extends PostgresIntegrationTest {
                     payment_method,subtotal,shipping_fee_type,shipping_fee,known_total,total_amount,currency_code,
                     confirmation_expires_at,created_at,updated_at)
                 values (?,?, 'PRODUCT',?,?,?,'PENDING_CONFIRMATION','MARKETPLACE','COD',0,'FREE',0,0,0,'VND',?,?,?)
-                """, orderId, code, buyerId, merchantId, locationId, now.plusSeconds(600), now, now);
+                """, orderId, code, buyerId, merchantId, locationId, Timestamp.from(now.plusSeconds(600)), Timestamp.from(now), Timestamp.from(now));
     }
 
     private OrderEntity sourceOrder(UUID orderId, UUID itemId) {
@@ -127,6 +128,10 @@ class NeedConcurrencyIntegrationTest extends PostgresIntegrationTest {
         when(order.getSourceNeedRequestId()).thenReturn(needId);
         when(order.getSourceNeedResponseItemId()).thenReturn(itemId);
         return order;
+    }
+
+    private static String shortOrderCode(String prefix, UUID id) {
+        return prefix + id.toString().replace("-", "").substring(0, 24);
     }
 
     private static void runAfter(CountDownLatch start, Runnable action) {

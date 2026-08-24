@@ -13,6 +13,8 @@ import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.inventory.application.InventoryReservationService;
 import vn.covie.orders.model.OrderEntity;
 import vn.covie.orders.model.OrderStatus;
+import vn.covie.orders.security.OrderAccess;
+import vn.covie.orders.security.OrderActorType;
 import vn.covie.orders.security.OrderAccessPolicy;
 import vn.covie.shared.idempotency.IdempotencyExecutor;
 import vn.covie.shared.outbox.OutboxEventWriter;
@@ -24,6 +26,7 @@ class OrderConfirmNeedIntegrationTest {
         UUID orderId = UUID.randomUUID();
         Instant now = Instant.parse("2026-08-24T12:00:00Z");
         when(order.getId()).thenReturn(orderId);
+        when(order.getOrderCode()).thenReturn("ORD-NEED-TEST");
         when(order.getStatus()).thenReturn(OrderStatus.PENDING_CONFIRMATION, OrderStatus.CONFIRMED);
         when(order.getConfirmationExpiresAt()).thenReturn(now.plusSeconds(60));
 
@@ -36,14 +39,9 @@ class OrderConfirmNeedIntegrationTest {
         InventoryReservationService inventory = mock(InventoryReservationService.class);
         OrderConfirmedParticipant participant = mock(OrderConfirmedParticipant.class);
         when(transitions.lock(orderId)).thenReturn(new LockedOrder(order));
-        var processor = mock(vn.covie.orders.model.OrderActorContext.class);
-
-        // Exercise the transaction-body method directly: authorization and transition are still the real service sequence.
-        // access.requireMerchantProcessor returns the actor context used by OrderCommandService.
-        var action = mock(vn.covie.orders.application.OrderActionContext.class);
         UUID actorId = UUID.randomUUID();
-        when(action.actorUserId()).thenReturn(actorId);
-        when(access.requireMerchantProcessor(order)).thenReturn(action);
+        when(access.requireMerchantProcessor(order)).thenReturn(
+                new OrderAccess(actorId, OrderActorType.MERCHANT, orderId, UUID.randomUUID(), UUID.randomUUID()));
 
         OrderCommandService service = new OrderCommandService(
                 idempotency, transitions, access, actors, events, outbox, inventory, () -> now, List.of(participant));
