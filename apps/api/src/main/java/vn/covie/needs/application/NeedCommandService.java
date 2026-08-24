@@ -9,6 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.location.application.LocationContext;
 import vn.covie.location.application.LocationContextResolver;
+import vn.covie.moderation.application.ModerationDecision;
+import vn.covie.moderation.application.ModerationDecisionService;
+import vn.covie.moderation.application.ModerationSubject;
+import vn.covie.moderation.model.ModerationTargetType;
 import vn.covie.needs.api.dto.CreateNeedRequest;
 import vn.covie.needs.api.dto.NeedDetailResponse;
 import vn.covie.needs.api.dto.NeedLocationSummaryResponse;
@@ -21,6 +25,8 @@ import vn.covie.shared.id.UuidV7Generator;
 import vn.covie.shared.idempotency.IdempotencyExecutor;
 import vn.covie.shared.outbox.OutboxEventIntent;
 import vn.covie.shared.outbox.OutboxEventWriter;
+import vn.covie.shared.moderation.ModerationCaseWriter;
+import vn.covie.shared.moderation.ModerationTargetRef;
 import vn.covie.shared.time.AppClock;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
@@ -34,14 +40,18 @@ public class NeedCommandService {
     private final NeedRequestRepository needs;
     private final IdempotencyExecutor idempotency;
     private final OutboxEventWriter outbox;
+    private final ModerationDecisionService moderation;
+    private final ModerationCaseWriter moderationCases;
     private final UuidV7Generator ids;
     private final AppClock clock;
 
     public NeedCommandService(CurrentActorProvider actors, LocationContextResolver locations,
             CategoryHierarchyRepository categories, NeedLocationSnapshotFactory snapshots, NeedRequestRepository needs,
-            IdempotencyExecutor idempotency, OutboxEventWriter outbox, UuidV7Generator ids, AppClock clock) {
+            IdempotencyExecutor idempotency, OutboxEventWriter outbox, ModerationDecisionService moderation,
+            ModerationCaseWriter moderationCases, UuidV7Generator ids, AppClock clock) {
         this.actors = actors; this.locations = locations; this.categories = categories; this.snapshots = snapshots;
-        this.needs = needs; this.idempotency = idempotency; this.outbox = outbox; this.ids = ids; this.clock = clock;
+        this.needs = needs; this.idempotency = idempotency; this.outbox = outbox; this.moderation = moderation;
+        this.moderationCases = moderationCases; this.ids = ids; this.clock = clock;
     }
 
     public IdempotencyExecutor.Execution<NeedDetailResponse> create(String key, CreateNeedRequest request) {
@@ -71,6 +81,12 @@ public class NeedCommandService {
         NeedRequestEntity need = needs.save(NeedRequestEntity.create(ids.generate(), buyerId, request.type(), request.categoryId(),
                 request.title(), request.queryText(), request.description(), request.requestedQuantity(), location.locationAreaId(),
                 location.point(), snapshots.snapshot(location), request.radiusMeters(), request.expiresAt(), now));
+        if (moderation.decide(new ModerationSubject(ModerationTargetType.NEED_REQUEST, buyerId, null,
+                need.getCategoryId(), need.getLocationAreaId())) == ModerationDecision.REQUIRE_MODERATION) {
+            need.requireModeration(now);
+            moderationCases.openPreApproval(new ModerationTargetRef(ModerationTargetType.NEED_REQUEST, need.getId()),
+                    "PUBLISH_REQUIRES_MODERATION");
+        }
         outbox.append(new OutboxEventIntent("NEED_CREATED", "NEED_REQUEST", need.getId(), Map.of(
                 "needRequestId", need.getId().toString(), "buyerUserId", buyerId.toString(),
                 "needType", need.getNeedType().name(), "categoryId", need.getCategoryId().toString())));
