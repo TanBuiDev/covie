@@ -6,14 +6,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import vn.covie.admin.api.dto.AdminUserSummaryResponse;
+import vn.covie.users.model.AccountStatus;
 
 @Repository
-public final class AdminUserReadRepository {
+public class AdminUserReadRepository {
     private final NamedParameterJdbcTemplate jdbc;
     public AdminUserReadRepository(NamedParameterJdbcTemplate jdbc){this.jdbc=jdbc;}
     public PageResult<AdminUserSummaryResponse> find(int page,int size,String status,String q,String sort){
@@ -40,7 +42,7 @@ public final class AdminUserReadRepository {
                 """;
         return jdbc.query(sql,p,this::map).stream().findFirst();
     }
-    private AdminUserSummaryResponse map(ResultSet rs,int row) throws SQLException {String roles=rs.getString("roles");return new AdminUserSummaryResponse(rs.getObject("id",UUID.class),rs.getString("display_name"),rs.getString("email"),rs.getString("account_status"),roles==null||roles.isBlank()?List.of():Arrays.asList(roles.split(",")),rs.getLong("active_session_count"),rs.getTimestamp("created_at").toInstant(),rs.getTimestamp("updated_at").toInstant());}
+    private AdminUserSummaryResponse map(ResultSet rs,int row) throws SQLException {String roles=rs.getString("roles");return new AdminUserSummaryResponse(rs.getObject("id",UUID.class),rs.getString("display_name"),AccountStatus.valueOf(rs.getString("account_status")),roles==null||roles.isBlank()?Set.of():Set.copyOf(Arrays.asList(roles.split(","))),rs.getTimestamp("created_at").toInstant(),rs.getTimestamp("updated_at").toInstant());}
     private static String blank(String s){return s==null||s.isBlank()?null:s.strip();}
     public record PageResult<T>(List<T> items,long total) {}
 }

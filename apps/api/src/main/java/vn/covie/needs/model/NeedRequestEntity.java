@@ -81,6 +81,16 @@ public class NeedRequestEntity {
         }
     }
 
+    public void fulfill(UUID orderId, Instant now) {
+        if (requestStatus != NeedStatus.ACTIVE) {
+            throw new IllegalStateException("Only active needs can be fulfilled.");
+        }
+        requestStatus = NeedStatus.FULFILLED;
+        fulfilledOrderId = orderId;
+        closedAt = now;
+        updatedAt = now;
+    }
+
     public void requireModeration(Instant now) { moderationStatus = ContentModerationStatus.PENDING; updatedAt = now; }
     public void approveModeration(Instant now) { moderationStatus = ContentModerationStatus.APPROVED; updatedAt = now; }
     public void rejectModeration(Instant now) { moderationStatus = ContentModerationStatus.REJECTED; updatedAt = now; }

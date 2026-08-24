@@ -10,9 +10,11 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import vn.covie.admin.api.dto.AdminMerchantSummaryResponse;
+import vn.covie.merchants.model.MerchantModerationStatus;
+import vn.covie.merchants.model.MerchantStatus;
 
 @Repository
-public final class AdminMerchantReadRepository {
+public class AdminMerchantReadRepository {
     private final NamedParameterJdbcTemplate jdbc; public AdminMerchantReadRepository(NamedParameterJdbcTemplate jdbc){this.jdbc=jdbc;}
     public PageResult<AdminMerchantSummaryResponse> find(int page,int size,String status,String moderationStatus,String q,String sort){
         String where=" where m.deleted_at is null and (:status is null or m.merchant_status=:status) and (:moderation is null or m.moderation_status=:moderation) and (:q is null or lower(m.name) like :qLike or lower(m.slug) like :qLike) ";
@@ -29,7 +31,7 @@ public final class AdminMerchantReadRepository {
               (select count(*) from merchant_locations ml where ml.merchant_profile_id=m.id and ml.deleted_at is null) location_count
             from merchant_profiles m
             """;}
-    private AdminMerchantSummaryResponse map(ResultSet rs,int row)throws SQLException{return new AdminMerchantSummaryResponse(rs.getObject("id",UUID.class),rs.getString("name"),rs.getString("slug"),rs.getString("merchant_status"),rs.getString("moderation_status"),rs.getLong("owner_count"),rs.getLong("member_count"),rs.getLong("location_count"),rs.getTimestamp("created_at").toInstant(),rs.getTimestamp("updated_at").toInstant());}
+    private AdminMerchantSummaryResponse map(ResultSet rs,int row)throws SQLException{return new AdminMerchantSummaryResponse(rs.getObject("id",UUID.class),rs.getString("name"),rs.getString("slug"),MerchantStatus.valueOf(rs.getString("merchant_status")),MerchantModerationStatus.valueOf(rs.getString("moderation_status")),rs.getTimestamp("created_at").toInstant(),rs.getTimestamp("updated_at").toInstant());}
     private static String blank(String s){return s==null||s.isBlank()?null:s.strip();}
     public record PageResult<T>(List<T> items,long total) {}
 }

@@ -14,6 +14,7 @@ import vn.covie.inventory.application.InventoryReservationService;
 import vn.covie.orders.model.OrderEntity;
 import vn.covie.orders.model.OrderStatus;
 import vn.covie.orders.security.OrderAccessPolicy;
+import vn.covie.orders.security.OrderAccess;
 import vn.covie.shared.idempotency.IdempotencyExecutor;
 import vn.covie.shared.outbox.OutboxEventWriter;
 
@@ -39,11 +40,14 @@ class OrderConfirmNeedIntegrationTest {
         var processor = mock(vn.covie.orders.model.OrderActorContext.class);
 
         // Exercise the transaction-body method directly: authorization and transition are still the real service sequence.
-        // access.requireMerchantProcessor returns the actor context used by OrderCommandService.
-        var action = mock(vn.covie.orders.application.OrderActionContext.class);
+        // access.requireMerchantProcessor returns the access object used by OrderCommandService.
+        var action = mock(OrderAccess.class);
         UUID actorId = UUID.randomUUID();
         when(action.actorUserId()).thenReturn(actorId);
         when(access.requireMerchantProcessor(order)).thenReturn(action);
+        when(order.getId()).thenReturn(orderId);
+        when(order.getOrderCode()).thenReturn("P05-" + orderId);
+        when(order.getStatus()).thenReturn(OrderStatus.CONFIRMED);
 
         OrderCommandService service = new OrderCommandService(
                 idempotency, transitions, access, actors, events, outbox, inventory, () -> now, List.of(participant));

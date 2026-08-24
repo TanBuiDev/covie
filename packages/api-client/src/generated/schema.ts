@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/need-requests/{needRequestId}/responses/{responseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["replace"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{merchantId}/members/{memberId}/locations": {
         parameters: {
             query?: never;
@@ -28,7 +44,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get"];
-        put: operations["replace"];
+        put: operations["replace_1"];
         post?: never;
         delete?: never;
         options?: never;
@@ -308,6 +324,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/need-requests/{needRequestId}/responses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/need-requests/{needRequestId}/responses/{responseId}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{merchantId}/members": {
         parameters: {
             query?: never;
@@ -333,7 +381,7 @@ export interface paths {
         };
         get: operations["list"];
         put?: never;
-        post: operations["create_1"];
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -349,7 +397,7 @@ export interface paths {
         };
         get: operations["list_1"];
         put?: never;
-        post: operations["create_2"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -365,7 +413,7 @@ export interface paths {
         };
         get: operations["list_2"];
         put?: never;
-        post: operations["create_3"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -445,7 +493,7 @@ export interface paths {
         };
         get: operations["list_3"];
         put?: never;
-        post: operations["create_4"];
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -461,7 +509,7 @@ export interface paths {
         };
         get: operations["list_4"];
         put?: never;
-        post: operations["create_5"];
+        post: operations["create_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -609,7 +657,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_6"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -657,7 +705,7 @@ export interface paths {
         };
         get: operations["list_5"];
         put?: never;
-        post: operations["create_7"];
+        post: operations["create_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -689,7 +737,7 @@ export interface paths {
         };
         get: operations["mine"];
         put?: never;
-        post: operations["create_8"];
+        post: operations["create_9"];
         delete?: never;
         options?: never;
         head?: never;
@@ -706,7 +754,7 @@ export interface paths {
         /** List contact methods */
         get: operations["active_1"];
         put?: never;
-        post: operations["create_9"];
+        post: operations["create_10"];
         delete?: never;
         options?: never;
         head?: never;
@@ -743,7 +791,7 @@ export interface paths {
          * Create a saved address
          * @description Browser mutations use X-CSRF-Token.
          */
-        post: operations["create_10"];
+        post: operations["create_11"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1448,6 +1496,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/need-requests/{needRequestId}/responses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["responses"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/events": {
         parameters: {
             query?: never;
@@ -1876,6 +1940,51 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ReplaceNeedResponseRequest: {
+            locationVariantIds: string[];
+            note?: string;
+        };
+        MoneyResponse: {
+            /** Format: int64 */
+            amount?: number;
+            currency?: string;
+        };
+        NeedResponseItemResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            locationVariantId?: string;
+            /** Format: uuid */
+            catalogItemId?: string;
+            /** Format: uuid */
+            variantId?: string;
+            priceAtResponse?: components["schemas"]["MoneyResponse"];
+            currentPrice?: components["schemas"]["MoneyResponse"];
+            available?: boolean;
+            actionable?: boolean;
+        };
+        NeedResponseResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            needRequestId?: string;
+            /** Format: uuid */
+            merchantId?: string;
+            merchantName?: string;
+            /** Format: uuid */
+            merchantLocationId?: string;
+            merchantLocationName?: string;
+            /** Format: int64 */
+            distanceMeters?: number;
+            /** @enum {string} */
+            status?: "ACTIVE" | "WITHDRAWN";
+            note?: string;
+            /** Format: int64 */
+            version?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            items?: components["schemas"]["NeedResponseItemResponse"][];
+        };
         ReplaceMemberLocationsRequest: {
             locationIds: string[];
         };
@@ -1949,6 +2058,12 @@ export interface components {
         };
         CancelOrderRequest: {
             reasonCode?: string;
+            note?: string;
+        };
+        CreateNeedResponseRequest: {
+            /** Format: uuid */
+            merchantLocationId: string;
+            locationVariantIds: string[];
             note?: string;
         };
         AddMerchantMemberRequest: {
@@ -2467,10 +2582,15 @@ export interface components {
             updatedAt?: string;
         };
         CheckoutPreviewRequest: {
+            source?: components["schemas"]["Source"];
             /** @enum {string} */
-            sourceType?: "CART" | "DIRECT";
+            sourceType?: "CART" | "DIRECT" | "NEED_REQUEST";
             /** Format: uuid */
             cartId?: string;
+            /** Format: uuid */
+            needRequestId?: string;
+            /** Format: uuid */
+            needResponseItemId?: string;
             items?: components["schemas"]["DirectItem"][];
             /** @enum {string} */
             fulfillmentMethod?: "PICKUP" | "SELLER_DELIVERY" | "SERVICE";
@@ -2484,6 +2604,16 @@ export interface components {
             locationVariantId?: string;
             /** Format: int64 */
             quantity?: number;
+        };
+        Source: {
+            /** @enum {string} */
+            type?: "CART" | "DIRECT" | "NEED_REQUEST";
+            /** Format: uuid */
+            cartId?: string;
+            /** Format: uuid */
+            needRequestId?: string;
+            /** Format: uuid */
+            needResponseItemId?: string;
         };
         CheckoutPreviewResponse: {
             checkoutToken?: string;
@@ -2925,6 +3055,11 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        NeedResponseCursorPage: {
+            items?: components["schemas"]["NeedResponseResponse"][];
+            hasMore?: boolean;
+            nextCursor?: string;
+        };
         SseEmitter: {
             /** Format: int64 */
             timeout?: number;
@@ -3173,29 +3308,29 @@ export interface components {
             content?: components["schemas"]["SystemSettingHistoryResponse"][];
             /** Format: int32 */
             number?: number;
-            first?: boolean;
-            last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
-            /** Format: int32 */
-            pageSize?: number;
-            /** Format: int32 */
-            pageNumber?: number;
-            unpaged?: boolean;
             paged?: boolean;
             sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
+            /** Format: int32 */
+            pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
         };
         SortObject: {
             empty?: boolean;
-            unsorted?: boolean;
             sorted?: boolean;
+            unsorted?: boolean;
         };
         SystemSettingHistoryResponse: {
             /** Format: uuid */
@@ -3281,12 +3416,12 @@ export interface components {
             content?: components["schemas"]["ModerationCaseSummaryResponse"][];
             /** Format: int32 */
             number?: number;
-            first?: boolean;
-            last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ModerationActionResponse: {
@@ -3354,12 +3489,12 @@ export interface components {
             content?: components["schemas"]["AdminAuditLogResponse"][];
             /** Format: int32 */
             number?: number;
-            first?: boolean;
-            last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
     };
@@ -3371,6 +3506,35 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    replace: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                needRequestId: string;
+                responseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceNeedResponseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NeedResponseResponse"];
+                };
+            };
+        };
+    };
     replaceLocations: {
         parameters: {
             query?: never;
@@ -3421,7 +3585,7 @@ export interface operations {
             };
         };
     };
-    replace: {
+    replace_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3844,6 +4008,59 @@ export interface operations {
             };
         };
     };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                needRequestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateNeedResponseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NeedResponseResponse"];
+                };
+            };
+        };
+    };
+    withdraw: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                needRequestId: string;
+                responseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NeedResponseResponse"];
+                };
+            };
+        };
+    };
     active: {
         parameters: {
             query?: never;
@@ -3914,7 +4131,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3963,7 +4180,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -4013,7 +4230,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4177,7 +4394,7 @@ export interface operations {
             };
         };
     };
-    create_4: {
+    create_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -4225,7 +4442,7 @@ export interface operations {
             };
         };
     };
-    create_5: {
+    create_6: {
         parameters: {
             query?: never;
             header?: {
@@ -4436,7 +4653,7 @@ export interface operations {
             };
         };
     };
-    create_6: {
+    create_7: {
         parameters: {
             query?: never;
             header: {
@@ -4524,7 +4741,7 @@ export interface operations {
             };
         };
     };
-    create_7: {
+    create_8: {
         parameters: {
             query?: never;
             header?: {
@@ -4594,7 +4811,7 @@ export interface operations {
             };
         };
     };
-    create_8: {
+    create_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -4638,7 +4855,7 @@ export interface operations {
             };
         };
     };
-    create_9: {
+    create_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -4706,7 +4923,7 @@ export interface operations {
             };
         };
     };
-    create_10: {
+    create_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -6124,6 +6341,31 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["NeedDetailResponse"];
+                };
+            };
+        };
+    };
+    responses: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                needRequestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NeedResponseCursorPage"];
                 };
             };
         };

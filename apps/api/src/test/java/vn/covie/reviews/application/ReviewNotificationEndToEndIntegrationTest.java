@@ -43,7 +43,10 @@ class ReviewNotificationEndToEndIntegrationTest extends PostgresIntegrationTest 
     void committedReviewOutboxCreatesMerchantNotificationAndPublishesEvent() {
         Fixture fixture=transactions.execute(status -> createReviewFixture());
 
-        assertThat(processor.processOne()).isTrue();
+        while (outbox.findById(fixture.eventId()).orElseThrow().getStatus() != OutboxEventStatus.PUBLISHED
+                && processor.processOne()) {
+            // Drain previously committed outbox work. The processor claims the oldest due event globally.
+        }
 
         assertThat(outbox.findById(fixture.eventId()).orElseThrow().getStatus()).isEqualTo(OutboxEventStatus.PUBLISHED);
         assertThat(notifications.findBySourceOutboxEventIdAndUserIdAndNotificationType(fixture.eventId(),fixture.owner(),NotificationType.REVIEW_RECEIVED)).isPresent();

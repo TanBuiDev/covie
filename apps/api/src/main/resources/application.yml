@@ -56,7 +56,6 @@ covie:
   rate-limit:
     enabled: false
     hmac-key: ${COVIE_RATE_LIMIT_HMAC_KEY:}
-    policies: {}
   retention:
     enabled: false
     batch-size: 500

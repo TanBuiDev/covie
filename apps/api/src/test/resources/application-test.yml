@@ -5,6 +5,10 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+  datasource:
+    hikari:
+      maximum-pool-size: 4
+      minimum-idle: 0
 
 springdoc:
   swagger-ui:

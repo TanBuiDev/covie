@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Instant;
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +36,7 @@ import vn.covie.shared.commerce.PaymentMethod;
 import vn.covie.shared.web.ApiException;
 import vn.covie.users.model.UserEntity;
 
-class CheckoutLastStockConcurrencyTest extends CheckoutRollbackInvariantTest {
+public class CheckoutLastStockConcurrencyTest extends CheckoutRollbackInvariantTest {
     @Autowired InventoryLockService locks;
     @Autowired TransactionTemplate transactions;
 
@@ -65,6 +66,11 @@ class CheckoutLastStockConcurrencyTest extends CheckoutRollbackInvariantTest {
 
     @Test
     void twoConcurrentCheckoutCommitsOfTheLastUnitYieldOneOrderAndOneInventoryConflict() throws Exception {
+        runLastStockCheckoutRace();
+    }
+
+    protected void runLastStockCheckoutRace() throws Exception {
+        org.mockito.Mockito.reset(sessions, previews, comparison, hook);
         Fixture fixture = fixture();
         UUID secondBuyer = UUID.randomUUID();
         users.saveAndFlush(UserEntity.active(secondBuyer, "buyer-" + secondBuyer, Instant.now()));
@@ -91,6 +97,42 @@ class CheckoutLastStockConcurrencyTest extends CheckoutRollbackInvariantTest {
                 (rs, row) -> rs.getInt(1), fixture.buyerId(), secondBuyer);
         assertThat(orderCount).isEqualTo(1);
         assertThat(jdbc.queryForObject("select reserved_quantity from inventory_balances where location_variant_id = ?", Long.class, fixture.offerId())).isEqualTo(1L);
+    }
+
+    protected void runIndependentCheckoutBatch(int buyerCount) throws Exception {
+        org.mockito.Mockito.reset(sessions, previews, comparison, hook);
+        List<Fixture> fixtures = new ArrayList<>();
+        Map<UUID, CheckoutRevalidation> revalidations = new HashMap<>();
+        Map<String, CheckoutSessionEntity> tokens = new HashMap<>();
+        for (int index = 0; index < buyerCount; index++) {
+            Fixture fixture = fixture();
+            String token = "independent-" + index;
+            fixtures.add(fixture);
+            revalidations.put(fixture.buyerId(), revalidation(fixture, fixture.buyerId()));
+            tokens.put(token, session(fixture.buyerId(), fixture));
+        }
+        org.mockito.Mockito.when(sessions.lock(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(call -> tokens.get(call.getArgument(0)));
+        org.mockito.Mockito.when(previews.revalidate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(call -> revalidations.get(call.getArgument(0)));
+        org.mockito.Mockito.when(previews.revalidate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyMap()))
+                .thenAnswer(call -> revalidations.get(call.getArgument(0)));
+        org.mockito.Mockito.when(comparison.compare(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(List.of());
+
+        int ordersBefore = jdbc.queryForObject("select count(*) from orders", Integer.class);
+        int outboxBefore = jdbc.queryForObject("select count(*) from outbox_events", Integer.class);
+        CyclicBarrier ready = new CyclicBarrier(buyerCount);
+        List<Callable<Boolean>> commands = new ArrayList<>();
+        for (int index = 0; index < buyerCount; index++) {
+            Fixture fixture = fixtures.get(index);
+            commands.add(commit(ready, fixture.buyerId(), "independent-" + index));
+        }
+        try (var pool = Executors.newFixedThreadPool(buyerCount)) {
+            List<Future<Boolean>> results = pool.invokeAll(commands);
+            assertThat(results.stream().filter(CheckoutLastStockConcurrencyTest::get).count()).isEqualTo(buyerCount);
+        }
+        assertThat(jdbc.queryForObject("select count(*) from orders", Integer.class)).isEqualTo(ordersBefore + buyerCount);
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events", Integer.class)).isEqualTo(outboxBefore + buyerCount);
     }
 
     @Test

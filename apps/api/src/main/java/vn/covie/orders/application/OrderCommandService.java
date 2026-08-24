@@ -180,6 +180,21 @@ public class OrderCommandService {
     @Transactional
     protected OrderCommandResult cancelLocked(UUID orderId, CancelOrderRequest request) {
         OrderEntity order = transitions.lock(orderId).order();
+        if (actors.currentActor().userId().equals(order.getBuyerUserId())) {
+            if (order.getStatus() == OrderStatus.CONFIRMED
+                    || order.getStatus() == OrderStatus.OUT_FOR_DELIVERY
+                    || order.getStatus() == OrderStatus.READY_FOR_PICKUP) {
+                throw new ApiException(
+                        ErrorCode.ORDER_ACTION_NOT_ALLOWED,
+                        HttpStatus.FORBIDDEN,
+                        "Request cancellation for a confirmed order instead.");
+            }
+            return cancelAsBuyer(order, request);
+        }
+        return cancelAsMerchant(order, request);
+    }
+
+    private OrderCommandResult cancelAsBuyer(OrderEntity order, CancelOrderRequest request) {
         UUID actorId = access.requireBuyer(order).actorUserId();
         transitions.requireStatus(order, OrderStatus.PENDING_CONFIRMATION);
         Instant now = clock.now();
@@ -192,7 +207,7 @@ public class OrderCommandService {
         }
         if (inventory == null) throw new IllegalStateException("Inventory reservation service is required.");
         inventory.releaseActiveForOrder(
-                orderId,
+                order.getId(),
                 actorId,
                 request.reasonCode() == null || request.reasonCode().isBlank()
                         ? "BUYER_CANCELLED"
@@ -206,6 +221,44 @@ public class OrderCommandService {
                 OrderActorContext.BUYER,
                 OrderStatus.PENDING_CONFIRMATION,
                 OrderStatus.CANCELLED_BEFORE_CONFIRMATION,
+                request.reasonCode(),
+                request.note(),
+                Map.of());
+        outbox.append(new OutboxEventIntent(
+                OrderOutboxEvents.ORDER_CANCELLED,
+                "ORDER",
+                order.getId(),
+                Map.of(
+                        "orderId", order.getId(),
+                        "orderCode", order.getOrderCode(),
+                        "status", order.getStatus().name())));
+        return result(order);
+    }
+
+    private OrderCommandResult cancelAsMerchant(OrderEntity order, CancelOrderRequest request) {
+        if (request.reasonCode() == null || request.reasonCode().isBlank()) {
+            throw new ApiException(
+                    ErrorCode.VALIDATION_FAILED,
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "reasonCode is required.");
+        }
+        UUID actorId = access.requireMerchantProcessor(order).actorUserId();
+        transitions.requireStatus(order,
+                OrderStatus.CONFIRMED,
+                OrderStatus.OUT_FOR_DELIVERY,
+                OrderStatus.READY_FOR_PICKUP);
+        Instant now = clock.now();
+        if (inventory == null) throw new IllegalStateException("Inventory reservation service is required.");
+        OrderStatus before = order.getStatus();
+        inventory.releaseActiveForOrder(order.getId(), actorId, request.reasonCode(), now);
+        order.close(OrderStatus.CANCELLED_BY_SELLER_AFTER_CONFIRMATION, now);
+        events.append(
+                order,
+                OrderEventType.SELLER_CANCELLED_AFTER_CONFIRMATION,
+                actorId,
+                OrderActorContext.MERCHANT,
+                before,
+                OrderStatus.CANCELLED_BY_SELLER_AFTER_CONFIRMATION,
                 request.reasonCode(),
                 request.note(),
                 Map.of());
