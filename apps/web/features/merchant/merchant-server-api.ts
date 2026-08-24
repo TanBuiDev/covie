@@ -25,3 +25,14 @@ export async function listLocationsForServer(merchantId: string) {
   const { data, response } = await client.GET("/api/v1/merchants/{merchantId}/locations", { params: { path: { merchantId } } });
   return requireData(response, data);
 }
+
+export async function getLocationForServer(
+  merchantId: string,
+  locationId: string,
+): Promise<Etagged<components["schemas"]["MerchantLocationResponse"]>> {
+  const client = await createServerReadClient();
+  const { data, response } = await client.GET("/api/v1/merchants/{merchantId}/locations/{locationId}", {
+    params: { path: { merchantId, locationId } },
+  });
+  return { data: await requireData(response, data), etag: response.headers.get("etag") ?? "" };
+}
