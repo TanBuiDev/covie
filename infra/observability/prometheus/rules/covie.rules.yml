@@ -7,17 +7,17 @@ groups:
         labels: { severity: page }
         annotations: { summary: "CoVie API metrics endpoint is down" }
       - alert: CoVieHigh5xxRate
-        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count[5m])), 1) > 0.05
-        for: 10m
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count[5m])), 1) > 0.02
+        for: 5m
         labels: { severity: page }
-        annotations: { summary: "CoVie 5xx ratio is above 5%" }
+        annotations: { summary: "CoVie 5xx ratio is above 2%" }
       - alert: CoVieRateLimiterDegraded
         expr: increase(covie_ratelimit_requests_total{outcome="degraded_fail_open"}[10m]) > 0
         for: 1m
         labels: { severity: warn }
         annotations: { summary: "A fail-open rate-limit group is degraded" }
       - alert: CoVieRetentionStalled
-        expr: time() - covie_retention_last_success_unixtime > 7200
+        expr: covie_retention_last_success_unixtime > 0 and time() - covie_retention_last_success_unixtime > 7200
         for: 15m
         labels: { severity: warn }
         annotations: { summary: "Technical retention has not completed for two hours" }
@@ -32,7 +32,7 @@ groups:
         labels: { severity: warn }
         annotations: { summary: "Host filesystem has less than 15% free space" }
       - alert: CoVieBackupTooOld
-        expr: covie_backup_age_seconds > 90000
+        expr: absent(covie_postgres_backup_timestamp_seconds) or time() - covie_postgres_backup_timestamp_seconds > 93600
         for: 15m
         labels: { severity: page }
-        annotations: { summary: "Latest verified PostgreSQL backup is older than 25 hours" }
+        annotations: { summary: "Latest verified PostgreSQL backup is older than 26 hours" }
