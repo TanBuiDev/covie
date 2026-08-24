@@ -13,7 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.covie.admin.security.AdminAccessPolicy;
 import vn.covie.moderation.api.dto.ModerationActionRequest;
+import vn.covie.moderation.api.dto.BulkModerationRequest;
+import vn.covie.moderation.api.dto.BulkModerationResult;
 import vn.covie.moderation.api.dto.ModerationCommandResult;
+import vn.covie.moderation.application.ModerationBulkService;
 import vn.covie.moderation.application.ModerationCommandService;
 import vn.covie.moderation.application.ModerationCaseService;
 import vn.covie.moderation.api.dto.ModerationCaseSummaryResponse;
@@ -28,9 +31,10 @@ public class AdminModerationController {
     private final AdminAccessPolicy access;
     private final IdempotencyExecutor idempotency;
     private final ModerationCommandService commands;
+    private final ModerationBulkService bulk;
     private final ModerationCaseService cases;
-    public AdminModerationController(AdminAccessPolicy access, IdempotencyExecutor idempotency, ModerationCommandService commands, ModerationCaseService cases) {
-        this.access = access; this.idempotency = idempotency; this.commands = commands; this.cases=cases;
+    public AdminModerationController(AdminAccessPolicy access, IdempotencyExecutor idempotency, ModerationCommandService commands, ModerationBulkService bulk, ModerationCaseService cases) {
+        this.access = access; this.idempotency = idempotency; this.commands = commands; this.bulk = bulk; this.cases=cases;
     }
     @org.springframework.web.bind.annotation.GetMapping public ResponseEntity<Page<ModerationCaseSummaryResponse>> page(@org.springframework.web.bind.annotation.RequestParam(defaultValue="0")int page,@org.springframework.web.bind.annotation.RequestParam(defaultValue="50")int size,@org.springframework.web.bind.annotation.RequestParam(required=false)ModerationCaseStatus status,@org.springframework.web.bind.annotation.RequestParam(defaultValue="OPENED_DESC")String sort){return ResponseEntity.ok().header("Cache-Control","private, no-store").body(cases.page(page,size,status,sort));}
     @org.springframework.web.bind.annotation.GetMapping("/{caseId}") public ResponseEntity<ModerationCaseDetailResponse> detail(@PathVariable UUID caseId){return ResponseEntity.ok().header("Cache-Control","private, no-store").body(cases.detail(caseId));}
@@ -39,6 +43,7 @@ public class AdminModerationController {
     @PostMapping("/{caseId}/hide-content") public ResponseEntity<ModerationCommandResult> hide(@PathVariable UUID caseId, @RequestHeader("Idempotency-Key") String key, @Valid @RequestBody ModerationActionRequest request) { return command(caseId, ModerationActionType.HIDE, key, request); }
     @PostMapping("/{caseId}/restore-content") public ResponseEntity<ModerationCommandResult> restore(@PathVariable UUID caseId, @RequestHeader("Idempotency-Key") String key, @Valid @RequestBody(required = false) ModerationActionRequest request) { return command(caseId, ModerationActionType.RESTORE, key, request); }
     @PostMapping("/{caseId}/close") public ResponseEntity<ModerationCommandResult> close(@PathVariable UUID caseId, @RequestHeader("Idempotency-Key") String key, @Valid @RequestBody ModerationActionRequest request) { return command(caseId, ModerationActionType.CLOSE, key, request); }
+    @PostMapping("/bulk-actions") public ResponseEntity<BulkModerationResult> bulk(@RequestHeader("Idempotency-Key") String key, @Valid @RequestBody BulkModerationRequest request) { return ResponseEntity.ok().header("Cache-Control", "private, no-store").body(bulk.execute(key, request)); }
     private ResponseEntity<ModerationCommandResult> command(UUID caseId, ModerationActionType action, String key, ModerationActionRequest request) {
         var actor = access.requireAdmin();
         ModerationCommandResult result = idempotency.execute(actor.userId(), "moderation." + action.name().toLowerCase() + ":" + caseId,
