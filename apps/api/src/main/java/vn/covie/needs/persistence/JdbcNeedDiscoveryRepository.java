@@ -44,7 +44,9 @@ public class JdbcNeedDiscoveryRepository implements NeedDiscoveryRepository {
                     join category_paths cp on cp.descendant_id=ci.primary_category_id and cp.ancestor_id=n.category_id
                     left join location_areas area on area.id=n.location_area_id
                     left join inventory_balances ib on ib.location_variant_id=lv.id
-                    where n.request_status='ACTIVE' and n.expires_at>:now and st_dwithin(n.geo_point,ml.geo_point,n.search_radius_meters)
+                    where n.request_status='ACTIVE'
+                      and n.moderation_status in ('NOT_REQUIRED','APPROVED')
+                      and n.expires_at>:now and st_dwithin(n.geo_point,ml.geo_point,n.search_radius_meters)
                       and (n.need_type='SERVICE' or lv.inventory_mode='UNTRACKED' or (lv.inventory_mode='TRACKED' and coalesce(ib.stock_on_hand,0)>coalesce(ib.reserved_quantity,0)))
                     group by n.id,n.need_type,n.category_id,n.title,n.description,n.expires_at,ml.id,ml.name,area.name,ml.pickup_enabled
                 ) select * from candidate

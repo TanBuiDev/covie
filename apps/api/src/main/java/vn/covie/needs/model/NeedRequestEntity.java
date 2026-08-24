@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.locationtech.jts.geom.Point;
+import vn.covie.moderation.model.ContentModerationStatus;
 
 @Entity
 @Table(name = "need_requests")
@@ -26,13 +27,12 @@ public class NeedRequestEntity {
     @Column(name = "requested_quantity") private Long requestedQuantity;
     @Column(name = "location_area_id") private UUID locationAreaId;
     @JdbcTypeCode(SqlTypes.GEOGRAPHY)
-    @Column(name = "geo_point", nullable = false, columnDefinition = "geography(Point,4326)")
-    private Point geoPoint;
+    @Column(name = "geo_point", nullable = false, columnDefinition = "geography(Point,4326)") private Point geoPoint;
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "location_snapshot", nullable = false, columnDefinition = "jsonb")
-    private JsonNode locationSnapshot;
+    @Column(name = "location_snapshot", nullable = false, columnDefinition = "jsonb") private JsonNode locationSnapshot;
     @Column(name = "search_radius_meters", nullable = false) private int searchRadiusMeters;
     @Enumerated(EnumType.STRING) @Column(name = "request_status", nullable = false) private NeedStatus requestStatus;
+    @Enumerated(EnumType.STRING) @Column(name = "moderation_status", nullable = false, length = 30) private ContentModerationStatus moderationStatus;
     @Column(name = "expires_at", nullable = false) private Instant expiresAt;
     @Column(name = "fulfilled_order_id") private UUID fulfilledOrderId;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
@@ -59,10 +59,49 @@ public class NeedRequestEntity {
         entity.locationSnapshot = locationSnapshot;
         entity.searchRadiusMeters = searchRadiusMeters;
         entity.requestStatus = NeedStatus.ACTIVE;
+        entity.moderationStatus = ContentModerationStatus.NOT_REQUIRED;
         entity.expiresAt = expiresAt;
         entity.createdAt = now;
         entity.updatedAt = now;
         return entity;
+    }
+
+    public void requireModeration(Instant now) {
+        if (moderationStatus != ContentModerationStatus.NOT_REQUIRED) throw new IllegalStateException("Need is already moderated.");
+        moderationStatus = ContentModerationStatus.PENDING;
+        updatedAt = now;
+    }
+
+    public void approveModeration(Instant now) {
+        if (moderationStatus != ContentModerationStatus.PENDING) throw new IllegalStateException("Need moderation is not pending.");
+        moderationStatus = ContentModerationStatus.APPROVED;
+        updatedAt = now;
+    }
+
+    public void rejectModeration(Instant now) {
+        if (moderationStatus != ContentModerationStatus.PENDING) throw new IllegalStateException("Need moderation is not pending.");
+        moderationStatus = ContentModerationStatus.REJECTED;
+        updatedAt = now;
+    }
+
+    public void hideModeration(Instant now) {
+        if (moderationStatus != ContentModerationStatus.NOT_REQUIRED && moderationStatus != ContentModerationStatus.APPROVED) {
+            throw new IllegalStateException("Need is not currently visible.");
+        }
+        moderationStatus = ContentModerationStatus.HIDDEN;
+        updatedAt = now;
+    }
+
+    public void restoreModeration(Instant now) {
+        if (moderationStatus != ContentModerationStatus.HIDDEN && moderationStatus != ContentModerationStatus.REJECTED) {
+            throw new IllegalStateException("Need is not restorable.");
+        }
+        moderationStatus = ContentModerationStatus.APPROVED;
+        updatedAt = now;
+    }
+
+    public boolean isModerationVisible() {
+        return moderationStatus == ContentModerationStatus.NOT_REQUIRED || moderationStatus == ContentModerationStatus.APPROVED;
     }
 
     public void cancel(Instant now) {
@@ -93,19 +132,13 @@ public class NeedRequestEntity {
     }
 
     private void requireStatus(NeedStatus expected) {
-        if (requestStatus != expected) {
-            throw new IllegalStateException("Need status must be " + expected + ".");
-        }
+        if (requestStatus != expected) throw new IllegalStateException("Need status must be " + expected + ".");
     }
-
     private static String normalizeRequired(String value) {
         if (value == null || value.strip().isEmpty()) throw new IllegalArgumentException("Value is required.");
         return value.strip();
     }
-
-    private static String normalizeOptional(String value) {
-        return value == null || value.strip().isEmpty() ? null : value.strip();
-    }
+    private static String normalizeOptional(String value) { return value == null || value.strip().isEmpty() ? null : value.strip(); }
 
     public UUID getId() { return id; }
     public UUID getBuyerUserId() { return buyerUserId; }
@@ -120,6 +153,7 @@ public class NeedRequestEntity {
     public JsonNode getLocationSnapshot() { return locationSnapshot; }
     public int getSearchRadiusMeters() { return searchRadiusMeters; }
     public NeedStatus getRequestStatus() { return requestStatus; }
+    public ContentModerationStatus getModerationStatus() { return moderationStatus; }
     public Instant getExpiresAt() { return expiresAt; }
     public UUID getFulfilledOrderId() { return fulfilledOrderId; }
     public Instant getCreatedAt() { return createdAt; }
