@@ -28,7 +28,15 @@ export function OrderDetailView({ orderId, sellerMerchantId }: { orderId: string
     });
   }, [refresh]);
 
-  if (error) return <ErrorState title="Không thể tải đơn hàng" description={error} onRetry={() => void refresh()} />;
+  if (error) {
+    return (
+      <ErrorState
+        title="Không thể tải đơn hàng"
+        description={error}
+        action={<button type="button" onClick={() => void refresh()}>Tải lại</button>}
+      />
+    );
+  }
   if (!order) return <LoadingState label="Đang tải đơn hàng…" />;
 
   return (
