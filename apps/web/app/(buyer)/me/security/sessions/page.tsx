@@ -5,5 +5,13 @@ import { requireUser } from "@/lib/auth/require-user";
 export default async function SessionsPage() {
   await requireUser();
   const sessions = await getActiveSessions();
-  return <main><h1>Bảo mật</h1><SessionList sessions={sessions} /></main>;
+  return (
+    <main className="profile-surface">
+      <header>
+        <h1>Bảo mật</h1>
+        <p>Quản lý các thiết bị đang đăng nhập vào tài khoản CoVie của bạn.</p>
+      </header>
+      <SessionList sessions={sessions} />
+    </main>
+  );
 }
