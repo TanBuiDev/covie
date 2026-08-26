@@ -10,7 +10,7 @@ export default async function MerchantOrdersPage({ params }: { params: Promise<{
       <header className="surface-header seller-desktop-heading">
         <p className="eyebrow">Seller Center / Đơn đến</p>
         <h1>Đơn hàng</h1>
-        <p>Danh sách cursor mới nhất từ backend. Không lọc theo status ở client vì trang chưa tải không được xem là dữ liệu đầy đủ.</p>
+        <p>Theo dõi các đơn mới nhất và lọc theo điểm bán được phân công.</p>
       </header>
       <OrderList merchantId={merchantId} sellerBase={`/seller/${encodeURIComponent(merchantId)}/orders`} locations={locations} />
     </section>
