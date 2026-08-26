@@ -58,7 +58,7 @@ export function SellerShell({
         {restricted ? (
           <section className="warning-banner seller-restriction-banner" role="status" aria-label="Trạng thái cửa hàng">
             <strong>Cửa hàng hiện {statusLabel(merchantStatus)}.</strong>
-            <p>Một số dữ liệu hoặc thao tác có thể bị backend giới hạn. CoVie chỉ hiển thị các action API thực sự cho phép.</p>
+            <p>Một số dữ liệu hoặc thao tác có thể bị giới hạn. CoVie chỉ hiển thị những thao tác hiện còn khả dụng.</p>
           </section>
         ) : null}
         {children}
