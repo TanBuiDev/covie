@@ -20,7 +20,7 @@ function resolveSellerTitle(pathname: string, merchantId: string) {
   if (relative.startsWith("/inventory")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Tồn kho" };
   if (relative.startsWith("/orders/") && relative.split("/").filter(Boolean).length >= 2) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Chi tiết đơn" };
   if (relative.startsWith("/orders")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Đơn hàng" };
-  if (relative.startsWith("/needs")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Nhu cầu phù hợp" };
+  if (relative.startsWith("/needs")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Cần mua phù hợp" };
   if (relative.startsWith("/reputation")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Uy tín Seller" };
   if (relative.startsWith("/notices")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Thông báo kiểm duyệt" };
   return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Seller Center" };
