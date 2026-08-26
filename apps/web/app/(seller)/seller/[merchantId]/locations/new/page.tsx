@@ -6,7 +6,7 @@ export default async function NewLocationPage({ params }: { params: Promise<{ me
   const base = `/seller/${encodeURIComponent(merchantId)}/locations`;
   return (
     <section className="seller-stack">
-      <p><Link href={base}>Quay lại điểm bán</Link></p>
+      <p className="seller-desktop-only"><Link href={base}>Quay lại điểm bán</Link></p>
       <LocationForm merchantId={merchantId} />
     </section>
   );
