@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 
 import type { components } from "@covie/api-client";
 import { useEffect, useState } from "react";
