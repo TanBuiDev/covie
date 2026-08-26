@@ -283,6 +283,13 @@
   color: var(--seller-text-inverse);
 }
 
+.seller-shell .seller-button--secondary,
+.seller-entry .seller-button--secondary {
+  background: var(--seller-surface);
+  border-color: var(--seller-border);
+  color: var(--seller-text-primary);
+}
+
 .seller-shell button:disabled,
 .seller-entry button:disabled {
   cursor: not-allowed;

@@ -233,7 +233,10 @@
 }
 
 @media (max-width: 1023px) {
-  .seller-desktop-heading { display: none; }
+  .seller-desktop-heading,
+  .seller-catalog-form > header {
+    display: none;
+  }
 }
 
 @media (max-width: 380px) {
