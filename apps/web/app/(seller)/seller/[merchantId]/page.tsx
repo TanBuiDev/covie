@@ -23,6 +23,7 @@ export default async function MerchantPage({ params }: { params: Promise<{ merch
   return (
     <SellerDashboard
       merchantId={merchantId}
+      merchantName={merchant.data.name}
       merchantStatus={merchant.data.status}
       orders={orderResult.data.items ?? []}
       needMatches={needResult.data.items ?? []}

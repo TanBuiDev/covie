@@ -21,8 +21,15 @@ export default async function LocationsPage({ params }: { params: Promise<{ merc
   const base = `/seller/${encodeURIComponent(merchantId)}/locations`;
 
   return (
-    <section className="seller-stack">
-      <Link className="seller-button seller-location-add" href={`${base}/new`}>Thêm điểm bán</Link>
+    <section className="seller-stack seller-locations-page">
+      <header className="seller-workspace-header seller-workspace-header--action">
+        <div>
+          <h1>Điểm bán</h1>
+          <p>Nơi phục vụ, giao hàng &amp; pickup</p>
+        </div>
+        <Link className="seller-button seller-location-add" href={`${base}/new`}>Thêm điểm bán</Link>
+      </header>
+      <p className="seller-location-count">{locations.length.toLocaleString("vi-VN")} điểm bán</p>
       <LocationList
         merchantId={merchantId}
         locations={locations}

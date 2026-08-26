@@ -26,12 +26,14 @@ function merchantStatusCopy(status?: MerchantStatus) {
 
 export function SellerDashboard({
   merchantId,
+  merchantName,
   merchantStatus,
   orders,
   needMatches,
   locations,
 }: {
   merchantId: string;
+  merchantName?: string;
   merchantStatus?: MerchantStatus;
   orders: OrderSummary[];
   needMatches: NeedMatch[];
@@ -42,6 +44,11 @@ export function SellerDashboard({
 
   return (
     <div className="seller-stack seller-dashboard">
+      <header className="seller-dashboard__header">
+        <h1>Tổng quan</h1>
+        <p>{merchantName ? `${merchantName} · Trung tâm bán hàng` : "Trung tâm bán hàng"}</p>
+      </header>
+
       <section className="seller-metric-grid" aria-label="Tóm tắt Seller Center">
         <article className="seller-metric">
           <span>Trạng thái cửa hàng</span>
@@ -87,7 +94,7 @@ export function SellerDashboard({
         <div className="seller-section__heading">
           <div>
             <p className="seller-section__eyebrow">NHU CẦU PHÙ HỢP</p>
-            <h2 id="seller-needs-heading">Cơ hội gần điểm bán</h2>
+            <h2 id="seller-needs-heading">Cần mua phù hợp</h2>
           </div>
           <Link href={`${base}/needs`}>Xem tất cả</Link>
         </div>
@@ -98,7 +105,7 @@ export function SellerDashboard({
               const location = match.resolvedLocation;
               const distance = distanceCopy(match.distanceMeters);
               return (
-                <Link className="seller-row" key={need?.id ?? `${location?.id ?? "need"}-${index}`} href={`${base}/needs`}>
+                <Link className="seller-row seller-need-match-row" key={need?.id ?? `${location?.id ?? "need"}-${index}`} href={`${base}/needs`}>
                   <div>
                     <strong>{need?.title ?? "Nhu cầu gần bạn"}</strong>
                     <small>{[location?.name, match.buyerArea?.label, distance].filter(Boolean).join(" · ") || "Trong phạm vi điểm bán"}</small>

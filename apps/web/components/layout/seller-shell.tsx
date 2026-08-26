@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { SellerNavLinks } from "@/features/seller/seller-nav";
 import { SellerPageTitle } from "@/features/seller/seller-page-title";
@@ -43,15 +42,10 @@ export function SellerShell({
       </div>
 
       <aside className="seller-desktop-navigation">
-        <Link className="seller-desktop-brand" href={base} aria-label="CoVie Seller Center — Tổng quan">
-          <Image src="/icon.svg" alt="" aria-hidden="true" width={36} height={36} priority />
-          <span>
-            <strong>CoVie Seller</strong>
-            <small>{merchantName ?? "Cửa hàng"}</small>
-          </span>
-        </Link>
+        <Link className="seller-desktop-brand" href={base}>TRUNG TÂM BÁN HÀNG</Link>
         {switcher ? <div className="seller-desktop-switcher">{switcher}</div> : null}
         <SellerNavLinks merchantId={merchantId} />
+        <p className="seller-desktop-role">Người bán / Nhà cung cấp</p>
       </aside>
 
       <main className="seller-shell__main" id="seller-main-content">
