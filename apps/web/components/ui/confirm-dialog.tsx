@@ -94,7 +94,7 @@ export function ConfirmDialog({
           <button ref={cancelRef} type="button" disabled={cancelDisabled} onClick={onCancel}>{cancelLabel}</button>
           <button
             type="button"
-            className={dangerous ? "button-danger" : undefined}
+            className={dangerous ? "button-danger" : "button-primary"}
             disabled={confirmDisabled}
             onClick={onConfirm}
           >
