@@ -67,7 +67,7 @@ it("preserves the other backend facet when editing a combined coverage record", 
   };
 
   render(<CoverageForm merchantId="merchant-1" locationId="location-1" coverage={coverage} />);
-  fireEvent.change(screen.getByLabelText(/^Bán kính$/), { target: { value: "5000" } });
+  fireEvent.change(screen.getByLabelText(/^Bán kính/), { target: { value: "5000" } });
   fireEvent.click(screen.getByRole("button", { name: "Lưu phạm vi" }));
 
   await waitFor(() => expect(mocks.update).toHaveBeenCalledTimes(1));
