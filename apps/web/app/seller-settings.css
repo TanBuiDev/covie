@@ -1,0 +1,64 @@
+.seller-shell fieldset,
+.seller-entry fieldset {
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-sm);
+  display: grid;
+  gap: .55rem;
+  margin: 0;
+  min-width: 0;
+  padding: .8rem;
+}
+
+.seller-shell legend,
+.seller-entry legend {
+  color: var(--seller-text-primary);
+  font-size: .86rem;
+  font-weight: 800;
+  padding: 0 .25rem;
+}
+
+.seller-shell fieldset label:has(input[type="radio"]),
+.seller-entry fieldset label:has(input[type="radio"]) {
+  align-items: center;
+  display: flex;
+  gap: .55rem;
+  min-height: 44px;
+}
+
+.seller-shell input[type="radio"],
+.seller-entry input[type="radio"] {
+  height: 20px;
+  width: 20px;
+}
+
+.seller-shell .rule-row {
+  display: grid;
+  gap: .55rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.seller-shell .seller-row__actions {
+  align-items: flex-end;
+  display: flex;
+  flex: 0 0 auto;
+  gap: .45rem;
+}
+
+.seller-shell .seller-row__actions button {
+  min-height: 40px;
+  padding: .5rem .65rem;
+}
+
+.seller-shell .field-hint {
+  color: var(--seller-text-tertiary);
+  font-size: .8rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .seller-shell .rule-row {
+    align-items: end;
+    grid-template-columns: minmax(0, 1fr) minmax(8rem, .7fr) auto;
+  }
+}

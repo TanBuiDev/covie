@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { StatusChip } from "@/components/ui/status-chip";
 import { LocationForm } from "@/features/merchant/location-form";
 import { getLocationForServer } from "@/features/merchant/merchant-server-api";
-import { StatusChip } from "@/components/ui/status-chip";
+import { MerchantContactSettings } from "@/features/seller/contact-settings";
+import { readApiError } from "@/lib/api/api-error";
+import { createServerReadClient } from "@/lib/api/server-api-client";
 import { formatMoney } from "@/lib/format/money";
 
 export default async function LocationDetailPage({
@@ -10,7 +13,12 @@ export default async function LocationDetailPage({
   params: Promise<{ merchantId: string; locationId: string }>;
 }) {
   const { merchantId, locationId } = await params;
-  const location = await getLocationForServer(merchantId, locationId);
+  const client = await createServerReadClient();
+  const [location, contactResult] = await Promise.all([
+    getLocationForServer(merchantId, locationId),
+    client.GET("/api/v1/merchants/{merchantId}/contacts", { params: { path: { merchantId } } }),
+  ]);
+  if (!contactResult.response.ok || !contactResult.data) throw await readApiError(contactResult.response);
   const base = `/seller/${encodeURIComponent(merchantId)}/locations/${encodeURIComponent(locationId)}`;
 
   return (
@@ -48,6 +56,12 @@ export default async function LocationDetailPage({
         key={location.etag || String(location.data.version ?? locationId)}
         merchantId={merchantId}
         location={location}
+      />
+      <MerchantContactSettings
+        merchantId={merchantId}
+        merchantLocationId={locationId}
+        contacts={contactResult.data}
+        title="Kênh liên hệ tại điểm bán"
       />
     </section>
   );
