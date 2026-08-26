@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -16,23 +17,9 @@ const NAV_ITEMS: ReadonlyArray<{ href: string; label: string; icon: CoVieIconNam
 ];
 
 function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/" || pathname.startsWith("/cart");
+  if (href === "/") return pathname === "/";
   if (href === "/search") return pathname.startsWith("/search") || pathname.startsWith("/items/") || pathname.startsWith("/merchants/");
   return pathname.startsWith(href);
-}
-
-function CoVieDesktopBrand() {
-  return (
-    <span className="buyer-desktop-brand__lockup" aria-hidden="true">
-      <svg className="buyer-desktop-brand__mark" viewBox="0 0 48 54" role="presentation">
-        <path d="M24 5C12.7 5 3.5 13.9 3.5 25C3.5 37.45 16.1 46.35 24 50C31.9 46.35 44.5 37.45 44.5 25C44.5 13.9 35.3 5 24 5Z" fill="#059669" />
-        <path d="M10 24.25C15.65 22.8 20.25 19.1 24 14C27.75 19.1 32.35 22.8 38 24.25L35.2 28.75C30.9 27.3 27.2 24.95 24 21.75C20.8 24.95 17.1 27.3 12.8 28.75L10 24.25Z" fill="white" />
-        <path d="M15 29.5H33V37.5C33 38.163 32.7366 38.7989 32.2678 39.2678C31.7989 39.7366 31.163 40 30.5 40H17.5C16.837 40 16.2011 39.7366 15.7322 39.2678C15.2634 38.7989 15 38.163 15 37.5V29.5Z" fill="white" />
-        <path d="M21 40V32H27V40H21Z" fill="#059669" />
-      </svg>
-      <span className="buyer-desktop-brand__words"><strong>CoVie</strong><small>Chợ Việt</small></span>
-    </span>
-  );
 }
 
 export function BuyerDesktopHeader() {
@@ -52,7 +39,9 @@ export function BuyerDesktopHeader() {
   return (
     <header className="buyer-desktop-header">
       <div className="buyer-desktop-header__inner">
-        <Link className="buyer-desktop-brand" href="/" aria-label="CoVie - Trang chủ"><CoVieDesktopBrand /></Link>
+        <Link className="buyer-desktop-brand" href="/" aria-label="CoVie - Trang chủ">
+          <Image src="/figma/covie-logo-primary.svg" alt="CoVie — Chợ Việt" width={152} height={54} priority />
+        </Link>
 
         <div className="buyer-desktop-location-wrap">
           <button
