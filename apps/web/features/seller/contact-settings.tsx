@@ -78,7 +78,7 @@ export function MerchantContactSettings({
       }
 
       if (requests.length === 0) {
-        setMessage("Không có kênh mới có thể lưu. Contact đã tồn tại cần concurrency token từ backend trước khi có thể chỉnh sửa an toàn.");
+        setMessage("Không có kênh mới để lưu. Các kênh đã tồn tại hiện chỉ có thể xem hoặc xóa trong phần quản lý.");
         return;
       }
 
@@ -90,7 +90,7 @@ export function MerchantContactSettings({
       router.refresh();
     } catch {
       setMessageIsError(true);
-      setMessage("Không thể lưu liên hệ. Vui lòng thử lại; các kênh đã tạo thành công vẫn được giữ theo backend.");
+      setMessage("Không thể lưu đầy đủ liên hệ. Các kênh đã lưu thành công vẫn được giữ; hãy tải lại và kiểm tra trước khi thử lại.");
       router.refresh();
     } finally {
       setPending(false);
@@ -130,7 +130,7 @@ export function MerchantContactSettings({
             disabled={pending}
             placeholder={zaloContact ? undefined : "https://zalo.me/..."}
           />
-          <small>{zaloContact ? "Liên kết liên hệ công khai · chỉ đọc cho đến khi backend cấp token chỉnh sửa." : "Liên kết liên hệ công khai"}</small>
+          <small>{zaloContact ? "Liên kết đã lưu hiện chỉ có thể xem." : "Liên kết liên hệ công khai"}</small>
         </label>
 
         <label>
@@ -144,14 +144,14 @@ export function MerchantContactSettings({
             disabled={pending}
             placeholder={messengerContact ? undefined : "https://m.me/..."}
           />
-          <small>{messengerContact ? "Liên kết liên hệ công khai · chỉ đọc cho đến khi backend cấp token chỉnh sửa." : "Liên kết liên hệ công khai"}</small>
+          <small>{messengerContact ? "Liên kết đã lưu hiện chỉ có thể xem." : "Liên kết liên hệ công khai"}</small>
         </label>
 
         <section className="seller-contact-qr" aria-labelledby="seller-contact-qr-heading">
           <strong id="seller-contact-qr-heading">QR liên hệ</strong>
           <p>Ảnh QR dùng để liên hệ Zalo. Không dùng cho thanh toán.</p>
           {qrContact ? (
-            <p className="seller-contact-qr__saved" role="status">Ảnh QR liên hệ đã được lưu. Thay ảnh cần contact concurrency token từ backend.</p>
+            <p className="seller-contact-qr__saved" role="status">Ảnh QR liên hệ đã được lưu. Hiện chưa hỗ trợ thay trực tiếp ảnh đã lưu.</p>
           ) : (
             <label className="seller-contact-qr__picker">
               <span>Chọn ảnh QR liên hệ</span>
@@ -161,7 +161,7 @@ export function MerchantContactSettings({
         </section>
 
         {hasDuplicateFrozenType ? (
-          <p className="seller-contract-note" role="status">Backend đang có nhiều record cùng loại liên hệ. Màn frozen chỉ hiển thị một giá trị; dùng phần quản lý desktop để xem/xóa record thừa.</p>
+          <p className="seller-contract-note" role="status">Có nhiều kênh cùng loại đang được lưu. Màn hình này hiển thị một giá trị; dùng phần quản lý trên desktop để xem hoặc xóa bản ghi thừa.</p>
         ) : null}
         {message ? <p role={messageIsError ? "alert" : "status"}>{message}</p> : null}
         <button className="seller-contact-save" type="submit" disabled={pending}>
@@ -171,7 +171,7 @@ export function MerchantContactSettings({
 
       {visibleContacts.length ? (
         <details className="seller-contact-management seller-desktop-only">
-          <summary>Quản lý record liên hệ</summary>
+          <summary>Quản lý kênh liên hệ</summary>
           <div className="seller-row-list">
             {visibleContacts.map((contact, index) => (
               <div className="seller-row" key={contact.id ?? `${contact.contactType ?? "contact"}-${index}`}>
