@@ -104,6 +104,6 @@ it("blocks save when backend returns an unsupported conditional rule instead of 
   expect(screen.getByText("Điều kiện đã được cập nhật")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Lưu phí giao" }));
 
-  expect(await screen.findByRole("alert")).toHaveTextContent("chưa được phiên bản Seller Center này hỗ trợ");
+  expect(await screen.findByRole("alert")).toHaveTextContent("chưa được phiên bản hiện tại hỗ trợ");
   expect(mocks.update).not.toHaveBeenCalled();
 });
