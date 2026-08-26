@@ -1,9 +1,19 @@
 import { readApiError } from "@/lib/api/api-error";
 import { createServerReadClient } from "@/lib/api/server-api-client";
+import { locationToQuery, type DiscoveryLocation } from "@/features/location/location-context";
 
 export async function listCatalogItemsForServer(merchantId: string) {
   const client = await createServerReadClient();
   const { data, response } = await client.GET("/api/v1/merchants/{merchantId}/catalog-items", { params: { path: { merchantId } } });
+  if (!response.ok || !data) throw await readApiError(response);
+  return data;
+}
+
+export async function getCatalogItemForServer(itemId: string, location?: DiscoveryLocation) {
+  const client = await createServerReadClient();
+  const { data, response } = await client.GET("/api/v1/catalog/items/{itemId}", {
+    params: { path: { itemId }, query: locationToQuery(location) },
+  });
   if (!response.ok || !data) throw await readApiError(response);
   return data;
 }

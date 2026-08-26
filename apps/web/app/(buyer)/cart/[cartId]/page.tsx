@@ -23,10 +23,5 @@ export default async function CartDetailPage({ params }: { params: Promise<{ car
     );
   }
 
-  return (
-    <main className="buyer-surface">
-      <p><Link href="/cart">← Tất cả giỏ hàng</Link></p>
-      <CartDetail initialCart={data} />
-    </main>
-  );
+  return <main><CartDetail initialCart={data} /></main>;
 }

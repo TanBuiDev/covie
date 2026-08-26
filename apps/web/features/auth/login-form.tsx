@@ -1,12 +1,17 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useSyncExternalStore } from "react";
 import { CovieApiError } from "../../lib/api/api-error";
 import { login } from "./auth-api";
 
 type LoginFormProps = { onNavigate?: (path: string) => void };
 
 export function LoginForm({ onNavigate = (path) => window.location.assign(path) }: LoginFormProps) {
+  const hydrated = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string>();
@@ -34,7 +39,7 @@ export function LoginForm({ onNavigate = (path) => window.location.assign(path) 
     }
   }
 
-  return <form onSubmit={submit}>
+  return <form method="post" onSubmit={submit}>
     <label htmlFor="email">Email</label>
     <input id="email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
     {fields.email?.map((error) => <p key={error}>{error}</p>)}
@@ -42,6 +47,6 @@ export function LoginForm({ onNavigate = (path) => window.location.assign(path) 
     <input id="password" name="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
     {fields.password?.map((error) => <p key={error}>{error}</p>)}
     {message && <p role="alert">{message}</p>}
-    <button type="submit">Đăng nhập</button>
+    <button type="submit" disabled={!hydrated}>Đăng nhập</button>
   </form>;
 }

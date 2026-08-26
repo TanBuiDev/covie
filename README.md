@@ -1,46 +1,106 @@
 # CoVie
 
-## Local bootstrap
+## Run locally in development
 
 Prerequisites:
 
 - JDK 25
-- Node.js 24 LTS
-- pnpm 10
-- Docker Desktop / Docker Engine + Compose
+- Node.js 24 LTS and pnpm 10
+- Docker Desktop / Docker Engine with Compose
 
-Start infrastructure:
+Run every command below from the repository root. The first time only, install packages and create the ignored local environment file:
 
-```bash
+```powershell
+pnpm install
+Copy-Item .env.example .env.local
+```
+
+Generate disposable local JWT keys if they do not yet exist. The script refuses to overwrite a key pair.
+
+```powershell
+& 'C:\Program Files\Git\bin\bash.exe' infra/scripts/generate-dev-jwt-keys.sh
+```
+
+Start PostgreSQL, Redis and MinIO:
+
+```powershell
 pnpm infra:up
 ```
 
-Run the API:
+### Fast path (after the one-time setup)
 
-```bash
-cd apps/api
-./mvnw -Dspring-boot.run.profiles=local spring-boot:run
-```
-
-Windows PowerShell equivalent:
+Run the full local stack with one command:
 
 ```powershell
-cd apps/api
-.\mvnw.cmd "-Dspring-boot.run.profiles=local" spring-boot:run
+pnpm dev
 ```
 
-Run the web app in another terminal:
+It starts PostgreSQL, Redis, MinIO, the API on `8081`, and the web app on `3000`. Open http://localhost:3000. To stop the local stack:
 
-```bash
+```powershell
+pnpm dev:stop
+```
+
+Logs are written to ignored `.local/dev/`. The manual steps below are useful only when you need to inspect or run one process separately.
+
+### Repeatable Public Buyer UI acceptance
+
+With the full local stack running, create the deterministic catalog/buyer fixture and verify the populated P0 flow:
+
+```powershell
+pnpm ui:verify-local
+```
+
+This runs `/` → `/search` → `/items/[itemId]` → `/cart` → `/cart/[cartId]` → `/checkout` → `/checkout/success/[orderId]` and then checks `/orders`. The generated local password is stored only in ignored `.local/dev/ui-fixture.json`; viewport screenshots are written to ignored `.local/dev/visual-review/`. Re-running the command abandons only the deterministic fixture buyer's active carts, so unrelated local data is preserved.
+
+To seed without running Playwright, use `pnpm ui:seed-local`. Regression checks for the seed and launcher are:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/seed-ui-fixture.test.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/dev-script.test.ps1
+```
+
+### Terminal 1 — API
+
+The API reads its configuration from process environment variables; it does not load root `.env.local` by itself. Load the local file, use absolute paths for the local JWT keys, then start the API.
+
+```powershell
+Get-Content .env.local | Where-Object { $_ -match '^\s*[^#\s][^=]*=' } | ForEach-Object {
+  $name, $value = $_ -split '=', 2
+  Set-Item -Path "Env:$name" -Value $value
+}
+$env:COVIE_JWT_PRIVATE_KEY_PATH = Join-Path (Get-Location) 'infra\secrets\dev\jwt-private.pem'
+$env:COVIE_JWT_PUBLIC_KEY_PATH = Join-Path (Get-Location) 'infra\secrets\dev\jwt-public.pem'
+$env:SPRING_PROFILES_ACTIVE = 'local'
+$env:SERVER_PORT = '8081'
+.\apps\api\mvnw.cmd -f .\apps\api\pom.xml spring-boot:run
+```
+
+The standard API port is `8080`. This workspace uses `8081` because an unrelated environment service occupies `8080`; use the same port in Terminal 2. Wait until the API reports that Tomcat started before continuing.
+
+### Terminal 2 — web app
+
+```powershell
+Get-Content .env.local | Where-Object { $_ -match '^\s*[^#\s][^=]*=' } | ForEach-Object {
+  $name, $value = $_ -split '=', 2
+  Set-Item -Path "Env:$name" -Value $value
+}
+$env:API_INTERNAL_BASE_URL = 'http://localhost:8081'
+$env:NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
 pnpm web:dev
 ```
 
-Verify:
+Open http://localhost:3000. Next.js proxies browser requests under `/api/v1/*` to `API_INTERNAL_BASE_URL` in development.
 
-- http://localhost:8080/api/v1/health
-- http://localhost:8080/actuator/health
-- http://localhost:3000/
-- http://localhost:9001/
+### Verify and stop
+
+- API health: http://localhost:8081/actuator/health
+- Web: http://localhost:3000/
+- MinIO console: http://localhost:9001/
+- Stop API and web with `Ctrl+C` in their terminals.
+- Stop local dependencies with `pnpm infra:down`.
+
+Google sign-in needs a development OAuth client ID and secret in the ignored `.env.local`. Guest routes work without them.
 
 Plan 07 runs its PostgreSQL outbox worker in the API process. It polls every 500 ms by default and emits best-effort authenticated SSE updates at `/api/v1/me/events`; SSE is only an invalidation hint, so browser clients must refetch REST state after reconnecting or receiving `sync-required`.
 

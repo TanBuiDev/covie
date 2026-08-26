@@ -1,6 +1,8 @@
 import { CartList } from "@/features/cart/cart-list";
 import { createServerReadClient } from "@/lib/api/server-api-client";
 import { requireUser } from "@/lib/auth/require-user";
+import { CartAppBar } from "@/features/cart/cart-app-bar";
+import styles from "@/features/cart/cart-list.module.css";
 
 export default async function CartPage() {
   await requireUser();
@@ -12,13 +14,9 @@ export default async function CartPage() {
   }
 
   return (
-    <main className="buyer-surface">
-      <header className="surface-header">
-        <p className="eyebrow">CoVie / Buyer</p>
-        <h1>Giỏ hàng</h1>
-        <p>Mỗi điểm bán và loại sản phẩm/dịch vụ được đặt trong một giỏ riêng.</p>
-      </header>
+    <div className={styles.screen}>
+      <CartAppBar />
       <CartList initialCarts={data} />
-    </main>
+    </div>
   );
 }

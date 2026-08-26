@@ -36,17 +36,20 @@ describe("browser CSRF middleware", () => {
     expect(new Request(fetchMock.mock.calls[1]![0]).headers.get("X-CSRF-Token")).toBe("first-token");
   });
 
-  it("reuses the cached CSRF token for later unsafe requests", async () => {
+  it("fetches the cookie-matching CSRF token for each sequential unsafe request", async () => {
     const fetchMock = vi.fn()
-      .mockResolvedValueOnce(json({ headerName: "X-CSRF-Token", token: "cached-token" }))
-      .mockResolvedValue(new Response(null, { status: 204 }));
+      .mockResolvedValueOnce(json({ headerName: "X-CSRF-Token", token: "first-token" }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(json({ headerName: "X-CSRF-Token", token: "second-token" }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
     vi.stubGlobal("fetch", fetchMock);
 
     await unsafeRequest("POST", "/api/v1/one");
     await unsafeRequest("DELETE", "/api/v1/two");
 
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(new Request(fetchMock.mock.calls[2]![0]).headers.get("X-CSRF-Token")).toBe("cached-token");
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(new Request(fetchMock.mock.calls[1]![0]).headers.get("X-CSRF-Token")).toBe("first-token");
+    expect(new Request(fetchMock.mock.calls[3]![0]).headers.get("X-CSRF-Token")).toBe("second-token");
   });
 
   it("obtains a fresh CSRF token after invalidation", async () => {

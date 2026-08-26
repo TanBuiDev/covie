@@ -21,10 +21,34 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
 
     List<OrderEntity> findAllByBuyerUserIdOrderByCreatedAtDesc(UUID buyerUserId);
     List<OrderEntity> findAllByMerchantProfileIdOrderByCreatedAtDesc(UUID merchantProfileId);
-    @Query("select o from OrderEntity o where o.buyerUserId=:buyerId and (:createdAt is null or o.createdAt < :createdAt or (o.createdAt=:createdAt and o.id < :id)) order by o.createdAt desc,o.id desc")
-    List<OrderEntity> findBuyerPage(@Param("buyerId") UUID buyerId,@Param("createdAt") java.time.Instant createdAt,@Param("id") UUID id,Pageable page);
-    @Query("select o from OrderEntity o where o.merchantProfileId=:merchantId and (:locationId is null or o.merchantLocationId=:locationId) and (:createdAt is null or o.createdAt < :createdAt or (o.createdAt=:createdAt and o.id < :id)) order by o.createdAt desc,o.id desc")
-    List<OrderEntity> findMerchantPage(@Param("merchantId") UUID merchantId,@Param("locationId") UUID locationId,@Param("createdAt") java.time.Instant createdAt,@Param("id") UUID id,Pageable page);
+    default List<OrderEntity> findBuyerPage(UUID buyerId, java.time.Instant createdAt, UUID id, Pageable page) {
+        return createdAt == null || id == null
+                ? findBuyerFirstPage(buyerId, page)
+                : findBuyerPageAfter(buyerId, createdAt, id, page);
+    }
+    @Query("select o from OrderEntity o where o.buyerUserId=:buyerId order by o.createdAt desc,o.id desc")
+    List<OrderEntity> findBuyerFirstPage(@Param("buyerId") UUID buyerId, Pageable page);
+    @Query("select o from OrderEntity o where o.buyerUserId=:buyerId and (o.createdAt < :createdAt or (o.createdAt=:createdAt and o.id < :id)) order by o.createdAt desc,o.id desc")
+    List<OrderEntity> findBuyerPageAfter(@Param("buyerId") UUID buyerId,@Param("createdAt") java.time.Instant createdAt,@Param("id") UUID id,Pageable page);
+
+    default List<OrderEntity> findMerchantPage(UUID merchantId, UUID locationId, java.time.Instant createdAt, UUID id, Pageable page) {
+        if (createdAt == null || id == null) {
+            return locationId == null
+                    ? findMerchantFirstPage(merchantId, page)
+                    : findMerchantFirstPageAtLocation(merchantId, locationId, page);
+        }
+        return locationId == null
+                ? findMerchantPageAfter(merchantId, createdAt, id, page)
+                : findMerchantPageAfterAtLocation(merchantId, locationId, createdAt, id, page);
+    }
+    @Query("select o from OrderEntity o where o.merchantProfileId=:merchantId order by o.createdAt desc,o.id desc")
+    List<OrderEntity> findMerchantFirstPage(@Param("merchantId") UUID merchantId, Pageable page);
+    @Query("select o from OrderEntity o where o.merchantProfileId=:merchantId and o.merchantLocationId=:locationId order by o.createdAt desc,o.id desc")
+    List<OrderEntity> findMerchantFirstPageAtLocation(@Param("merchantId") UUID merchantId,@Param("locationId") UUID locationId,Pageable page);
+    @Query("select o from OrderEntity o where o.merchantProfileId=:merchantId and (o.createdAt < :createdAt or (o.createdAt=:createdAt and o.id < :id)) order by o.createdAt desc,o.id desc")
+    List<OrderEntity> findMerchantPageAfter(@Param("merchantId") UUID merchantId,@Param("createdAt") java.time.Instant createdAt,@Param("id") UUID id,Pageable page);
+    @Query("select o from OrderEntity o where o.merchantProfileId=:merchantId and o.merchantLocationId=:locationId and (o.createdAt < :createdAt or (o.createdAt=:createdAt and o.id < :id)) order by o.createdAt desc,o.id desc")
+    List<OrderEntity> findMerchantPageAfterAtLocation(@Param("merchantId") UUID merchantId,@Param("locationId") UUID locationId,@Param("createdAt") java.time.Instant createdAt,@Param("id") UUID id,Pageable page);
     List<OrderEntity> findTop500ByOrderByIdAsc();
     List<OrderEntity> findTop500ByIdGreaterThanOrderByIdAsc(UUID afterId);
     List<OrderEntity> findTop100ByStatusAndConfirmationExpiresAtLessThanEqualOrderByConfirmationExpiresAtAsc(

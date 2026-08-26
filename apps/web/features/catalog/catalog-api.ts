@@ -32,6 +32,12 @@ export async function discoverCatalogItems(filters: CatalogDiscoveryFilters = {}
   return requireData(response, data);
 }
 
+export async function listPublicCategories() {
+  const client = createApiClient();
+  const { data, response } = await client.GET("/api/v1/categories");
+  return requireData(response, data);
+}
+
 export async function getCatalogItem(itemId: string, location?: DiscoveryLocation) {
   const client = createApiClient();
   const { data, response } = await client.GET("/api/v1/catalog/items/{itemId}", {

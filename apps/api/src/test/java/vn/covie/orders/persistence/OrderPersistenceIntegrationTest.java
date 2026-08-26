@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import vn.covie.merchants.model.MerchantLocationEntity;
 import vn.covie.merchants.model.MerchantProfileEntity;
@@ -31,6 +32,26 @@ class OrderPersistenceIntegrationTest extends PostgresIntegrationTest {
     @Autowired UserRepository users;
     @Autowired MerchantProfileRepository merchants;
     @Autowired MerchantLocationRepository locations;
+
+    @Test
+    void buyerFirstPageDoesNotBindAnUntypedNullCursor() {
+        UUID orderId = createOrder();
+        UUID buyerId = orders.findById(orderId).orElseThrow().getBuyerUserId();
+
+        var page = orders.findBuyerPage(buyerId, null, null, PageRequest.of(0, 21));
+
+        assertThat(page).extracting(OrderEntity::getId).contains(orderId);
+    }
+
+    @Test
+    void merchantFirstPageDoesNotBindAnUntypedNullCursor() {
+        UUID orderId = createOrder();
+        OrderEntity order = orders.findById(orderId).orElseThrow();
+
+        var page = orders.findMerchantPage(order.getMerchantProfileId(), order.getMerchantLocationId(), null, null, PageRequest.of(0, 21));
+
+        assertThat(page).extracting(OrderEntity::getId).contains(orderId);
+    }
 
     @Test
     void pessimisticOrderLockSerializesConcurrentLifecycleWrites() throws Exception {

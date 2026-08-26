@@ -2,10 +2,10 @@ import type { ReactNode } from "react";
 import { AppHeader } from "./app-header";
 import { ConsumerBottomNav } from "./consumer-bottom-nav";
 
-export function ConsumerShell({ children }: { children: ReactNode }) {
+export function ConsumerShell({ children, showHeader = true }: { children: ReactNode; showHeader?: boolean }) {
   return (
     <div className="consumer-shell">
-      <AppHeader />
+      {showHeader && <AppHeader />}
       <main className="app-main">{children}</main>
       <ConsumerBottomNav />
     </div>
