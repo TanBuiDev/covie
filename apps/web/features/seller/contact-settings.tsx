@@ -4,19 +4,19 @@ import type { components } from "@covie/api-client";
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { EmptyState } from "@/components/ui/empty-state";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { createMerchantContact, deleteMerchantContact } from "./contact-api";
 
 type MerchantContact = components["schemas"]["MerchantContactResponse"];
-type ContactType = components["schemas"]["MerchantContactRequest"]["contactType"];
+type MerchantContactInput = components["schemas"]["MerchantContactRequest"];
+type ContactType = MerchantContactInput["contactType"];
 
 function contactTypeCopy(type?: ContactType) {
   switch (type) {
     case "PHONE": return "Điện thoại";
-    case "ZALO_LINK": return "Zalo";
+    case "ZALO_LINK": return "Zalo link";
     case "ZALO_QR": return "Zalo QR";
-    case "MESSENGER_LINK": return "Messenger";
+    case "MESSENGER_LINK": return "Messenger link";
     case "OTHER": return "Khác";
     default: return "Liên hệ";
   }
@@ -34,50 +34,64 @@ export function MerchantContactSettings({
   title?: string;
 }) {
   const router = useRouter();
-  const [type, setType] = useState<ContactType>("PHONE");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string>();
+  const [messageIsError, setMessageIsError] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MerchantContact>();
   const visibleContacts = useMemo(
     () => contacts.filter((contact) => (merchantLocationId ? contact.merchantLocationId === merchantLocationId : !contact.merchantLocationId)),
     [contacts, merchantLocationId],
   );
+  const zaloContacts = visibleContacts.filter((contact) => contact.contactType === "ZALO_LINK");
+  const messengerContacts = visibleContacts.filter((contact) => contact.contactType === "MESSENGER_LINK");
+  const qrContacts = visibleContacts.filter((contact) => contact.contactType === "ZALO_QR");
+  const zaloContact = zaloContacts[0];
+  const messengerContact = messengerContacts[0];
+  const qrContact = qrContacts[0];
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
+
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    const zaloValue = String(form.get("zaloLink") ?? "").trim();
+    const messengerValue = String(form.get("messengerLink") ?? "").trim();
+    const qrFile = form.get("qrFile");
+    const requests: MerchantContactInput[] = [];
+
+    if (!zaloContact && zaloValue) {
+      requests.push({ merchantLocationId, contactType: "ZALO_LINK", value: zaloValue, publicContact: true });
+    }
+    if (!messengerContact && messengerValue) {
+      requests.push({ merchantLocationId, contactType: "MESSENGER_LINK", value: messengerValue, publicContact: true });
+    }
+
     setPending(true);
     setMessage(undefined);
+    setMessageIsError(false);
     try {
-      let qrMediaId: string | undefined;
-      let value = String(form.get("value") ?? "").trim() || undefined;
-      if (type === "ZALO_QR") {
-        const file = form.get("qrFile");
-        if (!(file instanceof File) || file.size === 0) {
-          setMessage("Chọn ảnh QR Zalo trước khi lưu.");
-          return;
-        }
-        const media = await uploadImage(file, "MERCHANT_CONTACT_QR");
+      if (!qrContact && qrFile instanceof File && qrFile.size > 0) {
+        const media = await uploadImage(qrFile, "MERCHANT_CONTACT_QR");
         if (!media.mediaId) throw new Error("MERCHANT_CONTACT_QR_MEDIA_ID_MISSING");
-        qrMediaId = media.mediaId;
-        value = undefined;
+        requests.push({ merchantLocationId, contactType: "ZALO_QR", qrMediaId: media.mediaId, publicContact: true });
       }
 
-      await createMerchantContact(merchantId, {
-        merchantLocationId,
-        contactType: type,
-        value,
-        qrMediaId,
-        primary: form.get("primary") === "on",
-        publicContact: form.get("publicContact") === "on",
-      });
+      if (requests.length === 0) {
+        setMessage("Không có kênh mới có thể lưu. Contact đã tồn tại cần concurrency token từ backend trước khi có thể chỉnh sửa an toàn.");
+        return;
+      }
+
+      for (const request of requests) {
+        await createMerchantContact(merchantId, request);
+      }
+      setMessage("Đã lưu liên hệ.");
       formElement.reset();
-      setType("PHONE");
       router.refresh();
     } catch {
-      setMessage("Không thể lưu kênh liên hệ. Vui lòng thử lại.");
+      setMessageIsError(true);
+      setMessage("Không thể lưu liên hệ. Vui lòng thử lại; các kênh đã tạo thành công vẫn được giữ theo backend.");
+      router.refresh();
     } finally {
       setPending(false);
     }
@@ -87,69 +101,94 @@ export function MerchantContactSettings({
     if (!deleteTarget?.id || pending) return;
     setPending(true);
     setMessage(undefined);
+    setMessageIsError(false);
     try {
       await deleteMerchantContact(merchantId, deleteTarget.id);
       setDeleteTarget(undefined);
       router.refresh();
     } catch {
+      setMessageIsError(true);
       setMessage("Không thể xóa kênh liên hệ. Vui lòng thử lại.");
     } finally {
       setPending(false);
     }
   }
 
-  return (
-    <section className="seller-section" aria-labelledby="seller-contact-heading">
-      <div className="seller-section__heading"><h2 id="seller-contact-heading">{title}</h2></div>
-      {visibleContacts.length ? (
-        <div className="seller-row-list">
-          {visibleContacts.map((contact, index) => (
-            <div className="seller-row" key={contact.id ?? `${contact.contactType ?? "contact"}-${index}`}>
-              <div>
-                <strong>{contactTypeCopy(contact.contactType)}</strong>
-                {contact.value ? <small>{contact.value}</small> : null}
-                {contact.qrMediaId ? <small>Ảnh QR liên hệ đã được lưu.</small> : null}
-                <small>{[contact.primary ? "Kênh chính" : null, contact.publicContact ? "Hiển thị công khai" : "Nội bộ"].filter(Boolean).join(" · ")}</small>
-              </div>
-              <div className="seller-row__actions">
-                {contact.id ? <button type="button" className="button-danger" disabled={pending} onClick={() => setDeleteTarget(contact)}>Xóa</button> : null}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <EmptyState title="Chưa có kênh liên hệ" description="Thêm số điện thoại, link nhắn tin hoặc QR Zalo theo contract Merchant Contact." />
-      )}
+  const hasDuplicateFrozenType = zaloContacts.length > 1 || messengerContacts.length > 1 || qrContacts.length > 1;
 
-      <form onSubmit={submit} aria-busy={pending}>
-        <h2>Thêm kênh liên hệ</h2>
+  return (
+    <section className="seller-contact-settings" aria-label={title}>
+      <form className="seller-contact-form" onSubmit={submit} aria-busy={pending}>
         <label>
-          Loại kênh
-          <select disabled={pending} value={type} onChange={(event) => setType(event.target.value as ContactType)}>
-            <option value="PHONE">Điện thoại</option>
-            <option value="ZALO_LINK">Zalo link</option>
-            <option value="ZALO_QR">Zalo QR</option>
-            <option value="MESSENGER_LINK">Messenger</option>
-            <option value="OTHER">Khác</option>
-          </select>
+          Zalo link
+          <input
+            name="zaloLink"
+            type="url"
+            inputMode="url"
+            defaultValue={zaloContact?.value ?? ""}
+            readOnly={Boolean(zaloContact)}
+            disabled={pending}
+            placeholder={zaloContact ? undefined : "https://zalo.me/..."}
+          />
+          <small>{zaloContact ? "Liên kết liên hệ công khai · chỉ đọc cho đến khi backend cấp token chỉnh sửa." : "Liên kết liên hệ công khai"}</small>
         </label>
-        {type === "ZALO_QR" ? (
-          <label>
-            Ảnh QR Zalo
-            <input name="qrFile" type="file" accept="image/jpeg,image/png,image/webp" required disabled={pending} />
-            <small className="field-hint">QR này chỉ dùng cho liên hệ Zalo, không dùng cho thanh toán.</small>
-          </label>
-        ) : (
-          <label>
-            {type === "PHONE" ? "Số điện thoại" : "Giá trị hoặc đường dẫn"}
-            <input name="value" type={type === "PHONE" ? "tel" : "text"} required disabled={pending} />
-          </label>
-        )}
-        <label><input name="primary" type="checkbox" disabled={pending} /> Kênh chính</label>
-        <label><input name="publicContact" type="checkbox" disabled={pending} defaultChecked /> Hiển thị công khai</label>
-        {message ? <p role="alert">{message}</p> : null}
-        <button type="submit" disabled={pending}>{pending ? "Đang lưu…" : "Thêm kênh liên hệ"}</button>
+
+        <label>
+          Messenger link
+          <input
+            name="messengerLink"
+            type="url"
+            inputMode="url"
+            defaultValue={messengerContact?.value ?? ""}
+            readOnly={Boolean(messengerContact)}
+            disabled={pending}
+            placeholder={messengerContact ? undefined : "https://m.me/..."}
+          />
+          <small>{messengerContact ? "Liên kết liên hệ công khai · chỉ đọc cho đến khi backend cấp token chỉnh sửa." : "Liên kết liên hệ công khai"}</small>
+        </label>
+
+        <section className="seller-contact-qr" aria-labelledby="seller-contact-qr-heading">
+          <strong id="seller-contact-qr-heading">QR liên hệ</strong>
+          <p>Ảnh QR dùng để liên hệ Zalo. Không dùng cho thanh toán.</p>
+          {qrContact ? (
+            <p className="seller-contact-qr__saved" role="status">Ảnh QR liên hệ đã được lưu. Thay ảnh cần contact concurrency token từ backend.</p>
+          ) : (
+            <label className="seller-contact-qr__picker">
+              <span>Chọn ảnh QR liên hệ</span>
+              <input name="qrFile" type="file" accept="image/jpeg,image/png,image/webp" disabled={pending} />
+            </label>
+          )}
+        </section>
+
+        {hasDuplicateFrozenType ? (
+          <p className="seller-contract-note" role="status">Backend đang có nhiều record cùng loại liên hệ. Màn frozen chỉ hiển thị một giá trị; dùng phần quản lý desktop để xem/xóa record thừa.</p>
+        ) : null}
+        {message ? <p role={messageIsError ? "alert" : "status"}>{message}</p> : null}
+        <button className="seller-contact-save" type="submit" disabled={pending}>
+          {pending ? "Đang lưu…" : "Lưu liên hệ"}
+        </button>
       </form>
+
+      {visibleContacts.length ? (
+        <details className="seller-contact-management seller-desktop-only">
+          <summary>Quản lý record liên hệ</summary>
+          <div className="seller-row-list">
+            {visibleContacts.map((contact, index) => (
+              <div className="seller-row" key={contact.id ?? `${contact.contactType ?? "contact"}-${index}`}>
+                <div>
+                  <strong>{contactTypeCopy(contact.contactType)}</strong>
+                  {contact.value ? <small>{contact.value}</small> : null}
+                  {contact.qrMediaId ? <small>Ảnh QR liên hệ đã được lưu.</small> : null}
+                  <small>{contact.publicContact ? "Hiển thị công khai" : "Nội bộ"}</small>
+                </div>
+                <div className="seller-row__actions">
+                  {contact.id ? <button type="button" className="button-danger" disabled={pending} onClick={() => setDeleteTarget(contact)}>Xóa</button> : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : null}
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
