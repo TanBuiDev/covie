@@ -13,7 +13,7 @@ export function countdownPresentation(isoTime: string, now = Date.now()): Countd
   if (!Number.isFinite(target)) return { expired: false, urgent: false, label: "Thời gian đang được cập nhật" };
   const remaining = target - now;
   if (remaining <= 0) return { expired: true, urgent: true, label: "Đã tới hạn, đang cập nhật..." };
-  if (remaining < HOUR) return { expired: false, urgent: true, label: "Sắp hết hạn" };
+  if (remaining < HOUR) return { expired: false, urgent: true, label: `Còn ${Math.max(1, Math.ceil(remaining / MINUTE))} phút` };
   if (remaining < DAY) return { expired: false, urgent: false, label: `Còn ${Math.ceil(remaining / HOUR)} giờ` };
   return { expired: false, urgent: false, label: `Còn ${Math.ceil(remaining / DAY)} ngày` };
 }
