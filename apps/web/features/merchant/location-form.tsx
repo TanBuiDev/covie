@@ -29,7 +29,7 @@ export function LocationForm({ merchantId, location, onSaved, onReload }: {
     const latitude = Number(form.get("latitude"));
     const longitude = Number(form.get("longitude"));
     if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
-      setMessage("Tọa độ chưa hợp lệ. API hiện yêu cầu latitude/longitude để lưu điểm bán.");
+      setMessage("Tọa độ chưa hợp lệ. Vui lòng nhập vĩ độ và kinh độ chính xác của điểm bán.");
       return;
     }
 
@@ -83,7 +83,7 @@ export function LocationForm({ merchantId, location, onSaved, onReload }: {
         <select name="timezone" required disabled={pending} defaultValue={location?.data.timezone ?? "Asia/Ho_Chi_Minh"}>
           <option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh</option>
         </select>
-        <small>Dùng cho giờ vận hành và deadline</small>
+        <small>Dùng cho giờ vận hành và thời hạn xử lý</small>
       </label>
 
       <label className="seller-switch-row">
@@ -100,8 +100,8 @@ export function LocationForm({ merchantId, location, onSaved, onReload }: {
       </label>
 
       <details className="seller-technical-fields" open={!editing}>
-        <summary>Vị trí kỹ thuật</summary>
-        <p className="seller-muted">Figma không yêu cầu nhập tọa độ, nhưng API V1 hiện bắt buộc latitude/longitude và chưa có geocode/pin-picker contract. Không được tự điền tọa độ giả.</p>
+        <summary>Tọa độ điểm bán</summary>
+        <p className="seller-muted">Phiên bản hiện tại cần vĩ độ và kinh độ để lưu điểm bán. Chỉ nhập tọa độ đã xác minh; không dùng giá trị ước lượng.</p>
         <div className="seller-grid seller-grid--two">
           <label>
             Vĩ độ
