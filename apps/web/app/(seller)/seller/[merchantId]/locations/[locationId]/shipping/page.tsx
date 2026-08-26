@@ -17,8 +17,8 @@ export default async function ShippingPage({
 
   return (
     <section className="seller-stack">
-      <p><Link href={`/seller/${encodeURIComponent(merchantId)}/locations/${encodeURIComponent(locationId)}`}>Quay lại điểm bán</Link></p>
-      <header className="surface-header">
+      <p className="seller-desktop-only"><Link href={`/seller/${encodeURIComponent(merchantId)}/locations/${encodeURIComponent(locationId)}`}>Quay lại điểm bán</Link></p>
+      <header className="surface-header seller-desktop-only">
         <p className="eyebrow">Seller Center / Giao hàng</p>
         <h1>Chính sách giao hàng</h1>
         <p>FREE, FIXED, NEGOTIATED và CONDITIONAL được lưu đúng contract backend; “thỏa thuận” không được hiển thị thành 0 ₫.</p>
