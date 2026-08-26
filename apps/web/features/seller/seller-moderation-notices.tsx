@@ -85,13 +85,13 @@ export function SellerModerationNotices({
       ) : (
         <EmptyState
           title="Chưa có thông báo nội dung"
-          description="Khi backend gửi cập nhật kiểm duyệt có thể xác định an toàn thuộc cửa hàng này, thông báo sẽ xuất hiện tại đây."
+          description="Các cập nhật kiểm duyệt có thể xác định thuộc cửa hàng này sẽ xuất hiện tại đây."
         />
       )}
 
       <aside className="seller-trust-note seller-notices__safe-copy">
-        <h2>Thông báo chỉ dẫn về nội dung</h2>
-        <p>Bạn có thể mở Danh mục để xem trạng thái hiện tại hoặc chỉnh sửa khi hành động đó thực sự khả dụng. Seller không có nút phê duyệt hoặc từ chối kiểm duyệt.</p>
+        <h2>Thông báo về nội dung</h2>
+        <p>Mở Danh mục để xem trạng thái hiện tại hoặc chỉnh sửa khi thao tác đó khả dụng.</p>
         <Link className="seller-button seller-button--secondary" href={catalogHref}>Mở Danh mục</Link>
       </aside>
     </section>
