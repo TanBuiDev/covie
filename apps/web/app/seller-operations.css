@@ -87,7 +87,7 @@
   align-self: start;
   background: var(--seller-brand);
   border-radius: var(--seller-radius-md);
-  color: #fff;
+  color: var(--seller-text-inverse);
   display: inline-flex;
   font-size: 13px;
   font-weight: 700;

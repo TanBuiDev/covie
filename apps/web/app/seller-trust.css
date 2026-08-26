@@ -182,8 +182,8 @@
 }
 
 .seller-notices__error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--seller-danger-bg);
+  border: 1px solid var(--seller-danger-border);
   border-radius: 12px;
   color: var(--seller-danger);
   margin: 0;
