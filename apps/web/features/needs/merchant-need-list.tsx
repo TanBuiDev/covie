@@ -5,13 +5,21 @@ import { useEffect, useState } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
-import { formatDateTime } from "@/lib/format/time";
+import { StatusChip } from "@/components/ui/status-chip";
+import { countdownPresentation } from "@/lib/format/time";
 import { discoverMerchantNeeds, type MerchantNeedMatch } from "./need-api";
 
 type Location = components["schemas"]["MerchantLocationResponse"];
 
+function distanceCopy(distanceMeters?: number) {
+  if (distanceMeters == null) return undefined;
+  if (distanceMeters < 1000) return `${Math.max(0, Math.round(distanceMeters))} m`;
+  return `${(distanceMeters / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km`;
+}
+
 export function MerchantNeedList({ merchantId, locations }: { merchantId: string; locations: Location[] }) {
-  const [locationId, setLocationId] = useState("");
+  const firstLocationId = locations.find((location) => location.id)?.id ?? "";
+  const [locationId, setLocationId] = useState(firstLocationId);
   const [items, setItems] = useState<MerchantNeedMatch[]>();
   const [nextCursor, setNextCursor] = useState<string>();
   const [error, setError] = useState<string>();
@@ -19,11 +27,16 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
   const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
+    if (!locationId) {
+      setItems([]);
+      setNextCursor(undefined);
+      return;
+    }
     let active = true;
     setItems(undefined);
     setNextCursor(undefined);
     setError(undefined);
-    void discoverMerchantNeeds(merchantId, locationId || undefined)
+    void discoverMerchantNeeds(merchantId, locationId)
       .then((page) => {
         if (!active) return;
         setItems(page.items ?? []);
@@ -38,11 +51,11 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
   }, [merchantId, locationId, reloadKey]);
 
   async function loadMore() {
-    if (!nextCursor || loadingMore) return;
+    if (!locationId || !nextCursor || loadingMore) return;
     setLoadingMore(true);
     setError(undefined);
     try {
-      const page = await discoverMerchantNeeds(merchantId, locationId || undefined, nextCursor);
+      const page = await discoverMerchantNeeds(merchantId, locationId, nextCursor);
       setItems((current) => [...(current ?? []), ...(page.items ?? [])]);
       setNextCursor(page.nextCursor);
     } catch (cause) {
@@ -52,17 +65,19 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
     }
   }
 
+  if (!locations.length) {
+    return <EmptyState title="Chưa có điểm bán để phản hồi" description="Tạo điểm bán và cấu hình phạm vi trước khi xem nhu cầu phù hợp." />;
+  }
+
   return (
     <section className="seller-stack" aria-label="Nhu cầu phù hợp">
-      {locations.length ? (
-        <label className="seller-need-location-filter">
-          Điểm bán
-          <select value={locationId} onChange={(event) => setLocationId(event.target.value)}>
-            <option value="">Tất cả điểm bán được backend cho phép</option>
-            {locations.map((location) => location.id ? <option key={location.id} value={location.id}>{location.name ?? "Điểm bán"}</option> : null)}
-          </select>
-        </label>
-      ) : null}
+      <label className="seller-need-location-filter">
+        Điểm bán đang phản hồi
+        <select required value={locationId} onChange={(event) => setLocationId(event.target.value)}>
+          {locations.map((location) => location.id ? <option key={location.id} value={location.id}>{location.name ?? "Điểm bán"}</option> : null)}
+        </select>
+        <small>Chỉ dùng nội dung đang bán tại điểm bán này</small>
+      </label>
 
       {error && !items ? (
         <ErrorState
@@ -72,34 +87,40 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
         />
       ) : null}
       {!error && !items ? <LoadingState label="Đang tìm nhu cầu phù hợp…" /> : null}
-      {items?.length === 0 ? <EmptyState title="Chưa có nhu cầu phù hợp" description="Danh sách này do backend match theo phạm vi location của Seller." /> : null}
+      {items?.length === 0 ? <EmptyState title="Chưa có nhu cầu phù hợp" description="Danh sách này do backend match theo phạm vi của điểm bán đang chọn." /> : null}
 
       {items?.length ? (
         <div className="seller-need-list">
           {items.map((match, index) => {
             const need = match.need;
-            const resolved = match.resolvedLocation;
-            const key = need?.id ?? `${resolved?.id ?? "location"}-${index}`;
+            const key = need?.id ?? `${match.resolvedLocation?.id ?? "location"}-${index}`;
+            const distance = distanceCopy(match.distanceMeters);
+            const expiry = need?.expiresAt ? countdownPresentation(need.expiresAt) : undefined;
             return (
               <article className="seller-need-card" key={key}>
-                <header>
-                  <div>
-                    <small>{need?.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"}</small>
-                    <h2>{need?.title ?? "Nhu cầu"}</h2>
+                <div className="seller-need-card__summary">
+                  <strong>{need?.title ?? "Nhu cầu"}</strong>
+                  <small>{[match.buyerArea?.label, distance ? `cách điểm bán ${distance}` : null].filter(Boolean).join(" · ") || "Khu vực theo dữ liệu backend"}</small>
+                </div>
+
+                {expiry ? (
+                  <div className={`seller-need-expiry${expiry.urgent ? " seller-need-expiry--urgent" : ""}`} role="status">
+                    <span aria-hidden="true" />
+                    <div>
+                      <strong>{expiry.expired ? "Đã hết hạn" : expiry.urgent ? "Sắp hết hạn" : "Còn thời gian"}</strong>
+                      <small>{expiry.label}</small>
+                    </div>
                   </div>
-                  {match.alreadyResponded ? <span className="status-chip">Đã phản hồi</span> : null}
-                </header>
-                {need?.description ? <p>{need.description}</p> : null}
-                <dl className="seller-order-facts">
-                  {match.buyerArea?.label ? <div><dt>Khu vực người mua</dt><dd>{match.buyerArea.label}</dd></div> : null}
-                  {match.distanceMeters != null ? <div><dt>Khoảng cách</dt><dd>{(match.distanceMeters / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km</dd></div> : null}
-                  {resolved?.name ? <div><dt>Điểm bán được match</dt><dd>{resolved.name}</dd></div> : null}
-                  {match.responseConstraints?.maxItems != null ? <div><dt>Tối đa offer</dt><dd>{match.responseConstraints.maxItems}</dd></div> : null}
-                </dl>
-                {need?.expiresAt ? <small>Hết hạn: {formatDateTime(need.expiresAt)}</small> : null}
+                ) : null}
+
+                <StatusChip
+                  label={match.alreadyResponded ? "Đã phản hồi" : "Chưa phản hồi"}
+                  tone={match.alreadyResponded ? "success" : "neutral"}
+                />
+
                 {!match.alreadyResponded ? (
-                  <p className="seller-muted" role="status">
-                    Chưa mount thao tác phản hồi: API hiện chưa trả danh sách LocationVariant/offer đủ điều kiện cho Need này. CoVie không cho nhập UUID hoặc giá thủ công.
+                  <p className="seller-contract-note" role="status">
+                    Chưa thể mở chọn nội dung: API hiện chưa có read contract trả LocationVariant đủ điều kiện cho Need này. UI không cho nhập UUID hoặc giá thủ công.
                   </p>
                 ) : null}
               </article>
@@ -109,7 +130,7 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
       ) : null}
 
       {error && items ? <p role="alert">{error}</p> : null}
-      {nextCursor ? <button type="button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? "Đang tải…" : "Tải thêm nhu cầu"}</button> : null}
+      {nextCursor ? <button className="seller-load-more" type="button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? "Đang tải…" : "Tải thêm"}</button> : null}
     </section>
   );
 }

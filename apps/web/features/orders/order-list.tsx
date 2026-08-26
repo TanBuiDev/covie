@@ -70,11 +70,12 @@ export function OrderList({
         <label className="seller-order-location-filter">
           Điểm bán
           <select value={locationId} onChange={(event) => setLocationId(event.target.value)}>
-            <option value="">Tất cả điểm bán được phép</option>
+            <option value="">Tất cả điểm bán được phân công</option>
             {locations.map((location) => location.id ? (
               <option value={location.id} key={location.id}>{location.name ?? "Điểm bán"}</option>
             ) : null)}
           </select>
+          <small>Có thể lọc theo một điểm bán cụ thể</small>
         </label>
       ) : null}
 
@@ -85,9 +86,7 @@ export function OrderList({
           action={<button type="button" onClick={() => setReloadKey((value) => value + 1)}>Thử lại</button>}
         />
       ) : null}
-
       {!error && !orders ? <LoadingState label="Đang tải đơn hàng…" /> : null}
-
       {orders?.length === 0 ? (
         <EmptyState
           title="Chưa có đơn hàng"
@@ -96,28 +95,32 @@ export function OrderList({
       ) : null}
 
       {orders?.length ? (
-        <div className="orders-ledger">
-          {orders.map((order) => {
-            if (!order.id) return null;
-            const href = sellerBase ? `${sellerBase}/${encodeURIComponent(order.id)}` : `/orders/${encodeURIComponent(order.id)}`;
-            return (
-              <Link className="order-row" key={order.id} href={href}>
-                <span>
-                  <strong>{order.orderCode ?? "Đơn hàng"}</strong>
-                  <small>{order.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"}</small>
-                  {order.createdAt ? <small>{formatDateTime(order.createdAt)}</small> : null}
-                </span>
-                <OrderStatusLabel status={order.status} />
-              </Link>
-            );
-          })}
+        <div className="seller-order-list-block">
+          <h2>Mới nhất</h2>
+          <div className="seller-order-list-cards">
+            {orders.map((order) => {
+              if (!order.id) return null;
+              const href = sellerBase ? `${sellerBase}/${encodeURIComponent(order.id)}` : `/orders/${encodeURIComponent(order.id)}`;
+              return (
+                <Link className="seller-order-list-card" key={order.id} href={href}>
+                  <header>
+                    <strong>{order.orderCode ?? "Đơn hàng"}</strong>
+                    <OrderStatusLabel status={order.status} />
+                  </header>
+                  <p>{order.type === "SERVICE" ? "Đơn dịch vụ" : "Đơn sản phẩm"}</p>
+                  {order.createdAt ? <small>Tạo lúc {formatDateTime(order.createdAt)}</small> : null}
+                  <span className="seller-order-open">Xem chi tiết</span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       ) : null}
 
       {error && orders ? <p role="alert">{error}</p> : null}
       {nextCursor ? (
-        <button type="button" onClick={() => void loadMore()} disabled={loadingMore}>
-          {loadingMore ? "Đang tải…" : "Tải thêm đơn"}
+        <button className="seller-load-more" type="button" onClick={() => void loadMore()} disabled={loadingMore}>
+          {loadingMore ? "Đang tải…" : "Tải thêm"}
         </button>
       ) : null}
     </section>
