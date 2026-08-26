@@ -4,6 +4,7 @@ import type { components } from "@covie/api-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CoVieIcon } from "@/components/ui/covie-icon";
 import { deleteSavedAddress } from "./address-api";
 import styles from "./address-list.module.css";
@@ -27,8 +28,8 @@ function AddressCard({ address, onDelete }: { address: Address; onDelete: () => 
       {address.phone ? <p>{address.phone}</p> : null}
       <p>{address.addressText || "Chưa có nội dung địa chỉ"}</p>
       {secondaryNote ? <small>{secondaryNote}</small> : null}
-      {address.defaultAddress && address.id ? (
-        <div className={styles.cardActions}>
+      {address.id ? (
+        <div className={`${styles.cardActions} ${!address.defaultAddress ? styles.nonDefaultActions : ""}`}>
           <Link href={`/me/addresses/${encodeURIComponent(address.id)}`} aria-label={`Chỉnh sửa ${label}`}>Chỉnh sửa</Link>
           <button type="button" aria-label={`Xóa ${label}`} onClick={onDelete}>Xóa</button>
         </div>
@@ -66,6 +67,24 @@ export function AddressList({
     }
   }
 
+  const readyContent = (
+    <div className={styles.readyContent}>
+      {message ? <p className={styles.error} role="alert">{message}</p> : null}
+      {addresses.length ? (
+        <ul className={styles.list}>
+          {addresses.map((address) => <li key={address.id ?? `${address.label}-${address.addressText}`}><AddressCard address={address} onDelete={() => setDeleteTarget(address)} /></li>)}
+        </ul>
+      ) : (
+        <section className={styles.empty}>
+          <h2>Chưa có địa chỉ đã lưu</h2>
+          <p>Thêm địa chỉ để chọn nhanh khi xác nhận đơn hàng.</p>
+        </section>
+      )}
+      <Link className={styles.primaryAction} href="/me/addresses/new">Thêm địa chỉ mới</Link>
+      <p className={styles.privacyNote}>Thông tin địa chỉ cá nhân không được lưu để sử dụng ngoại tuyến.</p>
+    </div>
+  );
+
   return (
     <section className={styles.screen} aria-label="Địa chỉ đã lưu" data-consumer-focus>
       <header className={styles.appBar}>
@@ -73,7 +92,8 @@ export function AddressList({
         <h1>Địa chỉ của tôi</h1>
       </header>
 
-      <div className={styles.content}>
+      <div className={`${styles.content} ${deleteTarget ? styles.deleting : ""}`}>
+        <h1 className={styles.desktopTitle}>Địa chỉ của tôi</h1>
         {state === "loading" ? (
           <div className={styles.loading} role="status">
             <span>Đang tải địa chỉ…</span>
@@ -85,34 +105,35 @@ export function AddressList({
             <p>Kết nối có thể đang gián đoạn. Dữ liệu địa chỉ cá nhân chưa được hiển thị.</p>
             <button type="button" onClick={onRetry}>Thử lại</button>
           </section>
-        ) : deleteTarget ? (
-          <>
-            <AddressCard address={deleteTarget} onDelete={() => undefined} />
-            <section className={styles.warning} role="alert">
-              <span aria-hidden="true">△</span>
-              <div><h2>Xóa địa chỉ này?</h2><p>Địa chỉ sẽ bị xóa khỏi tài khoản. Hành động cần xác nhận trước khi thực hiện.</p></div>
-            </section>
-            {message ? <p className={styles.error} role="alert">{message}</p> : null}
-            <div className={styles.confirmActions}>
-              <button type="button" disabled={pending} onClick={() => { setDeleteTarget(undefined); setMessage(undefined); }}>Giữ địa chỉ</button>
-              <button type="button" disabled={pending} onClick={() => void confirmDelete()}>{pending ? "Đang xóa…" : "Xác nhận xóa"}</button>
-            </div>
-          </>
         ) : (
           <>
-            {message ? <p className={styles.error} role="alert">{message}</p> : null}
-            {addresses.length ? (
-              <ul className={styles.list}>
-                {addresses.map((address) => <li key={address.id ?? `${address.label}-${address.addressText}`}><AddressCard address={address} onDelete={() => setDeleteTarget(address)} /></li>)}
-              </ul>
-            ) : (
-              <section className={styles.empty}>
-                <h2>Chưa có địa chỉ đã lưu</h2>
-                <p>Thêm địa chỉ để chọn nhanh khi xác nhận đơn hàng.</p>
-              </section>
-            )}
-            <Link className={styles.primaryAction} href="/me/addresses/new">Thêm địa chỉ mới</Link>
-            <p className={styles.privacyNote}>Thông tin địa chỉ cá nhân không được lưu để sử dụng ngoại tuyến.</p>
+            {readyContent}
+            {deleteTarget ? (
+              <div className={styles.mobileDeleteFlow}>
+                <AddressCard address={deleteTarget} onDelete={() => undefined} />
+                <section className={styles.warning} role="alert">
+                  <CoVieIcon name="feedback-warning" />
+                  <div><h2>Xóa địa chỉ này?</h2><p>Địa chỉ sẽ bị xóa khỏi tài khoản. Hành động cần xác nhận trước khi thực hiện.</p></div>
+                </section>
+                {message ? <p className={styles.error} role="alert">{message}</p> : null}
+                <div className={styles.confirmActions}>
+                  <button type="button" disabled={pending} onClick={() => { setDeleteTarget(undefined); setMessage(undefined); }}>Giữ địa chỉ</button>
+                  <button type="button" disabled={pending} onClick={() => void confirmDelete()}>{pending ? "Đang xóa…" : "Xác nhận xóa"}</button>
+                </div>
+              </div>
+            ) : null}
+            <div className={styles.desktopConfirm}>
+              <ConfirmDialog
+                open={Boolean(deleteTarget)}
+                title="Xóa địa chỉ này?"
+                description="Địa chỉ sẽ bị xóa khỏi tài khoản. Hành động này không thể hoàn tác."
+                cancelLabel="Giữ địa chỉ"
+                confirmLabel={pending ? "Đang xóa…" : "Xác nhận xóa"}
+                dangerous
+                onCancel={() => { if (!pending) { setDeleteTarget(undefined); setMessage(undefined); } }}
+                onConfirm={() => void confirmDelete()}
+              />
+            </div>
           </>
         )}
       </div>
