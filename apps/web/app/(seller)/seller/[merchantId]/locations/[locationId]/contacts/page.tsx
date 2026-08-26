@@ -20,8 +20,8 @@ export default async function SellerLocationContactsPage({
 
   return (
     <section className="seller-stack">
-      <p className="seller-muted">{location.data.name ?? "Điểm bán"}</p>
-      <nav className="subnav" aria-label="Cấu hình điểm bán">
+      <p className="seller-muted seller-desktop-only">{location.data.name ?? "Điểm bán"}</p>
+      <nav className="subnav seller-desktop-only" aria-label="Cấu hình điểm bán">
         <Link href={base}>Thông tin</Link>
         <Link href={`${base}/delivery`}>Vùng phục vụ</Link>
         <Link href={`${base}/shipping`}>Phí giao hàng</Link>
