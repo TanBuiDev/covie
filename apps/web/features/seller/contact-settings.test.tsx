@@ -43,7 +43,7 @@ it("renders existing frozen contact channels read-only instead of guessing PATCH
 
   expect(screen.getByLabelText(/^Zalo link/)).toHaveAttribute("readonly");
   expect(screen.getByLabelText(/^Messenger link/)).toHaveAttribute("readonly");
-  expect(screen.getByText("Ảnh QR liên hệ đã được lưu. Thay ảnh cần contact concurrency token từ backend.")).toBeInTheDocument();
+  expect(screen.getByText("Ảnh QR liên hệ đã được lưu. Hiện chưa hỗ trợ thay trực tiếp ảnh đã lưu.")).toBeInTheDocument();
   expect(screen.queryByLabelText(/^Chọn ảnh QR liên hệ/)).not.toBeInTheDocument();
 });
 
