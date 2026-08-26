@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { formatMoney, negotiatedShippingCopy } from "@/lib/format/money";
+import { statusCopy } from "@/lib/format/status-copy";
 import { getOrder, type OrderDetail } from "./order-api";
 import { OrderActions } from "./order-actions";
 import { OrderStatusLabel } from "./order-status";
@@ -18,7 +19,7 @@ function fulfillmentCopy(order: OrderDetail) {
   if (order.type === "SERVICE") return "Dịch vụ";
   if (order.fulfillment?.productMethod === "PICKUP") return "Nhận tại điểm bán";
   if (order.fulfillment?.productMethod === "SELLER_DELIVERY") return "Người bán giao";
-  return "Theo thông tin backend";
+  return "Theo thông tin hiện có";
 }
 
 export function OrderDetailView({ orderId, sellerMerchantId }: { orderId: string; sellerMerchantId?: string }) {
@@ -91,7 +92,7 @@ export function OrderDetailView({ orderId, sellerMerchantId }: { orderId: string
               </li>
             ))}
           </ul>
-        ) : <p className="seller-muted">Backend chưa trả item cho đơn này.</p>}
+        ) : <p className="seller-muted">Chưa có thông tin sản phẩm hoặc dịch vụ trong đơn.</p>}
       </section>
 
       <section aria-labelledby="order-pricing-title">
@@ -102,21 +103,21 @@ export function OrderDetailView({ orderId, sellerMerchantId }: { orderId: string
           <div><dt>{order.pricing?.shippingFeeType === "NEGOTIATED" ? "Tạm tính trên CoVie" : "Tổng"}</dt><dd>{money(order.pricing?.shippingFeeType === "NEGOTIATED" ? order.pricing?.knownTotal : order.pricing?.totalAmount ?? order.pricing?.knownTotal, currency)}</dd></div>
           <div><dt>Phương thức thanh toán</dt><dd>{order.paymentMethod === "COD" ? "Thanh toán khi nhận" : order.paymentMethod === "BANK_TRANSFER_NEGOTIATED" ? "Chuyển khoản thỏa thuận" : "—"}</dd></div>
         </dl>
-        {order.pricing?.shippingFeeType === "NEGOTIATED" ? <p className="seller-muted">Tổng cuối cùng không được frontend tự tính khi phí giao là thỏa thuận.</p> : null}
+        {order.pricing?.shippingFeeType === "NEGOTIATED" ? <p className="seller-muted">Tổng cuối cùng sẽ được cập nhật sau khi phí giao được thống nhất.</p> : null}
       </section>
 
       <section aria-labelledby="order-fulfillment-title">
         <h2 id="order-fulfillment-title">Thực hiện đơn</h2>
         <dl className="seller-order-facts">
           <div><dt>Hình thức</dt><dd>{fulfillmentCopy(order)}</dd></div>
-          {order.fulfillment?.distanceMeters != null ? <div><dt>Khoảng cách backend</dt><dd>{(order.fulfillment.distanceMeters / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km</dd></div> : null}
+          {order.fulfillment?.distanceMeters != null ? <div><dt>Khoảng cách</dt><dd>{(order.fulfillment.distanceMeters / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km</dd></div> : null}
         </dl>
       </section>
 
       {order.cancellation ? (
         <section aria-labelledby="order-cancellation-title">
           <h2 id="order-cancellation-title">Yêu cầu hủy</h2>
-          <p><strong>{order.cancellation.status ?? "PENDING"}</strong></p>
+          <p><strong>{statusCopy(order.cancellation.status)}</strong></p>
           {order.cancellation.reasonText || order.cancellation.reasonCode ? <p>{order.cancellation.reasonText ?? order.cancellation.reasonCode}</p> : null}
           {order.cancellation.responseNote ? <p>Phản hồi: {order.cancellation.responseNote}</p> : null}
         </section>
@@ -125,7 +126,7 @@ export function OrderDetailView({ orderId, sellerMerchantId }: { orderId: string
       {order.issue ? (
         <section className="warning-banner" aria-labelledby="order-issue-title">
           <h2 id="order-issue-title">Sự cố đang được ghi nhận</h2>
-          <p>{order.issue.type ?? "ISSUE"} · {order.issue.status ?? "OPEN"}</p>
+          <p>{statusCopy(order.issue.status)}</p>
           {order.issue.reasonText ? <p>{order.issue.reasonText}</p> : null}
         </section>
       ) : null}
@@ -138,7 +139,7 @@ export function OrderDetailView({ orderId, sellerMerchantId }: { orderId: string
             <div><dt>Đơn hoàn tất</dt><dd>{buyerReputation.completedOrders ?? "—"}</dd></div>
             <div><dt>Tỷ lệ hoàn tất</dt><dd>{buyerReputation.completionRateBasisPoints != null ? `${(buyerReputation.completionRateBasisPoints / 100).toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "—"}</dd></div>
           </dl>
-          {buyerReputation.warning ? <p className="warning-banner" role="status">Backend đang gắn cảnh báo độ tin cậy cho người mua trong ngữ cảnh đơn này.</p> : null}
+          {buyerReputation.warning ? <p className="warning-banner" role="status">Người mua đang có cảnh báo độ tin cậy trong ngữ cảnh đơn này.</p> : null}
         </section>
       ) : null}
 
@@ -153,7 +154,7 @@ export function OrderDetailView({ orderId, sellerMerchantId }: { orderId: string
         <OrderActions order={order} actorView={sellerMerchantId ? "SELLER" : "BUYER"} onChanged={refresh} />
       ) : (
         <section className="seller-card" aria-label="Trạng thái thao tác">
-          <p className="seller-muted">Backend hiện không trả thao tác nào trong allowedActions.</p>
+          <p className="seller-muted">Hiện không có thao tác khả dụng cho đơn này.</p>
         </section>
       )}
     </article>
