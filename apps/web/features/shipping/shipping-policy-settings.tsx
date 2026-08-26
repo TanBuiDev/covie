@@ -14,7 +14,7 @@ function policyTitle(mode?: Policy["mode"]) {
     case "FIXED": return "Cố định";
     case "NEGOTIATED": return "Thỏa thuận";
     case "CONDITIONAL": return "Theo điều kiện";
-    default: return "Chính sách giao hàng";
+    default: return "Chính sách giao hàng đã được cập nhật";
   }
 }
 
@@ -22,6 +22,14 @@ function policyStatus(status?: Policy["status"]) {
   if (status === "ACTIVE") return { label: "Đang hoạt động", tone: "success" as const };
   if (status === "INACTIVE") return { label: "Tạm ngưng", tone: "neutral" as const };
   return { label: "Trạng thái đã được cập nhật", tone: "neutral" as const };
+}
+
+function ruleMatchCopy(mode?: Policy["ruleMatchMode"]) {
+  switch (mode) {
+    case "ANY": return "Bất kỳ điều kiện nào khớp";
+    case "ALL": return "Tất cả điều kiện phải khớp";
+    default: return "Logic điều kiện đã được cập nhật";
+  }
 }
 
 export function ShippingPolicySettings({
@@ -51,8 +59,8 @@ export function ShippingPolicySettings({
   return (
     <div className="seller-stack">
       <section className="seller-section" aria-labelledby="shipping-list-heading">
-        <div className="seller-section__heading"><h2 id="shipping-list-heading">Shipping policy records</h2></div>
-        <p className="seller-contract-note">Backend đang có nhiều policy record. Chọn đúng record để chỉnh; frontend không tự suy diễn policy ưu tiên.</p>
+        <div className="seller-section__heading"><h2 id="shipping-list-heading">Các phí giao hiện có</h2></div>
+        <p className="seller-contract-note">Điểm bán đang có nhiều cấu hình phí giao. Chọn đúng cấu hình cần chỉnh để giữ nguyên dữ liệu của các cấu hình khác.</p>
         <div className="seller-row-list">
           {policies.map((policy, index) => {
             const status = policyStatus(policy.status);
@@ -65,7 +73,7 @@ export function ShippingPolicySettings({
                     <small>Phí cơ bản: {formatMoney({ amount: policy.baseFee, currency: policy.currencyCode })}</small>
                   ) : null}
                   {policy.mode === "CONDITIONAL" ? (
-                    <small>{policy.ruleMatchMode === "ALL" ? "Tất cả điều kiện phải khớp" : "Bất kỳ điều kiện nào khớp"} · {policy.rules?.length ?? 0} điều kiện</small>
+                    <small>{ruleMatchCopy(policy.ruleMatchMode)} · {policy.rules?.length ?? 0} điều kiện</small>
                   ) : null}
                 </div>
                 <div className="seller-row__actions">
@@ -88,7 +96,7 @@ export function ShippingPolicySettings({
         />
       ) : (
         <details className="seller-technical-fields">
-          <summary>Thêm shipping policy</summary>
+          <summary>Thêm cấu hình phí giao</summary>
           <ShippingPolicyForm merchantId={merchantId} locationId={locationId} />
         </details>
       )}
