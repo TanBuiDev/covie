@@ -39,7 +39,7 @@ export function SellerShell({
       </header>
 
       <div className="seller-mobile-tabs">
-        <SellerNavLinks merchantId={merchantId} />
+        <SellerNavLinks merchantId={merchantId} scrollActiveIntoView />
       </div>
 
       <aside className="seller-desktop-navigation">
