@@ -25,12 +25,24 @@ const defaultRule: ShippingRule = {
   enabled: true,
 };
 
+function isKnownCondition(rule: ShippingRule) {
+  return rule.conditionType === "DISTANCE_MAX" || rule.conditionType === "ORDER_AMOUNT_MIN";
+}
+
 function conditionCopy(rule: ShippingRule) {
-  return rule.conditionType === "DISTANCE_MAX" ? "Khoảng cách tối đa" : "Đơn tối thiểu";
+  switch (rule.conditionType) {
+    case "DISTANCE_MAX": return "Khoảng cách tối đa";
+    case "ORDER_AMOUNT_MIN": return "Đơn tối thiểu";
+    default: return "Điều kiện đã được cập nhật";
+  }
 }
 
 function conditionUnit(rule: ShippingRule) {
-  return rule.conditionType === "DISTANCE_MAX" ? "m" : "₫";
+  switch (rule.conditionType) {
+    case "DISTANCE_MAX": return "m";
+    case "ORDER_AMOUNT_MIN": return "₫";
+    default: return "giá trị";
+  }
 }
 
 export function ShippingPolicyForm({
@@ -62,6 +74,10 @@ export function ShippingPolicyForm({
     const parsedFee = Number(baseFee);
     if ((mode === "FIXED" || mode === "CONDITIONAL") && (!Number.isSafeInteger(parsedFee) || parsedFee < 0)) {
       setMessage("Phí giao phải là số nguyên không âm theo đồng (₫).");
+      return;
+    }
+    if (mode === "CONDITIONAL" && rules.some((rule) => !isKnownCondition(rule))) {
+      setMessage("Có điều kiện giao hàng chưa được phiên bản Seller Center này hỗ trợ. Không thể lưu để tránh ghi đè sai dữ liệu backend.");
       return;
     }
     if (mode === "CONDITIONAL" && !rules.some((rule) => rule.enabled)) {
@@ -164,56 +180,63 @@ export function ShippingPolicyForm({
       {mode === "CONDITIONAL" ? (
         <section className="seller-shipping-conditions" aria-labelledby="shipping-condition-heading">
           <strong id="shipping-condition-heading">Điều kiện freeship</strong>
-          {rules.map((rule, index) => (
-            <div className="seller-shipping-condition" key={`${rule.conditionType ?? "rule"}-${index}`}>
-              <label className="seller-shipping-condition__toggle">
-                <input
-                  type="checkbox"
-                  checked={rule.enabled ?? false}
-                  disabled={pending}
-                  onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
-                    ...item,
-                    enabled: event.target.checked,
-                  } : item))}
-                />
-                <span>Freeship khi {conditionCopy(rule).toLocaleLowerCase("vi-VN")}</span>
-              </label>
-              <div className="seller-shipping-condition__editor">
-                <select
-                  aria-label={`Loại điều kiện ${index + 1}`}
-                  disabled={pending}
-                  value={rule.conditionType}
-                  onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
-                    ...item,
-                    conditionType: event.target.value as ShippingRule["conditionType"],
-                    operator: event.target.value === "DISTANCE_MAX" ? "LTE" : "GTE",
-                  } : item))}
-                >
-                  <option value="DISTANCE_MAX">Khoảng cách tối đa</option>
-                  <option value="ORDER_AMOUNT_MIN">Đơn tối thiểu</option>
-                </select>
-                <label>
-                  Ngưỡng ({conditionUnit(rule)})
+          {rules.map((rule, index) => {
+            const knownCondition = isKnownCondition(rule);
+            return (
+              <div className="seller-shipping-condition" key={`${rule.conditionType ?? "rule"}-${index}`}>
+                <label className="seller-shipping-condition__toggle">
                   <input
-                    aria-label={`Ngưỡng điều kiện ${index + 1}`}
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    step="1"
-                    disabled={pending}
-                    value={rule.thresholdValue ?? 0}
+                    type="checkbox"
+                    checked={rule.enabled ?? false}
+                    disabled={pending || !knownCondition}
                     onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
                       ...item,
-                      thresholdValue: Math.max(0, Math.trunc(Number(event.target.value))),
+                      enabled: event.target.checked,
                     } : item))}
                   />
+                  <span>{knownCondition ? `Freeship khi ${conditionCopy(rule).toLocaleLowerCase("vi-VN")}` : conditionCopy(rule)}</span>
                 </label>
-                <button className="seller-button--secondary" type="button" disabled={rules.length === 1 || pending} onClick={() => setRules((current) => current.filter((_, ruleIndex) => ruleIndex !== index))}>
-                  Xóa điều kiện
-                </button>
+                {knownCondition ? (
+                  <div className="seller-shipping-condition__editor">
+                    <select
+                      aria-label={`Loại điều kiện ${index + 1}`}
+                      disabled={pending}
+                      value={rule.conditionType}
+                      onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
+                        ...item,
+                        conditionType: event.target.value as ShippingRule["conditionType"],
+                        operator: event.target.value === "DISTANCE_MAX" ? "LTE" : "GTE",
+                      } : item))}
+                    >
+                      <option value="DISTANCE_MAX">Khoảng cách tối đa</option>
+                      <option value="ORDER_AMOUNT_MIN">Đơn tối thiểu</option>
+                    </select>
+                    <label>
+                      Ngưỡng ({conditionUnit(rule)})
+                      <input
+                        aria-label={`Ngưỡng điều kiện ${index + 1}`}
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        step="1"
+                        disabled={pending}
+                        value={rule.thresholdValue ?? 0}
+                        onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
+                          ...item,
+                          thresholdValue: Math.max(0, Math.trunc(Number(event.target.value))),
+                        } : item))}
+                      />
+                    </label>
+                    <button className="seller-button--secondary" type="button" disabled={rules.length === 1 || pending} onClick={() => setRules((current) => current.filter((_, ruleIndex) => ruleIndex !== index))}>
+                      Xóa điều kiện
+                    </button>
+                  </div>
+                ) : (
+                  <p className="seller-contract-note">Loại điều kiện này do backend cung cấp và chưa được Seller Center hỗ trợ. Không chỉnh sửa để tránh ghi đè sai dữ liệu.</p>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
           <button className="seller-button--secondary" type="button" disabled={pending} onClick={() => setRules((current) => [...current, { ...defaultRule, priority: current.length + 1 }])}>
             Thêm điều kiện
           </button>
