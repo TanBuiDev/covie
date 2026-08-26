@@ -53,41 +53,46 @@ export function MerchantProfile({ merchant, reviews }: { merchant: Merchant; rev
     </header>
 
     <div className={styles.body}>
-      <section className={styles.hero} aria-labelledby="merchant-name">
-        {merchant.cover?.url && <Image src={merchant.cover.url} alt="" fill sizes="358px" unoptimized />}
-        <div><small>SHOP PUBLIC PROFILE</small><h2 id="merchant-name">{merchant.name ?? "Cửa hàng CoVie"}</h2>{merchant.description && <p>{merchant.description}</p>}</div>
-      </section>
+      <h1 className={styles.desktopTitle}>Cửa hàng</h1>
+      <div className={styles.desktopSummary}>
+        <section className={styles.hero} aria-labelledby="merchant-name">
+          {merchant.cover?.url && <Image src={merchant.cover.url} alt="" fill sizes="(min-width: 1024px) 420px, 358px" unoptimized />}
+          <div><small>SHOP PUBLIC PROFILE</small><h2 id="merchant-name">{merchant.name ?? "Cửa hàng CoVie"}</h2>{merchant.description && <p>{merchant.description}</p>}</div>
+        </section>
 
-      <section className={styles.identity} aria-label="Thông tin cửa hàng">
-        <div className={styles.avatar}>{merchant.logo?.url ? <Image src={merchant.logo.url} alt="" fill sizes="48px" unoptimized /> : initials(merchant.name)}</div>
-        <div><strong>{merchant.name ?? "Cửa hàng CoVie"}</strong>{primaryLocation?.name && <small>{primaryLocation.name}</small>}{distance(primaryLocation?.distanceMeters) && <small>Cách bạn {distance(primaryLocation?.distanceMeters)}</small>}{merchant.reputation?.completedOrders != null && <b>Đã hoàn thành {merchant.reputation.completedOrders} đơn</b>}</div>
-      </section>
+        <section className={styles.identity} aria-label="Thông tin cửa hàng">
+          <div className={styles.avatar}>{merchant.logo?.url ? <Image src={merchant.logo.url} alt="" fill sizes="48px" unoptimized /> : initials(merchant.name)}</div>
+          <div><strong>{merchant.name ?? "Cửa hàng CoVie"}</strong>{primaryLocation?.name && <small>{primaryLocation.name}</small>}{distance(primaryLocation?.distanceMeters) && <small>Cách bạn {distance(primaryLocation?.distanceMeters)}</small>}{merchant.reputation?.completedOrders != null && <b>Đã hoàn thành {merchant.reputation.completedOrders} đơn</b>}</div>
+        </section>
 
-      <section className={styles.trust}>
-        <h3>Uy tín &amp; đánh giá</h3>
-        <div className={styles.reputation}><strong>Uy tín giao dịch</strong>{completionRate == null ? <p>Chưa có đủ dữ liệu uy tín công khai.</p> : <><div><span>Tỷ lệ hoàn thành</span><b>{completionRate}%</b></div><progress max="100" value={completionRate} aria-label="Tỷ lệ hoàn thành" /></>}</div>
-        <div className={styles.reviews}><strong>Đánh giá từ người mua</strong>{ratingText ? <p><CoVieIcon name="rating-star" />{ratingText}</p> : <small>Chưa có đánh giá công khai.</small>}</div>
-      </section>
+        <section className={styles.trust}>
+          <h3>Uy tín &amp; đánh giá</h3>
+          <div className={styles.reputation}><strong>Uy tín giao dịch</strong>{completionRate == null ? <p>Chưa có đủ dữ liệu uy tín công khai.</p> : <><div><span>Tỷ lệ hoàn thành</span><b>{completionRate}%</b></div><progress max="100" value={completionRate} aria-label="Tỷ lệ hoàn thành" /></>}</div>
+          <div className={styles.reviews}><strong>Đánh giá từ người mua</strong>{ratingText ? <p><CoVieIcon name="rating-star" />{ratingText}</p> : <small>Chưa có đánh giá công khai.</small>}</div>
+        </section>
 
-      {merchant.contacts?.length ? <section className={styles.contacts}>
-        <h3>Liên hệ công khai</h3>
-        <p>{merchant.contacts.map(contact => contact.type === "PHONE" ? contact.value : contact.type?.replace("_LINK", "")).filter(Boolean).join(" · ")}</p>
-        {actions.length > 0 && <div>{actions.map(action => <a key={`${action.label}-${action.href}`} href={action.href} target={action.href.startsWith("http") ? "_blank" : undefined} rel={action.href.startsWith("http") ? "noreferrer" : undefined}>{action.label}</a>)}</div>}
-      </section> : null}
+        {merchant.contacts?.length ? <section className={styles.contacts}>
+          <h3>Liên hệ công khai</h3>
+          <p>{merchant.contacts.map(contact => contact.type === "PHONE" ? contact.value : contact.type?.replace("_LINK", "")).filter(Boolean).join(" · ")}</p>
+          {actions.length > 0 && <div>{actions.map(action => <a key={`${action.label}-${action.href}`} href={action.href} target={action.href.startsWith("http") ? "_blank" : undefined} rel={action.href.startsWith("http") ? "noreferrer" : undefined}>{action.label}</a>)}</div>}
+        </section> : null}
+      </div>
 
-      <section className={styles.locations}>
-        <h3>Điểm phục vụ công khai</h3>
-        {merchant.locations?.length ? merchant.locations.map(location => <div className={styles.locationCard} key={location.id ?? location.name}>
-          <strong>{location.name ?? "Điểm phục vụ"}</strong>
-          {location.addressText && <p>{location.addressText}</p>}
-          {distance(location.distanceMeters) && <small>Cách bạn {distance(location.distanceMeters)}</small>}
-        </div>) : <p className={styles.empty}>Chưa có điểm phục vụ công khai.</p>}
-      </section>
+      <div className={styles.desktopPublicContent}>
+        <section className={styles.locations}>
+          <h3>Điểm phục vụ công khai</h3>
+          {merchant.locations?.length ? merchant.locations.map(location => <div className={styles.locationCard} key={location.id ?? location.name}>
+            <strong>{location.name ?? "Điểm phục vụ"}</strong>
+            {location.addressText && <p>{location.addressText}</p>}
+            {distance(location.distanceMeters) && <small>Cách bạn {distance(location.distanceMeters)}</small>}
+          </div>) : <p className={styles.empty}>Chưa có điểm phục vụ công khai.</p>}
+        </section>
 
-      <section className={styles.catalog}>
-        <h3>Danh mục công khai</h3>
-        <div className={styles.empty}>Chưa thể tải danh mục của cửa hàng.</div>
-      </section>
+        <section className={styles.catalog}>
+          <h3>Danh mục công khai</h3>
+          <div className={styles.empty}>Chưa thể tải danh mục của cửa hàng.</div>
+        </section>
+      </div>
     </div>
   </article>;
 }
