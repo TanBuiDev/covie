@@ -41,17 +41,24 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
   const [method, setMethod] = useState<Method>(firstCart?.cartType === "SERVICE" ? "SERVICE" : "PICKUP");
   const [addressId, setAddressId] = useState(addresses.find((address) => address.defaultAddress)?.id ?? "");
   const [preview, setPreview] = useState<Preview>();
+  const [commitKey, setCommitKey] = useState<string>();
+  const [committing, setCommitting] = useState(false);
   const [changed, setChanged] = useState(false);
   const [message, setMessage] = useState<string>();
   const selectedCart = carts.find((cart) => cart.id === cartId);
   const selectedAddress = addresses.find((address) => address.id === addressId);
   const isService = selectedCart?.cartType === "SERVICE";
 
+  function invalidatePreview() {
+    setPreview(undefined);
+    setCommitKey(undefined);
+  }
+
   function chooseCart(nextId: string) {
     const next = carts.find((cart) => cart.id === nextId);
     setCartId(nextId);
     setMethod(next?.cartType === "SERVICE" ? "SERVICE" : "PICKUP");
-    setPreview(undefined);
+    invalidatePreview();
   }
 
   async function requestPreview() {
@@ -67,22 +74,33 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
         paymentMethod: "COD",
       });
       setPreview(value);
+      setCommitKey(crypto.randomUUID());
     } catch {
       setMessage("Không thể tạo bản xem trước. Hãy kiểm tra lại giỏ hàng và địa chỉ.");
     }
   }
 
   async function commit() {
-    if (!preview?.checkoutToken) return;
+    if (!preview?.checkoutToken || !commitKey || committing) return;
+    setCommitting(true);
+    setMessage(undefined);
     try {
-      const order = await commitCheckout(preview.checkoutToken, crypto.randomUUID());
-      if (order.id) router.push(`/checkout/success/${order.id}`);
+      const order = await commitCheckout(preview.checkoutToken, commitKey);
+      if (order.id) {
+        router.push(`/checkout/success/${order.id}`);
+        return;
+      }
+      setMessage("Đơn hàng đã được xử lý nhưng chưa nhận được mã đơn. Vui lòng kiểm tra danh sách đơn hàng.");
     } catch (error) {
       const code = typeof error === "object" && error && "code" in error ? String(error.code) : "";
       if (code === "CHECKOUT_CHANGED") {
-        setPreview(undefined);
+        invalidatePreview();
         setChanged(true);
-      } else setMessage("Không thể xác nhận đơn hàng. Vui lòng thử lại.");
+      } else {
+        setMessage("Không thể xác nhận đơn hàng. Vui lòng thử lại.");
+      }
+    } finally {
+      setCommitting(false);
     }
   }
 
@@ -116,7 +134,7 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
                   <p><strong>{selectedAddress.label ?? "Địa chỉ"}</strong> · {selectedAddress.addressText}<br />{selectedAddress.recipientName}{selectedAddress.phone ? ` · ${selectedAddress.phone}` : ""}</p>
                 ) : (
                   <label>Địa chỉ
-                    <select aria-label="Địa chỉ" value={addressId} onChange={(event) => { setAddressId(event.target.value); setPreview(undefined); }}>
+                    <select aria-label="Địa chỉ" value={addressId} onChange={(event) => { setAddressId(event.target.value); invalidatePreview(); }}>
                       <option value="">Chọn địa chỉ</option>
                       {addresses.map((address) => <option key={address.id} value={address.id}>{address.label} — {address.addressText}</option>)}
                     </select>
@@ -130,8 +148,8 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
                 <label className={styles.optionSelected}><input type="radio" aria-label="SERVICE" checked readOnly /><span><strong>Dịch vụ tại địa chỉ</strong><small>Người bán phối hợp lịch với bạn</small></span></label>
               ) : (
                 <>
-                  <label className={method === "SELLER_DELIVERY" ? styles.optionSelected : styles.option}><input type="radio" aria-label="SELLER_DELIVERY" checked={method === "SELLER_DELIVERY"} onChange={() => { setMethod("SELLER_DELIVERY"); setPreview(undefined); }} /><span><strong>Giao tận nơi</strong><small>Giao đến địa chỉ của bạn</small></span></label>
-                  <label className={method === "PICKUP" ? styles.optionSelected : styles.option}><input type="radio" aria-label="PICKUP" checked={method === "PICKUP"} onChange={() => { setMethod("PICKUP"); setPreview(undefined); }} /><span><strong>Nhận tại điểm bán</strong><small>Tự đến điểm bán để nhận hàng</small></span></label>
+                  <label className={method === "SELLER_DELIVERY" ? styles.optionSelected : styles.option}><input type="radio" aria-label="SELLER_DELIVERY" checked={method === "SELLER_DELIVERY"} onChange={() => { setMethod("SELLER_DELIVERY"); invalidatePreview(); }} /><span><strong>Giao tận nơi</strong><small>Giao đến địa chỉ của bạn</small></span></label>
+                  <label className={method === "PICKUP" ? styles.optionSelected : styles.option}><input type="radio" aria-label="PICKUP" checked={method === "PICKUP"} onChange={() => { setMethod("PICKUP"); invalidatePreview(); }} /><span><strong>Nhận tại điểm bán</strong><small>Tự đến điểm bán để nhận hàng</small></span></label>
                 </>
               )}
             </fieldset>
@@ -148,7 +166,7 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
                   <h2>Tóm tắt thanh toán</h2>
                   <dl><div><dt>Tạm tính</dt><dd>{money(preview.subtotal)}</dd></div><div><dt>Phí giao hàng</dt><dd>{negotiated ? "Thỏa thuận với người bán" : money(preview.shippingFee)}</dd></div><div><dt>{totalLabel}</dt><dd>{money(totalValue)}</dd></div></dl>
                   <p className={negotiated ? styles.negotiatedNote : undefined}>{negotiated ? "Phí giao sẽ được thỏa thuận; khoản tiền trên chưa phải tổng cuối cùng." : "Số tiền hiển thị theo bản xem trước từ hệ thống."}</p>
-                  <button className={styles.desktopCommit} type="button" onClick={commit}>Đặt hàng</button>
+                  <button className={styles.desktopCommit} type="button" onClick={commit} disabled={committing}>{committing ? "Đang đặt hàng…" : "Đặt hàng"}</button>
                 </section>
               </>
             ) : null}
@@ -157,7 +175,7 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
           </>
         )}
       </section>
-      {preview && !changed ? <div className={styles.commitBar}><div><span>{totalLabel}</span><strong>{money(totalValue)}</strong></div><button type="button" onClick={commit}>Đặt hàng</button></div> : null}
+      {preview && !changed ? <div className={styles.commitBar}><div><span>{totalLabel}</span><strong>{money(totalValue)}</strong></div><button type="button" onClick={commit} disabled={committing}>{committing ? "Đang đặt hàng…" : "Đặt hàng"}</button></div> : null}
     </div>
   );
 }
