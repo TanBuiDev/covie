@@ -91,11 +91,11 @@ export function CoverageForm({
     setMessage(undefined);
 
     if (!coverageType) {
-      setMessage("Chọn loại coverage trong Cấu hình kỹ thuật trước khi lưu.");
+      setMessage("Chọn mục đích phạm vi trong phần Thông tin bổ sung trước khi lưu.");
       return;
     }
     if (!radiusEnabled && !areaEnabled) {
-      setMessage("Coverage cần ít nhất một phạm vi bán kính hoặc khu vực.");
+      setMessage("Phạm vi cần ít nhất một bán kính hoặc khu vực.");
       return;
     }
     if (radiusEnabled && (!Number.isSafeInteger(radius) || radius < 1)) {
@@ -130,10 +130,10 @@ export function CoverageForm({
       if (error instanceof CovieApiError && error.code === "RESOURCE_VERSION_CONFLICT") {
         setMessage("Phạm vi đã được thay đổi ở nơi khác. Tải dữ liệu mới rồi thử lại.");
       } else if (error instanceof CovieApiError && error.code === "DELIVERY_COVERAGE_DUPLICATE_ACTIVE") {
-        setMessage("Điểm bán đã có coverage đang hoạt động cho loại này. Hãy tạm ngưng coverage cũ trước.");
+        setMessage("Điểm bán đã có một phạm vi đang hoạt động cho mục đích này. Hãy tạm ngưng phạm vi cũ trước.");
       } else {
         setMessage(error instanceof Error && error.message === "RESOURCE_VERSION_REQUIRED"
-          ? "Thiếu version của coverage. Hãy tải lại dữ liệu trước khi sửa."
+          ? "Thông tin phạm vi chưa đủ để chỉnh sửa an toàn. Hãy tải lại dữ liệu trước khi sửa."
           : "Không thể lưu phạm vi phục vụ. Hãy kiểm tra dữ liệu và thử lại.");
       }
     } finally {
@@ -234,7 +234,7 @@ export function CoverageForm({
             </div>
           ) : null}
           {!areasLoading && !areas.length ? <p className="seller-muted">Chưa có khu vực khả dụng.</p> : null}
-          <p className="seller-muted">Bạn có thể giữ thêm bán kính trên cùng coverage nếu backend record hiện tại đã dùng cả hai phạm vi.</p>
+          <p className="seller-muted">Bạn có thể giữ thêm bán kính nếu cấu hình hiện tại đang áp dụng cả hai phạm vi.</p>
         </section>
       ) : null}
 
@@ -243,22 +243,22 @@ export function CoverageForm({
           <strong>Phạm vi đang áp dụng</strong>
           {radiusEnabled && Number.isSafeInteger(radius) && radius > 0 ? <p>• Bán kính {radiusLabel(radius)}</p> : null}
           {areaEnabled ? <p>• Khu vực: {selectedAreaNames.length ? selectedAreaNames.join(", ") : `${selectedAreaIds.length} khu vực đã chọn`}</p> : null}
-          {radiusEnabled && areaEnabled ? <small>Backend hiện lưu hai facet trên cùng coverage record; UI không tạo state machine thứ hai.</small> : null}
+          {radiusEnabled && areaEnabled ? <small>Phạm vi này đang áp dụng cả bán kính và khu vực.</small> : null}
         </section>
       ) : null}
 
       <details className="seller-technical-fields" open={!editing && !coverageType}>
-        <summary>Cấu hình kỹ thuật</summary>
+        <summary>Thông tin bổ sung</summary>
         <label>
-          Loại coverage
+          Áp dụng cho
           <select disabled={pending || editing} value={coverageType} onChange={(event) => setCoverageType(event.target.value as CoverageType)} required>
-            <option value="">Chọn loại coverage</option>
+            <option value="">Chọn mục đích phạm vi</option>
             <option value="PRODUCT_DELIVERY">Giao sản phẩm</option>
             <option value="SERVICE_AREA">Khu vực dịch vụ</option>
           </select>
         </label>
-        {editing ? <p className="field-hint">Loại coverage là immutable theo backend; tạo record mới nếu cần đổi loại.</p> : null}
-        {editing ? <p className="field-hint">Trạng thái backend hiện tại: {coverage?.status ?? "không xác định"}.</p> : null}
+        {editing ? <p className="field-hint">Mục đích áp dụng không thể đổi khi sửa. Tạo cấu hình mới nếu cần dùng mục đích khác.</p> : null}
+        {editing ? <p className="field-hint">Trạng thái hiện tại: {coverage?.status ?? "không xác định"}.</p> : null}
         {editing && coverage?.status !== "INACTIVE" ? (
           <button type="button" className="button-danger" disabled={pending} onClick={() => setConfirmDeactivate(true)}>Tạm ngưng phạm vi</button>
         ) : null}
@@ -272,7 +272,7 @@ export function CoverageForm({
       <ConfirmDialog
         open={confirmDeactivate}
         title="Tạm ngưng phạm vi phục vụ?"
-        description="Backend sẽ chuyển coverage này sang INACTIVE; dữ liệu cấu hình vẫn được giữ lại."
+        description="Phạm vi sẽ được chuyển sang trạng thái tạm ngưng; dữ liệu cấu hình vẫn được giữ lại."
         confirmLabel={pending ? "Đang xử lý…" : "Tạm ngưng"}
         dangerous
         confirmDisabled={pending}
