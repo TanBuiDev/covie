@@ -7,6 +7,7 @@ import { OrderStatusLabel } from "@/features/orders/order-status";
 type OrderSummary = components["schemas"]["OrderSummaryResponse"];
 type MerchantLocation = components["schemas"]["MerchantLocationResponse"];
 type NeedMatch = components["schemas"]["MerchantNeedMatchResponse"];
+type MerchantReputation = components["schemas"]["MerchantReputationSummary"];
 
 function distanceCopy(distanceMeters?: number) {
   if (distanceMeters == null) return undefined;
@@ -19,11 +20,13 @@ export function SellerDashboard({
   orders,
   needMatches,
   locations,
+  reputation,
 }: {
   merchantId: string;
   orders: OrderSummary[];
   needMatches: NeedMatch[];
   locations: MerchantLocation[];
+  reputation?: MerchantReputation;
 }) {
   const base = `/seller/${encodeURIComponent(merchantId)}`;
 
@@ -36,9 +39,24 @@ export function SellerDashboard({
       </header>
 
       <section className="seller-metric-grid" aria-label="Tóm tắt dữ liệu hiện tại">
-        <div className="seller-metric"><span>Đơn gần đây</span><strong>{orders.length}</strong></div>
-        <div className="seller-metric"><span>Nhu cầu gợi ý</span><strong>{needMatches.length}</strong></div>
-        <div className="seller-metric"><span>Điểm bán</span><strong>{locations.length}</strong></div>
+        <div className="seller-metric"><span>Đơn ở trang gần nhất</span><strong>{orders.length}</strong></div>
+        <div className="seller-metric"><span>Nhu cầu ở trang gần nhất</span><strong>{needMatches.length}</strong></div>
+        <div className="seller-metric"><span>Điểm bán được trả về</span><strong>{locations.length}</strong></div>
+      </section>
+
+      <section className="seller-section" aria-labelledby="seller-reputation-heading">
+        <div className="seller-section__heading">
+          <h2 id="seller-reputation-heading">Độ tin cậy cửa hàng</h2>
+        </div>
+        {reputation ? (
+          <dl className="seller-order-facts">
+            <div><dt>Đơn đủ điều kiện</dt><dd>{reputation.eligibleOrders ?? "—"}</dd></div>
+            <div><dt>Đơn hoàn tất</dt><dd>{reputation.completedOrders ?? "—"}</dd></div>
+            <div><dt>Tỷ lệ hoàn tất</dt><dd>{reputation.completionRateBasisPoints != null ? `${(reputation.completionRateBasisPoints / 100).toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "—"}</dd></div>
+          </dl>
+        ) : (
+          <p className="seller-muted">Backend public merchant view hiện không trả reputation khả dụng cho trạng thái cửa hàng này.</p>
+        )}
       </section>
 
       <section className="seller-section" aria-labelledby="seller-recent-orders">
