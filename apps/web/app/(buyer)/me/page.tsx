@@ -4,8 +4,8 @@ import { requireUser } from "@/lib/auth/require-user";
 export default async function MePage() {
   const user = await requireUser();
   return (
-    <main className="buyer-surface">
-      <ProfileOverview user={user} notificationsAvailable={false} />
+    <main className="profile-surface">
+      <ProfileOverview user={user} notificationsAvailable />
     </main>
   );
 }
