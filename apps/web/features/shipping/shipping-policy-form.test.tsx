@@ -1,21 +1,82 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import type { components } from "@covie/api-client";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, expect, it, vi } from "vitest";
 import { ShippingPolicyForm } from "./shipping-policy-form";
 
-describe("ShippingPolicyForm", () => {
-  it("explains that negotiated shipping is not zero", () => {
-    render(<ShippingPolicyForm merchantId="merchant" locationId="location" />);
-    fireEvent.change(screen.getByLabelText("Loại phí"), { target: { value: "NEGOTIATED" } });
-    expect(screen.getByText(/Phí giao được thỏa thuận/)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/Phí cơ bản/)).not.toBeInTheDocument();
-  });
+type Policy = components["schemas"]["ShippingPolicyResponse"];
 
-  it("shows ANY or ALL matching only for conditional policies", () => {
-    render(<ShippingPolicyForm merchantId="merchant" locationId="location" />);
-    expect(screen.queryByLabelText("Cách khớp điều kiện")).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Loại phí"), { target: { value: "CONDITIONAL" } });
-    expect(screen.getByLabelText("Cách khớp điều kiện")).toHaveValue("ANY");
-    fireEvent.change(screen.getByLabelText("Cách khớp điều kiện"), { target: { value: "ALL" } });
-    expect(screen.getByLabelText("Cách khớp điều kiện")).toHaveValue("ALL");
+const mocks = vi.hoisted(() => ({
+  refresh: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  remove: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: mocks.refresh }),
+}));
+
+vi.mock("./shipping-api", () => ({
+  createShippingPolicy: mocks.create,
+  updateShippingPolicy: mocks.update,
+  deleteShippingPolicy: mocks.remove,
+}));
+
+beforeEach(() => {
+  mocks.refresh.mockReset();
+  mocks.create.mockReset().mockResolvedValue({});
+  mocks.update.mockReset().mockResolvedValue({});
+  mocks.remove.mockReset().mockResolvedValue(undefined);
+});
+
+it("submits conditional shipping with backend-owned rules and frozen ANY/ALL presentation", async () => {
+  render(<ShippingPolicyForm merchantId="merchant-1" locationId="location-1" />);
+
+  fireEvent.change(screen.getByLabelText("Loại phí giao"), { target: { value: "CONDITIONAL" } });
+  fireEvent.change(screen.getByRole("spinbutton", { name: /Phí mặc định/ }), { target: { value: "10000" } });
+  fireEvent.change(screen.getByLabelText("Ngưỡng điều kiện 1"), { target: { value: "150000" } });
+  fireEvent.click(screen.getByLabelText("Tất cả điều kiện phải đúng"));
+  fireEvent.click(screen.getByRole("button", { name: "Lưu phí giao" }));
+
+  await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(1));
+  expect(mocks.create).toHaveBeenCalledWith("merchant-1", "location-1", {
+    mode: "CONDITIONAL",
+    status: "ACTIVE",
+    currencyCode: "VND",
+    baseFee: 10000,
+    ruleMatchMode: "ALL",
+    rules: [{
+      conditionType: "ORDER_AMOUNT_MIN",
+      operator: "GTE",
+      thresholdValue: 150000,
+      actionType: "FREE_SHIPPING",
+      priority: 1,
+      enabled: true,
+    }],
+  });
+});
+
+it("preserves an existing backend status instead of silently reactivating policy on edit", async () => {
+  const policy: Policy = {
+    id: "policy-1",
+    mode: "FIXED",
+    status: "INACTIVE",
+    currencyCode: "VND",
+    baseFee: 10000,
+    version: 3,
+  };
+
+  render(<ShippingPolicyForm merchantId="merchant-1" locationId="location-1" policy={policy} />);
+  fireEvent.change(screen.getByRole("spinbutton", { name: /Phí cố định/ }), { target: { value: "12000" } });
+  fireEvent.click(screen.getByRole("button", { name: "Lưu phí giao" }));
+
+  await waitFor(() => expect(mocks.update).toHaveBeenCalledTimes(1));
+  expect(mocks.update).toHaveBeenCalledWith("merchant-1", "location-1", "policy-1", 3, {
+    mode: "FIXED",
+    status: "INACTIVE",
+    currencyCode: "VND",
+    baseFee: 12000,
+    ruleMatchMode: undefined,
+    rules: [],
   });
 });
