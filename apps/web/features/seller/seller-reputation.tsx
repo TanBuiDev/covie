@@ -15,7 +15,7 @@ export function SellerReputation({ reputation }: { reputation?: MerchantReputati
     return (
       <EmptyState
         title="Chưa có dữ liệu uy tín"
-        description="CoVie chỉ hiển thị chỉ số uy tín tổng hợp khi API hiện tại cho phép công khai."
+        description="Chỉ số uy tín tổng hợp sẽ xuất hiện khi có dữ liệu có thể hiển thị."
       />
     );
   }
