@@ -8,9 +8,9 @@ export default async function MerchantNeedsPage({ params }: { params: Promise<{ 
   return (
     <section className="seller-stack">
       <header className="surface-header seller-desktop-heading">
-        <p className="eyebrow">Seller Center / Need</p>
+        <p className="eyebrow">Seller Center / Nhu cầu</p>
         <h1>Cần mua phù hợp</h1>
-        <p>Chỉ hiển thị khu vực an toàn, khoảng cách và location backend đã resolve; không render địa chỉ hoặc tọa độ riêng của người mua.</p>
+        <p>Xem các nhu cầu phù hợp với điểm bán mà không hiển thị địa chỉ hoặc tọa độ riêng của người mua.</p>
       </header>
       <MerchantNeedList merchantId={merchantId} locations={locations} />
     </section>
