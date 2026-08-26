@@ -6,6 +6,7 @@ import "../seller-settings.css";
 import "../seller-settings-desktop.css";
 import "../seller-contact.css";
 import "../seller-catalog.css";
+import "../seller-catalog-desktop.css";
 import "../seller-delivery.css";
 import "../seller-operations.css";
 import "../seller-dashboard.css";
