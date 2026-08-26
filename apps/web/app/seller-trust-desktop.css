@@ -1,0 +1,45 @@
+@media (min-width: 1024px) {
+  .seller-trust-stack {
+    align-items: start;
+    display: grid;
+    gap: 24px;
+    grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+    max-width: 1128px;
+  }
+
+  .seller-reputation-summary {
+    grid-column: 1;
+    min-height: 220px;
+  }
+
+  .seller-trust-note {
+    grid-column: 2;
+    min-height: 160px;
+  }
+
+  .seller-notices {
+    align-items: start;
+    display: grid;
+    gap: 24px;
+    grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+    max-width: 1128px;
+  }
+
+  .seller-notice-list,
+  .seller-notices__error {
+    grid-column: 1;
+  }
+
+  .seller-notices__safe-copy,
+  .seller-notices > .seller-trust-note {
+    grid-column: 2;
+    grid-row: 1;
+    margin-right: 0;
+  }
+
+  .seller-notice {
+    border-radius: 12px;
+    min-height: 96px;
+    padding: 14px;
+  }
+}

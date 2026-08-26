@@ -9,9 +9,11 @@ import "../seller-catalog.css";
 import "../seller-catalog-desktop.css";
 import "../seller-delivery.css";
 import "../seller-operations.css";
+import "../seller-operations-desktop.css";
 import "../seller-dashboard.css";
 import "../seller-dashboard-desktop.css";
 import "../seller-trust.css";
+import "../seller-trust-desktop.css";
 import "../seller-status.css";
 import "../seller-accessibility.css";
 
