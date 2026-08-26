@@ -21,6 +21,7 @@ run_trivy() {
 }
 
 cd "$repo_root"
+mkdir -p "$repo_root/build"
 release_source="$(mktemp -d "$repo_root/build/security-source.XXXXXX")"
 cleanup_release_source() { rm -rf "$release_source"; }
 trap cleanup_release_source EXIT
