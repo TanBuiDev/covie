@@ -113,7 +113,7 @@
   display: inline-flex;
   flex: 0 0 auto;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 400;
   justify-content: center;
   min-height: 44px;
   padding: 0 12px;
@@ -124,6 +124,7 @@
 .seller-nav-links a[aria-current="page"] {
   background: var(--seller-brand-subtle);
   color: var(--seller-brand);
+  font-weight: 600;
 }
 
 .seller-nav-links a[aria-current="page"]::after {
