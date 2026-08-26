@@ -312,6 +312,106 @@
   .skeletonGrid i { height: 180px; }
 }
 
+@media (min-width: 1024px) {
+  .home {
+    gap: 32px;
+    margin: 0 auto;
+    max-width: 1024px;
+    padding: 24px 32px 48px;
+    width: 100%;
+  }
+
+  .search {
+    display: none;
+  }
+
+  .sectionHeading {
+    margin-bottom: 16px;
+  }
+
+  .sectionHeading h2 {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  .categoryGrid,
+  .categorySkeletons {
+    gap: 16px;
+    grid-template-columns: repeat(4, 84px);
+  }
+
+  .categoryGrid a {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .categoryIcon,
+  .categorySkeletons i {
+    border-radius: 16px;
+    height: 72px;
+  }
+
+  .cardGrid,
+  .skeletonGrid {
+    gap: 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card {
+    display: grid;
+    grid-template-columns: 176px minmax(0, 1fr);
+    min-height: 180px;
+  }
+
+  .cardMedia {
+    height: 180px;
+  }
+
+  .cardBody {
+    align-content: center;
+    gap: 8px;
+    padding: 16px;
+  }
+
+  .cardBody h3,
+  .price {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .merchant,
+  .locationLine {
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  .skeletonGrid i {
+    height: 180px;
+    min-height: 180px;
+  }
+
+  .locationState {
+    margin: 24px auto;
+    max-width: 680px;
+    padding: 40px;
+  }
+
+  .locationChooser {
+    max-width: 520px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .home {
+    max-width: 1280px;
+    padding: 32px 32px 56px;
+  }
+
+  .card {
+    grid-template-columns: 176px minmax(0, 1fr);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .categorySkeletons i,
   .skeletonGrid i,
