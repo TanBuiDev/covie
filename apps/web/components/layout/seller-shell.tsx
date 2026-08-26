@@ -2,7 +2,18 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { SellerNavLinks } from "@/features/seller/seller-nav";
+import { SellerPageTitle } from "@/features/seller/seller-page-title";
 import { sellerBasePath } from "@/features/seller/seller-context";
+
+function statusLabel(status?: string) {
+  switch (status) {
+    case "ACTIVE": return "đang hoạt động";
+    case "PAUSED": return "tạm dừng";
+    case "SUSPENDED": return "bị hạn chế";
+    case "DELETED": return "đã đóng";
+    default: return "đã được cập nhật";
+  }
+}
 
 export function SellerShell({
   merchantId,
@@ -22,23 +33,31 @@ export function SellerShell({
 
   return (
     <div className="seller-shell">
-      <aside className="seller-shell__navigation">
-        <div className="seller-shell__appbar">
-          <Link className="seller-shell__brand" href={base} aria-label="CoVie Seller Center — Tổng quan">
-            <Image src="/icon.svg" alt="" aria-hidden="true" width={36} height={36} priority />
-            <span>
-              <strong>CoVie Seller</strong>
-              <small>{merchantName ?? "Cửa hàng"}</small>
-            </span>
-          </Link>
-          {switcher ? <div className="seller-shell__switcher">{switcher}</div> : null}
-        </div>
+      <header className="seller-mobile-header">
+        <SellerPageTitle merchantId={merchantId} />
+        {switcher ? <div className="seller-mobile-switcher">{switcher}</div> : null}
+      </header>
+
+      <div className="seller-mobile-tabs">
+        <SellerNavLinks merchantId={merchantId} />
+      </div>
+
+      <aside className="seller-desktop-navigation">
+        <Link className="seller-desktop-brand" href={base} aria-label="CoVie Seller Center — Tổng quan">
+          <Image src="/icon.svg" alt="" aria-hidden="true" width={36} height={36} priority />
+          <span>
+            <strong>CoVie Seller</strong>
+            <small>{merchantName ?? "Cửa hàng"}</small>
+          </span>
+        </Link>
+        {switcher ? <div className="seller-desktop-switcher">{switcher}</div> : null}
         <SellerNavLinks merchantId={merchantId} />
       </aside>
+
       <main className="seller-shell__main" id="seller-main-content">
         {restricted ? (
           <section className="warning-banner seller-restriction-banner" role="status" aria-label="Trạng thái cửa hàng">
-            <strong>Cửa hàng hiện ở trạng thái {merchantStatus}.</strong>
+            <strong>Cửa hàng hiện {statusLabel(merchantStatus)}.</strong>
             <p>Một số dữ liệu hoặc thao tác có thể bị backend giới hạn. CoVie chỉ hiển thị các action API thực sự cho phép.</p>
           </section>
         ) : null}
