@@ -7,6 +7,7 @@ type LocalFixture = {
   buyerPassword: string;
   productItemId: string;
   serviceItemId: string;
+  resaleItemId: string;
 };
 
 const fixturePath = path.resolve(process.cwd(), "../../.local/dev/ui-fixture.json");
@@ -74,6 +75,16 @@ test("populated Public Buyer P0 journey reaches checkout success on the first co
   await expect(page.getByRole("heading", { name: "Chi tiết dịch vụ", exact: true })).toBeVisible();
   await expect(page.getByRole("radio", { name: /2 máy/ })).toBeChecked();
   await captureResponsive(page, "pub-007-service-detail");
+
+  await page.goto(`/items/${fixture.resaleItemId}`);
+  await expect(page).toHaveURL(new RegExp(`/items/${fixture.resaleItemId}`));
+  const resaleDetail = page.getByRole("article");
+  await expect(resaleDetail.getByRole("heading", { name: "Chi tiết thanh lý", exact: true })).toBeVisible();
+  await expect(resaleDetail.getByRole("heading", { name: "Kệ gỗ thanh lý", exact: true })).toBeVisible();
+  await expect(resaleDetail.getByText("Tình trạng", { exact: true })).toBeVisible();
+  await expect(resaleDetail.getByText("Vị trí giao dịch", { exact: true })).toBeVisible();
+  await expect(resaleDetail.getByRole("status", { name: "Số lượng" })).toHaveCount(0);
+  await captureResponsive(page, "pub-008-resale-detail");
 
   await page.goto("/cart");
   await expect(page.getByRole("heading", { name: "Giỏ hàng", exact: true })).toBeVisible();

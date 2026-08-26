@@ -69,13 +69,13 @@ export function CatalogDetail({ item }: { item: CatalogDetailData }) {
   return <article className={`${styles.detail} ${service ? styles.serviceDetail : resale ? resaleStyles.resaleDetail : ""}`}>
     <header className={styles.appBar}><button aria-label="Quay lại" onClick={() => router.back()}><CoVieIcon name="back" /></button><h1>{service ? "Chi tiết dịch vụ" : resale ? "Chi tiết thanh lý" : "Chi tiết sản phẩm"}</h1></header>
     {resale ? <div className={resaleStyles.resaleMedia}>
-      <div className={resaleStyles.resalePhoto}>{item.media?.[0]?.url ? <Image src={item.media[0].url!} alt={item.name ?? "Ảnh thực tế sản phẩm thanh lý"} fill sizes="326px" unoptimized /> : <Image src="/figma/product-media-placeholder.svg" alt="" fill sizes="326px" priority />}</div>
+      <div className={resaleStyles.resalePhoto}>{item.media?.[0]?.url && <Image src={item.media[0].url!} alt={item.name ?? "Ảnh thực tế sản phẩm thanh lý"} fill sizes="326px" unoptimized />}</div>
       <small>{item.media?.length ? `Ảnh thực tế · 1/${item.media.length}` : "Chưa có ảnh thực tế"}</small>
     </div> : !service && <div className={styles.media}>
       {item.media?.[0]?.url ? <Image src={item.media[0].url!} alt={item.name ?? "Hình ảnh sản phẩm"} fill sizes="390px" unoptimized /> : <Image src="/figma/product-media-placeholder.svg" alt="" fill sizes="390px" priority />}
     </div>}
     <div className={styles.body}>
-      <section className={styles.listing} aria-labelledby="listing-title"><span>{service ? "Dịch vụ" : item.listingKind === "RESALE" ? "Thanh lý" : "Sản phẩm"}</span><h2 id="listing-title">{item.name ?? (service ? "Dịch vụ" : "Sản phẩm")}</h2><strong>{money(offer?.price)}</strong><p>{item.merchant?.name ?? "Người bán CoVie"}</p>{service ? serviceLocation && <small>Phục vụ {serviceLocation}</small> : location && <small>{location}</small>}{ratingText && <div className={styles.rating}><CoVieIcon name="rating-star" />{ratingText}</div>}</section>
+      <section className={`${styles.listing} ${resale ? resaleStyles.resaleListing : ""}`} aria-labelledby="listing-title"><span>{service ? "Dịch vụ" : item.listingKind === "RESALE" ? "Thanh lý" : "Sản phẩm"}</span><h2 id="listing-title">{item.name ?? (service ? "Dịch vụ" : "Sản phẩm")}</h2><strong>{money(offer?.price)}</strong><p>{item.merchant?.name ?? "Người bán CoVie"}</p>{service ? serviceLocation && <small>Phục vụ {serviceLocation}</small> : location && <small>{location}</small>}{ratingText && <div className={styles.rating}><CoVieIcon name="rating-star" />{ratingText}</div>}</section>
       {service ? <>
         <fieldset className={styles.serviceOptions} role="radiogroup">
           <legend>Phân loại</legend>

@@ -32,6 +32,12 @@
   margin-top: 8px;
 }
 
+.resaleListing {
+  box-sizing: border-box;
+  min-height: 190px;
+  padding: 16px;
+}
+
 .conditionCard {
   background: #f1f5f9;
   border-radius: 12px;
