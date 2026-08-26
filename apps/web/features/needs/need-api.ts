@@ -15,6 +15,8 @@ export type NeedDetail = GeneratedRequired<components["schemas"]["NeedDetailResp
 export type NeedResponseItem = GeneratedRequired<components["schemas"]["NeedResponseItemResponse"]>;
 export type NeedResponse = GeneratedRequired<components["schemas"]["NeedResponseResponse"]>;
 export type MerchantNeedMatch = GeneratedRequired<components["schemas"]["MerchantNeedMatchResponse"]>;
+export type NeedCategory = components["schemas"]["CategorySummary"];
+export type NeedAddress = components["schemas"]["UserAddressResponse"];
 type CursorPage<T> = { items: T[]; hasMore: boolean; nextCursor?: string | null };
 export type CreateNeedInput = components["schemas"]["CreateNeedRequest"];
 
@@ -33,6 +35,15 @@ export async function listMyNeeds(status?: NeedStatus, cursor?: string): Promise
 
 export async function getMyNeed(needId: string): Promise<NeedDetail> {
   return jsonOrThrow(await requestBrowserApi("GET", `/api/v1/me/need-requests/${needId}`));
+}
+
+export async function listNeedCategories(type: NeedType): Promise<NeedCategory[]> {
+  const params = new URLSearchParams({ type });
+  return jsonOrThrow(await requestBrowserApi("GET", `/api/v1/categories?${params}`));
+}
+
+export async function listNeedAddresses(): Promise<NeedAddress[]> {
+  return jsonOrThrow(await requestBrowserApi("GET", "/api/v1/me/addresses"));
 }
 
 export async function createNeed(input: CreateNeedInput): Promise<NeedDetail> {
