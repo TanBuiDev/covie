@@ -4,23 +4,49 @@ import type { components } from "@covie/api-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { StatusChip, type StatusTone } from "@/components/ui/status-chip";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { CovieApiError } from "@/lib/api/api-error";
 import type { Etagged } from "./merchant-api";
 import { createMerchant, updateMerchant } from "./merchant-api";
 
-export function MerchantList({ merchants }: { merchants: components["schemas"]["MerchantSummaryResponse"][] }) {
+type MerchantSummary = components["schemas"]["MerchantSummaryResponse"];
+
+function merchantRoleCopy(role?: MerchantSummary["currentUserRole"]) {
+  switch (role) {
+    case "OWNER": return "Chủ cửa hàng";
+    case "MANAGER": return "Quản lý";
+    case "STAFF": return "Nhân viên";
+    default: return "Thành viên";
+  }
+}
+
+function merchantStatusPresentation(status?: MerchantSummary["status"]): { label: string; tone: StatusTone } {
+  switch (status) {
+    case "ACTIVE": return { label: "Đang hoạt động", tone: "success" };
+    case "PAUSED": return { label: "Tạm dừng", tone: "warning" };
+    case "SUSPENDED": return { label: "Bị hạn chế", tone: "error" };
+    case "DELETED": return { label: "Đã đóng", tone: "neutral" };
+    default: return { label: "Trạng thái đã được cập nhật", tone: "neutral" };
+  }
+}
+
+export function MerchantList({ merchants }: { merchants: MerchantSummary[] }) {
   return (
     <div className="seller-row-list">
-      {merchants.map((merchant) => merchant.id ? (
-        <Link className="seller-row" key={merchant.id} href={`/seller/${encodeURIComponent(merchant.id)}`}>
-          <div>
-            <strong>{merchant.name ?? "Cửa hàng"}</strong>
-            <small>{merchant.currentUserRole ?? "Thành viên"}</small>
-          </div>
-          <span className="status-chip">{merchant.status ?? "Trạng thái đã được cập nhật"}</span>
-        </Link>
-      ) : null)}
+      {merchants.map((merchant) => {
+        if (!merchant.id) return null;
+        const status = merchantStatusPresentation(merchant.status);
+        return (
+          <Link className="seller-row" key={merchant.id} href={`/seller/${encodeURIComponent(merchant.id)}`}>
+            <div>
+              <strong>{merchant.name ?? "Cửa hàng"}</strong>
+              <small>{merchantRoleCopy(merchant.currentUserRole)}</small>
+            </div>
+            <StatusChip label={status.label} tone={status.tone} />
+          </Link>
+        );
+      })}
     </div>
   );
 }
