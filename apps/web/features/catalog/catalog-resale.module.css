@@ -88,3 +88,12 @@
   font-size: 12px;
   line-height: 16px;
 }
+
+@media(min-width:1024px){
+  .resaleDetail{padding-bottom:0}
+  .resaleMedia{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:16px;height:480px;padding:20px}
+  .resalePhoto{height:404px}
+  .resaleMedia>small{margin:12px 0 0}
+  .resaleListing{min-height:0;padding:0}
+  .conditionCard,.transactionCard,.resaleFulfillment{border:1px solid #e2e8f0;border-radius:16px;padding:20px}
+}
