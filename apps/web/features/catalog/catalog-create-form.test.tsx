@@ -3,11 +3,16 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CatalogCreateForm } from "./catalog-create-form";
 
+type Category = components["schemas"]["CategorySummary"];
+type CategoryDetail = components["schemas"]["CategoryDetail"];
+type Location = components["schemas"]["MerchantLocationResponse"];
+type CreateCatalogItemRequest = components["schemas"]["CreateCatalogItemRequest"];
+
 const mocks = vi.hoisted(() => ({
-  createCatalogItem: vi.fn(),
-  getCategoryDetail: vi.fn(),
-  push: vi.fn(),
-  refresh: vi.fn(),
+  createCatalogItem: vi.fn<(merchantId: string, idempotencyKey: string, input: CreateCatalogItemRequest) => Promise<unknown>>(),
+  getCategoryDetail: vi.fn<(categoryId: string) => Promise<CategoryDetail>>(),
+  push: vi.fn<(href: string) => void>(),
+  refresh: vi.fn<() => void>(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -22,10 +27,6 @@ vi.mock("./catalog-api", () => ({
 vi.mock("@/features/media/direct-image-upload", () => ({
   uploadImage: vi.fn(),
 }));
-
-type Category = components["schemas"]["CategorySummary"];
-type CategoryDetail = components["schemas"]["CategoryDetail"];
-type Location = components["schemas"]["MerchantLocationResponse"];
 
 const serviceCategories: Category[] = [{
   id: "cat-service",
@@ -50,6 +51,19 @@ function fillBaseFields({ categoryId, name = "Nội dung thử" }: { categoryId:
   fireEvent.change(screen.getByLabelText("Tên"), { target: { value: name } });
   fireEvent.change(screen.getByLabelText("Danh mục"), { target: { value: categoryId } });
   fireEvent.change(screen.getByLabelText("Điểm bán"), { target: { value: "loc-1" } });
+}
+
+function requireElements(elements: HTMLElement[], expected: number) {
+  expect(elements).toHaveLength(expected);
+  if (elements.length !== expected) throw new Error(`Expected ${expected} elements, received ${elements.length}.`);
+  return elements;
+}
+
+function firstCreateCall() {
+  const call = mocks.createCatalogItem.mock.calls[0];
+  expect(call).toBeDefined();
+  if (!call) throw new Error("Expected createCatalogItem to be called.");
+  return call;
 }
 
 beforeEach(() => {
@@ -81,19 +95,22 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
     fireEvent.change(screen.getByLabelText("Tên lựa chọn"), { target: { value: "Số máy" } });
     fireEvent.change(screen.getByLabelText("Các giá trị"), { target: { value: "1 máy, 2 máy" } });
 
-    const prices = screen.getAllByLabelText(/Giá chính xác \(VND\)/);
-    expect(prices).toHaveLength(2);
-    fireEvent.change(prices[0], { target: { value: "150000" } });
-    fireEvent.change(prices[1], { target: { value: "280000" } });
+    const prices = requireElements(screen.getAllByLabelText(/Giá chính xác \(VND\)/), 2);
+    const firstPrice = prices[0];
+    const secondPrice = prices[1];
+    if (!firstPrice || !secondPrice) throw new Error("Expected two service variant price inputs.");
+    fireEvent.change(firstPrice, { target: { value: "150000" } });
+    fireEvent.change(secondPrice, { target: { value: "280000" } });
 
-    const availability = screen.getAllByLabelText("Đang nhận đơn");
-    expect(availability).toHaveLength(2);
-    fireEvent.click(availability[1]);
+    const availability = requireElements(screen.getAllByLabelText("Đang nhận đơn"), 2);
+    const secondAvailability = availability[1];
+    if (!secondAvailability) throw new Error("Expected second service variant availability control.");
+    fireEvent.click(secondAvailability);
 
     fireEvent.click(screen.getByRole("button", { name: "Tạo nội dung" }));
 
     await waitFor(() => expect(mocks.createCatalogItem).toHaveBeenCalledTimes(1));
-    const [merchantId, idempotencyKey, body] = mocks.createCatalogItem.mock.calls[0];
+    const [merchantId, idempotencyKey, body] = firstCreateCall();
 
     expect(merchantId).toBe("merchant-1");
     expect(idempotencyKey).toEqual(expect.any(String));
@@ -124,8 +141,7 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
         },
       ],
     });
-    expect(body.locationOffers[0].inventoryMode).toBeUndefined();
-    expect(body.locationOffers[1].inventoryMode).toBeUndefined();
+    expect(body.locationOffers?.map((offer) => offer.inventoryMode)).toEqual([undefined, undefined]);
   });
 
   it("serializes resale attributes from the authoritative category schema and option ids", async () => {
@@ -190,7 +206,7 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tạo nội dung" }));
 
     await waitFor(() => expect(mocks.createCatalogItem).toHaveBeenCalledTimes(1));
-    const body = mocks.createCatalogItem.mock.calls[0][2];
+    const body = firstCreateCall()[2];
 
     expect(body.listingKind).toBe("RESALE");
     expect(body.attributes).toEqual(expect.arrayContaining([
