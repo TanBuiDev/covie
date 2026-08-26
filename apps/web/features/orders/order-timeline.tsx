@@ -24,7 +24,7 @@ const eventCopy: Partial<Record<NonNullable<TimelineEvent["eventType"]>, string>
   BUYER_REPORTED_NOT_RECEIVED: "Người mua báo chưa nhận hàng",
   BUYER_REPORTED_SERVICE_NOT_COMPLETED: "Người mua báo dịch vụ chưa hoàn tất",
   ORDER_EXPIRED: "Đơn hết hạn",
-  ORDER_AUTO_COMPLETED: "Backend tự hoàn tất đơn",
+  ORDER_AUTO_COMPLETED: "Hệ thống tự hoàn tất đơn",
   ORDER_CLOSED_WITH_ISSUE: "Đơn đóng với sự cố",
 };
 
@@ -49,7 +49,7 @@ export function OrderTimeline({
       <ol className="order-timeline" aria-label="Tiến trình đơn hàng">
         {events.length ? events.map((event, index) => (
           <li key={event.id ?? `${event.eventType ?? "EVENT"}-${event.createdAt ?? index}`}>
-            <strong>{event.eventType ? eventCopy[event.eventType] ?? event.eventType : "Cập nhật đơn"}</strong>
+            <strong>{event.eventType ? eventCopy[event.eventType] ?? "Đơn hàng được cập nhật" : "Cập nhật đơn"}</strong>
             {event.createdAt ? <small>{formatDateTime(event.createdAt)}</small> : null}
             {event.reasonCode ? <small>Lý do: {event.reasonCode}</small> : null}
           </li>
