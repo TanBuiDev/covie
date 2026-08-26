@@ -12,7 +12,7 @@ export default async function InventoryPage({ params }: { params: Promise<{ merc
 
   return (
     <section className="seller-stack">
-      <header className="surface-header">
+      <header className="surface-header seller-desktop-heading">
         <p className="eyebrow">Seller Center / Inventory</p>
         <h1>Tồn kho</h1>
         <p>Chỉ offer PRODUCT ở chế độ TRACKED mới cho phép chỉnh số lượng. Reserved và available luôn lấy từ backend.</p>
