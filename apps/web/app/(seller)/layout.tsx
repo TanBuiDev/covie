@@ -6,6 +6,7 @@ import "../seller-catalog.css";
 import "../seller-operations.css";
 import "../seller-dashboard.css";
 import "../seller-trust.css";
+import "../seller-status.css";
 
 export default function SellerRouteGroupLayout({ children }: { children: ReactNode }) {
   return children;

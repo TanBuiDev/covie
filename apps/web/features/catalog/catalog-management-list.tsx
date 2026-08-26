@@ -1,7 +1,7 @@
 import type { components } from "@covie/api-client";
 import Link from "next/link";
 import { EmptyState } from "@/components/ui/empty-state";
-import { StatusChip } from "@/components/ui/status-chip";
+import { StatusChip, type StatusTone } from "@/components/ui/status-chip";
 
 type CatalogSummary = components["schemas"]["CatalogItemManagementSummaryResponse"];
 
@@ -9,6 +9,16 @@ function listingTypeLabel(item: CatalogSummary) {
   if (item.type === "SERVICE") return "Dịch vụ";
   if (item.listingKind === "RESALE") return "Bán lại";
   return "Sản phẩm";
+}
+
+function listingStatus(status?: CatalogSummary["listingStatus"]): { label: string; tone: StatusTone } {
+  switch (status) {
+    case "DRAFT": return { label: "Bản nháp", tone: "neutral" };
+    case "ACTIVE": return { label: "Đang hoạt động", tone: "success" };
+    case "PAUSED": return { label: "Tạm dừng", tone: "warning" };
+    case "DELETED": return { label: "Đã xóa", tone: "neutral" };
+    default: return { label: "Trạng thái đã được cập nhật", tone: "neutral" };
+  }
 }
 
 export function CatalogManagementList({ merchantId, items }: { merchantId: string; items: CatalogSummary[] }) {
@@ -24,16 +34,20 @@ export function CatalogManagementList({ merchantId, items }: { merchantId: strin
 
   return (
     <ul className="seller-row-list" aria-label="Catalog của cửa hàng">
-      {items.map((item) => item.id ? (
-        <li className="seller-row seller-catalog-row" key={item.id}>
-          <div>
-            <small>{listingTypeLabel(item)}</small>
-            <strong>{item.name ?? "Nội dung catalog"}</strong>
-            <small>Mã phiên bản: {item.version ?? "—"}</small>
-          </div>
-          <StatusChip status={item.listingStatus} />
-        </li>
-      ) : null)}
+      {items.map((item) => {
+        if (!item.id) return null;
+        const presentation = listingStatus(item.listingStatus);
+        return (
+          <li className="seller-row seller-catalog-row" key={item.id}>
+            <div>
+              <small>{listingTypeLabel(item)}</small>
+              <strong>{item.name ?? "Nội dung catalog"}</strong>
+              <small>Mã phiên bản: {item.version ?? "—"}</small>
+            </div>
+            <StatusChip label={presentation.label} tone={presentation.tone} />
+          </li>
+        );
+      })}
     </ul>
   );
 }

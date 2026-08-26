@@ -1,3 +1,8 @@
+.seller-shell,
+.seller-entry {
+  --seller-radius-sm: 12px;
+}
+
 .seller-shell fieldset,
 .seller-entry fieldset {
   border: 1px solid var(--seller-border);
@@ -54,6 +59,62 @@
   font-size: .8rem;
   line-height: 1.45;
   margin: 0;
+}
+
+.seller-shell .seller-merchant-form {
+  background: transparent;
+  border: 0;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.seller-shell .seller-merchant-form > label > small,
+.seller-media-settings small {
+  color: var(--seller-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.seller-media-settings {
+  background: var(--seller-bg-subtle);
+  border: 1px solid var(--seller-border-subtle);
+  border-radius: 12px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.seller-media-settings > strong {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.seller-media-settings > p {
+  color: var(--seller-text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+}
+
+.seller-shell .seller-media-settings > .seller-button--secondary {
+  background: var(--seller-surface);
+  border-color: var(--seller-border);
+  color: var(--seller-text-primary);
+  justify-self: start;
+  min-width: 180px;
+}
+
+.seller-media-settings__fields {
+  display: grid;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.seller-shell .seller-merchant-form > button[type="submit"] {
+  min-height: 48px;
+  width: 100%;
 }
 
 @media (min-width: 640px) {

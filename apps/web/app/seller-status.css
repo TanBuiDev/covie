@@ -1,0 +1,29 @@
+.seller-shell .status-chip[data-tone="neutral"] {
+  background: var(--seller-bg-subtle);
+  border-color: var(--seller-border);
+  color: var(--seller-action);
+}
+
+.seller-shell .status-chip[data-tone="info"] {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.seller-shell .status-chip[data-tone="success"] {
+  background: var(--seller-brand-subtle);
+  border-color: #a7f3d0;
+  color: var(--seller-brand);
+}
+
+.seller-shell .status-chip[data-tone="warning"] {
+  background: var(--seller-warning-bg);
+  border-color: var(--seller-warning-border);
+  color: var(--seller-warning-text);
+}
+
+.seller-shell .status-chip[data-tone="error"] {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: var(--seller-danger);
+}

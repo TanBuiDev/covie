@@ -8,6 +8,7 @@ function resolveSellerTitle(pathname: string, merchantId: string) {
   const relative = pathname.slice(base.length);
   if (!relative || relative === "/") return "Tổng quan";
   if (relative.startsWith("/settings")) return "Cài đặt shop";
+  if (relative.includes("/contacts")) return "Liên hệ";
   if (relative.includes("/delivery")) return "Phạm vi phục vụ";
   if (relative.includes("/shipping")) return "Phí giao hàng";
   if (relative.startsWith("/locations/") && relative.split("/").filter(Boolean).length >= 2) return "Sửa điểm bán";

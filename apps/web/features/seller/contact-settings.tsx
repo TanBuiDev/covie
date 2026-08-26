@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { StatusChip } from "@/components/ui/status-chip";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { createMerchantContact, deleteMerchantContact } from "./contact-api";
 
@@ -47,7 +46,8 @@ export function MerchantContactSettings({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setPending(true);
     setMessage(undefined);
     try {
@@ -73,7 +73,7 @@ export function MerchantContactSettings({
         primary: form.get("primary") === "on",
         publicContact: form.get("publicContact") === "on",
       });
-      event.currentTarget.reset();
+      formElement.reset();
       setType("PHONE");
       router.refresh();
     } catch {
@@ -108,11 +108,10 @@ export function MerchantContactSettings({
               <div>
                 <strong>{contactTypeCopy(contact.contactType)}</strong>
                 {contact.value ? <small>{contact.value}</small> : null}
-                {contact.qrMediaId ? <small>Ảnh QR đã được lưu trên media service.</small> : null}
+                {contact.qrMediaId ? <small>Ảnh QR liên hệ đã được lưu.</small> : null}
                 <small>{[contact.primary ? "Kênh chính" : null, contact.publicContact ? "Hiển thị công khai" : "Nội bộ"].filter(Boolean).join(" · ")}</small>
               </div>
               <div className="seller-row__actions">
-                <StatusChip status={contact.status} />
                 {contact.id ? <button type="button" className="button-danger" disabled={pending} onClick={() => setDeleteTarget(contact)}>Xóa</button> : null}
               </div>
             </div>
@@ -138,6 +137,7 @@ export function MerchantContactSettings({
           <label>
             Ảnh QR Zalo
             <input name="qrFile" type="file" accept="image/jpeg,image/png,image/webp" required disabled={pending} />
+            <small className="field-hint">QR này chỉ dùng cho liên hệ Zalo, không dùng cho thanh toán.</small>
           </label>
         ) : (
           <label>
@@ -157,6 +157,8 @@ export function MerchantContactSettings({
         description="Hành động này xóa kênh liên hệ đã chọn khỏi cấu hình cửa hàng."
         confirmLabel={pending ? "Đang xóa…" : "Xóa kênh"}
         dangerous
+        confirmDisabled={pending}
+        cancelDisabled={pending}
         onCancel={() => { if (!pending) setDeleteTarget(undefined); }}
         onConfirm={() => { void remove(); }}
       />

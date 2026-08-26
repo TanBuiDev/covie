@@ -1,11 +1,20 @@
 import Link from "next/link";
-import { StatusChip } from "@/components/ui/status-chip";
+import { StatusChip, type StatusTone } from "@/components/ui/status-chip";
 import { LocationForm } from "@/features/merchant/location-form";
 import { getLocationForServer } from "@/features/merchant/merchant-server-api";
-import { MerchantContactSettings } from "@/features/seller/contact-settings";
-import { readApiError } from "@/lib/api/api-error";
-import { createServerReadClient } from "@/lib/api/server-api-client";
 import { formatMoney } from "@/lib/format/money";
+
+type LocationStatus = "ACTIVE" | "PAUSED" | "SUSPENDED" | "DELETED" | undefined;
+
+function locationStatus(status: LocationStatus): { label: string; tone: StatusTone } {
+  switch (status) {
+    case "ACTIVE": return { label: "Đang hoạt động", tone: "success" };
+    case "PAUSED": return { label: "Tạm dừng", tone: "warning" };
+    case "SUSPENDED": return { label: "Tạm đình chỉ", tone: "error" };
+    case "DELETED": return { label: "Đã đóng", tone: "neutral" };
+    default: return { label: "Trạng thái đã được cập nhật", tone: "neutral" };
+  }
+}
 
 export default async function LocationDetailPage({
   params,
@@ -13,26 +22,19 @@ export default async function LocationDetailPage({
   params: Promise<{ merchantId: string; locationId: string }>;
 }) {
   const { merchantId, locationId } = await params;
-  const client = await createServerReadClient();
-  const [location, contactResult] = await Promise.all([
-    getLocationForServer(merchantId, locationId),
-    client.GET("/api/v1/merchants/{merchantId}/contacts", { params: { path: { merchantId } } }),
-  ]);
-  if (!contactResult.response.ok || !contactResult.data) throw await readApiError(contactResult.response);
+  const location = await getLocationForServer(merchantId, locationId);
   const base = `/seller/${encodeURIComponent(merchantId)}/locations/${encodeURIComponent(locationId)}`;
+  const status = locationStatus(location.data.status);
 
   return (
     <section className="seller-stack">
-      <header className="surface-header">
-        <p className="eyebrow">Seller Center / Điểm bán</p>
-        <h1>{location.data.name ?? "Điểm bán"}</h1>
-        <p>{location.data.addressText ?? "Chưa có địa chỉ hiển thị"}</p>
-      </header>
-
       <section className="seller-section" aria-labelledby="location-summary-heading">
         <div className="seller-section__heading">
-          <h2 id="location-summary-heading">Tóm tắt vận hành</h2>
-          <StatusChip status={location.data.status} />
+          <div>
+            <h2 id="location-summary-heading">{location.data.name ?? "Điểm bán"}</h2>
+            <p className="seller-muted">{location.data.addressText ?? "Chưa có địa chỉ hiển thị"}</p>
+          </div>
+          <StatusChip label={status.label} tone={status.tone} />
         </div>
         <div className="seller-grid seller-grid--two">
           <div className="seller-metric"><span>Pickup</span><strong>{location.data.pickupEnabled ? "Bật" : "Tắt"}</strong></div>
@@ -50,18 +52,13 @@ export default async function LocationDetailPage({
       <nav className="subnav" aria-label="Cấu hình điểm bán">
         <Link href={`${base}/delivery`}>Vùng phục vụ</Link>
         <Link href={`${base}/shipping`}>Phí giao hàng</Link>
+        <Link href={`${base}/contacts`}>Liên hệ</Link>
       </nav>
 
       <LocationForm
         key={location.etag || String(location.data.version ?? locationId)}
         merchantId={merchantId}
         location={location}
-      />
-      <MerchantContactSettings
-        merchantId={merchantId}
-        merchantLocationId={locationId}
-        contacts={contactResult.data}
-        title="Kênh liên hệ tại điểm bán"
       />
     </section>
   );

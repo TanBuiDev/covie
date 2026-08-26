@@ -32,8 +32,8 @@ const STATUS_COPY: Record<string, string> = {
 };
 
 export function statusCopy(status: string | null | undefined): string {
-  if (!status) return "Trạng thái đang được cập nhật";
-  return STATUS_COPY[status] ?? "Trạng thái mới";
+  if (!status) return "Trạng thái đã được cập nhật";
+  return STATUS_COPY[status] ?? "Trạng thái đã được cập nhật";
 }
 
 export function contentTypeCopy(value: string | null | undefined): string {
