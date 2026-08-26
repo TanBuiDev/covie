@@ -12,7 +12,7 @@ export default async function NewCatalogPage({ params }: { params: Promise<{ mer
 
   return (
     <section className="seller-stack">
-      <p><Link href={`/seller/${encodeURIComponent(merchantId)}/catalog`}>Quay lại catalog</Link></p>
+      <p className="seller-desktop-only"><Link href={`/seller/${encodeURIComponent(merchantId)}/catalog`}>Quay lại catalog</Link></p>
       <CatalogCreateForm merchantId={merchantId} categories={categories} locations={locations} />
     </section>
   );
