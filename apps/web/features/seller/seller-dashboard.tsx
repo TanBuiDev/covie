@@ -17,9 +17,9 @@ function distanceCopy(distanceMeters?: number) {
 function merchantStatusCopy(status?: MerchantStatus) {
   switch (status) {
     case "ACTIVE": return { label: "Đang hoạt động", note: "Hồ sơ công khai" };
-    case "PAUSED": return { label: "Tạm dừng", note: "Hiển thị theo quyền backend" };
-    case "SUSPENDED": return { label: "Bị hạn chế", note: "Hiển thị theo quyền backend" };
-    case "DELETED": return { label: "Đã đóng", note: "Hiển thị theo quyền backend" };
+    case "PAUSED": return { label: "Tạm dừng", note: "Một số tính năng có thể bị giới hạn" };
+    case "SUSPENDED": return { label: "Bị hạn chế", note: "Một số tính năng có thể bị giới hạn" };
+    case "DELETED": return { label: "Đã đóng", note: "Cửa hàng không còn hoạt động" };
     default: return { label: "Trạng thái đã được cập nhật", note: "Theo dữ liệu hệ thống" };
   }
 }
@@ -79,7 +79,7 @@ export function SellerDashboard({
             ) : null)}
           </div>
         ) : (
-          <EmptyState title="Chưa có đơn gần đây" description="Đơn mới sẽ xuất hiện tại đây khi backend trả về dữ liệu." />
+          <EmptyState title="Chưa có đơn gần đây" description="Đơn mới sẽ xuất hiện tại đây khi có dữ liệu mới." />
         )}
       </section>
 
@@ -101,7 +101,7 @@ export function SellerDashboard({
                 <Link className="seller-row" key={need?.id ?? `${location?.id ?? "need"}-${index}`} href={`${base}/needs`}>
                   <div>
                     <strong>{need?.title ?? "Nhu cầu gần bạn"}</strong>
-                    <small>{[location?.name, match.buyerArea?.label, distance].filter(Boolean).join(" · ") || "Theo phạm vi backend trả về"}</small>
+                    <small>{[location?.name, match.buyerArea?.label, distance].filter(Boolean).join(" · ") || "Trong phạm vi điểm bán"}</small>
                   </div>
                   <span className="seller-row__meta">{match.alreadyResponded ? "Đã phản hồi" : "Xem nhu cầu"}</span>
                 </Link>
@@ -109,7 +109,7 @@ export function SellerDashboard({
             })}
           </div>
         ) : (
-          <EmptyState title="Chưa có nhu cầu phù hợp" description="CoVie chỉ hiển thị các kết quả backend cho phép trong phạm vi cửa hàng của bạn." />
+          <EmptyState title="Chưa có nhu cầu phù hợp" description="Các nhu cầu phù hợp với phạm vi cửa hàng sẽ xuất hiện tại đây." />
         )}
       </section>
     </div>
