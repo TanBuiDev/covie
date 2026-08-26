@@ -90,7 +90,7 @@ export function OrderList({
       {orders?.length === 0 ? (
         <EmptyState
           title="Chưa có đơn hàng"
-          description={locationId ? "Không có đơn trong điểm bán đang chọn." : "Đơn mới sẽ xuất hiện ở đây khi backend trả dữ liệu."}
+          description={locationId ? "Không có đơn trong điểm bán đang chọn." : "Đơn mới sẽ xuất hiện ở đây khi có dữ liệu mới."}
         />
       ) : null}
 
