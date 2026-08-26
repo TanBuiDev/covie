@@ -23,7 +23,9 @@
 }
 
 .seller-shell fieldset label:has(input[type="radio"]),
-.seller-entry fieldset label:has(input[type="radio"]) {
+.seller-entry fieldset label:has(input[type="radio"]),
+.seller-shell fieldset label:has(input[type="checkbox"]),
+.seller-entry fieldset label:has(input[type="checkbox"]) {
   align-items: center;
   display: flex;
   gap: .55rem;
@@ -117,9 +119,52 @@
   width: 100%;
 }
 
+.seller-shell .seller-config-form {
+  margin-top: 0;
+}
+
+.seller-shell .seller-config-form > .seller-section__heading {
+  margin-bottom: 0;
+}
+
+.seller-shell .seller-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+
+.seller-shell .seller-form-actions > button {
+  flex: 1 1 12rem;
+}
+
+.seller-shell .seller-area-options {
+  background: var(--seller-bg-subtle);
+  border-radius: var(--seller-radius-sm);
+  display: grid;
+  gap: .2rem;
+  max-height: 18rem;
+  overflow: auto;
+  padding: .5rem .7rem;
+}
+
+.seller-shell .seller-rule-enabled {
+  white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+  .seller-shell .seller-row__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .seller-shell .seller-row__actions button {
+    width: 100%;
+  }
+}
+
 @media (min-width: 640px) {
   .seller-shell .rule-row {
     align-items: end;
-    grid-template-columns: minmax(0, 1fr) minmax(8rem, .7fr) auto;
+    grid-template-columns: minmax(0, 1.2fr) minmax(8rem, .7fr) auto auto;
   }
 }
