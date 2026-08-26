@@ -23,9 +23,9 @@ export default async function DeliveryPage({ params }: { params: Promise<{ merch
         <h1>Vùng giao hàng & phục vụ</h1>
         <p>Bán kính và khu vực được lưu đúng contract backend. Mọi chỉnh sửa dùng version hiện tại làm If-Match.</p>
       </header>
-      <section className="seller-location-context" aria-label="Điểm bán áp dụng">
+      <section className="seller-info-card" aria-label="Điểm bán áp dụng">
         <strong>{location.data.name ?? "Điểm bán"}</strong>
-        {location.data.addressText ? <span>{location.data.addressText}</span> : null}
+        {location.data.addressText ? <p>{location.data.addressText}</p> : null}
       </section>
       <CoverageSettings merchantId={merchantId} locationId={locationId} coverages={coverageResult.data} />
     </section>
