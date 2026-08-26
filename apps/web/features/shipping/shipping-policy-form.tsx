@@ -13,7 +13,6 @@ import {
 
 type Policy = components["schemas"]["ShippingPolicyResponse"];
 type ShippingMode = NonNullable<components["schemas"]["ShippingPolicyUpsertRequest"]["mode"]>;
-type ShippingStatus = NonNullable<components["schemas"]["ShippingPolicyUpsertRequest"]["status"]>;
 type RuleMatchMode = NonNullable<components["schemas"]["ShippingPolicyUpsertRequest"]["ruleMatchMode"]>;
 type ShippingRule = components["schemas"]["ShippingRuleRequest"];
 
@@ -25,6 +24,14 @@ const defaultRule: ShippingRule = {
   priority: 1,
   enabled: true,
 };
+
+function conditionCopy(rule: ShippingRule) {
+  return rule.conditionType === "DISTANCE_MAX" ? "Khoảng cách tối đa" : "Đơn tối thiểu";
+}
+
+function conditionUnit(rule: ShippingRule) {
+  return rule.conditionType === "DISTANCE_MAX" ? "m" : "₫";
+}
 
 export function ShippingPolicyForm({
   merchantId,
@@ -40,7 +47,6 @@ export function ShippingPolicyForm({
   const router = useRouter();
   const editing = Boolean(policy?.id);
   const [mode, setMode] = useState<ShippingMode>(policy?.mode ?? "FREE");
-  const [status, setStatus] = useState<ShippingStatus>(policy?.status ?? "ACTIVE");
   const [baseFee, setBaseFee] = useState(String(policy?.baseFee ?? 0));
   const [ruleMatchMode, setRuleMatchMode] = useState<RuleMatchMode>(policy?.ruleMatchMode ?? "ANY");
   const [rules, setRules] = useState<ShippingRule[]>(policy?.rules?.length ? policy.rules : [defaultRule]);
@@ -55,7 +61,7 @@ export function ShippingPolicyForm({
 
     const parsedFee = Number(baseFee);
     if ((mode === "FIXED" || mode === "CONDITIONAL") && (!Number.isSafeInteger(parsedFee) || parsedFee < 0)) {
-      setMessage("Phí cơ bản phải là số nguyên không âm.");
+      setMessage("Phí giao phải là số nguyên không âm theo đồng (₫).");
       return;
     }
     if (mode === "CONDITIONAL" && !rules.some((rule) => rule.enabled)) {
@@ -65,7 +71,7 @@ export function ShippingPolicyForm({
 
     const input: components["schemas"]["ShippingPolicyUpsertRequest"] = {
       mode,
-      status,
+      status: policy?.status ?? "ACTIVE",
       currencyCode: "VND",
       baseFee: mode === "FIXED" || mode === "CONDITIONAL" ? parsedFee : undefined,
       ruleMatchMode: mode === "CONDITIONAL" ? ruleMatchMode : undefined,
@@ -84,13 +90,13 @@ export function ShippingPolicyForm({
       onCancelEdit?.();
     } catch (error) {
       if (error instanceof CovieApiError && error.code === "RESOURCE_VERSION_CONFLICT") {
-        setMessage("Chính sách đã được thay đổi ở nơi khác. Tải dữ liệu mới rồi thử lại.");
+        setMessage("Phí giao hàng đã được thay đổi ở nơi khác. Tải dữ liệu mới rồi thử lại.");
       } else if (error instanceof CovieApiError && error.code === "SHIPPING_POLICY_DUPLICATE_ACTIVE") {
         setMessage("Điểm bán đã có một chính sách giao hàng đang hoạt động. Hãy tạm ngưng chính sách đó trước.");
       } else {
         setMessage(error instanceof Error && error.message === "RESOURCE_VERSION_REQUIRED"
           ? "Thiếu version của chính sách. Hãy tải lại dữ liệu trước khi sửa."
-          : "Không thể lưu chính sách giao hàng. Vui lòng kiểm tra dữ liệu và thử lại.");
+          : "Không thể lưu phí giao hàng. Vui lòng kiểm tra dữ liệu và thử lại.");
       }
     } finally {
       setPending(false);
@@ -119,27 +125,28 @@ export function ShippingPolicyForm({
   }
 
   return (
-    <form className="seller-config-form" onSubmit={submit} aria-busy={pending}>
-      <div className="seller-section__heading">
-        <h2>{editing ? "Sửa chính sách giao hàng" : "Thêm chính sách giao hàng"}</h2>
+    <form className="seller-config-form seller-shipping-form" onSubmit={submit} aria-busy={pending}>
+      <div className="seller-section__heading seller-desktop-only">
+        <h2>{editing ? "Sửa phí giao hàng" : "Thêm phí giao hàng"}</h2>
         {editing && onCancelEdit ? <button type="button" disabled={pending} onClick={onCancelEdit}>Đóng chỉnh sửa</button> : null}
       </div>
 
       <label>
-        Loại phí
+        Loại phí giao
         <select disabled={pending} value={mode} onChange={(event) => setMode(event.target.value as ShippingMode)}>
-          <option value="FREE">Miễn phí</option>
-          <option value="FIXED">Phí cố định</option>
-          <option value="NEGOTIATED">Thỏa thuận với người bán</option>
-          <option value="CONDITIONAL">Có điều kiện</option>
+          <option value="FREE">Freeship</option>
+          <option value="FIXED">Cố định</option>
+          <option value="CONDITIONAL">Theo điều kiện</option>
+          <option value="NEGOTIATED">Thỏa thuận</option>
         </select>
+        <small className="field-hint">Freeship · Cố định · Theo điều kiện · Thỏa thuận</small>
       </label>
 
       {mode === "NEGOTIATED" ? (
-        <p className="seller-muted">Phí giao được thỏa thuận với người mua và không được biểu diễn thành 0 ₫.</p>
+        <p className="seller-contract-note">Phí giao được thỏa thuận với người mua và không được biểu diễn thành 0 ₫.</p>
       ) : mode === "FIXED" || mode === "CONDITIONAL" ? (
         <label>
-          Phí cơ bản (VND)
+          {mode === "CONDITIONAL" ? "Phí mặc định" : "Phí cố định"}
           <input
             type="number"
             inputMode="numeric"
@@ -150,84 +157,87 @@ export function ShippingPolicyForm({
             required
             disabled={pending}
           />
+          <small className="field-hint">Nhập số tiền theo đồng (₫), không dùng số lẻ.</small>
         </label>
       ) : null}
 
       {mode === "CONDITIONAL" ? (
-        <fieldset disabled={pending}>
-          <legend>Điều kiện miễn phí giao hàng</legend>
-          <label>
-            Cách khớp điều kiện
-            <select value={ruleMatchMode} onChange={(event) => setRuleMatchMode(event.target.value as RuleMatchMode)}>
-              <option value="ANY">Bất kỳ điều kiện nào</option>
-              <option value="ALL">Tất cả điều kiện</option>
-            </select>
-          </label>
+        <section className="seller-shipping-conditions" aria-labelledby="shipping-condition-heading">
+          <strong id="shipping-condition-heading">Điều kiện freeship</strong>
           {rules.map((rule, index) => (
-            <div className="rule-row" key={`${rule.conditionType ?? "rule"}-${index}`}>
-              <select
-                aria-label={`Loại điều kiện ${index + 1}`}
-                value={rule.conditionType}
-                onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
-                  ...item,
-                  conditionType: event.target.value as ShippingRule["conditionType"],
-                  operator: event.target.value === "DISTANCE_MAX" ? "LTE" : "GTE",
-                } : item))}
-              >
-                <option value="ORDER_AMOUNT_MIN">Đơn tối thiểu</option>
-                <option value="DISTANCE_MAX">Khoảng cách tối đa</option>
-              </select>
-              <input
-                aria-label={`Ngưỡng điều kiện ${index + 1}`}
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                value={rule.thresholdValue ?? 0}
-                onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
-                  ...item,
-                  thresholdValue: Math.max(0, Math.trunc(Number(event.target.value))),
-                } : item))}
-              />
-              <label className="seller-rule-enabled">
+            <div className="seller-shipping-condition" key={`${rule.conditionType ?? "rule"}-${index}`}>
+              <label className="seller-shipping-condition__toggle">
                 <input
                   type="checkbox"
                   checked={rule.enabled ?? false}
+                  disabled={pending}
                   onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
                     ...item,
                     enabled: event.target.checked,
                   } : item))}
                 />
-                Bật
+                <span>Freeship khi {conditionCopy(rule).toLocaleLowerCase("vi-VN")}</span>
               </label>
-              <button type="button" disabled={rules.length === 1 || pending} onClick={() => setRules((current) => current.filter((_, ruleIndex) => ruleIndex !== index))}>
-                Xóa điều kiện
-              </button>
+              <div className="seller-shipping-condition__editor">
+                <select
+                  aria-label={`Loại điều kiện ${index + 1}`}
+                  disabled={pending}
+                  value={rule.conditionType}
+                  onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
+                    ...item,
+                    conditionType: event.target.value as ShippingRule["conditionType"],
+                    operator: event.target.value === "DISTANCE_MAX" ? "LTE" : "GTE",
+                  } : item))}
+                >
+                  <option value="DISTANCE_MAX">Khoảng cách tối đa</option>
+                  <option value="ORDER_AMOUNT_MIN">Đơn tối thiểu</option>
+                </select>
+                <label>
+                  Ngưỡng ({conditionUnit(rule)})
+                  <input
+                    aria-label={`Ngưỡng điều kiện ${index + 1}`}
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    step="1"
+                    disabled={pending}
+                    value={rule.thresholdValue ?? 0}
+                    onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
+                      ...item,
+                      thresholdValue: Math.max(0, Math.trunc(Number(event.target.value))),
+                    } : item))}
+                  />
+                </label>
+                <button className="seller-button--secondary" type="button" disabled={rules.length === 1 || pending} onClick={() => setRules((current) => current.filter((_, ruleIndex) => ruleIndex !== index))}>
+                  Xóa điều kiện
+                </button>
+              </div>
             </div>
           ))}
-          <button type="button" disabled={pending} onClick={() => setRules((current) => [...current, { ...defaultRule, priority: current.length + 1 }])}>
+          <button className="seller-button--secondary" type="button" disabled={pending} onClick={() => setRules((current) => [...current, { ...defaultRule, priority: current.length + 1 }])}>
             Thêm điều kiện
           </button>
-        </fieldset>
+
+          <fieldset className="seller-shipping-match" disabled={pending}>
+            <legend>Logic điều kiện</legend>
+            <label><input type="radio" name="shippingRuleMatch" value="ANY" checked={ruleMatchMode === "ANY"} onChange={() => setRuleMatchMode("ANY")} /> Bất kỳ điều kiện nào đúng</label>
+            <label><input type="radio" name="shippingRuleMatch" value="ALL" checked={ruleMatchMode === "ALL"} onChange={() => setRuleMatchMode("ALL")} /> Tất cả điều kiện phải đúng</label>
+          </fieldset>
+        </section>
       ) : null}
 
-      <label>
-        Trạng thái
-        <select disabled={pending} value={status} onChange={(event) => setStatus(event.target.value as ShippingStatus)}>
-          <option value="ACTIVE">Đang hoạt động</option>
-          <option value="INACTIVE">Tạm ngưng</option>
-        </select>
-      </label>
+      {editing ? (
+        <details className="seller-technical-fields">
+          <summary>Trạng thái & quản lý</summary>
+          <p className="field-hint">Trạng thái backend hiện tại: {policy?.status ?? "không xác định"}. Form giữ nguyên trạng thái khi lưu.</p>
+          {policy?.status !== "INACTIVE" ? (
+            <button type="button" className="button-danger" disabled={pending} onClick={() => setConfirmDelete(true)}>Tạm ngưng chính sách</button>
+          ) : null}
+        </details>
+      ) : null}
 
       {message ? <p role="alert">{message}</p> : null}
-      <div className="seller-form-actions">
-        <button type="submit" disabled={pending}>{pending ? "Đang lưu…" : editing ? "Lưu chính sách" : "Thêm chính sách"}</button>
-        {editing && policy?.status !== "INACTIVE" ? (
-          <button type="button" className="button-danger" disabled={pending} onClick={() => setConfirmDelete(true)}>
-            Tạm ngưng chính sách
-          </button>
-        ) : null}
-      </div>
+      <button className="seller-shipping-save" type="submit" disabled={pending}>{pending ? "Đang lưu…" : "Lưu phí giao"}</button>
 
       <ConfirmDialog
         open={confirmDelete}

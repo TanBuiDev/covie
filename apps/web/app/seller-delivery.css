@@ -1,0 +1,119 @@
+.seller-segmented--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.seller-coverage-form,
+.seller-shipping-form {
+  gap: 10px;
+  margin: 0;
+}
+
+.seller-coverage-form > label,
+.seller-shipping-form > label {
+  display: grid;
+  gap: 6px;
+}
+
+.seller-coverage-form > label > select,
+.seller-coverage-form > label > input,
+.seller-shipping-form > label > select,
+.seller-shipping-form > label > input,
+.seller-shipping-condition__editor select,
+.seller-shipping-condition__editor input {
+  min-height: 48px;
+}
+
+.seller-coverage-areas,
+.seller-shipping-conditions {
+  display: grid;
+  gap: 10px;
+}
+
+.seller-coverage-areas > strong,
+.seller-shipping-conditions > strong {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.seller-coverage-area-list {
+  display: grid;
+  gap: 0;
+}
+
+.seller-coverage-area-list label,
+.seller-shipping-condition__toggle {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.seller-coverage-area-list input[type="checkbox"],
+.seller-shipping-condition__toggle input[type="checkbox"] {
+  accent-color: var(--seller-brand);
+  flex: 0 0 auto;
+  height: 20px;
+  width: 20px;
+}
+
+.seller-coverage-current small {
+  color: var(--seller-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.seller-coverage-save,
+.seller-shipping-save {
+  min-height: 48px;
+  width: 100%;
+}
+
+.seller-shipping-condition {
+  display: grid;
+  gap: 6px;
+}
+
+.seller-shipping-condition__toggle span {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.seller-shipping-condition__editor {
+  display: grid;
+  gap: 8px;
+  padding-left: 28px;
+}
+
+.seller-shipping-condition__editor > label {
+  display: grid;
+  gap: 6px;
+}
+
+.seller-shipping-match {
+  border: 0 !important;
+  gap: 0 !important;
+  padding: 0 !important;
+}
+
+.seller-shipping-match legend {
+  font-size: 14px;
+  line-height: 20px;
+  padding: 0 0 4px;
+}
+
+.seller-shipping-match label {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.seller-shipping-match input[type="radio"] {
+  accent-color: var(--seller-brand);
+}
+
+@media (min-width: 640px) {
+  .seller-shipping-condition__editor {
+    align-items: end;
+    grid-template-columns: minmax(0, 1fr) minmax(8rem, .75fr) auto;
+  }
+}
