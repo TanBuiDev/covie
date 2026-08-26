@@ -2,17 +2,20 @@
 
 ## Scope
 
-This branch implements the Seller/Provider mobile production surfaces from Figma page `04 — Seller Mobile` while preserving the existing desktop Seller shell and backend-owned business behavior.
+This branch implements the production-safe Seller/Provider mobile surfaces from Figma page `04 — Seller Mobile` while preserving the existing responsive/desktop Seller composition and backend-owned business behavior.
 
 - branch: `feature/seller-mobile-figma-ui`
 - base: `main` @ `42693a64139b8213765dafaa57e4fd66bb3d3736`
+- pull request: `#5` — open, not merged
 - Figma file: `CoVie — V1 UI Design`
-- Figma Seller production matrix: `274:192`
-- coverage details: `docs/seller-mobile-coverage-matrix.md`
+- Figma Seller page: `3:5`
+- production matrix: `274:192`
+- detailed coverage: `docs/seller-mobile-coverage-matrix.md`
+- CI evidence: `docs/seller-mobile-ci-verification.md`
 
-## Frozen mobile IA
+## Frozen Seller mobile IA
 
-The mobile Seller navigation is a sticky horizontal tab strip. Exact order:
+Primary tabs, exact order:
 
 1. Tổng quan
 2. Đơn hàng
@@ -20,9 +23,9 @@ The mobile Seller navigation is a sticky horizontal tab strip. Exact order:
 4. Điểm bán
 5. Cài đặt
 
-`Needs`, reputation, moderation notices and inventory are supporting Seller routes reached from the five frozen IA sections. They are intentionally not added as extra primary tabs.
+This is the frozen `Navigation/SellerMobileNav` horizontal sticky-tab pattern. Need feed, inventory, reputation and moderation notices are supporting Seller routes; they are intentionally not added as extra primary tabs.
 
-## Main production routes
+## Production routes
 
 - `/seller`
 - `/seller/[merchantId]`
@@ -43,111 +46,100 @@ The mobile Seller navigation is a sticky horizontal tab strip. Exact order:
 - `/seller/[merchantId]/reputation`
 - `/seller/[merchantId]/notices`
 
-## Implementation groups
+## Implementation summary
 
-### Seller shell and navigation
+### Shell / responsive architecture
 
-- responsive Seller shell with canonical CoVie asset
-- sticky horizontal mobile nav with `aria-current`
-- 390px Figma reference, 360px minimum-width usability, responsive desktop preservation
-- scoped Seller semantic tokens and component CSS; no Tailwind dependency added
+- mobile-first Seller shell with frozen 5-tab IA and merchant switcher
+- canonical CoVie repo asset on desktop where branding is present; no text/Unicode logo approximation
+- 390px Figma reference plus explicit 360px Figma QA targets; desktop composition preserved at `>=1024px`
+- no global `max-width:390px` app shell
+- Seller semantic variables live in scoped CSS; cross-cutting accessibility rules are isolated in `seller-accessibility.css` rather than a giant override file
+- Seller focus uses the frozen Emerald brand focus token; practical touch targets are at least 44px for the audited controls
 
-### Dashboard, settings and locations
+### Dashboard / merchant settings / locations
 
-- dashboard consumes current orders, merchant Need matches and locations
-- merchant settings use HTTP ETag + `If-Match`
-- location create/edit uses backend location DTO and ETag conflict behavior
-- location list shows backend capability/configuration values only
-- minimum delivery order is separated into its own Figma-aligned route/surface
-- minimum-order PATCH round-trips the authoritative location data and disables mutation when required fields are absent
+- Dashboard reads orders, Need matches and locations from backend; displayed metrics are returned business data, not inferred analytics
+- merchant edit uses server ETag + `If-Match`
+- logo/cover upload uses canonical media purposes `MERCHANT_LOGO` and `MERCHANT_COVER`
+- location create/edit uses backend DTO + ETag conflict behavior
+- create, edit and minimum-order surfaces are separated to match the production frames
+- coverage configuration shown on location cards comes from backend records
+- backend-required coordinates remain an explicit technical fallback because Figma/API currently have no canonical geocoder/pin-picker contract
 
-### Coverage, shipping and contacts
+### Coverage / shipping / contacts
 
-- delivery coverage supports radius/area representations exposed by backend
-- coverage and shipping edit/deactivate use canonical backend version tokens; no client-generated ETag guessing
-- shipping supports FREE, FIXED, NEGOTIATED and CONDITIONAL with ANY/ALL rules
-- NEGOTIATED shipping is never rendered as `0 ₫`
+- delivery coverage supports backend radius and selected-area representations
+- coverage and shipping create/edit/deactivate use canonical version tokens; version conflicts never silently overwrite
+- shipping supports FREE, FIXED, NEGOTIATED and CONDITIONAL (ANY/ALL)
+- negotiated shipping is never rendered as `0 ₫`
 - contacts support PHONE, ZALO_LINK, ZALO_QR, MESSENGER_LINK and OTHER
-- contact QR uploads use media purpose `MERCHANT_CONTACT_QR`, never payment QR
-- destructive operations use confirmation and pending lockout
+- contact QR uses `MERCHANT_CONTACT_QR`, never payment QR
+- destructive configuration actions use confirmation and pending lockout
 
-### Catalog and inventory
+### Catalog / inventory
 
-- catalog list uses Product / Service / Thanh lý segmented presentation based only on summary fields returned by API
-- aggregate create uses real category/location/media contracts; manual production UUID fields were removed where authoritative option APIs exist
-- inventory uses responsive cards and idempotent stock mutations rather than full-page reloads
-- fields not present in the catalog management summary (sample price/media/offer count/moderation state) are intentionally not fabricated
+- catalog list follows Product / Service / Thanh lý segmented presentation and renders only management-summary fields actually returned by API
+- aggregate create uses real categories, category detail attributes, merchant locations, media, option groups, variants and location offers
+- category attributes are generated from backend definitions: `TEXT`, `NUMBER`, `BOOLEAN`, `SINGLE_SELECT`, `MULTI_SELECT`; required and option ownership remain backend-owned
+- `SEL-012` service variants create separate backend location offers per variant with independent exact price and availability
+- `SEL-013` resale uses `listingKind=RESALE`; a Figma “Tình trạng” value appears only if the selected category defines the corresponding backend attribute/options — no hard-coded resale-condition enum
+- default no-option variant uses backend canonical `__default__`
+- inventory renders mutations only for TRACKED offers; reserved quantities are not edited optimistically
+- stock mutation intents keep stable idempotency semantics; no full-page reload
 
 ### Orders
 
-- order list supports assigned-location filtering and cursor pagination
-- detail uses authoritative Order detail data
-- every Seller command is mounted from `OrderDetailResponse.allowedActions`
-- reject/cancel/cancellation-response dialogs do not infer authorization from order status
-- command intents use stable idempotency behavior and pending lockout
-- version/action-revocation conflicts refresh authoritative state
+- incoming list uses assigned-location filtering and cursor pagination
+- detail renders authoritative items, pricing, fulfillment, cancellation/issue, timeline and reputation context
+- **every Seller command is mounted from `OrderDetailResponse.allowedActions`**
+- no Seller action is inferred from order status
+- command endpoints and `Idempotency-Key` usage were re-audited against generated OpenAPI
+- destructive commands use dialogs with pending lock, keyboard focus trapping/restoration and authoritative refresh on conflict/action revocation
+- Figma sample buyer name/amount/deadline fields are omitted from list rows when the current summary API does not return them
 
 ### Need matching
 
-- Seller selects a merchant location before discovery
-- list displays safe buyer area, distance, expiry and responded state returned by backend
-- expiry countdown is presentation-only; frontend never transitions Need state
-- no buyer private address/coordinates are exposed
+- merchant location must be selected before discovery
+- feed exposes only safe buyer-area label/distance and backend Need data; private buyer coordinates/address are not rendered
+- expiry/countdown is presentation-only and never transitions Need state locally
+- `NEED-006` is intentionally a safe non-interactive fallback until backend exposes authoritative eligible response candidates
 
-### Reputation and moderation
+### Reputation / moderation
 
-- Seller reputation displays only public aggregate fields available from the public merchant contract
-- buyer reputation is only displayed inside the authorized Order reputation context
-- moderation notices are selected from `/api/v1/me/notifications` only when target ownership can be proven against the active merchant or one of its catalog items
-- no admin moderation actions are exposed to Seller
-- notification type is not locally mapped to a route/deep link
+- Seller reputation uses only backend public aggregate reputation
+- buyer reputation is displayed only inside the authorized Order reputation context
+- moderation notices are included only when notification `targetType/targetId` ownership can be proven for the active merchant or one of its catalog items
+- backend notification type is not mapped to a local route/deep-link
+- notification payload does not contain moderation decision/reason, therefore Figma sample Pending/Needs Edit/Approved business states are not fabricated
 
-## Backend-owned guardrails
+## Backend-owned guardrails / known contract gaps
 
-### Order lifecycle
+### NEED-006 eligible offer read
 
-Never add a Seller order CTA from `status`. Use `allowedActions` only.
+Submit accepts `merchantLocationId` + `locationVariantIds`, and backend validates merchant capability, serviceability/coverage, Need type, category hierarchy, listing/moderation state, availability and tracked stock. There is currently no read endpoint returning candidates after that same policy.
 
-### Need response eligibility
+Do not reconstruct the eligibility policy in the browser and do not restore manual UUID fields. Recommended backend follow-up: `merchantId + needId + merchantLocationId -> eligible locationVariant[]` with display-safe name, current price/currency, availability/actionability and max-items metadata.
 
-`CreateNeedResponseRequest` requires `merchantLocationId` and one or more `locationVariantIds`. Backend eligibility validates the selected location and offers against merchant capability, distance/serviceability, coverage, Need type, category hierarchy, listing/moderation state, offer availability and tracked stock.
+### Existing catalog edit/lifecycle
 
-The current API has **no read endpoint returning eligible response candidates** after this complete policy is applied. Existing catalog/inventory summaries do not expose enough data to reproduce the backend policy safely. Therefore `NEED-006` remains a documented `CONTRACT_GAP`: do not add manual UUID inputs or client-side eligibility reconstruction. The Seller feed renders a safe explanatory fallback until the API adds an authoritative candidate read contract.
-
-Recommended backend follow-up contract shape:
-
-- scoped by `merchantId`, `needId`, `merchantLocationId`
-- returns eligible `locationVariantId` records already filtered by the same policy used by submit
-- includes display-safe item/variant name, current price/currency, availability summary and any caller-safe actionability reason
-- supports the backend `responseConstraints.maxItems`
-
-### Catalog edit/lifecycle
-
-Do not mount granular edit/lifecycle commands unless the UI can first read the authoritative management detail plus its concurrency token. The current production implementation supports aggregate create and safe summary presentation; missing authoritative edit detail/version remains a contract gap.
+Backend supports granular mutations, but the current management surface does not expose an authoritative management-detail GET plus concurrency token that the Seller editor can safely read before mutation. Aggregate create, list presentation, media and inventory are implemented; existing-item structural edit/lifecycle CTA remains unmounted rather than guessing version state.
 
 ### Contact edit
 
-The contact list currently does not expose a safe per-contact concurrency token/detail read that can be used for PATCH without guessing. Create/delete are mounted; edit must remain disabled/unmounted until the version contract is authoritative.
+The contact list does not provide a safe per-contact version/detail read for PATCH. Create/delete are production-mounted; edit is intentionally not mounted.
 
-### Location coordinates
+### Location coordinate UX
 
-The backend location upsert requires latitude/longitude and `pinSource`, while the frozen `SEL-004` Figma frame does not provide a geocoder/pin-picker interaction. The UI keeps these fields as an explicit technical fallback rather than manufacturing coordinates. When a canonical location picker/geocoder contract is available, replace this fallback instead of keeping two competing position sources.
+Location upsert requires latitude/longitude/`pinSource`. Frozen `SEL-004` does not define a canonical geocoder/pin picker. Current fields are explicitly technical contract inputs, not fabricated location data. Replace them when an authoritative picker/geocoder contract exists.
 
-## Loading, errors, conflicts and accessibility
+### Figma sample-only fields
 
-- Seller route group has loading/error boundaries
-- scoped client reads use canonical Loading/Empty/Error states where applicable
-- mutations lock controls while pending and avoid double submission
-- destructive actions use `ConfirmDialog`; focus is keyboard constrained/restored
-- version conflicts never silently overwrite; users can refresh authoritative state
-- mobile controls preserve practical touch targets
-- visible labels and semantic headings are preferred
-- status/error content uses semantic status/alert regions
-- long user/API content wraps or truncates without locking the application to 390px
+Current management summaries do not return all visual sample values shown in Figma (for example catalog card media/price/offer count/moderation state and incoming-order buyer/amount/deadline). Those values are intentionally omitted rather than mocked.
 
-## Figma verification
+## Figma production mapping
 
-Actual production frames accessed during implementation include:
+Exact mobile production frames audited include:
 
 - `SEL-001` `357:9`
 - `SEL-002` `357:220`
@@ -158,54 +150,103 @@ Actual production frames accessed during implementation include:
 - `SEL-007` `362:718`
 - `SEL-008` `362:796`
 - `SEL-009` `368:709`
+- `SEL-010` `368:854` (inventory supporting frame `368:1410`)
+- `SEL-011` `368:1026`
+- `SEL-012` `368:1139`
+- `SEL-013` `368:1271`
+- catalog lifecycle/media/conflict supporting stacks `368:1535`, `368:1578`, `368:1601`
 - `SEL-014` `374:1340`
+- `SEL-015` `374:1606`, `374:1744`, `374:1874`, `374:1984`
+- `SEL-016` latest production `387:13327`; explicit 360 QA `387:13569`
+- `SEL-017` latest production `387:13416`
 - `NEED-005` `387:2001`
-- `NEED-006` `387:2124`
+- `NEED-006` `387:2124`, edit `387:2277`, state stack `387:2413`
 - `SEL-018` `389:13788`
-- `SEL-019` `389:13846`
+- `SEL-019` `389:13846`, empty/fallback `389:13921`
 
-Additional editor/detail/modal surfaces were audited in the same Seller page groups. Shared frozen component contracts used include SellerMobileNav, SellerLocationSummary, SellerCatalogRow, SellerOrderRow, SellerNeedMatchRow, StatusChip, Select, TextField, Switch, SegmentedControl, buttons, ConfirmDialog and Need expiry.
+Shared frozen components/tokens audited include SellerMobileNav, Merchant Switcher, StatusChip, Select, TextField, Switch, SegmentedControl, Seller Location/Catalog/Order/Need rows, action buttons and ConfirmDialog.
 
-A pixel screenshot comparison against a running Next.js build was not available in this connector-only session. Do not describe the branch as pixel-verified until such a browser/runtime comparison is performed.
+## Loading / error / mutation / accessibility coverage
 
-## Verification gate
+- route-group loading/error boundaries
+- scoped Loading/Empty/Error states on remote reads
+- no double submit; pending controls disabled and important forms/actions expose busy/status semantics
+- destructive actions confirm before mutation
+- conflict/action-revocation paths refetch backend truth
+- focus-visible Seller ring, semantic labels/headings, `aria-current`, status/alert regions
+- confirm dialog supports Escape, focus trap, initial focus and focus restore
+- audited mobile action targets use minimum practical 44px height
+- long content wraps/truncates and layout is not fixed to 390px
+- reduced-motion handling added for the custom switch presentation
 
-The repository CI workflow runs on pull requests and executes:
+## Static verification performed
 
-- backend `mvnw verify`
-- OpenAPI export and generated-client drift check
-- API client typecheck
+Remote repo/OpenAPI/Figma audit performed on the branch includes:
+
+- no current Seller `window.location.reload()`
+- no current Seller `window.location.assign()` navigation
+- manual production Category ID / LocationVariant ID entry removed where the backend has authoritative reads
+- no current Unicode back-arrow/icon approximation in Seller routes
+- Order actions derive from `allowedActions`; generated OpenAPI was checked for the command headers used by the client
+- category attribute payload rules were checked against `CatalogAggregateValidator`
+- service variant offer creation was checked against `CatalogCreateService`
+- shipping/coverage version update contract was checked against generated types/backend DTOs
+- StatusChip refactor retains global base presentation; Seller tone styling is scoped
+- project uses TypeScript `strict` + `noUncheckedIndexedAccess`; obvious high-risk newly-added DTO property accesses were cross-checked against generated schema
+
+This is **remote/static verification**, not an assertion that TypeScript/lint/tests/build have executed.
+
+## CI execution status
+
+Repository `.github/workflows/ci.yml` normally executes:
+
+- API `./mvnw verify`
+- OpenAPI export + generated client drift check
+- API client check/typecheck
 - web typecheck
 - web lint
 - web tests
 - web build
-- secret-hygiene checks
-- source security scan
+- secret hygiene
+- Trivy source/config/secret scan
 
-At the time this handoff file is created, those PR checks are still pending. Update this section with the final PR/run result after opening the PR and fixing any failures.
+GitHub Actions could not be started by this connector session. Evidence is recorded in `docs/seller-mobile-ci-verification.md`: PR #5 `opened`/Ready/`synchronize` events created no run, and a separate connector push to `codex/plan-10-seller-mobile-ci` (which matches the workflow's official push pattern) also created no run. Historical repo runs exist, so the limitation is the connector event/dispatch path, not a claim that CI passed.
 
-## Commit groups already delivered
+## Local verification instructions
 
-Representative branch groups include:
+After pulling the branch, run from repo root with Node 24 and pnpm 10:
 
-- coverage matrix first
-- responsive Seller shell
-- dashboard/settings/locations
-- coverage/shipping/contacts
-- catalog/inventory
-- orders/Needs
-- trust/moderation
-- Figma alignment passes for locations, catalog, orders and Need feed
-- mutation hardening and documentation
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm api-client:check
+pnpm web:typecheck
+pnpm web:lint
+pnpm web:test
+pnpm web:build
+pnpm --filter @covie/web test:e2e
+```
 
-See Git history on `feature/seller-mobile-figma-ui` for exact SHAs.
+Backend verification:
 
-## Final handoff rule
+```bash
+cd apps/api
+./mvnw verify
+```
 
-This branch may be called implementation-complete only when:
+The root `package.json` currently has **no `format:check` script**. Do not report `pnpm format:check` as passed unless that script is added later.
 
-1. production-safe Figma coverage is reflected in `seller-mobile-coverage-matrix.md`;
-2. documented contract gaps remain unimplemented rather than guessed;
-3. the PR CI workflow passes or any unrelated infrastructure failure is explicitly proven and recorded;
-4. no required Seller action depends on client-inferred authorization/state;
-5. the PR remains unmerged for maintainer review.
+For runtime/pixel tuning, start the documented local stack, then compare the main Seller frames at `360px`, `390px`, `768px` and desktop against the Figma frames above. Specifically check header/tab stickiness, horizontal nav scroll, padding, typography, card geometry, dialogs, long content, pending states and horizontal overflow.
+
+## Verification classification at handoff
+
+- **Code implementation:** completed to the maximum production-safe scope exposed by current Figma + repo + backend contracts.
+- **Figma node coverage:** mapped with exact production frame IDs.
+- **Remote/static contract verification:** completed.
+- **GitHub Actions execution:** blocked by connector-created event semantics; no run was produced, so CI is not claimed green.
+- **Local runtime verification:** pending.
+- **Rendered 360/390 browser comparison:** pending.
+- **Pixel-perfect claim:** not made.
+- **PR:** #5 open and unmerged.
+
+The branch is intended to be pulled directly for the remaining runtime/browser verification. Do not reimplement the contract-safe Seller work locally; use local agents only to fix actual runtime/type/test failures and final rendered pixel tuning that cannot be observed from this connector session.
