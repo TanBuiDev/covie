@@ -32,8 +32,8 @@ beforeEach(() => {
 it("submits conditional shipping with backend-owned rules and frozen ANY/ALL presentation", async () => {
   render(<ShippingPolicyForm merchantId="merchant-1" locationId="location-1" />);
 
-  fireEvent.change(screen.getByLabelText("Loại phí giao"), { target: { value: "CONDITIONAL" } });
-  fireEvent.change(screen.getByRole("spinbutton", { name: /Phí mặc định/ }), { target: { value: "10000" } });
+  fireEvent.change(screen.getByLabelText(/^Loại phí giao/), { target: { value: "CONDITIONAL" } });
+  fireEvent.change(screen.getByRole("spinbutton", { name: /^Phí mặc định/ }), { target: { value: "10000" } });
   fireEvent.change(screen.getByLabelText("Ngưỡng điều kiện 1"), { target: { value: "150000" } });
   fireEvent.click(screen.getByLabelText("Tất cả điều kiện phải đúng"));
   fireEvent.click(screen.getByRole("button", { name: "Lưu phí giao" }));
@@ -67,7 +67,7 @@ it("preserves an existing backend status instead of silently reactivating policy
   };
 
   render(<ShippingPolicyForm merchantId="merchant-1" locationId="location-1" policy={policy} />);
-  fireEvent.change(screen.getByRole("spinbutton", { name: /Phí cố định/ }), { target: { value: "12000" } });
+  fireEvent.change(screen.getByRole("spinbutton", { name: /^Phí cố định/ }), { target: { value: "12000" } });
   fireEvent.click(screen.getByRole("button", { name: "Lưu phí giao" }));
 
   await waitFor(() => expect(mocks.update).toHaveBeenCalledTimes(1));
@@ -79,4 +79,31 @@ it("preserves an existing backend status instead of silently reactivating policy
     ruleMatchMode: undefined,
     rules: [],
   });
+});
+
+it("blocks save when backend returns an unsupported conditional rule instead of coercing it", async () => {
+  const policy: Policy = {
+    id: "policy-unknown-rule",
+    mode: "CONDITIONAL",
+    status: "ACTIVE",
+    currencyCode: "VND",
+    baseFee: 10000,
+    ruleMatchMode: "ANY",
+    rules: [{
+      conditionType: undefined,
+      operator: "GTE",
+      thresholdValue: 1,
+      actionType: "FREE_SHIPPING",
+      priority: 1,
+      enabled: true,
+    }],
+    version: 2,
+  };
+
+  render(<ShippingPolicyForm merchantId="merchant-1" locationId="location-1" policy={policy} />);
+  expect(screen.getByText("Điều kiện đã được cập nhật")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Lưu phí giao" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("chưa được phiên bản Seller Center này hỗ trợ");
+  expect(mocks.update).not.toHaveBeenCalled();
 });
