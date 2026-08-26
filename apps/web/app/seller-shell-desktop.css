@@ -1,21 +1,3 @@
-.seller-shell,
-.seller-entry {
-  --seller-text-primary: var(--color-text);
-  --seller-text-secondary: var(--color-text-muted);
-  --seller-text-tertiary: var(--color-text-muted);
-  --seller-text-inverse: #fff;
-  --seller-border: var(--color-border);
-  --seller-border-subtle: color-mix(in srgb, var(--color-border) 52%, transparent);
-  --seller-bg: var(--color-bg);
-  --seller-bg-subtle: var(--color-panel);
-  --seller-surface: var(--color-surface);
-  --seller-action: var(--color-text-muted);
-  --seller-brand: var(--color-primary);
-  --seller-brand-subtle: var(--color-primary-soft);
-  --seller-focus: var(--color-ring);
-  --seller-danger: var(--color-danger);
-}
-
 .seller-nav-indicator,
 .seller-nav-icon {
   display: none;

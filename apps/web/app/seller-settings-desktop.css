@@ -120,6 +120,45 @@
   .seller-locations-page .seller-location-card > :last-child {
     justify-self: end;
   }
+
+  .seller-location-form {
+    align-items: start;
+    display: grid;
+    gap: 16px 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 1128px;
+  }
+
+  .seller-location-form > h1,
+  .seller-location-form > h2,
+  .seller-location-form > p,
+  .seller-location-form > fieldset,
+  .seller-location-form > .seller-technical-fields,
+  .seller-location-form > .seller-info-card {
+    grid-column: 1 / -1;
+  }
+
+  .seller-shell .seller-location-form > button[type="submit"] {
+    justify-self: start;
+    min-height: 44px;
+    width: 180px;
+  }
+
+  .seller-location-config-links {
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 1128px;
+  }
+
+  .seller-config-link {
+    min-height: 132px;
+    padding: 16px;
+  }
+
+  .seller-config-form,
+  .seller-minimum-order-form {
+    max-width: 552px;
+  }
 }
 
 @media (min-width: 1024px) and (max-width: 1199px) {
@@ -134,5 +173,10 @@
   .seller-locations-page .seller-location-card > :last-child {
     grid-column: 2;
     justify-self: start;
+  }
+
+  .seller-location-form,
+  .seller-location-config-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
