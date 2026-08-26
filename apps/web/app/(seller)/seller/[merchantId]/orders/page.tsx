@@ -7,7 +7,7 @@ export default async function MerchantOrdersPage({ params }: { params: Promise<{
 
   return (
     <section className="seller-stack">
-      <header className="surface-header">
+      <header className="surface-header seller-desktop-heading">
         <p className="eyebrow">Seller Center / Đơn đến</p>
         <h1>Đơn hàng</h1>
         <p>Danh sách cursor mới nhất từ backend. Không lọc theo status ở client vì trang chưa tải không được xem là dữ liệu đầy đủ.</p>
