@@ -35,7 +35,7 @@ export function MerchantNeedResponseForm({
     event.preventDefault();
     if (submitting) return;
     if (!selected.length || selected.length > maxItems) {
-      setMessage(`Chọn từ 1 đến ${maxItems} offer backend cho phép.`);
+      setMessage(`Chọn từ 1 đến ${maxItems} nội dung phù hợp.`);
       return;
     }
 
@@ -53,7 +53,7 @@ export function MerchantNeedResponseForm({
       setMessage("Đã gửi phản hồi.");
       onCreated?.();
     } catch (cause) {
-      setMessage(cause instanceof Error ? cause.message : "Không thể gửi phản hồi. Bạn có thể thử lại cùng intent.");
+      setMessage(cause instanceof Error ? cause.message : "Không thể gửi phản hồi. Vui lòng thử lại.");
     } finally {
       setSubmitting(false);
     }
@@ -62,7 +62,7 @@ export function MerchantNeedResponseForm({
   return (
     <form onSubmit={submit} aria-busy={submitting}>
       <fieldset disabled={submitting}>
-        <legend>Chọn offer tại điểm bán</legend>
+        <legend>Chọn nội dung tại điểm bán</legend>
         {selectable.length ? selectable.map((offer) => (
           <label key={offer.locationVariantId}>
             <input
@@ -78,9 +78,9 @@ export function MerchantNeedResponseForm({
             />
             {offer.label}
           </label>
-        )) : <p className="seller-muted">Backend chưa cung cấp offer có thể chọn.</p>}
+        )) : <p className="seller-muted">Chưa có nội dung phù hợp để chọn.</p>}
       </fieldset>
-      <p className="seller-muted">Đã chọn {selected.length}/{maxItems}. Không có trường nhập giá tự do.</p>
+      <p className="seller-muted">Đã chọn {selected.length}/{maxItems}.</p>
       <label>
         Ghi chú
         <textarea
