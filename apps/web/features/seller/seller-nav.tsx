@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { sellerBasePath } from "./seller-context";
 
 const sections = [
@@ -27,9 +28,21 @@ function sectionIsActive(key: (typeof sections)[number]["key"], pathname: string
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SellerNavLinks({ merchantId }: { merchantId: string }) {
+export function SellerNavLinks({
+  merchantId,
+  scrollActiveIntoView = false,
+}: {
+  merchantId: string;
+  scrollActiveIntoView?: boolean;
+}) {
   const pathname = usePathname();
   const base = sellerBasePath(merchantId);
+  const activeLinkRef = useRef<HTMLAnchorElement | null>(null);
+
+  useEffect(() => {
+    if (!scrollActiveIntoView) return;
+    activeLinkRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [pathname, scrollActiveIntoView]);
 
   return (
     <nav className="seller-nav-links" aria-label="Điều hướng Seller Center">
@@ -38,7 +51,12 @@ export function SellerNavLinks({ merchantId }: { merchantId: string }) {
         const active = sectionIsActive(section.key, pathname, base);
 
         return (
-          <Link key={section.key} href={href} aria-current={active ? "page" : undefined}>
+          <Link
+            key={section.key}
+            href={href}
+            aria-current={active ? "page" : undefined}
+            ref={active && scrollActiveIntoView ? activeLinkRef : undefined}
+          >
             {section.label}
           </Link>
         );
