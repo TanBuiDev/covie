@@ -77,7 +77,7 @@ export function ShippingPolicyForm({
       return;
     }
     if (mode === "CONDITIONAL" && rules.some((rule) => !isKnownCondition(rule))) {
-      setMessage("Có điều kiện giao hàng chưa được phiên bản Seller Center này hỗ trợ. Không thể lưu để tránh ghi đè sai dữ liệu backend.");
+      setMessage("Có điều kiện chưa được phiên bản hiện tại hỗ trợ. Không thể lưu để tránh làm thay đổi cấu hình ngoài ý muốn.");
       return;
     }
     if (mode === "CONDITIONAL" && !rules.some((rule) => rule.enabled)) {
@@ -111,7 +111,7 @@ export function ShippingPolicyForm({
         setMessage("Điểm bán đã có một chính sách giao hàng đang hoạt động. Hãy tạm ngưng chính sách đó trước.");
       } else {
         setMessage(error instanceof Error && error.message === "RESOURCE_VERSION_REQUIRED"
-          ? "Thiếu version của chính sách. Hãy tải lại dữ liệu trước khi sửa."
+          ? "Thông tin chính sách chưa đủ để chỉnh sửa an toàn. Hãy tải lại dữ liệu trước khi sửa."
           : "Không thể lưu phí giao hàng. Vui lòng kiểm tra dữ liệu và thử lại.");
       }
     } finally {
@@ -232,7 +232,7 @@ export function ShippingPolicyForm({
                     </button>
                   </div>
                 ) : (
-                  <p className="seller-contract-note">Loại điều kiện này do backend cung cấp và chưa được Seller Center hỗ trợ. Không chỉnh sửa để tránh ghi đè sai dữ liệu.</p>
+                  <p className="seller-contract-note">Điều kiện này chưa được phiên bản hiện tại hỗ trợ nên được giữ ở chế độ chỉ đọc.</p>
                 )}
               </div>
             );
@@ -252,7 +252,7 @@ export function ShippingPolicyForm({
       {editing ? (
         <details className="seller-technical-fields">
           <summary>Trạng thái & quản lý</summary>
-          <p className="field-hint">Trạng thái backend hiện tại: {policy?.status ?? "không xác định"}. Form giữ nguyên trạng thái khi lưu.</p>
+          <p className="field-hint">Trạng thái hiện tại: {policy?.status ?? "không xác định"}. Trạng thái này được giữ nguyên khi lưu.</p>
           {policy?.status !== "INACTIVE" ? (
             <button type="button" className="button-danger" disabled={pending} onClick={() => setConfirmDelete(true)}>Tạm ngưng chính sách</button>
           ) : null}
@@ -265,7 +265,7 @@ export function ShippingPolicyForm({
       <ConfirmDialog
         open={confirmDelete}
         title="Tạm ngưng chính sách giao hàng?"
-        description="Backend sẽ chuyển chính sách này sang INACTIVE; dữ liệu lịch sử vẫn được giữ lại."
+        description="Chính sách sẽ được chuyển sang trạng thái tạm ngưng; dữ liệu cấu hình vẫn được giữ lại."
         confirmLabel={pending ? "Đang xử lý…" : "Tạm ngưng"}
         dangerous
         confirmDisabled={pending}
