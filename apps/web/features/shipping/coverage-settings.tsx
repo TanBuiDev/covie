@@ -13,6 +13,14 @@ function coverageStatus(status?: Coverage["status"]) {
   return { label: "Trạng thái đã được cập nhật", tone: "neutral" as const };
 }
 
+function coverageTypeCopy(type?: Coverage["coverageType"]) {
+  switch (type) {
+    case "PRODUCT_DELIVERY": return "Giao sản phẩm";
+    case "SERVICE_AREA": return "Khu vực dịch vụ";
+    default: return "Loại phạm vi đã được cập nhật";
+  }
+}
+
 export function CoverageSettings({
   merchantId,
   locationId,
@@ -40,15 +48,15 @@ export function CoverageSettings({
   return (
     <div className="seller-stack">
       <section className="seller-section" aria-labelledby="coverage-list-heading">
-        <div className="seller-section__heading"><h2 id="coverage-list-heading">Coverage records</h2></div>
-        <p className="seller-contract-note">Backend đang có nhiều coverage record. Chọn đúng record để chỉnh; frontend không tự gộp hoặc suy diễn record ưu tiên.</p>
+        <div className="seller-section__heading"><h2 id="coverage-list-heading">Các phạm vi hiện có</h2></div>
+        <p className="seller-contract-note">Điểm bán đang có nhiều cấu hình phạm vi. Chọn đúng cấu hình cần chỉnh để giữ nguyên dữ liệu của các cấu hình khác.</p>
         <div className="seller-row-list">
           {coverages.map((coverage, index) => {
             const status = coverageStatus(coverage.status);
             return (
               <article className="seller-row" key={coverage.id ?? `${coverage.coverageType ?? "coverage"}-${index}`}>
                 <div>
-                  <strong>{coverage.coverageType === "SERVICE_AREA" ? "Khu vực dịch vụ" : "Giao sản phẩm"}</strong>
+                  <strong>{coverageTypeCopy(coverage.coverageType)}</strong>
                   {coverage.radiusEnabled && coverage.radiusMeters != null ? <small>Bán kính: {coverage.radiusMeters.toLocaleString("vi-VN")} m</small> : null}
                   {coverage.areaEnabled ? <small>Khu vực đã chọn: {coverage.locationAreaIds?.length ?? 0}</small> : null}
                 </div>
@@ -72,7 +80,7 @@ export function CoverageSettings({
         />
       ) : (
         <details className="seller-technical-fields">
-          <summary>Thêm coverage record</summary>
+          <summary>Thêm cấu hình phạm vi</summary>
           <CoverageForm merchantId={merchantId} locationId={locationId} />
         </details>
       )}
