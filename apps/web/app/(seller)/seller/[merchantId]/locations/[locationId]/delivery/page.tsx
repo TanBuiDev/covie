@@ -21,7 +21,7 @@ export default async function DeliveryPage({ params }: { params: Promise<{ merch
       <header className="surface-header seller-desktop-only">
         <p className="eyebrow">Seller Center / Vùng phục vụ</p>
         <h1>Vùng giao hàng & phục vụ</h1>
-        <p>Bán kính và khu vực được lưu đúng contract backend. Mọi chỉnh sửa dùng version hiện tại làm If-Match.</p>
+        <p>Cấu hình bán kính hoặc khu vực phục vụ cho điểm bán này.</p>
       </header>
       <section className="seller-info-card" aria-label="Điểm bán áp dụng">
         <strong>{location.data.name ?? "Điểm bán"}</strong>
