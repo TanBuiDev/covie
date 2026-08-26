@@ -1,7 +1,7 @@
 # CoVie V1 — Project Status Dashboard
 
 **Last verified:** 2026-08-26
-**Overall status:** Plans 01–10 are integrated on `main` for planning closure. The requested Public Buyer P0 route chain has populated local flow and screenshot acceptance for PUB-001, PUB-003…008 and BUY-001/002/005/006; PUB-009 Shop has a reviewed contract-safe first pass while its Provider variant remains open. Remaining Figma units, authenticated staging journeys and release acceptance remain open.
+**Overall status:** Plans 01–10 are integrated on `main` for planning closure. The requested Public Buyer P0 route chain has populated local flow and screenshot acceptance for PUB-001, PUB-003…008 and BUY-001/002/003/005/006; PUB-009 Shop has a reviewed contract-safe first pass while its Provider variant remains open. BUY-004 create/edit and remaining Figma units, authenticated staging journeys and release acceptance remain open.
 **Current implementation plan:** Verification and carry-over hardening — see `CoVie-plan-closure-audit-2026-08-24.md`.
 
 ## Purpose
@@ -21,7 +21,7 @@ This is the single progress dashboard for CoVie V1. It records completed work on
 |---|---|---|
 | Product, UX, database, API and technical planning | Complete | Approved documents in `docs/` |
 | Figma design source | Complete | Figma cover records 37/37 production units `FROZEN`; cross-screen QA and critical prototypes `PASS` |
-| Web UI implementation against Figma | In progress | PUB-001, PUB-003…008 and BUY-001/002/005/006 use exact frozen frames, exported SVG icons, Inter/Emerald tokens and buyer navigation. PUB-009 Shop now renders public identity, reputation, reviews, safe contacts and locations; the Provider discriminator and public catalog/fulfillment data are absent from current contracts, so the unit remains incomplete. `pnpm ui:verify-local` passed the populated Home → Search → Product Detail → Shop Profile → Service Detail → Resale Detail → Cart → Checkout → Success → Orders journey and captured target viewport comparisons on 2026-08-26. Other Figma units remain open. |
+| Web UI implementation against Figma | In progress | PUB-001, PUB-003…008 and BUY-001/002/003/005/006 use exact frozen frames, exported SVG icons, Inter/Emerald tokens and buyer navigation. PUB-009 Shop now renders public identity, reputation, reviews, safe contacts and locations; the Provider discriminator and public catalog/fulfillment data are absent from current contracts, so the unit remains incomplete. BUY-003 Address List now covers main, delete, empty, loading and error states; BUY-004 remains open. `pnpm ui:verify-local` passed the populated Home → Search → Product Detail → Shop Profile → Address List → Service Detail → Resale Detail → Cart → Checkout → Success → Orders journey and captured target viewport comparisons on 2026-08-26. Other Figma units remain open. |
 | Repository implementation | Integrated through Plan 10 | `main` and `origin/main` point to `42693a6` (`merge: close plans 01-10`); Flyway migrations are sequential from `V001` through `V013`. |
 | Local development launcher | Fixed and cold-start verified | `pnpm dev` now runs Maven Wrapper from `apps/api` and derives `JAVA_HOME` from `java` on `PATH` when unset. Regression script passed; API and web returned HTTP 200 after a clean launcher start on 2026-08-25. |
 | Identity, auth and user implementation | Complete | Plan 02 Task 16 fresh gate: backend `clean verify` (84 tests), regenerated OpenAPI/client, web lint/typecheck/test/build (20 web tests), Flyway V001–V003 and secret hygiene checks (2026-08-12) |
@@ -39,15 +39,15 @@ This is the single progress dashboard for CoVie V1. It records completed work on
 | 06 | Need Requests & Matching | Closed — locally verified | `V011` and focused concurrency/query gates are integrated |
 | 07 | Reviews, Reputation, Outbox, Notifications & SSE | Closed — locally verified | `V012`, notification/outbox behavior and regression coverage are integrated |
 | 08 | Moderation, Settings & Admin | Closed — locally verified | `V013`, authorization and contract coverage are integrated |
-| 09 | Web Completion / PWA | Closed for planning — UI carry-over in progress | Requested Public Buyer P0 through PUB-008/BUY-006 plus the PUB-009 Shop first pass: typecheck, production build and 97 unit tests pass; the populated journey including Shop and Resale Detail passes (2026-08-26). Lint retains 2 pre-existing warnings and 0 errors; staging P0 journeys remain open. |
+| 09 | Web Completion / PWA | Closed for planning — UI carry-over in progress | Requested Public Buyer P0 through PUB-008/BUY-006 plus PUB-009 Shop and BUY-003: typecheck, production build and 103 unit tests pass; the populated journey including Shop, Address List and Resale Detail passes (2026-08-26). Lint retains 2 pre-existing warnings and 0 errors; staging P0 journeys remain open. |
 | 10 | Production Hardening & Pilot Launch | Closed — carry-over required | Staging rehearsal and release evidence are open |
 
 ## Public Buyer P0 local acceptance — 2026-08-26
 
 - `pnpm ui:verify-local`: 1/1 populated Playwright journey passed on the first checkout commit; the generated credential remains only in ignored `.local/dev/ui-fixture.json`.
-- Visual evidence: `.local/dev/visual-review/` contains Home, Results, Product Detail, Shop Profile, Service Detail, Resale Detail, Multi-cart, Cart Detail, Checkout Preview and Checkout Success at 390×844, 360×800 and 1280×900; Shop also has a bottom-scrolled 390×844 review.
+- Visual evidence: `.local/dev/visual-review/` contains Home, Results, Product Detail, Shop Profile, Address List, Service Detail, Resale Detail, Multi-cart, Cart Detail, Checkout Preview and Checkout Success at 390×844, 360×800 and 1280×900; Shop has a bottom-scrolled review and Address List has an inline-delete review at 390×844.
 - Recurrence guards added for CSRF rotation, pre-hydration credential submission, server-side catalog URL resolution, checkout navigation overlap, first-page order queries and the fixture's UTF-8/category/cart invariants.
-- Fresh repository gates: API `460` passed / `1` skipped before the UI-only PUB-009 batch; web typecheck, `97/97` tests and production build pass; standard E2E `2` passed / `1` fixture-gated skip; populated E2E `1/1`; launcher and fixture regression scripts exited `0`.
+- Fresh repository gates: API `460` passed / `1` skipped before the UI-only batches; web typecheck, `103/103` tests and production build pass; standard E2E `2` passed / `1` fixture-gated skip; populated E2E `1/1`; launcher and fixture regression scripts exited `0`.
 
 ## Update protocol
 

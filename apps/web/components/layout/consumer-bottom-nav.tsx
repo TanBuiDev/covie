@@ -14,7 +14,7 @@ const items: ReadonlyArray<{ href: string; label: string; icon: CoVieIconName }>
 
 export function ConsumerBottomNav() {
   const pathname = usePathname() ?? "/";
-  if (pathname.startsWith("/items/") || pathname.startsWith("/checkout")) return null;
+  if (pathname.startsWith("/items/") || pathname.startsWith("/checkout") || pathname.startsWith("/me/addresses")) return null;
   const activeHref = pathname.startsWith("/merchants/") ? "/search" : pathname.startsWith("/cart") ? "/" : undefined;
   return (
     <nav className="consumer-bottom-nav" aria-label="Điều hướng chính">

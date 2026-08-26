@@ -44,6 +44,10 @@ function ConvertFrom-UiFixtureBase64([string]$value) {
 $sellerDisplayName = ConvertFrom-UiFixtureBase64 "Q2jhu6MgWGFuaCBPd25lcg=="
 $addressLabel = ConvertFrom-UiFixtureBase64 "TmjDoA=="
 $recipientName = ConvertFrom-UiFixtureBase64 "Tmd1eeG7hW4gVsSDbiBNaW5o"
+$companyAddressLabel = ConvertFrom-UiFixtureBase64 "Q8O0bmcgdHk="
+$homeAddressText = ConvertFrom-UiFixtureBase64 "UzUuMDMsIFZpbmhvbWVzIEdyYW5kIFBhcmssIExvbmcgQsOsbmgsIFRQIFRo4bunIMSQ4bupYw=="
+$companyAddressText = ConvertFrom-UiFixtureBase64 "xJDGsOG7nW5nIFbDtSBDaMOtIEPDtG5nLCBUUCBUaOG7pyDEkOG7qWM="
+$companyAddressNote = ConvertFrom-UiFixtureBase64 "R2lhbyB04bqhaSBs4buFIHTDom4="
 $merchantName = ConvertFrom-UiFixtureBase64 "Q+G7rWEgaMOgbmcgQ2jhu6MgWGFuaA=="
 $merchantDescription = ConvertFrom-UiFixtureBase64 "UmF1IGPhu6cgdsOgIGThu4tjaCB24bulIMSR4buLYSBwaMawxqFuZyBjaG8gdmlzdWFsIHJldmlldy4="
 $locationName = ConvertFrom-UiFixtureBase64 "Q2jhu6MgWGFuaCBHcmFuZCBQYXJr"
@@ -110,8 +114,12 @@ values('11111111-1111-4111-8111-555555555555','$buyerId','EMAIL','$buyerEmail','
 on conflict(id) do update set password_hash=excluded.password_hash,verified_at=now(),last_used_at=now();
 
 insert into user_addresses(id,user_id,label,recipient_name,phone,address_text,geo_point,pin_source,is_default,status,created_at,updated_at,version)
-values('99999999-9999-4999-8999-999999999999','$buyerId','$addressLabel','$recipientName','0909 123 456','S5.03, Vinhomes Grand Park',ST_SetSRID(ST_MakePoint(106.842,10.842),4326)::geography,'USER_ADJUSTED',true,'ACTIVE',now(),now(),0)
+values('99999999-9999-4999-8999-999999999999','$buyerId','$addressLabel','$recipientName','0909 123 456','$homeAddressText',ST_SetSRID(ST_MakePoint(106.842,10.842),4326)::geography,'USER_ADJUSTED',true,'ACTIVE',now(),now(),0)
 on conflict(id) do update set label=excluded.label,recipient_name=excluded.recipient_name,phone=excluded.phone,address_text=excluded.address_text,status='ACTIVE',is_default=true,updated_at=now();
+
+insert into user_addresses(id,user_id,label,recipient_name,address_text,geo_point,pin_source,note,is_default,status,created_at,updated_at,version)
+values('99999999-9999-4999-8999-999999999998','$buyerId','$companyAddressLabel','$recipientName','$companyAddressText',ST_SetSRID(ST_MakePoint(106.805,10.835),4326)::geography,'USER_ADJUSTED','$companyAddressNote',false,'ACTIVE',now(),now(),0)
+on conflict(id) do update set label=excluded.label,recipient_name=excluded.recipient_name,address_text=excluded.address_text,note=excluded.note,status='ACTIVE',is_default=false,updated_at=now();
 
 insert into merchant_profiles(id,name,slug,description,merchant_status,moderation_status,created_at,updated_at,version)
 values('$merchantId','$merchantName','ui-cho-xanh','$merchantDescription','ACTIVE','APPROVED',now(),now(),0)

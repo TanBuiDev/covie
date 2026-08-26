@@ -100,6 +100,17 @@ test("populated Public Buyer P0 journey reaches checkout success on the first co
   await page.screenshot({ path: path.join(evidenceDirectory, "pub-009-shop-profile-bottom-390.png") });
   await page.evaluate(() => window.scrollTo(0, 0));
 
+  await page.goto("/me/addresses");
+  await expect(page.getByRole("heading", { name: "Địa chỉ của tôi" })).toBeVisible();
+  await expect(page.getByText("Nhà · Nguyễn Văn Minh").first()).toBeVisible();
+  await expect(page.getByText("Công ty · Nguyễn Văn Minh").first()).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Điều hướng chính" })).toHaveCount(0);
+  await captureResponsive(page, "buy-003-address-list");
+  await page.getByRole("button", { name: "Xóa Nhà" }).click();
+  await expect(page.getByRole("heading", { name: "Xóa địa chỉ này?" })).toBeVisible();
+  await screenshotAt(page, "buy-003-address-delete", 390, 844);
+  await page.getByRole("button", { name: "Giữ địa chỉ" }).click();
+
   await page.goto("/cart");
   await expect(page.getByRole("heading", { name: "Giỏ hàng", exact: true })).toBeVisible();
   await captureResponsive(page, "buy-001-cart-list");

@@ -19,6 +19,16 @@ describe("ConsumerBottomNav", () => {
     expect(screen.queryByRole("navigation", { name: "Điều hướng chính" })).not.toBeInTheDocument();
   });
 
+  it("stays hidden throughout address management to match the focused account flow", () => {
+    navigation.pathname = "/me/addresses";
+    const { rerender } = render(<ConsumerBottomNav />);
+    expect(screen.queryByRole("navigation", { name: "Điều hướng chính" })).not.toBeInTheDocument();
+
+    navigation.pathname = "/me/addresses/new";
+    rerender(<ConsumerBottomNav />);
+    expect(screen.queryByRole("navigation", { name: "Điều hướng chính" })).not.toBeInTheDocument();
+  });
+
   it("remains available on ordinary consumer routes", () => {
     navigation.pathname = "/cart";
     render(<ConsumerBottomNav />);

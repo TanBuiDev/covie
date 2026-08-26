@@ -42,6 +42,11 @@ try {
         throw "PUB-009 fixture must provide public trust and three contact methods; found '$merchantProfile'."
     }
 
+    $buyerAddresses = & docker exec compose-postgres-1 psql -U covie -d covie -tAc "select count(*) || '|' || count(*) filter (where is_default) || '|' || count(*) filter (where id='99999999-9999-4999-8999-999999999998' and note is not null) from user_addresses where user_id='$($fixture.buyerId)' and status='ACTIVE'"
+    if ($buyerAddresses -ne "2|1|1") {
+        throw "BUY-003 fixture must provide two addresses with exactly one default; found '$buyerAddresses'."
+    }
+
     Write-Output "seed-ui-fixture regression checks passed"
 } finally {
     Pop-Location
