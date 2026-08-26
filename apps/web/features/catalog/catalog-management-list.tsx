@@ -59,7 +59,7 @@ export function CatalogManagementList({ merchantId, items }: { merchantId: strin
       {!filtered.length ? (
         <EmptyState
           title={`Chưa có ${view === "PRODUCT" ? "sản phẩm" : view === "SERVICE" ? "dịch vụ" : "nội dung thanh lý"}`}
-          description="Danh sách chỉ hiển thị dữ liệu management API hiện có; không tạo giá, ảnh hay moderation state giả."
+          description="Nội dung thuộc nhóm này sẽ xuất hiện tại đây sau khi được tạo."
           action={<Link className="seller-button" href={createHref}>Thêm nội dung</Link>}
         />
       ) : (
