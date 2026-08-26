@@ -4,17 +4,27 @@ import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { OrderAction } from "./order-api";
 
-const actionCopy: Record<OrderAction, { title: string; confirm: string; description: string; dangerous?: boolean; reason?: "required" | "optional" }> = {
+export type OrderActorView = "BUYER" | "SELLER";
+
+type ActionCopy = {
+  title: string;
+  confirm: string;
+  description: string;
+  dangerous?: boolean;
+  reason?: "required" | "optional";
+};
+
+const actionCopy: Record<OrderAction, ActionCopy> = {
   CONFIRM: { title: "Xác nhận đơn", confirm: "Xác nhận", description: "Xác nhận rằng bạn có thể thực hiện đơn này." },
-  REJECT: { title: "Từ chối đơn", confirm: "Từ chối", description: "Hãy cho người mua biết lý do bạn không thể nhận đơn.", dangerous: true, reason: "required" },
-  CANCEL: { title: "Hủy đơn", confirm: "Hủy đơn", description: "Đơn sẽ được backend xử lý theo trạng thái và quyền hiện tại.", dangerous: true, reason: "optional" },
-  REQUEST_CANCELLATION: { title: "Yêu cầu hủy", confirm: "Gửi yêu cầu", description: "Người bán sẽ nhận được yêu cầu hủy và lý do của bạn.", dangerous: true, reason: "required" },
-  ACCEPT_CANCELLATION: { title: "Chấp nhận hủy", confirm: "Chấp nhận", description: "Xác nhận chấp nhận yêu cầu hủy đơn.", dangerous: true },
-  REJECT_CANCELLATION: { title: "Từ chối hủy", confirm: "Từ chối", description: "Đơn sẽ quay về trạng thái trước đó nếu backend vẫn cho phép." },
+  REJECT: { title: "Từ chối đơn", confirm: "Từ chối", description: "Hãy nhập lý do trước khi từ chối đơn.", dangerous: true, reason: "required" },
+  CANCEL: { title: "Hủy đơn", confirm: "Hủy đơn", description: "Backend sẽ xử lý lệnh hủy theo quyền hiện tại của đơn.", dangerous: true, reason: "optional" },
+  REQUEST_CANCELLATION: { title: "Yêu cầu hủy", confirm: "Gửi yêu cầu", description: "Gửi yêu cầu hủy cùng lý do để phía còn lại xử lý.", dangerous: true, reason: "required" },
+  ACCEPT_CANCELLATION: { title: "Chấp nhận hủy", confirm: "Chấp nhận", description: "Xác nhận chấp nhận yêu cầu hủy đơn.", dangerous: true, reason: "optional" },
+  REJECT_CANCELLATION: { title: "Từ chối hủy", confirm: "Từ chối", description: "Từ chối yêu cầu hủy nếu backend vẫn cho phép thao tác này.", reason: "optional" },
   MARK_OUT_FOR_DELIVERY: { title: "Bắt đầu giao hàng", confirm: "Bắt đầu giao", description: "Cập nhật tiến độ giao hàng cho người mua." },
   MARK_DELIVERED: { title: "Đã giao hàng", confirm: "Đánh dấu đã giao", description: "Chỉ xác nhận khi hàng đã được giao theo quy trình của đơn." },
   MARK_READY_FOR_PICKUP: { title: "Sẵn sàng nhận hàng", confirm: "Đã sẵn sàng", description: "Thông báo đơn đã sẵn sàng để người mua đến nhận." },
-  REPORT_BUYER_NO_SHOW: { title: "Báo người mua không đến", confirm: "Gửi báo cáo", description: "Backend sẽ kiểm tra thời gian chờ và điều kiện no-show trước khi chấp nhận.", dangerous: true },
+  REPORT_BUYER_NO_SHOW: { title: "Báo người mua không đến", confirm: "Gửi báo cáo", description: "Backend kiểm tra thời gian chờ và điều kiện no-show trước khi chấp nhận.", dangerous: true },
   CONTEST_NO_SHOW: { title: "Phản hồi báo cáo no-show", confirm: "Gửi phản hồi", description: "Gửi phản hồi để backend xử lý theo trạng thái hiện tại.", reason: "optional" },
   MARK_SERVICE_PERFORMED: { title: "Đã thực hiện dịch vụ", confirm: "Xác nhận đã thực hiện", description: "Cập nhật rằng dịch vụ đã được thực hiện." },
   CONFIRM_RECEIVED: { title: "Xác nhận đã nhận hàng", confirm: "Hoàn tất đơn", description: "Xác nhận này hoàn tất đơn và không thể hoàn tác.", dangerous: true },
@@ -23,34 +33,46 @@ const actionCopy: Record<OrderAction, { title: string; confirm: string; descript
   REPORT_SERVICE_ISSUE: { title: "Báo sự cố dịch vụ", confirm: "Gửi sự cố", description: "Mô tả ngắn vấn đề để backend ghi nhận sự cố của đơn.", dangerous: true, reason: "required" },
 };
 
+function copyFor(action: OrderAction, actorView: OrderActorView): ActionCopy {
+  const base = actionCopy[action];
+  if (action === "CANCEL" && actorView === "SELLER") {
+    return { ...base, reason: "required", description: "Hủy đơn từ Seller cần lý do; backend vẫn quyết định lệnh có còn được phép hay không." };
+  }
+  return base;
+}
+
 export function OrderActionDialog({
   action,
+  actorView = "BUYER",
   pending,
   onCancel,
   onSubmit,
 }: {
   action?: OrderAction;
+  actorView?: OrderActorView;
   pending?: boolean;
   onCancel(): void;
   onSubmit(input: { reasonCode?: string; note?: string }): void;
 }) {
   if (!action) return null;
-  return <OrderActionDialogForm key={action} action={action} pending={pending} onCancel={onCancel} onSubmit={onSubmit} />;
+  return <OrderActionDialogForm key={`${actorView}-${action}`} action={action} actorView={actorView} pending={pending} onCancel={onCancel} onSubmit={onSubmit} />;
 }
 
 function OrderActionDialogForm({
   action,
+  actorView,
   pending,
   onCancel,
   onSubmit,
 }: {
   action: OrderAction;
+  actorView: OrderActorView;
   pending?: boolean;
   onCancel(): void;
   onSubmit(input: { reasonCode?: string; note?: string }): void;
 }) {
   const [reason, setReason] = useState("");
-  const copy = actionCopy[action];
+  const copy = copyFor(action, actorView);
   const trimmed = reason.trim();
   const reasonRequired = copy.reason === "required";
 
@@ -61,6 +83,8 @@ function OrderActionDialogForm({
       description={copy.description}
       confirmLabel={pending ? "Đang xử lý…" : copy.confirm}
       dangerous={copy.dangerous}
+      confirmDisabled={Boolean(pending || (reasonRequired && !trimmed))}
+      cancelDisabled={Boolean(pending)}
       onCancel={onCancel}
       onConfirm={() => {
         if (pending || (reasonRequired && !trimmed)) return;

@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 
-const FOCUSABLE = "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
-
 export function ConfirmDialog({
   open,
   title,
@@ -11,6 +9,8 @@ export function ConfirmDialog({
   confirmLabel = "Xác nhận",
   cancelLabel = "Quay lại",
   dangerous = false,
+  confirmDisabled = false,
+  cancelDisabled = false,
   onConfirm,
   onCancel,
   children,
@@ -21,6 +21,8 @@ export function ConfirmDialog({
   confirmLabel?: string;
   cancelLabel?: string;
   dangerous?: boolean;
+  confirmDisabled?: boolean;
+  cancelDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   children?: ReactNode;
@@ -30,17 +32,18 @@ export function ConfirmDialog({
 
   useEffect(() => {
     if (!open) return;
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     cancelRef.current?.focus();
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        event.preventDefault();
-        onCancel();
+        if (!cancelDisabled) onCancel();
         return;
       }
-      if (event.key !== "Tab" || !dialogRef.current) return;
-      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+      ) ?? []);
       if (!focusable.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -56,20 +59,40 @@ export function ConfirmDialog({
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      previous?.focus();
+      previousFocus?.focus();
     };
-  }, [open, onCancel]);
+  }, [cancelDisabled, onCancel, open]);
 
   if (!open) return null;
   return (
-    <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onCancel(); }}>
-      <section ref={dialogRef} className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" aria-describedby={description ? "confirm-dialog-description" : undefined}>
+    <div
+      className="dialog-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (!cancelDisabled && event.currentTarget === event.target) onCancel();
+      }}
+    >
+      <section
+        ref={dialogRef}
+        className="confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby={description ? "confirm-dialog-description" : undefined}
+      >
         <h2 id="confirm-dialog-title">{title}</h2>
         {description && <p id="confirm-dialog-description">{description}</p>}
         {children}
         <div className="dialog-actions">
-          <button ref={cancelRef} type="button" onClick={onCancel}>{cancelLabel}</button>
-          <button type="button" className={dangerous ? "button-danger" : undefined} onClick={onConfirm}>{confirmLabel}</button>
+          <button ref={cancelRef} type="button" disabled={cancelDisabled} onClick={onCancel}>{cancelLabel}</button>
+          <button
+            type="button"
+            className={dangerous ? "button-danger" : undefined}
+            disabled={confirmDisabled}
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </button>
         </div>
       </section>
     </div>

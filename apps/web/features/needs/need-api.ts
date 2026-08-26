@@ -14,7 +14,8 @@ export type NeedSummary = GeneratedRequired<components["schemas"]["NeedSummaryRe
 export type NeedDetail = GeneratedRequired<components["schemas"]["NeedDetailResponse"]>;
 export type NeedResponseItem = GeneratedRequired<components["schemas"]["NeedResponseItemResponse"]>;
 export type NeedResponse = GeneratedRequired<components["schemas"]["NeedResponseResponse"]>;
-export type MerchantNeedMatch = GeneratedRequired<components["schemas"]["MerchantNeedMatchResponse"]>;
+export type MerchantNeedMatch = components["schemas"]["MerchantNeedMatchResponse"];
+export type MerchantNeedPage = components["schemas"]["MerchantNeedCursorPage"];
 type CursorPage<T> = { items: T[]; hasMore: boolean; nextCursor?: string | null };
 export type CreateNeedInput = components["schemas"]["CreateNeedRequest"];
 
@@ -61,19 +62,24 @@ export async function discoverMerchantNeeds(
   merchantId: string,
   locationId?: string,
   cursor?: string,
-): Promise<CursorPage<MerchantNeedMatch>> {
+): Promise<MerchantNeedPage> {
   const params = new URLSearchParams();
   if (locationId) params.set("locationId", locationId);
   if (cursor) params.set("cursor", cursor);
-  return jsonOrThrow(await requestBrowserApi("GET", `/api/v1/merchants/${merchantId}/need-requests?${params}`));
+  params.set("limit", "20");
+  return jsonOrThrow(await requestBrowserApi(
+    "GET",
+    `/api/v1/merchants/${encodeURIComponent(merchantId)}/need-requests${params.size ? `?${params}` : ""}`,
+  ));
 }
 
 export async function respondToNeed(
   needId: string,
   input: { merchantLocationId: string; locationVariantIds: string[]; note?: string },
+  idempotencyKey = crypto.randomUUID(),
 ): Promise<NeedResponse> {
-  return jsonOrThrow(await requestBrowserApi("POST", `/api/v1/need-requests/${needId}/responses`, input, {
-    "Idempotency-Key": crypto.randomUUID(),
+  return jsonOrThrow(await requestBrowserApi("POST", `/api/v1/need-requests/${encodeURIComponent(needId)}/responses`, input, {
+    "Idempotency-Key": idempotencyKey,
   }));
 }
 

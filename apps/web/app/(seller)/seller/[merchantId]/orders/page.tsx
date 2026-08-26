@@ -1,2 +1,18 @@
+import { listLocationsForServer } from "@/features/merchant/merchant-server-api";
 import { OrderList } from "@/features/orders/order-list";
-export default async function MerchantOrdersPage({params}:{params:Promise<{merchantId:string}>}){const {merchantId}=await params;return <main className="orders-surface"><header><p className="eyebrow">Người bán / Đơn đến</p><h1>Nhịp vận hành hôm nay</h1></header><OrderList merchantId={merchantId} sellerBase={`/seller/${merchantId}/orders`} /></main>;}
+
+export default async function MerchantOrdersPage({ params }: { params: Promise<{ merchantId: string }> }) {
+  const { merchantId } = await params;
+  const locations = await listLocationsForServer(merchantId);
+
+  return (
+    <section className="seller-stack">
+      <header className="surface-header">
+        <p className="eyebrow">Seller Center / Đơn đến</p>
+        <h1>Đơn hàng</h1>
+        <p>Danh sách cursor mới nhất từ backend. Không lọc theo status ở client vì trang chưa tải không được xem là dữ liệu đầy đủ.</p>
+      </header>
+      <OrderList merchantId={merchantId} sellerBase={`/seller/${encodeURIComponent(merchantId)}/orders`} locations={locations} />
+    </section>
+  );
+}
