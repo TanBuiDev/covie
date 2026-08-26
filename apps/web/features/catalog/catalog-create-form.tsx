@@ -33,7 +33,7 @@ export function CatalogCreateForm({
   locations: Location[];
 }) {
   const router = useRouter();
-  const idempotencyKeyRef = useRef<string>();
+  const idempotencyKeyRef = useRef<string | undefined>(undefined);
   const [type, setType] = useState<CatalogType>("PRODUCT");
   const [listingKind, setListingKind] = useState<ListingKind>("STANDARD");
   const [inventoryMode, setInventoryMode] = useState<InventoryMode>("UNTRACKED");
