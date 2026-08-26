@@ -15,10 +15,11 @@ const items: ReadonlyArray<{ href: string; label: string; icon: CoVieIconName }>
 export function ConsumerBottomNav() {
   const pathname = usePathname() ?? "/";
   if (pathname.startsWith("/items/") || pathname.startsWith("/checkout")) return null;
+  const activeHref = pathname.startsWith("/merchants/") ? "/search" : pathname.startsWith("/cart") ? "/" : undefined;
   return (
     <nav className="consumer-bottom-nav" aria-label="Điều hướng chính">
       {items.map((item) => {
-        const active = item.href === "/" ? pathname === "/" || pathname.startsWith("/cart") : pathname.startsWith(item.href);
+        const active = activeHref ? item.href === activeHref : item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
         return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}><CoVieIcon name={item.icon} active={active} /><span>{item.label}</span></Link>;
       })}
     </nav>

@@ -49,6 +49,7 @@ describe("PUB-006 Catalog detail", () => {
     expect(screen.getByText("85.000 ₫")).toBeInTheDocument();
     expect(screen.getByText("Hoàn thành 98% đơn")).toBeInTheDocument();
     expect(await screen.findByText("4,8 · 96 đánh giá")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Xem shop" })).toHaveAttribute("href", "/merchants/merchant-1");
     expect(screen.getByRole("button", { name: "Giảm số lượng" })).toBeDisabled();
   });
 

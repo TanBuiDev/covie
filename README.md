@@ -51,7 +51,7 @@ With the full local stack running, create the deterministic catalog/buyer fixtur
 pnpm ui:verify-local
 ```
 
-This runs `/` → `/search` → Product, Service and Resale `/items/[itemId]` states → `/cart` → `/cart/[cartId]` → `/checkout` → `/checkout/success/[orderId]` and then checks `/orders`. The generated local password is stored only in ignored `.local/dev/ui-fixture.json`; viewport screenshots are written to ignored `.local/dev/visual-review/`. Re-running the command abandons only the deterministic fixture buyer's active carts, so unrelated local data is preserved.
+This runs `/` → `/search` → Product `/items/[itemId]` → Shop `/merchants/[merchantId]` → Service and Resale `/items/[itemId]` states → `/cart` → `/cart/[cartId]` → `/checkout` → `/checkout/success/[orderId]` and then checks `/orders`. The generated local password is stored only in ignored `.local/dev/ui-fixture.json`; viewport screenshots are written to ignored `.local/dev/visual-review/`. Re-running the command abandons only the deterministic fixture buyer's active carts, so unrelated local data is preserved.
 
 To seed without running Playwright, use `pnpm ui:seed-local`. Regression checks for the seed and launcher are:
 

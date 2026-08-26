@@ -5,6 +5,7 @@ import path from "node:path";
 type LocalFixture = {
   buyerEmail: string;
   buyerPassword: string;
+  merchantId: string;
   productItemId: string;
   serviceItemId: string;
   resaleItemId: string;
@@ -85,6 +86,19 @@ test("populated Public Buyer P0 journey reaches checkout success on the first co
   await expect(resaleDetail.getByText("Vị trí giao dịch", { exact: true })).toBeVisible();
   await expect(resaleDetail.getByRole("status", { name: "Số lượng" })).toHaveCount(0);
   await captureResponsive(page, "pub-008-resale-detail");
+
+  await page.goto(`/merchants/${fixture.merchantId}`);
+  await expect(page).toHaveURL(new RegExp(`/merchants/${fixture.merchantId}`));
+  const merchantProfile = page.getByRole("article");
+  await expect(merchantProfile.getByRole("heading", { name: "Cửa hàng", exact: true })).toBeVisible();
+  await expect(merchantProfile.getByRole("heading", { name: "Cửa hàng Chợ Xanh", exact: true })).toBeVisible();
+  await expect(merchantProfile.getByText("96%")).toBeVisible();
+  await expect(merchantProfile.getByText("4,8 · 96 đánh giá")).toBeVisible();
+  await expect(merchantProfile.getByRole("link", { name: "Mở Zalo" })).toHaveAttribute("href", "https://zalo.me/0909123456");
+  await captureResponsive(page, "pub-009-shop-profile");
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.screenshot({ path: path.join(evidenceDirectory, "pub-009-shop-profile-bottom-390.png") });
+  await page.evaluate(() => window.scrollTo(0, 0));
 
   await page.goto("/cart");
   await expect(page.getByRole("heading", { name: "Giỏ hàng", exact: true })).toBeVisible();

@@ -121,6 +121,12 @@ insert into merchant_memberships(id,merchant_profile_id,user_id,role,membership_
 values('33333333-3333-4333-8333-444444444444','$merchantId','$sellerId','OWNER','ACTIVE',now(),now(),0)
 on conflict(id) do update set membership_status='ACTIVE';
 
+insert into merchant_contact_methods(id,merchant_profile_id,merchant_location_id,contact_type,value,qr_media_id,is_primary,is_public,status,created_at,version) values
+('33333333-3333-4333-8333-555555555551','$merchantId',null,'ZALO_LINK','https://zalo.me/0909123456',null,true,true,'ACTIVE',now(),0),
+('33333333-3333-4333-8333-555555555552','$merchantId',null,'MESSENGER_LINK','https://m.me/covie.ui.fixture',null,false,true,'ACTIVE',now(),0),
+('33333333-3333-4333-8333-555555555553','$merchantId',null,'PHONE','0909 123 456',null,false,true,'ACTIVE',now(),0)
+on conflict(id) do update set value=excluded.value,is_public=true,status='ACTIVE';
+
 insert into merchant_locations(id,merchant_profile_id,name,address_text,geo_point,pin_source,timezone,location_status,pickup_enabled,seller_delivery_enabled,service_enabled,minimum_delivery_order,currency_code,created_at,updated_at,version)
 values('$locationId','$merchantId','$locationName','S5.03, Vinhomes Grand Park',ST_SetSRID(ST_MakePoint(106.842,10.842),4326)::geography,'USER_ADJUSTED','Asia/Ho_Chi_Minh','ACTIVE',true,true,true,0,'VND',now(),now(),0)
 on conflict(id) do update set name=excluded.name,address_text=excluded.address_text,location_status='ACTIVE',pickup_enabled=true,seller_delivery_enabled=true,service_enabled=true,updated_at=now();
@@ -167,6 +173,14 @@ on conflict(id) do update set coverage_status='ACTIVE',radius_enabled=true,radiu
 insert into shipping_policies(id,merchant_location_id,mode,base_fee,currency_code,policy_status,created_at,updated_at,version)
 values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','$locationId','FIXED',25000,'VND','ACTIVE',now(),now(),0)
 on conflict(id) do update set mode='FIXED',base_fee=25000,policy_status='ACTIVE',updated_at=now();
+
+insert into merchant_reputation_stats(merchant_profile_id,eligible_order_count,completed_order_count,seller_cancel_after_confirm_count,excluded_issue_count,completion_rate_basis_points,updated_at)
+values('$merchantId',125,120,5,0,9600,now())
+on conflict(merchant_profile_id) do update set eligible_order_count=125,completed_order_count=120,seller_cancel_after_confirm_count=5,excluded_issue_count=0,completion_rate_basis_points=9600,updated_at=now();
+
+insert into merchant_rating_stats(merchant_profile_id,review_count,rating_sum,average_rating,updated_at)
+values('$merchantId',96,461,4.80,now())
+on conflict(merchant_profile_id) do update set review_count=96,rating_sum=461,average_rating=4.80,updated_at=now();
 commit;
 "@
 
@@ -188,6 +202,7 @@ $fixture = [ordered]@{
     buyerId = $buyerId
     buyerEmail = $buyerEmail
     buyerPassword = $buyerPassword
+    merchantId = $merchantId
     productItemId = $productItemId
     serviceItemId = $serviceItemId
     resaleItemId = $resaleItemId

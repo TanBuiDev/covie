@@ -24,4 +24,12 @@ describe("ConsumerBottomNav", () => {
     render(<ConsumerBottomNav />);
     expect(screen.getByRole("navigation", { name: "Điều hướng chính" })).toBeInTheDocument();
   });
+
+  it("keeps merchant public profiles in the Explore navigation context", () => {
+    navigation.pathname = "/merchants/merchant-1";
+    render(<ConsumerBottomNav />);
+
+    expect(screen.getByRole("link", { name: "Khám phá" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Tôi" })).not.toHaveAttribute("aria-current");
+  });
 });
