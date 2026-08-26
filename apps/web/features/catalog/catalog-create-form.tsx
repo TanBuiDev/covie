@@ -321,7 +321,7 @@ export function CatalogCreateForm({
       <header>
         <p className="eyebrow">Catalog / Tạo mới</p>
         <h1>Tạo nội dung bán</h1>
-        <p className="seller-muted">Sản phẩm, dịch vụ và hàng bán lại dùng cùng contract catalog; danh mục, thuộc tính và điểm bán được lấy trực tiếp từ backend.</p>
+        <p className="seller-muted">Tạo sản phẩm, dịch vụ hoặc hàng thanh lý từ danh mục và điểm bán hiện có.</p>
       </header>
 
       <fieldset disabled={pending}>
@@ -345,7 +345,7 @@ export function CatalogCreateForm({
         </label>
         {type === "PRODUCT" ? (
           <label>
-            Kiểu listing
+            Loại sản phẩm
             <select name="listingKind" value={listingKind} onChange={(event) => setListingKind(event.target.value as ListingKind)}>
               <option value="STANDARD">Sản phẩm tiêu chuẩn</option>
               <option value="RESALE">Thanh lý</option>
@@ -370,12 +370,12 @@ export function CatalogCreateForm({
           {compatibleCategories.map((category) => category.id ? <option key={category.id} value={category.id}>{category.name ?? "Danh mục"}</option> : null)}
         </select>
       </label>
-      {!compatibleCategories.length ? <p className="warning-banner" role="status">Chưa có danh mục backend phù hợp với loại nội dung này.</p> : null}
+      {!compatibleCategories.length ? <p className="warning-banner" role="status">Chưa có danh mục phù hợp với loại nội dung này.</p> : null}
       {categoryLoading ? <p className="seller-muted" role="status">Đang tải thuộc tính danh mục…</p> : null}
       {categoryError ? <p className="seller-contract-note" role="alert">{categoryError}</p> : null}
       {categoryDetail ? <CategoryAttributeFields definitions={categoryDetail.attributes ?? []} pending={pending} /> : null}
       {listingKind === "RESALE" && categoryDetail && !(categoryDetail.attributes ?? []).length ? (
-        <p className="seller-contract-note" role="status">Danh mục này chưa cung cấp thuộc tính tình trạng qua API. CoVie không tự tạo danh sách tình trạng thanh lý ở frontend.</p>
+        <p className="seller-contract-note" role="status">Danh mục này chưa có tùy chọn tình trạng để chọn.</p>
       ) : null}
 
       <label>
@@ -398,7 +398,7 @@ export function CatalogCreateForm({
             ) : null)}
           </select>
         </label>
-        {!compatibleLocations.length ? <p className="warning-banner" role="status">Chưa có điểm bán backend phù hợp. Dịch vụ chỉ dùng location có serviceEnabled.</p> : null}
+        {!compatibleLocations.length ? <p className="warning-banner" role="status">Chưa có điểm bán phù hợp. Với dịch vụ, hãy bật phục vụ dịch vụ tại ít nhất một điểm bán.</p> : null}
         {!serviceVariantOffers ? (
           <label>
             Giá chính xác (VND)
@@ -442,9 +442,9 @@ export function CatalogCreateForm({
                 required
               />
             </label>
-            {type !== "SERVICE" ? <p className="seller-muted">Mỗi giá trị tạo một variant backend và cùng dùng giá/điểm bán của lần tạo này.</p> : null}
+            {type !== "SERVICE" ? <p className="seller-muted">Mỗi giá trị tạo một biến thể và dùng chung giá cùng điểm bán trong lần tạo này.</p> : null}
           </div>
-        ) : <p className="seller-muted">Không có lựa chọn: backend tạo default variant canonical, frontend không tự tạo SKU giả.</p>}
+        ) : <p className="seller-muted">Không có lựa chọn: nội dung sẽ dùng một phiên bản mặc định.</p>}
 
         {serviceVariantOffers ? (
           <div className="seller-service-variant-grid" aria-label="Giá các gói dịch vụ">
@@ -462,7 +462,7 @@ export function CatalogCreateForm({
                 </label>
               </section>
             ))}
-            <p className="seller-muted">Mỗi gói tạo một location offer riêng. Muốn đổi tổ hợp lựa chọn sau này cần contract edit/version authoritative; frontend không tự sửa cấu trúc đã publish.</p>
+            <p className="seller-muted">Mỗi gói có giá và trạng thái nhận đơn riêng tại điểm bán. Nội dung đã tạo hiện chưa hỗ trợ chỉnh cấu trúc gói.</p>
           </div>
         ) : null}
       </fieldset>
@@ -481,7 +481,7 @@ export function CatalogCreateForm({
             }}
           />
         </label>
-        <p className="seller-muted">JPEG, PNG hoặc WebP; tối đa 10 MB mỗi ảnh. File được upload trực tiếp qua presigned storage contract.</p>
+        <p className="seller-muted">JPEG, PNG hoặc WebP; tối đa 10 MB mỗi ảnh.</p>
         {files.length ? <p role="status">Đã chọn {files.length} ảnh.</p> : null}
       </fieldset>
 
