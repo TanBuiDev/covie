@@ -46,7 +46,7 @@ export function InventoryTable({ merchantId, items: initialItems }: { merchantId
         version: result.version,
       } : currentItem));
       intentKeys.current.delete(locationVariantId);
-      setMessages((current) => ({ ...current, [locationVariantId]: "Đã cập nhật tồn kho từ kết quả backend." }));
+      setMessages((current) => ({ ...current, [locationVariantId]: "Đã cập nhật tồn kho." }));
     } catch (error) {
       if (error instanceof CovieApiError && error.code === "INVENTORY_BELOW_RESERVED_QUANTITY") {
         setMessages((current) => ({
@@ -109,12 +109,12 @@ export function InventoryTable({ merchantId, items: initialItems }: { merchantId
                   Ghi chú điều chỉnh
                   <input name="note" maxLength={500} disabled={pending} onChange={() => intentKeys.current.delete(id)} />
                 </label>
-                <p className="seller-muted" id={`inventory-help-${id}`}>Backend giữ quyền xác nhận số lượng reserved và available; UI không cập nhật lạc quan.</p>
+                <p className="seller-muted" id={`inventory-help-${id}`}>Số lượng đã giữ và có thể bán sẽ được cập nhật theo dữ liệu mới nhất sau khi lưu.</p>
                 {messages[id] ? <p role={messages[id]?.startsWith("Đã") ? "status" : "alert"}>{messages[id]}</p> : null}
                 <button type="submit" disabled={pending}>{pending ? "Đang lưu…" : "Lưu tồn kho"}</button>
               </form>
             ) : (
-              <p className="seller-muted">Offer này ở chế độ UNTRACKED nên không có thao tác stock.</p>
+              <p className="seller-muted">Nội dung này không theo dõi số lượng tồn kho nên không cần cập nhật thủ công.</p>
             )}
           </li>
         );
