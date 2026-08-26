@@ -17,26 +17,26 @@ type ActionCopy = {
 const actionCopy: Record<OrderAction, ActionCopy> = {
   CONFIRM: { title: "Xác nhận đơn", confirm: "Xác nhận", description: "Xác nhận rằng bạn có thể thực hiện đơn này." },
   REJECT: { title: "Từ chối đơn", confirm: "Từ chối", description: "Hãy nhập lý do trước khi từ chối đơn.", dangerous: true, reason: "required" },
-  CANCEL: { title: "Hủy đơn", confirm: "Hủy đơn", description: "Backend sẽ xử lý lệnh hủy theo quyền hiện tại của đơn.", dangerous: true, reason: "optional" },
+  CANCEL: { title: "Hủy đơn", confirm: "Hủy đơn", description: "Yêu cầu hủy sẽ được xử lý theo trạng thái và quyền hiện tại của đơn.", dangerous: true, reason: "optional" },
   REQUEST_CANCELLATION: { title: "Yêu cầu hủy", confirm: "Gửi yêu cầu", description: "Gửi yêu cầu hủy cùng lý do để phía còn lại xử lý.", dangerous: true, reason: "required" },
   ACCEPT_CANCELLATION: { title: "Chấp nhận hủy", confirm: "Chấp nhận", description: "Xác nhận chấp nhận yêu cầu hủy đơn.", dangerous: true, reason: "optional" },
-  REJECT_CANCELLATION: { title: "Từ chối hủy", confirm: "Từ chối", description: "Từ chối yêu cầu hủy nếu backend vẫn cho phép thao tác này.", reason: "optional" },
+  REJECT_CANCELLATION: { title: "Từ chối hủy", confirm: "Từ chối", description: "Từ chối yêu cầu hủy nếu thao tác này vẫn còn khả dụng.", reason: "optional" },
   MARK_OUT_FOR_DELIVERY: { title: "Bắt đầu giao hàng", confirm: "Bắt đầu giao", description: "Cập nhật tiến độ giao hàng cho người mua." },
   MARK_DELIVERED: { title: "Đã giao hàng", confirm: "Đánh dấu đã giao", description: "Chỉ xác nhận khi hàng đã được giao theo quy trình của đơn." },
   MARK_READY_FOR_PICKUP: { title: "Sẵn sàng nhận hàng", confirm: "Đã sẵn sàng", description: "Thông báo đơn đã sẵn sàng để người mua đến nhận." },
-  REPORT_BUYER_NO_SHOW: { title: "Báo người mua không đến", confirm: "Gửi báo cáo", description: "Backend kiểm tra thời gian chờ và điều kiện no-show trước khi chấp nhận.", dangerous: true },
-  CONTEST_NO_SHOW: { title: "Phản hồi báo cáo no-show", confirm: "Gửi phản hồi", description: "Gửi phản hồi để backend xử lý theo trạng thái hiện tại.", reason: "optional" },
+  REPORT_BUYER_NO_SHOW: { title: "Báo người mua không đến", confirm: "Gửi báo cáo", description: "Hệ thống sẽ kiểm tra thời gian chờ và điều kiện áp dụng trước khi ghi nhận.", dangerous: true },
+  CONTEST_NO_SHOW: { title: "Phản hồi báo cáo no-show", confirm: "Gửi phản hồi", description: "Gửi phản hồi để hệ thống xử lý theo trạng thái hiện tại.", reason: "optional" },
   MARK_SERVICE_PERFORMED: { title: "Đã thực hiện dịch vụ", confirm: "Xác nhận đã thực hiện", description: "Cập nhật rằng dịch vụ đã được thực hiện." },
   CONFIRM_RECEIVED: { title: "Xác nhận đã nhận hàng", confirm: "Hoàn tất đơn", description: "Xác nhận này hoàn tất đơn và không thể hoàn tác.", dangerous: true },
   CONFIRM_COMPLETED: { title: "Xác nhận dịch vụ hoàn thành", confirm: "Hoàn tất đơn", description: "Xác nhận này hoàn tất đơn và không thể hoàn tác.", dangerous: true },
-  REPORT_DELIVERY_ISSUE: { title: "Báo sự cố giao hàng", confirm: "Gửi sự cố", description: "Mô tả ngắn vấn đề để backend ghi nhận sự cố của đơn.", dangerous: true, reason: "required" },
-  REPORT_SERVICE_ISSUE: { title: "Báo sự cố dịch vụ", confirm: "Gửi sự cố", description: "Mô tả ngắn vấn đề để backend ghi nhận sự cố của đơn.", dangerous: true, reason: "required" },
+  REPORT_DELIVERY_ISSUE: { title: "Báo sự cố giao hàng", confirm: "Gửi sự cố", description: "Mô tả ngắn vấn đề để hệ thống ghi nhận sự cố của đơn.", dangerous: true, reason: "required" },
+  REPORT_SERVICE_ISSUE: { title: "Báo sự cố dịch vụ", confirm: "Gửi sự cố", description: "Mô tả ngắn vấn đề để hệ thống ghi nhận sự cố của đơn.", dangerous: true, reason: "required" },
 };
 
 function copyFor(action: OrderAction, actorView: OrderActorView): ActionCopy {
   const base = actionCopy[action];
   if (action === "CANCEL" && actorView === "SELLER") {
-    return { ...base, reason: "required", description: "Hủy đơn từ Seller cần lý do; backend vẫn quyết định lệnh có còn được phép hay không." };
+    return { ...base, reason: "required", description: "Hủy đơn từ Seller cần lý do. Thao tác chỉ được thực hiện nếu đơn vẫn cho phép hủy." };
   }
   return base;
 }
