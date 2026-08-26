@@ -38,7 +38,7 @@ beforeEach(() => {
 it("uses the frozen area facet while requiring an explicit backend coverage type", async () => {
   render(<CoverageForm merchantId="merchant-1" locationId="location-1" />);
 
-  fireEvent.change(screen.getByLabelText(/^Loại coverage/), { target: { value: "PRODUCT_DELIVERY" } });
+  fireEvent.change(screen.getByLabelText(/^Áp dụng cho/), { target: { value: "PRODUCT_DELIVERY" } });
   fireEvent.click(screen.getByRole("button", { name: "Khu vực" }));
   fireEvent.click(await screen.findByLabelText("The Origami"));
   fireEvent.click(screen.getByRole("button", { name: "Lưu khu vực" }));
