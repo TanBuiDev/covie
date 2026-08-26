@@ -1,15 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-
-const sections = [
-  ["", "Dashboard"],
-  ["orders", "Orders"],
-  ["catalog", "Catalog"],
-  ["needs", "Needs"],
-  ["inventory", "Inventory"],
-  ["locations", "Locations"],
-  ["settings", "Settings"],
-] as const;
+import { SellerNavLinks } from "@/features/seller/seller-nav";
+import { sellerBasePath } from "@/features/seller/seller-context";
 
 export function SellerShell({
   merchantId,
@@ -22,18 +15,26 @@ export function SellerShell({
   switcher?: ReactNode;
   children: ReactNode;
 }) {
-  const base = `/seller/${encodeURIComponent(merchantId)}`;
+  const base = sellerBasePath(merchantId);
+
   return (
-    <div className="workspace-shell">
-      <aside className="workspace-nav">
-        <Link className="app-brand" href="/seller">CoVie Seller</Link>
-        <p className="workspace-nav__context">{merchantName ?? "Cửa hàng hiện tại"}</p>
-        {switcher}
-        <nav aria-label="Seller Center">
-          {sections.map(([path, label]) => <Link key={path} href={path ? `${base}/${path}` : base}>{label}</Link>)}
-        </nav>
+    <div className="seller-shell">
+      <aside className="seller-shell__navigation">
+        <div className="seller-shell__appbar">
+          <Link className="seller-shell__brand" href={base} aria-label="CoVie Seller Center — Tổng quan">
+            <Image src="/icon.svg" alt="" aria-hidden="true" width={36} height={36} priority />
+            <span>
+              <strong>CoVie Seller</strong>
+              <small>{merchantName ?? "Cửa hàng"}</small>
+            </span>
+          </Link>
+          {switcher ? <div className="seller-shell__switcher">{switcher}</div> : null}
+        </div>
+        <SellerNavLinks merchantId={merchantId} />
       </aside>
-      <main className="workspace-main">{children}</main>
+      <main className="seller-shell__main" id="seller-main-content">
+        {children}
+      </main>
     </div>
   );
 }
