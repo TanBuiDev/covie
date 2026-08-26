@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LoadingState } from "@/components/ui/loading-state";
-import { cancelNeed, getMyNeed, type NeedDetail as NeedDetailModel } from "./need-api";
+import { getMyNeed, type NeedDetail as NeedDetailModel } from "./need-api";
 import { NeedResponseList } from "./need-response-list";
 
 const statusCopy = {
@@ -16,7 +16,6 @@ const statusCopy = {
 export function NeedDetail({ needId }: { needId: string }) {
   const [need, setNeed] = useState<NeedDetailModel | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -25,18 +24,6 @@ export function NeedDetail({ needId }: { needId: string }) {
       .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Không thể tải nhu cầu."); });
     return () => { active = false; };
   }, [needId]);
-
-  async function cancel() {
-    setCancelling(true);
-    setError(null);
-    try {
-      setNeed(await cancelNeed(needId));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể hủy nhu cầu.");
-    } finally {
-      setCancelling(false);
-    }
-  }
 
   if (error && !need) return <p className="form-alert" role="alert">{error}</p>;
   if (!need) return <LoadingState label="Đang tải nhu cầu…" />;
@@ -62,11 +49,6 @@ export function NeedDetail({ needId }: { needId: string }) {
 
         {need.fulfilledOrderId ? <p className="need-detail__fulfilled">Đã tạo đơn đáp ứng: <Link href={`/orders/${need.fulfilledOrderId}`}>Xem đơn hàng</Link></p> : null}
         {error ? <p className="form-alert" role="alert">{error}</p> : null}
-        {need.status === "ACTIVE" ? (
-          <button className="button-secondary need-detail__cancel" disabled={cancelling} type="button" onClick={() => void cancel()}>
-            {cancelling ? "Đang hủy…" : "Hủy nhu cầu"}
-          </button>
-        ) : null}
       </section>
 
       <NeedResponseList needId={needId} />
