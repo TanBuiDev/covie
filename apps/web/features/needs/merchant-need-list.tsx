@@ -87,7 +87,7 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
         />
       ) : null}
       {!error && !items ? <LoadingState label="Đang tìm nhu cầu phù hợp…" /> : null}
-      {items?.length === 0 ? <EmptyState title="Chưa có nhu cầu phù hợp" description="Danh sách này do backend match theo phạm vi của điểm bán đang chọn." /> : null}
+      {items?.length === 0 ? <EmptyState title="Chưa có nhu cầu phù hợp" description="Danh sách sẽ xuất hiện khi có nhu cầu phù hợp với phạm vi của điểm bán đang chọn." /> : null}
 
       {items?.length ? (
         <div className="seller-need-list">
@@ -100,7 +100,7 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
               <article className="seller-need-card" key={key}>
                 <div className="seller-need-card__summary">
                   <strong>{need?.title ?? "Nhu cầu"}</strong>
-                  <small>{[match.buyerArea?.label, distance ? `cách điểm bán ${distance}` : null].filter(Boolean).join(" · ") || "Khu vực theo dữ liệu backend"}</small>
+                  <small>{[match.buyerArea?.label, distance ? `cách điểm bán ${distance}` : null].filter(Boolean).join(" · ") || "Khu vực theo dữ liệu hệ thống"}</small>
                 </div>
 
                 {expiry ? (
@@ -120,7 +120,7 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
 
                 {!match.alreadyResponded ? (
                   <p className="seller-contract-note" role="status">
-                    Chưa thể mở chọn nội dung: API hiện chưa có read contract trả LocationVariant đủ điều kiện cho Need này. UI không cho nhập UUID hoặc giá thủ công.
+                    Hiện chưa thể chọn nội dung để phản hồi nhu cầu này. Hệ thống chưa cung cấp danh sách mục phù hợp cho điểm bán đã chọn.
                   </p>
                 ) : null}
               </article>
