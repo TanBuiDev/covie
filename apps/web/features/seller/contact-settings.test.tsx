@@ -41,17 +41,17 @@ it("renders existing frozen contact channels read-only instead of guessing PATCH
 
   render(<MerchantContactSettings merchantId="merchant-1" merchantLocationId="location-1" contacts={contacts} />);
 
-  expect(screen.getByLabelText("Zalo link")).toHaveAttribute("readonly");
-  expect(screen.getByLabelText("Messenger link")).toHaveAttribute("readonly");
+  expect(screen.getByLabelText(/^Zalo link/)).toHaveAttribute("readonly");
+  expect(screen.getByLabelText(/^Messenger link/)).toHaveAttribute("readonly");
   expect(screen.getByText("Ảnh QR liên hệ đã được lưu. Thay ảnh cần contact concurrency token từ backend.")).toBeInTheDocument();
-  expect(screen.queryByLabelText("Chọn ảnh QR liên hệ")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText(/^Chọn ảnh QR liên hệ/)).not.toBeInTheDocument();
 });
 
 it("creates only missing Zalo and Messenger channels as public backend contacts", async () => {
   render(<MerchantContactSettings merchantId="merchant-1" merchantLocationId="location-1" contacts={[]} />);
 
-  fireEvent.change(screen.getByLabelText("Zalo link"), { target: { value: "https://zalo.me/new-shop" } });
-  fireEvent.change(screen.getByLabelText("Messenger link"), { target: { value: "https://m.me/new-shop" } });
+  fireEvent.change(screen.getByLabelText(/^Zalo link/), { target: { value: "https://zalo.me/new-shop" } });
+  fireEvent.change(screen.getByLabelText(/^Messenger link/), { target: { value: "https://m.me/new-shop" } });
   fireEvent.click(screen.getByRole("button", { name: "Lưu liên hệ" }));
 
   await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(2));
@@ -74,7 +74,7 @@ it("uploads contact QR with the canonical MERCHANT_CONTACT_QR purpose", async ()
   render(<MerchantContactSettings merchantId="merchant-1" merchantLocationId="location-1" contacts={[]} />);
   const file = new File(["qr"], "zalo-qr.png", { type: "image/png" });
 
-  fireEvent.change(screen.getByLabelText("Chọn ảnh QR liên hệ"), { target: { files: [file] } });
+  fireEvent.change(screen.getByLabelText(/^Chọn ảnh QR liên hệ/), { target: { files: [file] } });
   fireEvent.click(screen.getByRole("button", { name: "Lưu liên hệ" }));
 
   await waitFor(() => expect(mocks.upload).toHaveBeenCalledWith(file, "MERCHANT_CONTACT_QR"));
