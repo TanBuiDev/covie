@@ -12,20 +12,21 @@ export default async function SellerPage() {
   }
 
   return (
-    <main className="buyer-surface">
+    <main className="seller-entry seller-stack">
       <header className="surface-header">
         <p className="eyebrow">CoVie Seller</p>
         <h1>Seller Center</h1>
+        <p>Chọn cửa hàng đang quản lý hoặc tạo cửa hàng đầu tiên. Merchant hiện tại luôn được thể hiện trên route, không nằm trong session ẩn phía client.</p>
       </header>
       {merchants.length === 0 ? (
         <section>
           <h2>Bán hàng trên CoVie</h2>
-          <p>Tạo cửa hàng đầu tiên để bắt đầu cấu hình điểm bán và catalog.</p>
+          <p className="seller-muted">Tạo cửa hàng đầu tiên để bắt đầu cấu hình điểm bán và catalog.</p>
           <MerchantForm />
         </section>
       ) : (
         <section>
-          <h2>Chọn cửa hàng</h2>
+          <div className="seller-section__heading"><h2>Chọn cửa hàng</h2></div>
           <MerchantList merchants={merchants} />
         </section>
       )}

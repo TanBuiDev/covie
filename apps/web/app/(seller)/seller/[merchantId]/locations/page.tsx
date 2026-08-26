@@ -7,13 +7,16 @@ export default async function LocationsPage({ params }: { params: Promise<{ merc
   const locations = await listLocationsForServer(merchantId);
 
   return (
-    <section>
+    <section className="seller-stack">
       <header className="surface-header">
-        <p className="eyebrow">Seller Center / Locations</p>
+        <p className="eyebrow">Seller Center / Điểm bán</p>
         <h1>Điểm bán & phục vụ</h1>
-        <p>Mỗi location là một ranh giới vận hành riêng cho giá, giao hàng, tồn kho và quyền nhân viên.</p>
+        <p>Mỗi điểm bán giữ phạm vi vận hành riêng cho giao hàng, pickup, dịch vụ, tồn kho và phân quyền backend.</p>
       </header>
-      <LocationList merchantId={merchantId} locations={locations} />
+      <section className="seller-section" aria-labelledby="locations-list-heading">
+        <div className="seller-section__heading"><h2 id="locations-list-heading">Điểm bán hiện có</h2></div>
+        <LocationList merchantId={merchantId} locations={locations} />
+      </section>
       <LocationForm merchantId={merchantId} />
     </section>
   );

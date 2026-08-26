@@ -6,13 +6,13 @@ export default async function SellerSettingsPage({ params }: { params: Promise<{
   const merchant = await getMerchantForServer(merchantId);
 
   return (
-    <section>
+    <section className="seller-stack">
       <header className="surface-header">
-        <p className="eyebrow">Seller Center / Settings</p>
+        <p className="eyebrow">Seller Center / Cài đặt</p>
         <h1>Cài đặt cửa hàng</h1>
-        <p>Thay đổi thông tin cửa hàng theo version hiện tại của backend.</p>
+        <p>Các thay đổi được lưu theo version hiện tại từ backend. Khi có xung đột, CoVie sẽ yêu cầu tải dữ liệu mới thay vì ghi đè im lặng.</p>
       </header>
-      <MerchantForm merchant={merchant} />
+      <MerchantForm key={merchant.etag || String(merchant.data.version ?? "merchant")} merchant={merchant} />
     </section>
   );
 }
