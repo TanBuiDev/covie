@@ -99,6 +99,7 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
         <h1>Xác nhận đơn</h1>
       </header>
       <section className={styles.content}>
+        <h1 className={styles.desktopTitle}>Xác nhận đơn</h1>
         {changed ? <CheckoutChangeDialog onPreviewAgain={requestPreview} /> : (
           <>
             {carts.length > 1 ? (
@@ -147,6 +148,7 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
                   <h2>Tóm tắt thanh toán</h2>
                   <dl><div><dt>Tạm tính</dt><dd>{money(preview.subtotal)}</dd></div><div><dt>Phí giao hàng</dt><dd>{negotiated ? "Thỏa thuận với người bán" : money(preview.shippingFee)}</dd></div><div><dt>{totalLabel}</dt><dd>{money(totalValue)}</dd></div></dl>
                   <p className={negotiated ? styles.negotiatedNote : undefined}>{negotiated ? "Phí giao sẽ được thỏa thuận; khoản tiền trên chưa phải tổng cuối cùng." : "Số tiền hiển thị theo bản xem trước từ hệ thống."}</p>
+                  <button className={styles.desktopCommit} type="button" onClick={commit}>Đặt hàng</button>
                 </section>
               </>
             ) : null}
