@@ -12,7 +12,7 @@ export default async function MinimumOrderPage({
   const base = `/seller/${encodeURIComponent(merchantId)}/locations/${encodeURIComponent(locationId)}`;
   return (
     <section className="seller-stack">
-      <p><Link href={base}>Quay lại điểm bán</Link></p>
+      <p className="seller-desktop-only"><Link href={base}>Quay lại điểm bán</Link></p>
       <MinimumOrderForm
         key={location.etag || String(location.data.version ?? locationId)}
         merchantId={merchantId}
