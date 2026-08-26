@@ -192,7 +192,7 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
 
     render(<CatalogCreateForm merchantId="merchant-1" categories={productCategories} locations={locations} />);
 
-    fireEvent.change(screen.getByLabelText("Kiểu listing"), { target: { value: "RESALE" } });
+    fireEvent.change(screen.getByLabelText("Loại sản phẩm"), { target: { value: "RESALE" } });
     fillBaseFields({ categoryId: "cat-resale", name: "Nồi chiên không dầu" });
 
     await waitFor(() => expect(screen.getByLabelText("Tình trạng")).toBeInTheDocument());
@@ -228,10 +228,10 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
 
     render(<CatalogCreateForm merchantId="merchant-1" categories={productCategories} locations={locations} />);
 
-    fireEvent.change(screen.getByLabelText("Kiểu listing"), { target: { value: "RESALE" } });
+    fireEvent.change(screen.getByLabelText("Loại sản phẩm"), { target: { value: "RESALE" } });
     fireEvent.change(screen.getByLabelText("Danh mục"), { target: { value: "cat-resale" } });
 
-    expect(await screen.findByText(/không tự tạo danh sách tình trạng thanh lý ở frontend/i)).toBeInTheDocument();
+    expect(await screen.findByText("Danh mục này chưa có tùy chọn tình trạng để chọn.")).toBeInTheDocument();
     expect(screen.queryByLabelText("Tình trạng")).not.toBeInTheDocument();
   });
 });
