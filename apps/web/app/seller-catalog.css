@@ -17,6 +17,50 @@
   padding-inline: .3rem;
 }
 
+.seller-catalog-form .seller-attribute-options {
+  background: var(--seller-bg-subtle);
+  border-color: var(--seller-border-subtle);
+  padding: .75rem;
+}
+
+.seller-check-row {
+  align-items: center;
+  display: flex;
+  gap: .6rem;
+  min-height: 44px;
+}
+
+.seller-check-row input {
+  flex: 0 0 auto;
+}
+
+.seller-service-variant-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.seller-service-variant-card {
+  background: var(--seller-bg-subtle);
+  border: 1px solid var(--seller-border-subtle);
+  border-radius: var(--seller-radius-md);
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.seller-service-variant-card > strong {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.seller-service-variant-card small {
+  color: var(--seller-text-secondary);
+  display: block;
+  font-size: 12px;
+  line-height: 16px;
+  margin-top: 4px;
+}
+
 .seller-catalog-management {
   display: grid;
   gap: 10px;
