@@ -22,11 +22,11 @@ export default async function LocationDetailPage({
       <section className="seller-location-config-links" aria-labelledby="location-config-heading">
         <div>
           <h2 id="location-config-heading">Cấu hình vận hành</h2>
-          <p className="seller-muted">Các cấu hình riêng của điểm bán dùng contract và version độc lập.</p>
+          <p className="seller-muted">Quản lý phạm vi, phí giao, đơn tối thiểu và kênh liên hệ của điểm bán.</p>
         </div>
         <div className="seller-grid seller-grid--two">
           <Link className="seller-config-link" href={`${base}/delivery`}><strong>Phạm vi phục vụ</strong><span>Vùng giao hàng hoặc dịch vụ</span></Link>
-          <Link className="seller-config-link" href={`${base}/shipping`}><strong>Phí giao hàng</strong><span>FREE, FIXED, CONDITIONAL, NEGOTIATED</span></Link>
+          <Link className="seller-config-link" href={`${base}/shipping`}><strong>Phí giao hàng</strong><span>Freeship, cố định, theo điều kiện hoặc thỏa thuận</span></Link>
           <Link className="seller-config-link" href={`${base}/minimum-order`}><strong>Đơn tối thiểu</strong><span>Ngưỡng chỉ áp dụng cho giao hàng</span></Link>
           <Link className="seller-config-link" href={`${base}/contacts`}><strong>Liên hệ</strong><span>Kênh liên hệ của điểm bán</span></Link>
         </div>
