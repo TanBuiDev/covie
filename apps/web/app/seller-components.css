@@ -255,10 +255,7 @@
 .seller-shell .seller-button,
 .seller-entry .seller-button {
   align-items: center;
-  background: var(--seller-action);
-  border: 1px solid var(--seller-action);
   border-radius: var(--seller-radius-sm);
-  color: #fff;
   cursor: pointer;
   display: inline-flex;
   font-weight: 800;
@@ -268,22 +265,35 @@
   text-decoration: none;
 }
 
+.seller-shell button,
+.seller-entry button {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  color: var(--seller-text-primary);
+}
+
+.seller-shell .seller-button,
+.seller-entry .seller-button,
+.seller-shell button[type="submit"],
+.seller-entry button[type="submit"],
+.seller-shell .button-primary,
+.seller-entry .button-primary {
+  background: var(--seller-brand);
+  border: 1px solid var(--seller-brand);
+  color: var(--seller-text-inverse);
+}
+
 .seller-shell button:disabled,
 .seller-entry button:disabled {
   cursor: not-allowed;
   opacity: .55;
 }
 
-.seller-shell .button-danger {
+.seller-shell .button-danger,
+.seller-entry .button-danger {
   background: var(--seller-surface);
   border-color: var(--seller-danger);
   color: var(--seller-danger);
-}
-
-.seller-shell .button-primary {
-  background: var(--seller-action);
-  border-color: var(--seller-action);
-  color: #fff;
 }
 
 .seller-shell .action-row,
@@ -343,8 +353,14 @@
 .seller-entry input:focus-visible,
 .seller-entry select:focus-visible,
 .seller-entry textarea:focus-visible {
-  outline: 3px solid var(--covie-accent);
+  outline: 3px solid var(--seller-focus);
   outline-offset: 2px;
+}
+
+@media (max-width: 1023px) {
+  .seller-desktop-only {
+    display: none !important;
+  }
 }
 
 @media (min-width: 640px) {
