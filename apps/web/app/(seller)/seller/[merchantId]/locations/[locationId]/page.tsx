@@ -13,7 +13,7 @@ export default async function LocationDetailPage({
 
   return (
     <section className="seller-stack">
-      <p><Link href={`/seller/${encodeURIComponent(merchantId)}/locations`}>Quay lại danh sách điểm bán</Link></p>
+      <p className="seller-desktop-only"><Link href={`/seller/${encodeURIComponent(merchantId)}/locations`}>Quay lại danh sách điểm bán</Link></p>
       <LocationForm
         key={location.etag || String(location.data.version ?? locationId)}
         merchantId={merchantId}
