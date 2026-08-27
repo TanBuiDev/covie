@@ -186,17 +186,9 @@ export function CatalogCreateForm({
   const serviceVariantOffers = type === "SERVICE" && withOptions && optionValues.length > 0;
 
   useEffect(() => {
-    if (!selectedCategoryId) {
-      setCategoryDetail(undefined);
-      setCategoryError(undefined);
-      setCategoryLoading(false);
-      return;
-    }
+    if (!selectedCategoryId) return;
 
     let active = true;
-    setCategoryLoading(true);
-    setCategoryError(undefined);
-    setCategoryDetail(undefined);
     void getCategoryDetail(selectedCategoryId)
       .then((detail) => {
         if (active) setCategoryDetail(detail);
@@ -211,6 +203,20 @@ export function CatalogCreateForm({
       active = false;
     };
   }, [selectedCategoryId]);
+
+  function resetCategorySelection() {
+    setSelectedCategoryId("");
+    setCategoryDetail(undefined);
+    setCategoryError(undefined);
+    setCategoryLoading(false);
+  }
+
+  function selectCategory(categoryId: string) {
+    setSelectedCategoryId(categoryId);
+    setCategoryDetail(undefined);
+    setCategoryError(undefined);
+    setCategoryLoading(Boolean(categoryId));
+  }
 
   function invalidateIntent() {
     if (!pending) idempotencyKeyRef.current = undefined;
@@ -334,8 +340,7 @@ export function CatalogCreateForm({
             onChange={(event) => {
               const next = event.target.value as CatalogType;
               setType(next);
-              setSelectedCategoryId("");
-              setCategoryDetail(undefined);
+              resetCategorySelection();
               if (next === "SERVICE") setListingKind("STANDARD");
             }}
           >
@@ -364,7 +369,7 @@ export function CatalogCreateForm({
           name="categoryId"
           required
           value={selectedCategoryId}
-          onChange={(event) => setSelectedCategoryId(event.target.value)}
+          onChange={(event) => selectCategory(event.target.value)}
         >
           <option value="" disabled>Chọn danh mục</option>
           {compatibleCategories.map((category) => category.id ? <option key={category.id} value={category.id}>{category.name ?? "Danh mục"}</option> : null)}
