@@ -81,6 +81,8 @@ export function CatalogDetail({ item }: { item: CatalogDetailData }) {
   const location = [distance, item.resolvedLocation?.name, item.resolvedLocation?.addressText].filter(Boolean).join(" · ");
   const serviceLocation = [item.resolvedLocation?.name, item.resolvedLocation?.addressText].filter(Boolean).join(" · ");
   const ratingText = rating?.averageRating != null && rating.reviewCount ? `${rating.averageRating.toLocaleString("vi-VN")} · ${rating.reviewCount} đánh giá` : null;
+  const reportType = service ? "Dịch vụ" : resale ? "Thanh lý" : "Sản phẩm";
+  const reportMeta = [reportType, item.merchant?.name, item.resolvedLocation?.name].filter(Boolean).join(" · ");
 
   const media = resale ? (
     <div className={resaleStyles.resaleMedia}>
@@ -110,7 +112,7 @@ export function CatalogDetail({ item }: { item: CatalogDetailData }) {
               <p>{item.merchant?.name ?? "Người bán CoVie"}</p>
               {service ? serviceLocation && <small>Phục vụ {serviceLocation}</small> : location && <small>{location}</small>}
               {ratingText && <div className={styles.rating}><CoVieIcon name="rating-star" />{ratingText}</div>}
-              {item.id ? <div className="trust-actions"><ReportButton targetType="CATALOG_ITEM" targetId={item.id} contextMerchantId={item.merchant?.id} label="Báo cáo nội dung" /></div> : null}
+              {item.id ? <div className="trust-actions"><ReportButton targetType="CATALOG_ITEM" targetId={item.id} contextMerchantId={item.merchant?.id} label="Báo cáo nội dung" targetTitle={item.name ?? reportType} targetMeta={reportMeta || undefined} /></div> : null}
             </section>
 
             {service ? <>
