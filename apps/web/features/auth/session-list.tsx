@@ -80,10 +80,10 @@ export function SessionList({ sessions: initialSessions }: { sessions: Session[]
               className={styles.revoke}
               type="button"
               aria-label={`Thu hồi ${session.deviceName ?? "thiết bị"}`}
-              disabled={busy !== undefined || !session.id || Boolean(session.current)}
+              disabled={busy !== undefined || !session.id}
               onClick={() => session.id ? void revoke("/api/v1/me/security/sessions/{sessionId}", session.id) : undefined}
             >
-              {session.current ? "Phiên hiện tại" : busy === session.id ? "Đang thu hồi…" : "Thu hồi"}
+              {busy === session.id ? "Đang thu hồi…" : "Thu hồi"}
             </button>
           </li>
         ))}
