@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { inbox, markAllRead, markRead, type Notification } from "./notification-api";
 import { notificationDeepLink } from "./notification-deep-link";
 import { notificationLabel } from "./notification-types";
+import styles from "./notification-inbox.module.css";
 
 export function NotificationInbox() {
   const router = useRouter();
@@ -64,45 +65,47 @@ export function NotificationInbox() {
   const unreadCount = items.filter((item) => !item.read).length;
 
   return (
-    <section className="notification-inbox">
-      <header className="notification-inbox__header">
-        <div>
-          <h1>Thông báo</h1>
+    <section className={styles.screen} aria-labelledby="notification-title">
+      <header className={styles.header}>
+        <div className={styles.headerText}>
+          <h1 id="notification-title">Thông báo gần đây</h1>
           <p>{unreadCount ? `${unreadCount} thông báo chưa đọc` : "Bạn đã đọc tất cả thông báo hiện có."}</p>
         </div>
-        <button className="button-secondary" type="button" onClick={() => void all()} disabled={!unreadCount || Boolean(pending)}>
-          Đánh dấu tất cả đã đọc
+        <button className={styles.markAll} type="button" onClick={() => void all()} disabled={!unreadCount || Boolean(pending)}>
+          {pending === "all" ? "Đang cập nhật…" : "Đánh dấu đã đọc"}
         </button>
       </header>
 
-      {error ? <p className="form-alert" role="alert">{error}</p> : null}
-      {loading && !items.length ? <p className="notification-inbox__loading">Đang tải thông báo…</p> : null}
+      {error ? <p className={styles.error} role="alert">{error}</p> : null}
+      {loading && !items.length ? <p className={styles.loading}>Đang tải thông báo…</p> : null}
 
       {!loading && !items.length ? (
-        <div className="notification-empty">
+        <div className={styles.empty}>
           <h2>Chưa có thông báo</h2>
           <p>Các cập nhật từ đơn hàng, nhu cầu và tài khoản sẽ xuất hiện tại đây.</p>
         </div>
       ) : null}
 
       {items.length ? (
-        <ol className="notification-list">
+        <ol className={styles.list}>
           {items.map((notification) => {
             const href = notificationDeepLink(notification.data);
+            const unread = !notification.read;
             return (
               <li key={notification.id}>
                 <button
-                  className={`notification-item${notification.read ? "" : " notification-item--unread"}`}
+                  className={`${styles.item}${unread ? ` ${styles.itemUnread}` : ""}`}
                   disabled={pending === notification.id}
                   type="button"
                   onClick={() => void openNotification(notification)}
+                  aria-label={`${notificationLabel(notification.type ?? "")}. ${href ? "Mở chi tiết" : unread ? "Đánh dấu đã đọc" : "Đã đọc"}`}
                 >
-                  <span className="notification-item__indicator" aria-hidden="true" />
-                  <span className="notification-item__content">
+                  <span className={styles.indicator} aria-hidden="true" />
+                  <span className={styles.content}>
                     <strong>{notificationLabel(notification.type ?? "")}</strong>
                     <small>{notification.createdAt ? new Date(notification.createdAt).toLocaleString("vi-VN") : ""}</small>
                   </span>
-                  <span className="notification-item__action">{href ? "Mở" : notification.read ? "Đã đọc" : "Đánh dấu đã đọc"}</span>
+                  <span className={styles.state}>{href ? "Mở" : unread ? "Chưa đọc" : "Đã đọc"}</span>
                 </button>
               </li>
             );
@@ -111,7 +114,7 @@ export function NotificationInbox() {
       ) : null}
 
       {cursor ? (
-        <button className="button-secondary notification-inbox__more" disabled={loading} type="button" onClick={() => void load(cursor)}>
+        <button className={styles.more} disabled={loading} type="button" onClick={() => void load(cursor)}>
           {loading ? "Đang tải…" : "Tải thêm"}
         </button>
       ) : null}
