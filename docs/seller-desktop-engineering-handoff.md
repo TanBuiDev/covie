@@ -150,17 +150,27 @@ The implementation includes compact desktop rules for 1024 and intermediate widt
 
 - `FIGMA_AUDITED`: exact Seller Desktop production frames and frozen component contracts were inspected before implementation.
 - `REMOTE_STATIC_VERIFIED`: branch diff, route wiring, API ownership, responsive CSS, and contract-gap handling were audited against the current repository and generated API usage.
+- `TEST_VERIFIED`: the Seller Desktop web tree was executed through typecheck, lint, the full Vitest suite, and production build on a CI-only verification branch.
 - Seller Mobile regression strategy: the same production routes/data components remain active below 1024px; desktop overrides are isolated behind desktop media queries/compositions.
 
 ### Executable verification
 
-At the time this handoff file was first committed, direct execution was still pending because the connector environment could not clone the repository over the network. The repository CI itself contains the required frontend checks (`typecheck`, `lint`, `test`, `build`), but its normal triggers are PRs plus pushes to `main`/`codex/plan-10-*`.
+The executable Seller Desktop web gate is now complete for application code head `266e9019bedc3b870daa32edbd6361fdf93c772a`.
 
-A separate CI-only branch may be used to verify the exact implementation tree without opening the Seller Desktop PR early. Once executable evidence exists, record the run/commit in the coverage matrix and update this section to `TEST_VERIFIED`.
+Verification was run without opening the final Seller Desktop PR by temporarily mirroring that exact application tree to `codex/plan-10-seller-desktop-ci` and adding a CI-only workflow there. The successful verification run is GitHub Actions run `33037040294` (wrapper commit `0b1468baa6f17c143cd5e7d8b49937fabff1c025`). Results:
+
+- `pnpm --filter @covie/web typecheck` — **PASS**.
+- `pnpm --filter @covie/web lint` — **PASS**, 0 errors and 2 existing `@next/next/no-img-element` warnings in `catalog-card.tsx` / `catalog-detail.tsx`.
+- `pnpm --filter @covie/web test` — **PASS**, full 83/83 tests.
+- `pnpm --filter @covie/web build` — **PASS**.
+
+The repository's normal CI remains separately blocked at `Check generated contract drift` after OpenAPI export/client generation. The same generated-client drift was reproduced on the Seller Mobile baseline before the Desktop fixes, so it is classified as a pre-existing repository/baseline CI blocker rather than a Seller Desktop regression. On run `33037040323`, `release-security-source` passed while `frontend-and-contract` stopped at that drift check before its web steps.
+
+Documentation commits after `266e9019...` only record verification state; they do not change the application tree that was executed.
 
 ### Runtime/browser verification still required for final gate
 
-The final gate requires actual rendered-browser evidence at 1024, 1280, and 1440 and affected Seller flows with real/local authoritative backend state. Source inspection alone must not be labeled `VISUALLY_VERIFIED` or `RUNTIME_VERIFIED`.
+The final gate requires actual rendered-browser evidence at 1024, 1280, and 1440 and affected Seller flows with real/local authoritative backend state. Source inspection and executable unit/build evidence alone must not be labeled `VISUALLY_VERIFIED` or `RUNTIME_VERIFIED`.
 
 Until that evidence exists:
 
@@ -171,7 +181,7 @@ Until that evidence exists:
 
 ## Required local/browser verification checklist
 
-Run from a checkout of `feature/seller-desktop-figma-ui`:
+The executable commands below are already verified for code head `266e9019...`, but remain the reproducible local command set:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -212,5 +222,9 @@ Capture screenshots or equivalent browser evidence for the canonical desktop sta
 - `16036df` — Catalog/editor/inventory desktop pass.
 - `ecd5ca0` — Operations/trust desktop pass.
 - `ed3a032` — State/accessibility desktop pass.
+- `8cd1138` — robust QR contact file handling across browser/test runtimes.
+- `978de75` — stable merchant-form accessible naming.
+- `7b6189d` — stable shipping-form accessible naming.
+- `266e901` — final Seller navigation runtime guard; exact application code head verified by the green web run.
 
-The handoff/cleanup commit follows these implementation commits and should be treated as the branch documentation checkpoint, not as proof of runtime/browser verification by itself.
+This handoff document is a documentation checkpoint. The executable evidence validates the application code at `266e9019...`; runtime/browser visual verification remains the outstanding final gate.
