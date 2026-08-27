@@ -1,6 +1,11 @@
-import Link from "next/link";
+import { CheckoutSuccess } from "@/features/checkout/checkout-success";
+import { createServerReadClient } from "@/lib/api/server-api-client";
+import { requireUser } from "@/lib/auth/require-user";
 
 export default async function CheckoutSuccessPage({ params }: { params: Promise<{ orderId: string }> }) {
+  await requireUser();
   const { orderId } = await params;
-  return <main className="buyer-surface success-state"><p className="eyebrow">Đặt hàng thành công</p><h1>Đơn hàng đang chờ xác nhận</h1><p>Mã theo dõi: {orderId}</p><Link href="/explore">Tiếp tục khám phá</Link></main>;
+  const client = await createServerReadClient();
+  const { data } = await client.GET("/api/v1/orders/{orderId}", { params: { path: { orderId } } });
+  return <main><CheckoutSuccess orderId={orderId} orderCode={data?.orderCode} /></main>;
 }

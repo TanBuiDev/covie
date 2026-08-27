@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
+import { renderToString } from "react-dom/server";
 import { GoogleLoginButton } from "../../features/auth/google-login-button";
 import { LoginForm } from "../../features/auth/login-form";
 
@@ -15,6 +16,16 @@ it("uses PASSWORD_RESET intent for the Google recovery link", () => {
     "href",
     "/api/v1/auth/google/start?intent=PASSWORD_RESET",
   );
+});
+
+it("uses a POST fallback so pre-hydration submit never puts credentials in the URL", () => {
+  render(<LoginForm />);
+
+  expect(screen.getByRole("button", { name: "Đăng nhập" }).closest("form")).toHaveAttribute("method", "post");
+});
+
+it("keeps submit disabled in server HTML until the login handler is hydrated", () => {
+  expect(renderToString(<LoginForm />)).toContain("disabled");
 });
 
 it("maps invalid credentials by error code without showing the backend message", async () => {

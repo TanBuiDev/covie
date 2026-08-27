@@ -1,35 +1,22 @@
-export type NotificationLinkInput = {
-  type: string;
-  recipientRole?: "BUYER" | "SELLER" | "ADMIN" | string;
-  orderId?: string;
-  merchantId?: string;
-  needRequestId?: string;
-};
+const DEEP_LINK_KEYS = ["deepLink", "href", "path", "route"] as const;
 
-function segment(value: string | undefined): string | null {
-  const normalized = value?.trim();
-  return normalized ? encodeURIComponent(normalized) : null;
+function safeInternalPath(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const path = value.trim();
+  if (!path.startsWith("/") || path.startsWith("//")) return null;
+  if (/[\u0000-\u001f\\]/.test(path)) return null;
+  return path;
 }
 
 /**
- * Derives navigation exclusively from trusted notification type + typed entity ids.
- * Arbitrary URLs from notification payloads are intentionally not accepted.
+ * Notification navigation is backend-owned. We only accept a relative, same-origin
+ * path carried in the notification data and never derive a destination from type.
  */
-export function notificationDeepLink(input: NotificationLinkInput): string {
-  const orderId = segment(input.orderId);
-  const merchantId = segment(input.merchantId);
-  const needRequestId = segment(input.needRequestId);
-
-  if (input.type.startsWith("ORDER_")) {
-    if (input.recipientRole === "SELLER" && merchantId && orderId) return `/seller/${merchantId}/orders/${orderId}`;
-    if (orderId) return `/orders/${orderId}`;
+export function notificationDeepLink(data: Record<string, unknown> | null | undefined): string | null {
+  if (!data) return null;
+  for (const key of DEEP_LINK_KEYS) {
+    const path = safeInternalPath(data[key]);
+    if (path) return path;
   }
-
-  if (input.type.startsWith("NEED_RESPONSE_") && needRequestId) return `/needs/${needRequestId}`;
-  if (input.type === "NEED_REQUEST_FULFILLED" && needRequestId) return `/needs/${needRequestId}`;
-  if (input.type === "NEED_MATCH_AVAILABLE" && merchantId) return `/seller/${merchantId}/needs`;
-
-  if (input.type.startsWith("MODERATION_") && merchantId) return `/seller/${merchantId}/catalog`;
-
-  return "/me/notifications";
+  return null;
 }

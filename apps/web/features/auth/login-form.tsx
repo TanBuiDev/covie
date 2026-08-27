@@ -1,21 +1,28 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useSyncExternalStore } from "react";
 import { CovieApiError } from "../../lib/api/api-error";
 import { login } from "./auth-api";
 
 type LoginFormProps = { onNavigate?: (path: string) => void };
 
 export function LoginForm({ onNavigate = (path) => window.location.assign(path) }: LoginFormProps) {
+  const hydrated = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string>();
   const [fields, setFields] = useState<Record<string, string[]>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(undefined);
     setFields({});
+    setSubmitting(true);
     try {
       await login({ email, password });
       onNavigate("/");
@@ -31,17 +38,19 @@ export function LoginForm({ onNavigate = (path) => window.location.assign(path) 
       } else {
         setMessage("Không thể đăng nhập. Vui lòng thử lại.");
       }
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  return <form onSubmit={submit}>
-    <label htmlFor="email">Email</label>
-    <input id="email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-    {fields.email?.map((error) => <p key={error}>{error}</p>)}
-    <label htmlFor="password">Mật khẩu</label>
-    <input id="password" name="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-    {fields.password?.map((error) => <p key={error}>{error}</p>)}
-    {message && <p role="alert">{message}</p>}
-    <button type="submit">Đăng nhập</button>
-  </form>;
+  return (
+    <form className="auth-form" method="post" onSubmit={submit}>
+      <label htmlFor="email"><span>Email</span><input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+      {fields.email?.map((error) => <p className="field-error" key={error}>{error}</p>)}
+      <label htmlFor="password"><span>Mật khẩu</span><input id="password" name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+      {fields.password?.map((error) => <p className="field-error" key={error}>{error}</p>)}
+      {message ? <p className="form-alert" role="alert">{message}</p> : null}
+      <button className="button-primary auth-form__submit" type="submit" disabled={!hydrated || submitting}>{submitting ? "Đang đăng nhập…" : "Đăng nhập"}</button>
+    </form>
+  );
 }

@@ -4,6 +4,7 @@ import type { components } from "@covie/api-client";
 import { useState } from "react";
 import { createApiClient } from "../../lib/api/api-client";
 import { readApiError } from "../../lib/api/api-error";
+import styles from "./session-list.module.css";
 
 type Session = components["schemas"]["AuthSessionSummaryResponse"];
 
@@ -21,6 +22,10 @@ async function listSessions() {
   const { data, response } = await personalApiClient().GET("/api/v1/me/security/sessions");
   if (!response.ok || !data) throw await readApiError(response);
   return data;
+}
+
+function time(value?: string) {
+  return value ? new Date(value).toLocaleString("vi-VN") : "—";
 }
 
 export function SessionList({ sessions: initialSessions }: { sessions: Session[] }) {
@@ -45,16 +50,44 @@ export function SessionList({ sessions: initialSessions }: { sessions: Session[]
     }
   }
 
-  return <section>
-    <h2>Phiên đăng nhập</h2>
-    <button type="button" onClick={() => revoke("/api/v1/me/security/sessions/revoke-others")} disabled={busy !== undefined}>Thu hồi các phiên khác</button>
-    {message && <p role="alert">{message}</p>}
-    <ul>
-      {sessions.map((session) => <li key={session.id}>
-        <strong>{session.deviceName ?? "Thiết bị không xác định"}</strong>
-        {session.current && <span>Thiết bị hiện tại</span>}
-        <button type="button" aria-label={`Thu hồi ${session.deviceName ?? "thiết bị"}`} disabled={busy !== undefined} onClick={() => revoke("/api/v1/me/security/sessions/{sessionId}", session.id)}>Thu hồi</button>
-      </li>)}
-    </ul>
-  </section>;
+  return (
+    <section className={styles.screen} aria-labelledby="session-list-title">
+      <div className={styles.header}>
+        <div>
+          <h2 id="session-list-title">Phiên đăng nhập</h2>
+          <p>{sessions.length.toLocaleString("vi-VN")} phiên đang hoạt động</p>
+        </div>
+        <button className={styles.revokeOthers} type="button" onClick={() => void revoke("/api/v1/me/security/sessions/revoke-others")} disabled={busy !== undefined}>
+          {busy === "others" ? "Đang thu hồi…" : "Thu hồi các phiên khác"}
+        </button>
+      </div>
+      {message ? <p className={styles.error} role="alert">{message}</p> : null}
+      <ul className={styles.cards}>
+        {sessions.map((session) => (
+          <li className={styles.card} key={session.id}>
+            <div>
+              <div className={styles.title}>
+                <strong>{session.deviceName ?? "Thiết bị không xác định"}</strong>
+                {session.current ? <span>Thiết bị hiện tại</span> : null}
+              </div>
+              <dl className={styles.facts}>
+                <div><dt>Dùng gần nhất</dt><dd>{time(session.lastUsedAt)}</dd></div>
+                <div><dt>Đăng nhập</dt><dd>{time(session.createdAt)}</dd></div>
+                <div><dt>Hết hạn</dt><dd>{time(session.expiresAt)}</dd></div>
+              </dl>
+            </div>
+            <button
+              className={styles.revoke}
+              type="button"
+              aria-label={`Thu hồi ${session.deviceName ?? "thiết bị"}`}
+              disabled={busy !== undefined || !session.id}
+              onClick={() => session.id ? void revoke("/api/v1/me/security/sessions/{sessionId}", session.id) : undefined}
+            >
+              {busy === session.id ? "Đang thu hồi…" : "Thu hồi"}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }

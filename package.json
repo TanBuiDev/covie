@@ -6,6 +6,10 @@
     "pnpm": ">=10 <11"
   },
   "scripts": {
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev.ps1",
+    "dev:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-dev.ps1",
+    "ui:seed-local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/seed-ui-fixture.ps1",
+    "ui:verify-local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-ui-flow.ps1",
     "infra:config": "docker compose -f infra/compose/compose.local.yml config",
     "infra:up": "docker compose -f infra/compose/compose.local.yml up -d",
     "infra:down": "docker compose -f infra/compose/compose.local.yml down",

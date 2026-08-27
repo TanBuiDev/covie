@@ -17,6 +17,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     type: type === "PRODUCT" || type === "SERVICE" ? type : "",
     categoryId: first(params.categoryId),
     sort: sort && SORT_VALUES.has(sort) ? sort as SearchInitialFilters["sort"] : "RELEVANCE",
+    listingKind: first(params.listingKind) === "RESALE" ? "RESALE" : "",
+    radiusMeters: Number(first(params.radiusMeters)) || undefined,
+    openNow: first(params.openNow) === "true",
   };
   return <SearchResults initial={initial} />;
 }

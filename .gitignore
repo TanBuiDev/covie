@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+.local/
 infra/deploy/*.env
 !infra/deploy/prod.env.example
 *.pem

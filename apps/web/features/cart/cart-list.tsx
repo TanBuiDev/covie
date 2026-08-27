@@ -1,39 +1,27 @@
 import Link from "next/link";
 import type { components } from "@covie/api-client";
+import styles from "./cart-list.module.css";
 
 type Cart = components["schemas"]["CartResponse"];
+const formatMoney = (amount: number) => `${new Intl.NumberFormat("vi-VN").format(amount)} ₫`;
 
 export function CartList({ initialCarts }: { initialCarts: Cart[] }) {
-  if (!initialCarts.length) {
-    return (
-      <section className="empty-state">
-        <h1>Giỏ hàng của bạn đang trống.</h1>
-        <p>Mỗi điểm bán và loại nội dung sẽ có một giỏ riêng.</p>
-        <Link href="/search">Khám phá gần bạn</Link>
-      </section>
-    );
-  }
+  if (!initialCarts.length) return <section className={styles.empty}><h2>Giỏ hàng của bạn đang trống</h2><p>Khám phá sản phẩm, dịch vụ và đồ thanh lý gần bạn để bắt đầu.</p><Link href="/search">Khám phá gần bạn</Link></section>;
 
-  return (
-    <section className="cart-list" aria-label="Giỏ hàng của bạn">
-      {initialCarts.map((cart) => {
-        const itemCount = (cart.items ?? []).reduce((total, item) => total + (item.quantity ?? 0), 0);
-        return (
-          <article key={cart.id ?? `${cart.merchantLocationId}-${cart.cartType}`} className="cart-card">
-            <header>
-              <p className="eyebrow">{cart.cartType === "SERVICE" ? "Dịch vụ" : "Sản phẩm"}</p>
-              <h2>Điểm bán {cart.merchantLocationId ?? "hiện tại"}</h2>
-            </header>
-            <p>{itemCount} mục</p>
-            <ul className="compact-list">
-              {(cart.items ?? []).slice(0, 3).map((item) => (
-                <li key={item.id ?? item.locationVariantId}>{item.itemName ?? "Nội dung"}</li>
-              ))}
-            </ul>
-            {cart.id ? <Link href={`/cart/${encodeURIComponent(cart.id)}`}>Xem giỏ này</Link> : null}
-          </article>
-        );
-      })}
-    </section>
-  );
+  return <section className={styles.content} aria-label="Giỏ hàng của bạn">
+    <h2>Giỏ hàng của bạn</h2>
+    <div className={styles.cards}>{initialCarts.map(cart => {
+      const service = cart.cartType === "SERVICE";
+      const count = (cart.items ?? []).reduce((sum, item) => sum + (item.quantity ?? 0), 0);
+      const total = (cart.items ?? []).reduce((sum, item) => sum + (item.priceSnapshot ?? 0) * (item.quantity ?? 0), 0);
+      const label = service ? "Dịch vụ" : "Sản phẩm";
+      return <article key={cart.id ?? `${cart.merchantLocationId}-${cart.cartType}`} className={`${styles.card} ${service ? styles.service : ""}`}>
+        <h3>Giỏ {label.toLocaleLowerCase("vi-VN")}</h3>
+        <p><span>{count} {label.toLocaleLowerCase("vi-VN")}</span><strong>{formatMoney(total)}</strong></p>
+        <span className={styles.type}>{label}</span>
+        {cart.id && <Link href={`/cart/${encodeURIComponent(cart.id)}`}>{service ? "Xem giỏ dịch vụ" : "Xem và thanh toán giỏ này"}</Link>}
+      </article>;
+    })}</div>
+    <p className={styles.note}>Mỗi giỏ được thanh toán riêng. Sản phẩm và dịch vụ được tách thành các giỏ khác nhau.</p>
+  </section>;
 }

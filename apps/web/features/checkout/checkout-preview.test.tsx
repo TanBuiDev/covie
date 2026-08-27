@@ -21,8 +21,9 @@ it("renders a negotiated delivery preview without inventing a zero fee", async (
   fireEvent.click(screen.getByLabelText("SELLER_DELIVERY"));
   fireEvent.change(screen.getByLabelText("Địa chỉ"), { target: { value: "address" } });
   fireEvent.click(screen.getByRole("button", { name: "Xem trước" }));
-  await waitFor(() => expect(screen.getByText("Phí giao hàng thỏa thuận")).toBeInTheDocument());
-  expect(screen.getByText("Sẽ thỏa thuận với người bán")).toBeInTheDocument();
+  await waitFor(() => expect(screen.getAllByText("Thỏa thuận với người bán").length).toBeGreaterThan(0));
+  expect(screen.getAllByText("Khoản tiền đã biết").length).toBeGreaterThan(0);
+  expect(screen.queryByText("0 ₫")).not.toBeInTheDocument();
 });
 
 it("discards a changed checkout token and requires a fresh preview", async () => {
@@ -30,8 +31,10 @@ it("discards a changed checkout token and requires a fresh preview", async () =>
   commitCheckout.mockRejectedValueOnce(new CovieApiError(409, "CHECKOUT_CHANGED", "changed"));
   render(<CheckoutPreview carts={carts} addresses={[]} />);
   fireEvent.click(screen.getByRole("button", { name: "Xem trước" }));
-  await waitFor(() => expect(screen.getByRole("button", { name: "Xác nhận đặt hàng" })).toBeInTheDocument());
-  fireEvent.click(screen.getByRole("button", { name: "Xác nhận đặt hàng" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Đặt hàng" })).toBeInTheDocument());
+  fireEvent.click(screen.getByRole("button", { name: "Đặt hàng" }));
   await waitFor(() => expect(screen.getByRole("alertdialog")).toBeInTheDocument());
-  expect(screen.queryByRole("button", { name: "Xác nhận đặt hàng" })).not.toBeInTheDocument();
+  expect(screen.getByText("Giá hoặc thông tin đã thay đổi")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Kiểm tra giá/thông tin mới" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Đặt hàng" })).not.toBeInTheDocument();
 });

@@ -14,11 +14,13 @@ export function PasswordForm({ submitPassword, fieldName = "password", onComplet
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(expiredMessage);
   const [fields, setFields] = useState<Record<string, string[]>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(undefined);
     setFields({});
+    setSubmitting(true);
     try {
       await submitPassword(password);
       onComplete("/");
@@ -30,14 +32,21 @@ export function PasswordForm({ submitPassword, fieldName = "password", onComplet
       } else {
         setMessage("Không thể cập nhật mật khẩu. Vui lòng thử lại.");
       }
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  return <form onSubmit={submit}>
-    <label htmlFor="new-password">Mật khẩu mới</label>
-    <input id="new-password" name={fieldName} type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={10} />
-    {fields[fieldName]?.map((error) => <p key={error}>{error}</p>)}
-    {message && <p role="alert">{message}</p>}
-    <button type="submit">Lưu mật khẩu</button>
-  </form>;
+  return (
+    <form className="auth-form" onSubmit={submit}>
+      <label htmlFor="new-password">
+        <span>Mật khẩu mới</span>
+        <input id="new-password" name={fieldName} type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={10} />
+      </label>
+      <small className="auth-form__help">Dùng ít nhất 10 ký tự.</small>
+      {fields[fieldName]?.map((error) => <p className="field-error" key={error}>{error}</p>)}
+      {message ? <p className="form-alert" role="alert">{message}</p> : null}
+      <button className="button-primary auth-form__submit" disabled={submitting} type="submit">{submitting ? "Đang lưu…" : "Lưu mật khẩu"}</button>
+    </form>
+  );
 }

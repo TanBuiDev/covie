@@ -27,6 +27,7 @@ it("refetches the cart when a stale version rejects a quantity change", async ()
   fireEvent.click(screen.getByRole("button", { name: "Tăng số lượng" }));
 
   await waitFor(() => expect(getCart).toHaveBeenCalledWith("cart"));
-  expect(await screen.findByText(/Giỏ hàng đã thay đổi ở nơi khác/)).toBeInTheDocument();
+  expect(await screen.findByText("Giỏ hàng vừa thay đổi")).toBeInTheDocument();
+  expect(screen.getByText(/CoVie đã tải lại dữ liệu mới nhất/)).toBeInTheDocument();
   expect(screen.getByLabelText("Số lượng")).toHaveTextContent("1");
 });
