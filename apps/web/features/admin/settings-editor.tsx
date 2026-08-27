@@ -1,43 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AdminStatusChip } from "./admin-ui";
 
 export type AdminSettingDefinition = {
   key: string;
   valueType: string;
-  defaultValue: string;
+  defaultValue: unknown;
   allowedScopes: string[];
   effectiveValue?: unknown;
 };
 
-export function SettingsEditor({ definitions, onSave }: { definitions: AdminSettingDefinition[]; onSave?: (key: string, value: string) => Promise<void> }) {
-  return (
-    <section aria-labelledby="settings-title" style={{ display: "grid", gap: 12 }}>
-      <header>
-        <p style={{ margin: 0, color: "#b45309", fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase" }}>Policy control</p>
-        <h1 id="settings-title" style={{ margin: "4px 0 0", fontFamily: "Georgia, serif", fontSize: 34 }}>System settings</h1>
-      </header>
-      <div style={{ border: "1px solid #d6d3d1", borderRadius: 12, overflow: "hidden", background: "#fffdf8" }}>
-        {definitions.map((definition) => <SettingRow key={definition.key} definition={definition} onSave={onSave} />)}
-      </div>
-    </section>
-  );
+export function serializeSettingValue(value: unknown) {
+  if (typeof value === "string") return value;
+  if (value === undefined) return "";
+  try { return JSON.stringify(value); }
+  catch { return String(value ?? ""); }
 }
 
-function SettingRow({ definition, onSave }: { definition: AdminSettingDefinition; onSave?: (key: string, value: string) => Promise<void> }) {
-  const [value, setValue] = useState(String(definition.effectiveValue ?? definition.defaultValue));
+function SettingRow({ definition, onSave, onReload }: { definition: AdminSettingDefinition; onSave?: (key: string, value: string) => Promise<void>; onReload?: () => Promise<void> }) {
+  const effective = serializeSettingValue(definition.effectiveValue ?? definition.defaultValue);
+  const [value, setValue] = useState(effective);
   const [saving, setSaving] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string>();
-  const canEditGlobal = definition.allowedScopes.includes("GLOBAL") && onSave;
+  const canEditGlobal = definition.allowedScopes.includes("GLOBAL") && Boolean(onSave);
+
+  useEffect(() => { setValue(effective); }, [effective]);
+
   async function save() {
     if (!onSave) return;
     setSaving(true); setError(undefined);
-    try { await onSave(definition.key, value); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "Unable to save setting"); }
-    finally { setSaving(false); }
+    try {
+      await onSave(definition.key, value);
+      setConfirming(false);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể lưu cấu hình. Dữ liệu có thể đã thay đổi; hãy tải lại trước khi thử lại.");
+      setConfirming(false);
+    } finally { setSaving(false); }
   }
-  return <article style={{ padding: 16, borderBottom: "1px solid #e7e5e4", display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
-    <div><strong style={{ fontFamily: "ui-monospace, monospace" }}>{definition.key}</strong><div style={{ color: "#57534e", fontSize: 14, marginTop: 4 }}>{definition.valueType} · {definition.allowedScopes.join(", ")}</div>{error && <p role="alert" style={{ color: "#b91c1c", margin: "8px 0 0" }}>{error}</p>}</div>
-    {canEditGlobal ? <form onSubmit={(event) => { event.preventDefault(); void save(); }} style={{ display: "flex", gap: 8, alignSelf: "center" }}><input aria-label={`${definition.key} value`} value={value} onChange={(event) => setValue(event.target.value)} /><button type="submit" disabled={saving}>{saving ? "Saving…" : "Save global"}</button></form> : <output aria-label={`${definition.key} default`} style={{ alignSelf: "center", padding: "4px 8px", borderRadius: 999, background: "#fef3c7", color: "#92400e" }}>{definition.defaultValue}</output>}
+
+  return <article className="admin-setting-row">
+    <div className="admin-setting-row__description"><strong>{definition.key}</strong><p>Kiểu {definition.valueType}. Phạm vi được máy chủ cho phép: {definition.allowedScopes.join(", ") || "không có"}.</p>{canEditGlobal ? <AdminStatusChip label="Cần xác nhận" tone="warning" /> : <AdminStatusChip label="Chỉ đọc" tone="neutral" />}</div>
+    <div className="admin-setting-row__editor"><label className="admin-field"><span>Giá trị</span><input value={value} onChange={event => setValue(event.target.value)} disabled={!canEditGlobal || saving} /><small>Hiệu lực: {effective || "—"} · Mặc định: {serializeSettingValue(definition.defaultValue) || "—"} · Nguồn: API hệ thống</small></label>{error ? <div><p className="admin-error" role="alert">{error}</p>{onReload ? <button className="admin-inline-link admin-link-button" type="button" onClick={() => void onReload()}>Tải lại cấu hình mới nhất</button> : null}</div> : null}<div className="admin-setting-row__actions"><button className="admin-button admin-button--secondary" disabled={!canEditGlobal || saving || value === effective} onClick={() => setConfirming(true)}>Lưu</button></div></div>
+    {confirming ? <div className="dialog-backdrop" role="presentation"><div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby={`setting-confirm-${definition.key}`}><h2 id={`setting-confirm-${definition.key}`}>Xác nhận thay đổi cấu hình</h2><p>Giá trị <strong>{definition.key}</strong> sẽ được gửi với ETag/version hiện tại khi có. Máy chủ vẫn là nguồn xác thực cuối cùng cho validation và concurrency.</p><div className="dialog-actions"><button className="admin-button admin-button--secondary" disabled={saving} onClick={() => setConfirming(false)}>Huỷ</button><button className="admin-button admin-button--primary" disabled={saving} onClick={() => void save()}>{saving ? "Đang lưu…" : "Xác nhận lưu"}</button></div></div></div> : null}
   </article>;
+}
+
+export function SettingsEditor({ definitions, onSave, onReload }: { definitions: AdminSettingDefinition[]; onSave?: (key: string, value: string) => Promise<void>; onReload?: () => Promise<void> }) {
+  if (!definitions.length) return <div className="admin-surface"><p className="admin-muted">Không có cấu hình phù hợp section hiện tại hoặc API chưa trả định nghĩa.</p></div>;
+  return <div className="admin-settings-list">{definitions.map(definition => <SettingRow key={definition.key} definition={definition} onSave={onSave} onReload={onReload} />)}</div>;
 }

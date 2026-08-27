@@ -1,0 +1,2 @@
+import { AdminCapabilityPage } from "@/features/admin/admin-capability-page";
+export default function ListingsPage(){return <AdminCapabilityPage title="Nội dung đăng bán" subtitle="Kiểm duyệt nội dung" message="Repository hiện có moderation case API nhưng chưa có Admin listing-read contract độc lập. Không dựng listing detail từ dữ liệu mẫu; các báo cáo thực tế được xử lý tại hàng đợi Báo cáo."/>;}

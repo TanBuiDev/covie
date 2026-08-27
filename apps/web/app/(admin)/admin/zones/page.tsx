@@ -1,0 +1,2 @@
+import { AdminReadOnlyCollection } from "@/features/admin/admin-readonly-collection";
+export default function ZonesPage(){return <AdminReadOnlyCollection title="Khu vực" subtitle="Cộng đồng & khu vực" path="/api/v1/location-areas" statusKey="status" note="Contract hiện tại chỉ xác nhận GET /api/v1/location-areas. Vì không có Admin mutation contract, màn hình này cố ý chỉ đọc." columns={[{key:"name",label:"Tên"},{key:"areaType",label:"Loại khu vực"},{key:"parentId",label:"Khu vực cha"},{key:"sortOrder",label:"Thứ tự"},{key:"status",label:"Trạng thái"}]}/>;}
