@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { NeedList } from "@/features/needs/need-list";
 
@@ -33,6 +33,10 @@ it("renders buyer need status and response count", async () => {
   render(<NeedList />);
 
   await waitFor(() => expect(screen.getByText("Cần mua máy lọc không khí")).toBeInTheDocument());
-  expect(screen.getByText(/ACTIVE · 3 phản hồi/)).toBeInTheDocument();
+  const card = screen.getByRole("article");
+  expect(within(card).getByText("Đang tìm")).toBeInTheDocument();
+  expect(within(card).getByText("3 phản hồi")).toBeInTheDocument();
+  expect(screen.queryByLabelText("Điểm bán đang phản hồi")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Phản hồi nhu cầu" })).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Tạo nhu cầu mới" })).toHaveAttribute("href", "/needs/new");
 });

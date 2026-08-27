@@ -46,4 +46,20 @@ describe("OrderActions", () => {
     fireEvent.change(within(dialog).getByRole("textbox"), { target: { value: "Không thể tiếp tục thực hiện đơn" } });
     expect(confirm).not.toBeDisabled();
   });
+
+  it("keeps buyer and seller cancellation presentation actor-specific", () => {
+    render(
+      <OrderActions
+        actorView="BUYER"
+        order={{ id: "order-4", type: "PRODUCT", status: "CONFIRMED", allowedActions: ["CANCEL"] }}
+        onChanged={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Hủy đơn" }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText(/không bắt buộc/i)).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Hủy đơn" })).not.toBeDisabled();
+    expect(within(dialog).queryByText(/Hủy đơn từ Seller/)).not.toBeInTheDocument();
+  });
 });

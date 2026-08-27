@@ -44,6 +44,8 @@ it("renders a matched need without inventing an ineligible response action", asy
   await waitFor(() => expect(screen.getByText("Cần mua máy lọc không khí")).toBeInTheDocument());
   expect(screen.getByLabelText("Điểm bán đang phản hồi")).toHaveValue("location-1");
   expect(screen.getByText(/Thủ Đức · cách điểm bán 1,2 km/)).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Tạo nhu cầu mới" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("group", { name: "Lọc nhu cầu theo trạng thái" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Phản hồi nhu cầu" })).not.toBeInTheDocument();
   expect(screen.getByText(/Hệ thống chưa cung cấp danh sách mục phù hợp/)).toBeInTheDocument();
 });
