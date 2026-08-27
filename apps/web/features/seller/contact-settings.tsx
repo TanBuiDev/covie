@@ -22,6 +22,10 @@ function contactTypeCopy(type?: ContactType) {
   }
 }
 
+function isSelectedFile(value: FormDataEntryValue | null): value is File {
+  return value !== null && typeof value !== "string" && typeof value.size === "number" && value.size > 0;
+}
+
 export function MerchantContactSettings({
   merchantId,
   merchantLocationId,
@@ -71,7 +75,7 @@ export function MerchantContactSettings({
     setMessage(undefined);
     setMessageIsError(false);
     try {
-      if (!qrContact && qrFile instanceof File && qrFile.size > 0) {
+      if (!qrContact && isSelectedFile(qrFile)) {
         const media = await uploadImage(qrFile, "MERCHANT_CONTACT_QR");
         if (!media.mediaId) throw new Error("MERCHANT_CONTACT_QR_MEDIA_ID_MISSING");
         requests.push({ merchantLocationId, contactType: "ZALO_QR", qrMediaId: media.mediaId, publicContact: true });
