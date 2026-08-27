@@ -4,5 +4,5 @@ import { OrderStatusLabel } from "./order-status";
 
 it("renders a safe fallback for a future order status", () => {
   render(<OrderStatusLabel status="FUTURE_STATUS" />);
-  expect(screen.getByText("Trạng thái mới")).toBeTruthy();
+  expect(screen.getByText("Trạng thái đã được cập nhật")).toBeTruthy();
 });
