@@ -16,6 +16,14 @@ export async function createCatalogItem(merchantId: string, idempotencyKey: stri
   return requireData(response, data);
 }
 
+export async function getCategoryDetail(categoryId: string): Promise<components["schemas"]["CategoryDetail"]> {
+  const client = createApiClient();
+  const { data, response } = await client.GET("/api/v1/categories/{categoryId}", {
+    params: { path: { categoryId } },
+  });
+  return requireData(response, data);
+}
+
 type DiscoveryQuery = NonNullable<paths["/api/v1/catalog/items"]["get"]>["parameters"] extends { query?: infer Query } ? NonNullable<Query> : never;
 export type CatalogDiscoveryFilters = Omit<DiscoveryQuery, "lat" | "lng" | "addressId"> & {
   location?: DiscoveryLocation;

@@ -1,0 +1,32 @@
+.seller-shell a:focus-visible,
+.seller-shell button:focus-visible,
+.seller-shell input:focus-visible,
+.seller-shell select:focus-visible,
+.seller-shell textarea:focus-visible,
+.seller-entry a:focus-visible,
+.seller-entry button:focus-visible,
+.seller-entry input:focus-visible,
+.seller-entry select:focus-visible,
+.seller-entry textarea:focus-visible {
+  outline: 3px solid var(--seller-focus);
+  outline-offset: 2px;
+}
+
+.seller-shell .seller-row__actions button,
+.seller-order-open,
+.seller-shell .seller-notice__unread {
+  min-height: 44px;
+}
+
+.seller-technical-fields summary {
+  align-items: center;
+  display: flex;
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seller-switch-row input[type="checkbox"],
+  .seller-switch-row input[type="checkbox"]::after {
+    transition: none;
+  }
+}

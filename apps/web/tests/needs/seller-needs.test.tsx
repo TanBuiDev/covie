@@ -13,7 +13,7 @@ afterEach(() => {
   discoverMerchantNeeds.mockReset();
 });
 
-it("renders a matched need with its resolved location", async () => {
+it("renders a matched need without inventing an ineligible response action", async () => {
   discoverMerchantNeeds.mockResolvedValueOnce({
     items: [{
       need: {
@@ -34,9 +34,16 @@ it("renders a matched need with its resolved location", async () => {
     nextCursor: null,
   });
 
-  render(<MerchantNeedList merchantId="merchant-1" />);
+  render(
+    <MerchantNeedList
+      merchantId="merchant-1"
+      locations={[{ id: "location-1", name: "Chi nhánh Thủ Đức", status: "ACTIVE", currency: "VND" }]}
+    />,
+  );
 
   await waitFor(() => expect(screen.getByText("Cần mua máy lọc không khí")).toBeInTheDocument());
-  expect(screen.getByText(/Chi nhánh Thủ Đức/)).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Phản hồi nhu cầu" })).toBeInTheDocument();
+  expect(screen.getByLabelText("Điểm bán đang phản hồi")).toHaveValue("location-1");
+  expect(screen.getByText(/Thủ Đức · cách điểm bán 1,2 km/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Phản hồi nhu cầu" })).not.toBeInTheDocument();
+  expect(screen.getByText(/Hệ thống chưa cung cấp danh sách mục phù hợp/)).toBeInTheDocument();
 });

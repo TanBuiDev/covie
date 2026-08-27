@@ -1,61 +1,100 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { respondToNeed } from "./need-api";
+
+export type NeedOfferOption = {
+  locationVariantId: string;
+  label: string;
+  available?: boolean;
+  actionable?: boolean;
+};
 
 export function MerchantNeedResponseForm({
   needId,
-  defaultLocationId,
+  merchantLocationId,
   maxItems,
+  offers,
   onCreated,
 }: {
   needId: string;
-  defaultLocationId: string;
+  merchantLocationId: string;
   maxItems: number;
+  offers: NeedOfferOption[];
   onCreated?: () => void;
 }) {
-  const [merchantLocationId, setMerchantLocationId] = useState(defaultLocationId);
-  const [variantIds, setVariantIds] = useState("");
+  const intentKeyRef = useRef<string | undefined>(undefined);
+  const [selected, setSelected] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const selectable = offers.filter((offer) => offer.available !== false && offer.actionable !== false);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const locationVariantIds = variantIds.split(/[\s,]+/).map((value) => value.trim()).filter(Boolean);
-    if (!locationVariantIds.length || locationVariantIds.length > maxItems) {
-      setMessage(`Chọn từ 1 đến ${maxItems} offer.`);
+    if (submitting) return;
+    if (!selected.length || selected.length > maxItems) {
+      setMessage(`Chọn từ 1 đến ${maxItems} nội dung phù hợp.`);
       return;
     }
+
+    const key = intentKeyRef.current ?? crypto.randomUUID();
+    intentKeyRef.current = key;
     setSubmitting(true);
     setMessage(null);
     try {
-      await respondToNeed(needId, { merchantLocationId, locationVariantIds, note: note || undefined });
+      await respondToNeed(needId, {
+        merchantLocationId,
+        locationVariantIds: selected,
+        note: note.trim() || undefined,
+      }, key);
+      intentKeyRef.current = undefined;
       setMessage("Đã gửi phản hồi.");
       onCreated?.();
     } catch (cause) {
-      setMessage(cause instanceof Error ? cause.message : "Không thể gửi phản hồi.");
+      setMessage(cause instanceof Error ? cause.message : "Không thể gửi phản hồi. Vui lòng thử lại.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={submit} style={{ display: "grid", gap: 8, marginTop: 12 }}>
-      <label>
-        Merchant location ID
-        <input required value={merchantLocationId} onChange={(event) => setMerchantLocationId(event.target.value)} />
-      </label>
-      <label>
-        Location variant IDs (phân cách bằng dấu phẩy)
-        <textarea required value={variantIds} onChange={(event) => setVariantIds(event.target.value)} />
-      </label>
+    <form onSubmit={submit} aria-busy={submitting}>
+      <fieldset disabled={submitting}>
+        <legend>Chọn nội dung tại điểm bán</legend>
+        {selectable.length ? selectable.map((offer) => (
+          <label key={offer.locationVariantId}>
+            <input
+              type="checkbox"
+              checked={selected.includes(offer.locationVariantId)}
+              disabled={!selected.includes(offer.locationVariantId) && selected.length >= maxItems}
+              onChange={(event) => {
+                intentKeyRef.current = undefined;
+                setSelected((current) => event.target.checked
+                  ? [...current, offer.locationVariantId]
+                  : current.filter((id) => id !== offer.locationVariantId));
+              }}
+            />
+            {offer.label}
+          </label>
+        )) : <p className="seller-muted">Chưa có nội dung phù hợp để chọn.</p>}
+      </fieldset>
+      <p className="seller-muted">Đã chọn {selected.length}/{maxItems}.</p>
       <label>
         Ghi chú
-        <textarea maxLength={2000} value={note} onChange={(event) => setNote(event.target.value)} />
+        <textarea
+          maxLength={2000}
+          value={note}
+          disabled={submitting}
+          onChange={(event) => {
+            intentKeyRef.current = undefined;
+            setNote(event.target.value);
+          }}
+        />
       </label>
       {message && <p role="status">{message}</p>}
-      <button disabled={submitting} type="submit">{submitting ? "Đang gửi…" : "Phản hồi nhu cầu"}</button>
+      <button disabled={submitting || selected.length === 0} type="submit">{submitting ? "Đang gửi…" : "Phản hồi nhu cầu"}</button>
     </form>
   );
 }

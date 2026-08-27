@@ -1,0 +1,154 @@
+@media (min-width: 1024px) {
+  .seller-desktop-heading {
+    display: grid;
+    gap: 4px;
+    max-width: 1128px;
+  }
+
+  .seller-desktop-heading .eyebrow,
+  .seller-catalog-form > header .eyebrow {
+    display: none;
+  }
+
+  .seller-desktop-heading h1,
+  .seller-catalog-form > header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 32px;
+    margin: 0;
+  }
+
+  .seller-desktop-heading > p:last-child,
+  .seller-catalog-form > header .seller-muted {
+    font-size: 14px;
+    line-height: 20px;
+    margin: 0;
+  }
+
+  .seller-catalog-management {
+    align-items: start;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+    max-width: 1128px;
+  }
+
+  .seller-catalog-management .seller-segmented {
+    min-height: 44px;
+    width: 520px;
+  }
+
+  .seller-catalog-management .seller-catalog-add {
+    justify-self: end;
+    min-height: 40px;
+    width: auto;
+  }
+
+  .seller-catalog-management > .empty-state,
+  .seller-catalog-list {
+    grid-column: 1 / -1;
+  }
+
+  .seller-catalog-list {
+    gap: 12px;
+    grid-template-columns: 1fr;
+    max-width: 920px;
+  }
+
+  .seller-catalog-card {
+    align-items: center;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 72px;
+    padding: 12px;
+  }
+
+  .seller-catalog-placeholder {
+    height: 48px;
+    width: 48px;
+  }
+
+  .seller-catalog-placeholder::after {
+    height: 16px;
+    left: 13px;
+    top: 16px;
+    width: 22px;
+  }
+
+  .seller-catalog-card__status {
+    justify-self: end;
+  }
+
+  .seller-catalog-form {
+    align-items: start;
+    display: grid;
+    gap: 16px 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 1128px;
+  }
+
+  .seller-catalog-form > header {
+    grid-column: 1 / -1;
+  }
+
+  .seller-catalog-form > fieldset,
+  .seller-catalog-form > label {
+    align-self: start;
+    min-width: 0;
+  }
+
+  .seller-catalog-form > fieldset {
+    min-height: 100%;
+  }
+
+  .seller-catalog-form .seller-attribute-fields,
+  .seller-catalog-form .seller-service-variant-grid {
+    grid-column: 1 / -1;
+  }
+
+  .seller-catalog-form > button[type="submit"] {
+    justify-self: start;
+    min-width: 180px;
+  }
+
+  .seller-inventory-list {
+    gap: 12px;
+    grid-template-columns: 1fr;
+    max-width: 1128px;
+  }
+
+  .seller-inventory-card {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(220px, .8fr) minmax(280px, 1fr) minmax(340px, 1.2fr);
+    padding: 16px;
+  }
+
+  .seller-inventory-card > header,
+  .seller-inventory-card > .seller-inventory-metrics,
+  .seller-inventory-card > form,
+  .seller-inventory-card > .seller-muted {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .seller-inventory-card > form {
+    display: grid;
+    gap: 10px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .seller-catalog-form {
+    gap: 16px;
+  }
+
+  .seller-inventory-card {
+    grid-template-columns: minmax(200px, .8fr) minmax(240px, 1fr);
+  }
+
+  .seller-inventory-card > form,
+  .seller-inventory-card > .seller-muted {
+    grid-column: 1 / -1;
+  }
+}

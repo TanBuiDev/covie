@@ -1,0 +1,170 @@
+@media (min-width: 1024px) {
+  .seller-order-location-filter {
+    max-width: 420px;
+  }
+
+  .seller-order-location-filter select {
+    min-height: 44px;
+  }
+
+  .seller-order-list-block {
+    display: grid;
+    gap: 12px;
+    max-width: 920px;
+  }
+
+  .seller-order-list-block > h2 {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 26px;
+    margin: 0;
+  }
+
+  .seller-order-list-cards {
+    display: grid;
+    gap: 12px;
+  }
+
+  .seller-order-list-card {
+    align-items: center;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(220px, 1.25fr) minmax(130px, .75fr) minmax(180px, 1fr) auto;
+    min-height: 72px;
+    padding: 12px;
+  }
+
+  .seller-order-list-card > header {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .seller-order-list-card > p,
+  .seller-order-list-card > small {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .seller-order-list-card > small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .seller-order-open {
+    justify-self: end;
+    white-space: nowrap;
+  }
+
+  .seller-load-more {
+    justify-self: start;
+    min-width: 144px;
+  }
+
+  .seller-order-detail {
+    align-items: start;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 690px) minmax(320px, 422px);
+    max-width: 1128px;
+  }
+
+  .seller-order-detail__hero {
+    grid-column: 1 / -1;
+  }
+
+  .seller-order-detail__snapshot,
+  .seller-order-detail__timeline,
+  .seller-order-detail__info {
+    grid-column: 1;
+  }
+
+  .seller-order-detail__actions,
+  .seller-order-detail__privacy,
+  .seller-order-detail__fulfillment {
+    grid-column: 2;
+  }
+
+  .seller-order-detail__snapshot-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .seller-order-action {
+    max-width: 1128px;
+  }
+
+  .seller-order-action__body,
+  .seller-order-action__content {
+    align-items: start;
+    display: grid;
+    gap: 24px;
+    grid-template-columns: minmax(0, 720px) minmax(280px, 376px);
+  }
+
+  .seller-order-action__impact {
+    align-self: start;
+  }
+
+  .seller-order-action__footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-start;
+  }
+
+  .seller-need-feed,
+  .seller-need-detail {
+    max-width: 1128px;
+  }
+
+  .seller-need-feed {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 548px) minmax(0, 564px);
+  }
+
+  .seller-need-feed > .seller-order-location-filter,
+  .seller-need-feed > header,
+  .seller-need-feed > .seller-need-filter {
+    grid-column: 1 / -1;
+    max-width: 420px;
+  }
+
+  .seller-need-card {
+    min-height: 96px;
+  }
+
+  .seller-need-detail {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 548px) minmax(0, 564px);
+  }
+
+  .seller-need-detail__summary,
+  .seller-need-detail__info {
+    grid-column: 1;
+  }
+
+  .seller-need-detail__actions,
+  .seller-need-response,
+  .seller-need-response__fallback {
+    grid-column: 2;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .seller-order-list-card {
+    grid-template-columns: minmax(220px, 1fr) minmax(140px, .7fr) auto;
+  }
+
+  .seller-order-list-card > small {
+    grid-column: 1 / 3;
+  }
+
+  .seller-order-detail,
+  .seller-need-detail,
+  .seller-need-feed {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, .8fr);
+  }
+}

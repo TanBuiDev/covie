@@ -3,6 +3,10 @@ import { afterEach, expect, it, vi } from "vitest";
 import { MerchantForm, MerchantList } from "../../features/merchant/merchant-form";
 import { invalidateCsrfToken } from "../../features/auth/csrf";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
 afterEach(() => {
   cleanup();
   invalidateCsrfToken();
@@ -21,7 +25,7 @@ it("renders generated merchant summaries", () => {
   }]} />);
 
   expect(screen.getByText("Tạp hóa Minh")).toBeInTheDocument();
-  expect(screen.getByText("ACTIVE")).toBeInTheDocument();
+  expect(screen.getByText("Đang hoạt động")).toBeInTheDocument();
 });
 
 it("creates a merchant through the generated endpoint and refreshes the list", async () => {
@@ -54,11 +58,11 @@ it("shows a reload action instead of resubmitting a stale merchant edit", async 
     etag: "\"v2\"",
   }} onReload={reload} />);
 
-  fireEvent.change(screen.getByLabelText("Tên cửa hàng"), { target: { value: "Mới" } });
-  fireEvent.click(screen.getByRole("button", { name: "Lưu cửa hàng" }));
+  fireEvent.change(screen.getByLabelText("Tên shop"), { target: { value: "Mới" } });
+  fireEvent.click(screen.getByRole("button", { name: "Lưu thay đổi" }));
 
   await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Dữ liệu đã được thay đổi"));
   expect(fetchMock).toHaveBeenCalledTimes(2);
-  fireEvent.click(screen.getByRole("button", { name: "Tải lại dữ liệu" }));
+  fireEvent.click(screen.getByRole("button", { name: "Tải dữ liệu mới" }));
   expect(reload).toHaveBeenCalledTimes(1);
 });

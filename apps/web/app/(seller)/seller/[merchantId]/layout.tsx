@@ -17,9 +17,9 @@ export default async function MerchantSellerLayout({
   const { merchantId } = await params;
 
   const merchantAndMerchants = await Promise.all([
-      getMerchantForServer(merchantId),
-      listMyMerchantsForServer(),
-    ]).catch((error: unknown) => {
+    getMerchantForServer(merchantId),
+    listMyMerchantsForServer(),
+  ]).catch((error: unknown) => {
     if (error instanceof CovieApiError && error.status === 404) redirect("/seller");
     throw error;
   });
@@ -27,7 +27,7 @@ export default async function MerchantSellerLayout({
   return (
     <SellerShell
       merchantId={merchantId}
-      merchantName={merchant.data.name}
+      merchantStatus={merchant.data.status}
       switcher={<MerchantSwitcher merchants={merchants} currentMerchantId={merchantId} />}
     >
       {children}

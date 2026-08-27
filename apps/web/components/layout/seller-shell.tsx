@@ -1,39 +1,60 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { SellerNavLinks } from "@/features/seller/seller-nav";
+import { SellerPageTitle } from "@/features/seller/seller-page-title";
+import { sellerBasePath } from "@/features/seller/seller-context";
 
-const sections = [
-  ["", "Dashboard"],
-  ["orders", "Orders"],
-  ["catalog", "Catalog"],
-  ["needs", "Needs"],
-  ["inventory", "Inventory"],
-  ["locations", "Locations"],
-  ["settings", "Settings"],
-] as const;
+function statusLabel(status?: string) {
+  switch (status) {
+    case "ACTIVE": return "đang hoạt động";
+    case "PAUSED": return "tạm dừng";
+    case "SUSPENDED": return "bị hạn chế";
+    case "DELETED": return "đã đóng";
+    default: return "đã được cập nhật";
+  }
+}
 
 export function SellerShell({
   merchantId,
-  merchantName,
+  merchantStatus,
   switcher,
   children,
 }: {
   merchantId: string;
-  merchantName?: string;
+  merchantStatus?: "ACTIVE" | "PAUSED" | "SUSPENDED" | "DELETED";
   switcher?: ReactNode;
   children: ReactNode;
 }) {
-  const base = `/seller/${encodeURIComponent(merchantId)}`;
+  const base = sellerBasePath(merchantId);
+  const restricted = merchantStatus && merchantStatus !== "ACTIVE";
+
   return (
-    <div className="workspace-shell">
-      <aside className="workspace-nav">
-        <Link className="app-brand" href="/seller">CoVie Seller</Link>
-        <p className="workspace-nav__context">{merchantName ?? "Cửa hàng hiện tại"}</p>
-        {switcher}
-        <nav aria-label="Seller Center">
-          {sections.map(([path, label]) => <Link key={path} href={path ? `${base}/${path}` : base}>{label}</Link>)}
-        </nav>
+    <div className="seller-shell">
+      <header className="seller-mobile-header">
+        <SellerPageTitle merchantId={merchantId} />
+        {switcher ? <div className="seller-mobile-switcher">{switcher}</div> : null}
+      </header>
+
+      <div className="seller-mobile-tabs">
+        <SellerNavLinks merchantId={merchantId} scrollActiveIntoView />
+      </div>
+
+      <aside className="seller-desktop-navigation">
+        <Link className="seller-desktop-brand" href={base}>TRUNG TÂM BÁN HÀNG</Link>
+        {switcher ? <div className="seller-desktop-switcher">{switcher}</div> : null}
+        <SellerNavLinks merchantId={merchantId} />
+        <p className="seller-desktop-role">Người bán / Nhà cung cấp</p>
       </aside>
-      <main className="workspace-main">{children}</main>
+
+      <main className="seller-shell__main" id="seller-main-content">
+        {restricted ? (
+          <section className="warning-banner seller-restriction-banner" role="status" aria-label="Trạng thái cửa hàng">
+            <strong>Cửa hàng hiện {statusLabel(merchantStatus)}.</strong>
+            <p>Một số dữ liệu hoặc thao tác có thể bị giới hạn. CoVie chỉ hiển thị những thao tác hiện còn khả dụng.</p>
+          </section>
+        ) : null}
+        {children}
+      </main>
     </div>
   );
 }

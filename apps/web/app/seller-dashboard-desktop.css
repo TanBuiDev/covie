@@ -1,0 +1,115 @@
+@media (min-width: 1024px) {
+  .seller-dashboard {
+    gap: 20px;
+    max-width: 1120px;
+  }
+
+  .seller-dashboard__header {
+    display: grid;
+    gap: 4px;
+  }
+
+  .seller-dashboard__header h1 {
+    color: var(--seller-text-primary);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 32px;
+    margin: 0;
+  }
+
+  .seller-dashboard__header p {
+    color: var(--seller-text-secondary);
+    font-size: 14px;
+    line-height: 20px;
+    margin: 0;
+  }
+
+  .seller-dashboard .seller-metric-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, 280px));
+  }
+
+  .seller-dashboard .seller-metric {
+    border: 1px solid var(--seller-border);
+    border-radius: 12px;
+    min-height: 132px;
+    padding: 16px;
+  }
+
+  .seller-dashboard .seller-metric strong {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 32px;
+  }
+
+  .seller-dashboard .seller-section {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    max-width: 920px;
+    padding: 0;
+  }
+
+  .seller-dashboard .seller-section__heading {
+    margin-bottom: 12px;
+  }
+
+  .seller-dashboard .seller-section__heading h2 {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 26px;
+    margin: 0;
+  }
+
+  .seller-dashboard .seller-section__eyebrow {
+    display: none;
+  }
+
+  .seller-dashboard .seller-section__heading > a {
+    font-size: 13px;
+    min-height: 36px;
+  }
+
+  .seller-dashboard .seller-row-list {
+    gap: 14px;
+  }
+
+  .seller-dashboard .seller-row {
+    align-items: center;
+    border: 1px solid var(--seller-border);
+    border-radius: 12px;
+    min-height: 72px;
+    padding: 12px;
+  }
+
+  .seller-dashboard .seller-row > div:first-child {
+    min-width: 0;
+  }
+
+  .seller-dashboard .seller-row > div:first-child strong {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .seller-dashboard .seller-row > div:first-child small {
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  .seller-dashboard .seller-row__meta {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+  }
+
+  .seller-dashboard .seller-need-match-row {
+    min-height: 96px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .seller-dashboard .seller-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

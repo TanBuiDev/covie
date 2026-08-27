@@ -1,0 +1,392 @@
+.seller-shell .surface-header,
+.seller-entry .surface-header {
+  margin-bottom: 1rem;
+}
+
+.seller-shell .surface-header .eyebrow,
+.seller-entry .surface-header .eyebrow,
+.seller-shell .eyebrow,
+.seller-entry .eyebrow {
+  color: var(--seller-text-tertiary);
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  margin: 0 0 .35rem;
+  text-transform: uppercase;
+}
+
+.seller-shell h1,
+.seller-entry h1 {
+  font-size: clamp(1.55rem, 5vw, 2.1rem);
+  letter-spacing: -.035em;
+  line-height: 1.12;
+  margin: 0;
+}
+
+.seller-shell h2,
+.seller-entry h2 {
+  font-size: 1.05rem;
+  letter-spacing: -.015em;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.seller-shell .surface-header > p:not(.eyebrow),
+.seller-entry .surface-header > p:not(.eyebrow) {
+  color: var(--seller-text-secondary);
+  line-height: 1.55;
+  margin: .55rem 0 0;
+}
+
+.seller-section,
+.seller-card,
+.seller-shell .state-card,
+.seller-shell .warning-banner,
+.seller-entry section {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 2%);
+}
+
+.seller-section,
+.seller-card,
+.seller-entry section {
+  padding: 1rem;
+}
+
+.seller-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.seller-grid {
+  display: grid;
+  gap: .75rem;
+}
+
+.seller-metric-grid {
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.seller-metric {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  min-width: 0;
+  padding: .9rem;
+}
+
+.seller-metric span {
+  color: var(--seller-text-secondary);
+  display: block;
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+.seller-metric strong {
+  display: block;
+  font-size: 1.35rem;
+  margin-top: .3rem;
+}
+
+.seller-section__heading {
+  align-items: flex-start;
+  display: flex;
+  gap: .75rem;
+  justify-content: space-between;
+  margin-bottom: .8rem;
+}
+
+.seller-section__heading a {
+  color: var(--seller-action);
+  flex: 0 0 auto;
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.seller-row-list,
+.seller-shell .management-list,
+.seller-shell .orders-ledger {
+  display: grid;
+  gap: .65rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.seller-row,
+.seller-shell .management-list > li,
+.seller-shell .order-row {
+  align-items: center;
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  display: flex;
+  gap: .75rem;
+  justify-content: space-between;
+  min-height: 60px;
+  min-width: 0;
+  padding: .85rem;
+  text-decoration: none;
+}
+
+.seller-row > div,
+.seller-shell .management-list > li > div,
+.seller-shell .order-row > span {
+  display: grid;
+  gap: .18rem;
+  min-width: 0;
+}
+
+.seller-row strong,
+.seller-shell .management-list strong,
+.seller-shell .order-row strong {
+  overflow-wrap: anywhere;
+}
+
+.seller-row small,
+.seller-shell .management-list small,
+.seller-shell .order-row small {
+  color: var(--seller-text-secondary);
+  line-height: 1.4;
+}
+
+.seller-muted,
+.seller-empty-copy {
+  color: var(--seller-text-secondary);
+  line-height: 1.5;
+}
+
+.seller-empty-copy {
+  margin: .5rem 0 0;
+}
+
+.seller-shell .status-chip {
+  background: var(--seller-bg-subtle);
+  border-color: var(--seller-border);
+  color: var(--seller-text-primary);
+  white-space: nowrap;
+}
+
+.seller-shell .subnav {
+  display: flex;
+  gap: .5rem;
+  margin: 0 0 1rem;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.seller-shell .subnav a {
+  align-items: center;
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: 999px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: .83rem;
+  font-weight: 700;
+  min-height: 44px;
+  padding: .5rem .8rem;
+  text-decoration: none;
+}
+
+.seller-shell form,
+.seller-entry form {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  display: grid;
+  gap: .9rem;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.seller-shell form label,
+.seller-entry form label {
+  color: var(--seller-text-secondary);
+  display: grid;
+  font-size: .86rem;
+  font-weight: 700;
+  gap: .35rem;
+  min-width: 0;
+}
+
+.seller-shell form label:has(input[type="checkbox"]),
+.seller-entry form label:has(input[type="checkbox"]) {
+  align-items: center;
+  display: flex;
+  gap: .65rem;
+  min-height: 44px;
+}
+
+.seller-shell input:not([type="checkbox"]):not([type="radio"]),
+.seller-shell select,
+.seller-shell textarea,
+.seller-entry input:not([type="checkbox"]):not([type="radio"]),
+.seller-entry select,
+.seller-entry textarea {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-sm);
+  color: var(--seller-text-primary);
+  min-height: 44px;
+  min-width: 0;
+  padding: .65rem .75rem;
+  width: 100%;
+}
+
+.seller-shell textarea,
+.seller-entry textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.seller-shell input[type="checkbox"],
+.seller-entry input[type="checkbox"] {
+  height: 20px;
+  width: 20px;
+}
+
+.seller-shell button,
+.seller-entry button,
+.seller-shell .seller-button,
+.seller-entry .seller-button {
+  align-items: center;
+  border-radius: var(--seller-radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 44px;
+  padding: .65rem .9rem;
+  text-decoration: none;
+}
+
+.seller-shell button,
+.seller-entry button {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  color: var(--seller-text-primary);
+}
+
+.seller-shell .seller-button,
+.seller-entry .seller-button,
+.seller-shell button[type="submit"],
+.seller-entry button[type="submit"],
+.seller-shell .button-primary,
+.seller-entry .button-primary {
+  background: var(--seller-brand);
+  border: 1px solid var(--seller-brand);
+  color: var(--seller-text-inverse);
+}
+
+.seller-shell .seller-button--secondary,
+.seller-entry .seller-button--secondary {
+  background: var(--seller-surface);
+  border-color: var(--seller-border);
+  color: var(--seller-text-primary);
+}
+
+.seller-shell button:disabled,
+.seller-entry button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.seller-shell .button-danger,
+.seller-entry .button-danger {
+  background: var(--seller-surface);
+  border-color: var(--seller-danger);
+  color: var(--seller-danger);
+}
+
+.seller-shell .action-row,
+.seller-shell .dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+
+.seller-shell .order-actions {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.seller-shell .order-detail {
+  display: grid;
+  gap: 1rem;
+}
+
+.seller-shell .order-detail > section,
+.seller-shell .order-detail > ol,
+.seller-shell .order-detail > ul {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  margin: 0;
+  padding: 1rem;
+}
+
+.seller-shell .loading-state {
+  color: var(--seller-text-secondary);
+}
+
+.seller-shell .empty-state {
+  background: var(--seller-surface);
+  border: 1px dashed var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  padding: 1rem;
+}
+
+.seller-shell .confirm-dialog {
+  border-color: var(--seller-border);
+  border-radius: var(--seller-radius-lg);
+  box-shadow: var(--seller-shadow);
+}
+
+.seller-shell a:focus-visible,
+.seller-shell button:focus-visible,
+.seller-shell input:focus-visible,
+.seller-shell select:focus-visible,
+.seller-shell textarea:focus-visible,
+.seller-entry a:focus-visible,
+.seller-entry button:focus-visible,
+.seller-entry input:focus-visible,
+.seller-entry select:focus-visible,
+.seller-entry textarea:focus-visible {
+  outline: 3px solid var(--seller-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1023px) {
+  .seller-desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 640px) {
+  .seller-grid--two,
+  .seller-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .seller-section,
+  .seller-card,
+  .seller-entry section,
+  .seller-shell form,
+  .seller-entry form {
+    padding: 1.2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .seller-metric-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

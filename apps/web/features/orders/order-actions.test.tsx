@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { OrderActions } from "./order-actions";
 
@@ -28,5 +28,22 @@ describe("OrderActions", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Dịch vụ đã hoàn thành" }));
     expect(screen.getByText(/không thể hoàn tác/i)).toBeInTheDocument();
+  });
+
+  it("requires a reason for seller cancellation without deriving eligibility from status", () => {
+    render(
+      <OrderActions
+        actorView="SELLER"
+        order={{ id: "order-3", type: "PRODUCT", status: "CONFIRMED", allowedActions: ["CANCEL"] }}
+        onChanged={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Hủy đơn" }));
+    const dialog = screen.getByRole("dialog");
+    const confirm = within(dialog).getByRole("button", { name: "Hủy đơn" });
+    expect(confirm).toBeDisabled();
+    fireEvent.change(within(dialog).getByRole("textbox"), { target: { value: "Không thể tiếp tục thực hiện đơn" } });
+    expect(confirm).not.toBeDisabled();
   });
 });

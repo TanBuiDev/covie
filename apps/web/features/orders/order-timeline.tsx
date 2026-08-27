@@ -4,80 +4,66 @@ import { OrderStatusLabel } from "./order-status";
 
 type TimelineEvent = components["schemas"]["OrderTimelineEventResponse"];
 
-const eventCopy: Record<string, string> = {
-  ORDER_CREATED: "Đơn hàng đã được tạo",
-  SELLER_CONFIRMED: "Người bán đã xác nhận",
-  SELLER_REJECTED: "Người bán đã từ chối",
-  BUYER_CANCELLED_BEFORE_CONFIRMATION: "Bạn đã hủy đơn",
-  BUYER_REQUESTED_CANCELLATION: "Bạn đã gửi yêu cầu hủy",
-  SELLER_ACCEPTED_CANCELLATION: "Người bán đã chấp nhận hủy",
-  SELLER_REJECTED_CANCELLATION: "Người bán đã từ chối yêu cầu hủy",
-  SELLER_CANCELLED_AFTER_CONFIRMATION: "Người bán đã hủy đơn",
-  SELLER_MARKED_OUT_FOR_DELIVERY: "Đơn đang được giao",
-  SELLER_MARKED_DELIVERED: "Người bán đã đánh dấu đã giao",
-  SELLER_MARKED_READY_FOR_PICKUP: "Đơn đã sẵn sàng để nhận",
-  SELLER_MARKED_BUYER_NO_SHOW: "Người bán đã báo người mua không đến",
-  BUYER_CONTESTED_NO_SHOW: "Bạn đã phản hồi báo không đến",
-  PROVIDER_MARKED_PERFORMED: "Người cung cấp đã thực hiện dịch vụ",
-  BUYER_CONFIRMED_RECEIVED: "Bạn đã xác nhận nhận hàng",
-  BUYER_CONFIRMED_SERVICE_COMPLETED: "Bạn đã xác nhận dịch vụ hoàn thành",
-  BUYER_REPORTED_NOT_RECEIVED: "Bạn đã báo chưa nhận được hàng",
-  BUYER_REPORTED_SERVICE_NOT_COMPLETED: "Bạn đã báo dịch vụ chưa hoàn thành",
-  ORDER_EXPIRED: "Đơn đã hết hạn",
-  ORDER_AUTO_COMPLETED: "Đơn đã được tự động hoàn tất",
-  ORDER_CLOSED_WITH_ISSUE: "Đơn đã đóng với vấn đề",
+const eventCopy: Partial<Record<NonNullable<TimelineEvent["eventType"]>, string>> = {
+  ORDER_CREATED: "Đơn được tạo",
+  SELLER_CONFIRMED: "Người bán xác nhận",
+  SELLER_REJECTED: "Người bán từ chối",
+  BUYER_CANCELLED_BEFORE_CONFIRMATION: "Người mua hủy trước xác nhận",
+  BUYER_REQUESTED_CANCELLATION: "Người mua yêu cầu hủy",
+  SELLER_ACCEPTED_CANCELLATION: "Người bán chấp nhận hủy",
+  SELLER_REJECTED_CANCELLATION: "Người bán từ chối hủy",
+  SELLER_CANCELLED_AFTER_CONFIRMATION: "Người bán hủy sau xác nhận",
+  SELLER_MARKED_OUT_FOR_DELIVERY: "Bắt đầu giao hàng",
+  SELLER_MARKED_DELIVERED: "Người bán đánh dấu đã giao",
+  SELLER_MARKED_READY_FOR_PICKUP: "Sẵn sàng để nhận",
+  SELLER_MARKED_BUYER_NO_SHOW: "Người bán báo người mua không đến",
+  BUYER_CONTESTED_NO_SHOW: "Người mua phản hồi no-show",
+  PROVIDER_MARKED_PERFORMED: "Dịch vụ đã được thực hiện",
+  BUYER_CONFIRMED_RECEIVED: "Người mua xác nhận đã nhận",
+  BUYER_CONFIRMED_SERVICE_COMPLETED: "Người mua xác nhận dịch vụ hoàn tất",
+  BUYER_REPORTED_NOT_RECEIVED: "Người mua báo chưa nhận hàng",
+  BUYER_REPORTED_SERVICE_NOT_COMPLETED: "Người mua báo dịch vụ chưa hoàn tất",
+  ORDER_EXPIRED: "Đơn hết hạn",
+  ORDER_AUTO_COMPLETED: "Hệ thống tự hoàn tất đơn",
+  ORDER_CLOSED_WITH_ISSUE: "Đơn đóng với sự cố",
 };
 
-function eventLabel(event: TimelineEvent): string {
-  return event.eventType ? (eventCopy[event.eventType] ?? event.eventType) : "Cập nhật đơn hàng";
-}
-
 export function OrderTimeline({
+  events = [],
   status,
-  events,
   createdAt,
   confirmedAt,
   completedAt,
   closedAt,
 }: {
-  status?: string;
   events?: TimelineEvent[];
+  status?: string;
   createdAt?: string;
   confirmedAt?: string;
   completedAt?: string;
   closedAt?: string;
 }) {
-  if (events?.length) {
-    return (
+  return (
+    <section aria-labelledby="order-timeline-title">
+      <h2 id="order-timeline-title">Tiến trình</h2>
       <ol className="order-timeline" aria-label="Tiến trình đơn hàng">
-        {events.map((event, index) => (
-          <li key={event.id ?? `${event.eventType ?? "event"}-${event.createdAt ?? index}`}>
-            <strong>{eventLabel(event)}</strong>
+        {events.length ? events.map((event, index) => (
+          <li key={event.id ?? `${event.eventType ?? "EVENT"}-${event.createdAt ?? index}`}>
+            <strong>{event.eventType ? eventCopy[event.eventType] ?? "Đơn hàng được cập nhật" : "Cập nhật đơn"}</strong>
             {event.createdAt ? <time dateTime={event.createdAt}>{formatDateTime(event.createdAt)}</time> : null}
+            {event.reasonCode ? <small>Lý do: {event.reasonCode}</small> : null}
             {event.note ? <p>{event.note}</p> : null}
           </li>
-        ))}
-        <li className="order-timeline__current"><span>Hiện tại</span><OrderStatusLabel status={status} /></li>
+        )) : (
+          <>
+            {createdAt ? <li>Đặt đơn: {formatDateTime(createdAt)}</li> : null}
+            {confirmedAt ? <li>Xác nhận: {formatDateTime(confirmedAt)}</li> : null}
+            {completedAt ? <li>Hoàn thành: {formatDateTime(completedAt)}</li> : null}
+            {closedAt && !completedAt ? <li>Đóng đơn: {formatDateTime(closedAt)}</li> : null}
+          </>
+        )}
+        <li className="order-timeline__current"><span>Hiện tại: </span><OrderStatusLabel status={status} /></li>
       </ol>
-    );
-  }
-
-  const fallback = [
-    createdAt ? { label: "Đơn hàng đã được tạo", date: createdAt } : null,
-    confirmedAt ? { label: "Người bán đã xác nhận", date: confirmedAt } : null,
-    completedAt ? { label: "Đơn đã hoàn thành", date: completedAt } : null,
-    closedAt && !completedAt ? { label: "Đơn đã đóng", date: closedAt } : null,
-  ].filter((entry): entry is { label: string; date: string } => Boolean(entry));
-
-  return (
-    <ol className="order-timeline" aria-label="Tiến trình đơn hàng">
-      {fallback.map((entry) => (
-        <li key={`${entry.label}-${entry.date}`}>
-          <strong>{entry.label}</strong>
-          <time dateTime={entry.date}>{formatDateTime(entry.date)}</time>
-        </li>
-      ))}
-      <li className="order-timeline__current"><span>Hiện tại</span><OrderStatusLabel status={status} /></li>
-    </ol>
+    </section>
   );
 }

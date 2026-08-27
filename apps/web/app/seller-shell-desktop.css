@@ -1,0 +1,148 @@
+.seller-nav-indicator,
+.seller-nav-icon {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .seller-shell {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  .seller-desktop-navigation {
+    align-self: stretch;
+    border-right-color: var(--seller-border-subtle);
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    padding: 20px 16px;
+    width: 240px;
+  }
+
+  .seller-desktop-brand {
+    color: var(--seller-brand);
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+    padding: 0;
+    text-decoration: none;
+  }
+
+  .seller-desktop-switcher {
+    margin: 4px 0 10px;
+  }
+
+  .seller-desktop-switcher .merchant-switcher {
+    gap: 0;
+  }
+
+  .seller-desktop-switcher .merchant-switcher > span {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+
+  .seller-desktop-switcher .merchant-switcher select {
+    background-color: var(--seller-bg-subtle);
+    border: 0;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    min-height: 44px;
+    padding: 0 36px 0 12px;
+  }
+
+  .seller-desktop-navigation .seller-nav-links {
+    border-top: 1px solid var(--seller-border-subtle);
+    gap: 4px;
+    margin-top: 0;
+    padding-top: 12px;
+  }
+
+  .seller-desktop-navigation .seller-nav-links a {
+    color: var(--seller-action);
+    gap: 10px;
+    height: 48px;
+    min-height: 48px;
+    padding: 0 12px;
+  }
+
+  .seller-desktop-navigation .seller-nav-links a[aria-current="page"] {
+    background: var(--seller-brand-subtle);
+    color: var(--seller-brand);
+  }
+
+  .seller-desktop-navigation .seller-nav-links a[aria-current="page"]::after {
+    display: none;
+  }
+
+  .seller-nav-indicator {
+    display: block;
+    flex: 0 0 3px;
+    height: 24px;
+    width: 3px;
+  }
+
+  .seller-desktop-navigation .seller-nav-links a[aria-current="page"] .seller-nav-indicator {
+    background: var(--seller-brand);
+    border-radius: 999px;
+  }
+
+  .seller-nav-icon {
+    color: currentColor;
+    display: block;
+    flex: 0 0 24px;
+    height: 24px;
+    width: 24px;
+  }
+
+  .seller-nav-icon svg {
+    display: block;
+    fill: none;
+    height: 24px;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+    width: 24px;
+  }
+
+  .seller-nav-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .seller-desktop-role {
+    color: var(--seller-text-tertiary);
+    font-size: 12px;
+    line-height: 16px;
+    margin: auto 0 0;
+  }
+
+  .seller-shell__main {
+    margin: 0;
+    max-width: 1200px;
+    min-width: 0;
+    padding: 32px clamp(24px, 2.8vw, 40px) 64px;
+    width: 100%;
+  }
+
+  .seller-restriction-banner {
+    margin-bottom: 20px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .seller-shell__main {
+    padding-inline: 40px;
+  }
+}

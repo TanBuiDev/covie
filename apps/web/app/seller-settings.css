@@ -1,0 +1,346 @@
+.seller-shell,
+.seller-entry {
+  --seller-radius-sm: 12px;
+}
+
+.seller-shell fieldset,
+.seller-entry fieldset {
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-sm);
+  display: grid;
+  gap: .55rem;
+  margin: 0;
+  min-width: 0;
+  padding: .8rem;
+}
+
+.seller-shell legend,
+.seller-entry legend {
+  color: var(--seller-text-primary);
+  font-size: .86rem;
+  font-weight: 800;
+  padding: 0 .25rem;
+}
+
+.seller-shell fieldset label:has(input[type="radio"]),
+.seller-entry fieldset label:has(input[type="radio"]),
+.seller-shell fieldset label:has(input[type="checkbox"]),
+.seller-entry fieldset label:has(input[type="checkbox"]) {
+  align-items: center;
+  display: flex;
+  gap: .55rem;
+  min-height: 44px;
+}
+
+.seller-shell input[type="radio"],
+.seller-entry input[type="radio"] {
+  height: 20px;
+  width: 20px;
+}
+
+.seller-shell .rule-row {
+  display: grid;
+  gap: .55rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.seller-shell .seller-row__actions {
+  align-items: flex-end;
+  display: flex;
+  flex: 0 0 auto;
+  gap: .45rem;
+}
+
+.seller-shell .seller-row__actions button {
+  min-height: 40px;
+  padding: .5rem .65rem;
+}
+
+.seller-shell .field-hint {
+  color: var(--seller-text-tertiary);
+  font-size: .8rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.seller-shell .seller-merchant-form,
+.seller-shell .seller-location-form,
+.seller-shell .seller-minimum-order-form {
+  background: transparent;
+  border: 0;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.seller-shell .seller-merchant-form > label > small,
+.seller-shell .seller-location-form > label > small,
+.seller-shell .seller-minimum-order-form > label > small,
+.seller-media-settings small {
+  color: var(--seller-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.seller-media-settings {
+  background: var(--seller-bg-subtle);
+  border: 1px solid var(--seller-border-subtle);
+  border-radius: 12px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.seller-media-settings > strong {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.seller-media-settings > p {
+  color: var(--seller-text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+}
+
+.seller-shell .seller-media-settings > .seller-button--secondary {
+  background: var(--seller-surface);
+  border-color: var(--seller-border);
+  color: var(--seller-text-primary);
+  justify-self: start;
+  min-width: 180px;
+}
+
+.seller-media-settings__fields {
+  display: grid;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.seller-shell .seller-merchant-form > button[type="submit"],
+.seller-shell .seller-location-form > button[type="submit"],
+.seller-shell .seller-minimum-order-form > button[type="submit"] {
+  min-height: 48px;
+  width: 100%;
+}
+
+.seller-shell .seller-location-form > label > input:not([type="checkbox"]),
+.seller-shell .seller-location-form > label > select,
+.seller-shell .seller-minimum-order-form > label > input:not([type="checkbox"]) {
+  min-height: 48px;
+}
+
+.seller-shell .seller-config-form {
+  margin-top: 0;
+}
+
+.seller-shell .seller-config-form > .seller-section__heading {
+  margin-bottom: 0;
+}
+
+.seller-shell .seller-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+
+.seller-shell .seller-form-actions > button {
+  flex: 1 1 12rem;
+}
+
+.seller-shell .seller-area-options {
+  background: var(--seller-bg-subtle);
+  border-radius: var(--seller-radius-sm);
+  display: grid;
+  gap: .2rem;
+  max-height: 18rem;
+  overflow: auto;
+  padding: .5rem .7rem;
+}
+
+.seller-shell .seller-rule-enabled {
+  white-space: nowrap;
+}
+
+.seller-location-add {
+  min-height: 48px;
+  width: 100%;
+}
+
+.seller-location-list {
+  display: grid;
+  gap: 12px;
+}
+
+.seller-location-card {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  text-decoration: none;
+}
+
+.seller-location-card__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.seller-location-card__copy strong {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.seller-location-card__copy small {
+  color: var(--seller-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.seller-capability-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.seller-capability-list span {
+  background: var(--seller-brand-subtle);
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 16px;
+  padding: 6px 10px;
+}
+
+.seller-switch-row {
+  align-items: center;
+  display: flex !important;
+  gap: 8px !important;
+  min-height: 44px;
+}
+
+.seller-switch-row input[type="checkbox"] {
+  appearance: none;
+  background: var(--seller-border);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  height: 24px;
+  margin: 0;
+  position: relative;
+  transition: background .15s ease;
+  width: 40px;
+}
+
+.seller-switch-row input[type="checkbox"]::after {
+  background: var(--seller-surface);
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 20%);
+  content: "";
+  height: 18px;
+  left: 3px;
+  position: absolute;
+  top: 3px;
+  transition: transform .15s ease;
+  width: 18px;
+}
+
+.seller-switch-row input[type="checkbox"]:checked {
+  background: var(--seller-brand);
+}
+
+.seller-switch-row input[type="checkbox"]:checked::after {
+  transform: translateX(16px);
+}
+
+.seller-switch-row input[type="checkbox"]:focus-visible {
+  outline: 3px solid var(--seller-focus);
+  outline-offset: 2px;
+}
+
+.seller-technical-fields {
+  border: 1px solid var(--seller-border-subtle);
+  border-radius: var(--seller-radius-md);
+  padding: 10px 12px;
+}
+
+.seller-technical-fields summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 32px;
+}
+
+.seller-info-card {
+  background: var(--seller-bg-subtle);
+  border: 1px solid var(--seller-border-subtle);
+  border-radius: var(--seller-radius-md);
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.seller-info-card strong {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.seller-info-card p {
+  color: var(--seller-text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+}
+
+.seller-location-config-links {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.seller-location-config-links h2,
+.seller-location-config-links p {
+  margin: 0;
+}
+
+.seller-config-link {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  display: grid;
+  gap: 4px;
+  min-height: 72px;
+  padding: 12px;
+  text-decoration: none;
+}
+
+.seller-config-link span {
+  color: var(--seller-text-secondary);
+  font-size: 12px;
+}
+
+@media (max-width: 639px) {
+  .seller-shell .seller-row__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .seller-shell .seller-row__actions button {
+    width: 100%;
+  }
+}
+
+@media (min-width: 640px) {
+  .seller-shell .rule-row {
+    align-items: end;
+    grid-template-columns: minmax(0, 1.2fr) minmax(8rem, .7fr) auto auto;
+  }
+
+  .seller-location-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

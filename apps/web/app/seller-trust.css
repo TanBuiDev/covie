@@ -1,0 +1,234 @@
+.seller-trust-stack,
+.seller-notices {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.seller-reputation-summary {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.seller-reputation-summary h2,
+.seller-trust-note h2,
+.seller-notice h2 {
+  font-size: 1rem;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.seller-reputation-rate {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  min-height: 48px;
+}
+
+.seller-reputation-rate span {
+  color: var(--seller-text-secondary);
+  font-size: .875rem;
+}
+
+.seller-reputation-rate strong {
+  color: var(--seller-brand);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.seller-reputation-progress {
+  background: var(--seller-bg-subtle);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.seller-reputation-progress > span {
+  background: var(--seller-brand);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
+
+.seller-reputation-summary > p,
+.seller-trust-note p,
+.seller-notice p {
+  color: var(--seller-text-secondary);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.seller-reputation-summary > p {
+  font-size: .75rem;
+}
+
+.seller-trust-note {
+  background: var(--seller-bg-subtle);
+  border: 1px solid var(--seller-border-subtle);
+  border-radius: 12px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.seller-trust-note p {
+  font-size: .875rem;
+}
+
+.seller-notice-list {
+  display: grid;
+  gap: 0;
+}
+
+.seller-notice {
+  align-items: flex-start;
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  min-height: 112px;
+  padding: 14px;
+}
+
+.seller-notice + .seller-notice {
+  margin-top: -1px;
+}
+
+.seller-notice--unread {
+  background: var(--seller-brand-subtle);
+}
+
+.seller-notice__visual {
+  align-items: center;
+  background: var(--seller-brand-subtle);
+  border-radius: 999px;
+  display: flex;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.seller-notice__visual::after {
+  background: var(--seller-brand);
+  border-radius: 999px;
+  content: "";
+  height: 12px;
+  width: 12px;
+}
+
+.seller-notice__content {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.seller-notice__heading {
+  align-items: start;
+  display: flex;
+  gap: .5rem;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.seller-notice__heading h2 {
+  flex: 1 1 auto;
+  font-size: .875rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.seller-notice__heading time {
+  color: var(--seller-text-secondary);
+  flex: 0 0 auto;
+  font-size: .75rem;
+  white-space: nowrap;
+}
+
+.seller-notice p {
+  font-size: .75rem;
+}
+
+.seller-shell .seller-notice__unread {
+  align-items: center;
+  align-self: start;
+  background: transparent;
+  border: 0;
+  color: var(--seller-action);
+  display: inline-flex;
+  font-size: .6875rem;
+  font-weight: 600;
+  gap: 6px;
+  justify-content: flex-start;
+  min-height: 22px;
+  padding: 0;
+}
+
+.seller-shell .seller-notice__unread > span {
+  background: var(--seller-brand);
+  border-radius: 999px;
+  height: 7px;
+  width: 7px;
+}
+
+.seller-shell .seller-notice__unread:disabled {
+  opacity: .7;
+}
+
+.seller-notices__error {
+  background: var(--seller-danger-bg);
+  border: 1px solid var(--seller-danger-border);
+  border-radius: 12px;
+  color: var(--seller-danger);
+  margin: 0;
+  padding: 12px 14px;
+}
+
+.seller-notices__safe-copy {
+  margin-right: 32px;
+}
+
+.seller-shell .seller-button--secondary {
+  background: var(--seller-surface);
+  border-color: var(--seller-border);
+  color: var(--seller-text-primary);
+  justify-self: start;
+}
+
+@media (max-width: 380px) {
+  .seller-notice {
+    gap: 10px;
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .seller-notice__visual {
+    height: 32px;
+    width: 32px;
+  }
+
+  .seller-notice__heading {
+    display: grid;
+    gap: 2px;
+  }
+
+  .seller-notice__heading time {
+    white-space: normal;
+  }
+
+  .seller-notices__safe-copy {
+    margin-right: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .seller-trust-stack,
+  .seller-notices {
+    max-width: 720px;
+  }
+}

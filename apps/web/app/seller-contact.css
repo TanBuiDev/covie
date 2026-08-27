@@ -1,0 +1,105 @@
+.seller-contact-settings,
+.seller-contact-form {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.seller-contact-form {
+  margin: 0;
+}
+
+.seller-contact-form > label {
+  display: grid;
+  gap: 6px;
+}
+
+.seller-contact-form > label > small {
+  color: var(--seller-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.seller-contact-form input[type="url"] {
+  min-height: 48px;
+}
+
+.seller-contact-form input[readonly] {
+  background: var(--seller-surface);
+  color: var(--seller-text-primary);
+}
+
+.seller-contact-qr {
+  background: var(--seller-bg-subtle);
+  border: 1px solid var(--seller-border-subtle);
+  border-radius: var(--seller-radius-md);
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.seller-contact-qr > strong {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.seller-contact-qr > p {
+  color: var(--seller-text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+}
+
+.seller-contact-qr .seller-contact-qr__saved {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.seller-contact-qr__picker {
+  align-items: center;
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 600;
+  justify-content: center;
+  min-height: 48px;
+  overflow: hidden;
+  padding: 0 20px;
+  position: relative;
+  width: min(220px, 100%);
+}
+
+.seller-contact-qr__picker input[type="file"] {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.seller-contact-qr__picker:has(input:focus-visible) {
+  outline: 3px solid var(--seller-focus);
+  outline-offset: 2px;
+}
+
+.seller-contact-save {
+  min-height: 48px;
+  width: 100%;
+}
+
+.seller-contact-management {
+  border: 1px solid var(--seller-border-subtle);
+  border-radius: var(--seller-radius-md);
+  padding: 12px;
+}
+
+.seller-contact-management summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 44px;
+}

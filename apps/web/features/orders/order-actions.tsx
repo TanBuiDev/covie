@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { CovieApiError } from "@/lib/api/api-error";
 import { errorCopy } from "@/lib/api/error-copy";
-import { OrderActionDialog } from "./order-action-dialog";
+import { OrderActionDialog, type OrderActorView } from "./order-action-dialog";
 import { orderCommand, type OrderAction, type OrderDetail } from "./order-api";
 
 const actionUi: Record<OrderAction, { label: string; priority?: "primary" | "danger" }> = {
@@ -25,7 +25,15 @@ const actionUi: Record<OrderAction, { label: string; priority?: "primary" | "dan
   REPORT_SERVICE_ISSUE: { label: "Có vấn đề với dịch vụ", priority: "danger" },
 };
 
-export function OrderActions({ order, onChanged }: { order: OrderDetail; onChanged: () => Promise<void> }) {
+export function OrderActions({
+  order,
+  actorView = "BUYER",
+  onChanged,
+}: {
+  order: OrderDetail;
+  actorView?: OrderActorView;
+  onChanged: () => Promise<void>;
+}) {
   const [selected, setSelected] = useState<OrderAction>();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string>();
@@ -35,6 +43,7 @@ export function OrderActions({ order, onChanged }: { order: OrderDetail; onChang
     () => (order.allowedActions ?? []).filter((action): action is OrderAction => action in actionUi),
     [order.allowedActions],
   );
+  const selectedAction = selected && actions.includes(selected) ? selected : undefined;
 
   function open(action: OrderAction) {
     setMessage(undefined);
@@ -43,12 +52,12 @@ export function OrderActions({ order, onChanged }: { order: OrderDetail; onChang
   }
 
   async function submit(input: { reasonCode?: string; note?: string }) {
-    if (!order.id || !selected || !intentKey || pending) return;
+    if (!order.id || !selectedAction || !intentKey || pending) return;
     setPending(true);
     setMessage(undefined);
 
     try {
-      await orderCommand(order.id, selected, intentKey, input);
+      await orderCommand(order.id, selectedAction, intentKey, input);
       setSelected(undefined);
       setIntentKey(undefined);
       await onChanged();
@@ -61,11 +70,13 @@ export function OrderActions({ order, onChanged }: { order: OrderDetail; onChang
           setIntentKey(undefined);
         } else if (error.status === 403) {
           setMessage("Thao tác này hiện không còn được phép với đơn hàng.");
+          setSelected(undefined);
+          setIntentKey(undefined);
         } else {
           setMessage(errorCopy(error.code, error.requestId));
         }
       } else {
-        setMessage("Không thể cập nhật đơn hàng. Vui lòng kiểm tra trạng thái mới nhất rồi thử lại.");
+        setMessage("Không thể cập nhật đơn hàng. Bạn có thể thử lại cùng thao tác; CoVie giữ nguyên idempotency key của lần này.");
       }
     } finally {
       setPending(false);
@@ -75,7 +86,7 @@ export function OrderActions({ order, onChanged }: { order: OrderDetail; onChang
   if (!actions.length && !message) return null;
 
   return (
-    <section className="order-actions" aria-label="Thao tác đơn hàng">
+    <section className="order-actions" aria-label="Thao tác đơn hàng" aria-busy={pending}>
       {message ? <p role="status">{message}</p> : null}
       <div className="action-row">
         {actions.map((action) => {
@@ -94,7 +105,8 @@ export function OrderActions({ order, onChanged }: { order: OrderDetail; onChang
         })}
       </div>
       <OrderActionDialog
-        action={selected}
+        action={selectedAction}
+        actorView={actorView}
         pending={pending}
         onCancel={() => {
           if (pending) return;

@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { ShippingPolicyForm } from "@/features/shipping/shipping-policy-form";
+import { ShippingPolicySettings } from "@/features/shipping/shipping-policy-settings";
 import { readApiError } from "@/lib/api/api-error";
 import { createServerReadClient } from "@/lib/api/server-api-client";
-import { formatMoney } from "@/lib/format/money";
 
 export default async function ShippingPage({
   params,
@@ -17,26 +16,14 @@ export default async function ShippingPage({
   if (!response.ok || !data) throw await readApiError(response);
 
   return (
-    <section>
-      <p><Link href={`/seller/${merchantId}/locations/${locationId}`}>← Điểm bán</Link></p>
-      <header className="surface-header">
-        <p className="eyebrow">Seller Center / Shipping</p>
+    <section className="seller-stack">
+      <p className="seller-desktop-only"><Link href={`/seller/${encodeURIComponent(merchantId)}/locations/${encodeURIComponent(locationId)}`}>Quay lại điểm bán</Link></p>
+      <header className="surface-header seller-desktop-only">
+        <p className="eyebrow">Seller Center / Giao hàng</p>
         <h1>Chính sách giao hàng</h1>
+        <p>Cấu hình freeship, phí cố định, phí theo điều kiện hoặc thỏa thuận.</p>
       </header>
-      {data.length ? (
-        <ul className="management-list">
-          {data.map((policy) => (
-            <li key={policy.id ?? `${policy.mode}-${policy.version}`}>
-              <div>
-                <strong>{policy.mode === "NEGOTIATED" ? "Thỏa thuận với người bán" : policy.mode ?? "Chính sách"}</strong>
-                {policy.baseFee != null && policy.currencyCode ? <small>{formatMoney({ amount: policy.baseFee, currency: policy.currencyCode })}</small> : null}
-                {policy.mode === "CONDITIONAL" ? <small>Khớp điều kiện: {policy.ruleMatchMode === "ALL" ? "Tất cả" : "Bất kỳ"}</small> : null}
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : <p>Chưa có chính sách giao hàng.</p>}
-      <ShippingPolicyForm merchantId={merchantId} locationId={locationId} />
+      <ShippingPolicySettings merchantId={merchantId} locationId={locationId} policies={data} />
     </section>
   );
 }

@@ -1,0 +1,182 @@
+.seller-workspace-header {
+  display: grid;
+  gap: 4px;
+}
+
+.seller-workspace-header h1 {
+  color: var(--seller-text-primary);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  margin: 0;
+}
+
+.seller-workspace-header p {
+  color: var(--seller-text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+}
+
+.seller-workspace-header--action {
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.seller-location-count {
+  color: var(--seller-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  margin: 0;
+}
+
+@media (min-width: 1024px) {
+  .seller-settings-page,
+  .seller-locations-page {
+    gap: 20px;
+    max-width: 1128px;
+  }
+
+  .seller-settings-page .seller-merchant-form {
+    align-items: start;
+    display: grid;
+    gap: 16px 24px;
+    grid-template-columns: minmax(0, 726px) minmax(300px, 378px);
+    max-width: 1128px;
+  }
+
+  .seller-settings-page .seller-merchant-form > .seller-media-settings {
+    grid-column: 2;
+    grid-row: 1 / span 5;
+    min-height: 220px;
+  }
+
+  .seller-settings-page .seller-merchant-form > label,
+  .seller-settings-page .seller-merchant-form > p,
+  .seller-settings-page .seller-merchant-form > button {
+    grid-column: 1;
+  }
+
+  .seller-settings-page .seller-merchant-form > label {
+    gap: 6px;
+  }
+
+  .seller-settings-page .seller-merchant-form > label > input,
+  .seller-settings-page .seller-merchant-form > label > textarea {
+    min-height: 44px;
+  }
+
+  .seller-settings-page .seller-merchant-form > label > textarea {
+    min-height: 132px;
+    resize: vertical;
+  }
+
+  .seller-shell .seller-settings-page .seller-merchant-form > button[type="submit"] {
+    justify-self: start;
+    min-height: 44px;
+    width: 180px;
+  }
+
+  .seller-locations-page .seller-workspace-header--action {
+    align-items: center;
+  }
+
+  .seller-locations-page .seller-location-add {
+    min-height: 40px;
+    width: auto;
+  }
+
+  .seller-locations-page .seller-location-list {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr;
+  }
+
+  .seller-locations-page .seller-location-card {
+    align-items: center;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(260px, 1.35fr) minmax(260px, 1fr) minmax(180px, auto);
+    min-height: 84px;
+    padding: 12px 16px;
+  }
+
+  .seller-locations-page .seller-location-card__copy {
+    overflow: hidden;
+  }
+
+  .seller-locations-page .seller-location-card__copy strong,
+  .seller-locations-page .seller-location-card__copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .seller-locations-page .seller-capability-list {
+    align-items: center;
+    min-width: 0;
+  }
+
+  .seller-locations-page .seller-location-card > :last-child {
+    justify-self: end;
+  }
+
+  .seller-location-form {
+    align-items: start;
+    display: grid;
+    gap: 16px 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 1128px;
+  }
+
+  .seller-location-form > h1,
+  .seller-location-form > h2,
+  .seller-location-form > p,
+  .seller-location-form > fieldset,
+  .seller-location-form > .seller-technical-fields,
+  .seller-location-form > .seller-info-card {
+    grid-column: 1 / -1;
+  }
+
+  .seller-shell .seller-location-form > button[type="submit"] {
+    justify-self: start;
+    min-height: 44px;
+    width: 180px;
+  }
+
+  .seller-location-config-links {
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 1128px;
+  }
+
+  .seller-config-link {
+    min-height: 132px;
+    padding: 16px;
+  }
+
+  .seller-config-form,
+  .seller-minimum-order-form {
+    max-width: 552px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .seller-settings-page .seller-merchant-form {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 36%);
+  }
+
+  .seller-locations-page .seller-location-card {
+    grid-template-columns: minmax(220px, 1fr) minmax(180px, .8fr);
+  }
+
+  .seller-locations-page .seller-location-card > :last-child {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .seller-location-form,
+  .seller-location-config-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

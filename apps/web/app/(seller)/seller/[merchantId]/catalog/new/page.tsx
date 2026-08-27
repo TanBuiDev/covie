@@ -1,12 +1,19 @@
 import Link from "next/link";
 import { CatalogCreateForm } from "@/features/catalog/catalog-create-form";
-import { requireUser } from "@/lib/auth/require-user";
+import { listCategoriesForServer } from "@/features/catalog/catalog-server-api";
+import { listLocationsForServer } from "@/features/merchant/merchant-server-api";
 
 export default async function NewCatalogPage({ params }: { params: Promise<{ merchantId: string }> }) {
-  await requireUser();
   const { merchantId } = await params;
-  return <main>
-    <Link href={`/seller/${merchantId}/catalog`}>← Catalog</Link>
-    <CatalogCreateForm merchantId={merchantId} />
-  </main>;
+  const [categories, locations] = await Promise.all([
+    listCategoriesForServer(),
+    listLocationsForServer(merchantId),
+  ]);
+
+  return (
+    <section className="seller-stack">
+      <p className="seller-desktop-only"><Link href={`/seller/${encodeURIComponent(merchantId)}/catalog`}>Quay lại catalog</Link></p>
+      <CatalogCreateForm merchantId={merchantId} categories={categories} locations={locations} />
+    </section>
+  );
 }
