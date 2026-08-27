@@ -53,7 +53,9 @@ export function SellerNavLinks({ merchantId, scrollActiveIntoView = false }: { m
 
   useEffect(() => {
     if (!scrollActiveIntoView) return;
-    activeLinkRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const activeLink = activeLinkRef.current;
+    if (!activeLink || typeof activeLink.scrollIntoView !== "function") return;
+    activeLink.scrollIntoView({ block: "nearest", inline: "nearest" });
   }, [pathname, scrollActiveIntoView]);
 
   return (
