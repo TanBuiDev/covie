@@ -27,7 +27,7 @@ function resolveSellerTitle(pathname: string, merchantId: string) {
 }
 
 export function SellerPageTitle({ merchantId }: { merchantId: string }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? sellerBasePath(merchantId);
   const copy = resolveSellerTitle(pathname, merchantId);
   return (
     <div className="seller-page-title">
