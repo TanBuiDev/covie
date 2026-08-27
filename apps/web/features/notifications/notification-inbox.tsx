@@ -1,8 +1,10 @@
 "use client";
 /* eslint-disable react-hooks/set-state-in-effect */
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CoVieIcon } from "@/components/ui/covie-icon";
 import { inbox, markAllRead, markRead, type Notification } from "./notification-api";
 import { notificationDeepLink } from "./notification-deep-link";
 import { notificationLabel } from "./notification-types";
@@ -66,9 +68,13 @@ export function NotificationInbox() {
 
   return (
     <section className={styles.screen} aria-labelledby="notification-title">
+      <div className={styles.appBar}>
+        <Link href="/me" aria-label="Quay lại hồ sơ"><CoVieIcon name="back" /></Link>
+        <h1 id="notification-title">Thông báo</h1>
+      </div>
       <header className={styles.header}>
         <div className={styles.headerText}>
-          <h1 id="notification-title">Thông báo gần đây</h1>
+          <h2>Thông báo gần đây</h2>
           <p>{unreadCount ? `${unreadCount} thông báo chưa đọc` : "Bạn đã đọc tất cả thông báo hiện có."}</p>
         </div>
         <button className={styles.markAll} type="button" onClick={() => void all()} disabled={!unreadCount || Boolean(pending)}>
