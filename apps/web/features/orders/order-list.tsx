@@ -30,9 +30,6 @@ export function OrderList({
 
   useEffect(() => {
     let active = true;
-    setOrders(undefined);
-    setNextCursor(undefined);
-    setError(undefined);
 
     void (merchantId ? merchantOrders(merchantId, { locationId: locationId || undefined, limit: 20 }) : myOrders())
       .then((page) => {
@@ -48,6 +45,20 @@ export function OrderList({
       active = false;
     };
   }, [merchantId, locationId, reloadKey]);
+
+  function changeLocation(nextLocationId: string) {
+    setLocationId(nextLocationId);
+    setOrders(undefined);
+    setNextCursor(undefined);
+    setError(undefined);
+  }
+
+  function reload() {
+    setOrders(undefined);
+    setNextCursor(undefined);
+    setError(undefined);
+    setReloadKey((value) => value + 1);
+  }
 
   async function loadMore() {
     if (!merchantId || !nextCursor || loadingMore) return;
@@ -69,7 +80,7 @@ export function OrderList({
       {merchantId && locations.length ? (
         <label className="seller-order-location-filter">
           Điểm bán
-          <select value={locationId} onChange={(event) => setLocationId(event.target.value)}>
+          <select value={locationId} onChange={(event) => changeLocation(event.target.value)}>
             <option value="">Tất cả điểm bán được phân công</option>
             {locations.map((location) => location.id ? (
               <option value={location.id} key={location.id}>{location.name ?? "Điểm bán"}</option>
@@ -83,7 +94,7 @@ export function OrderList({
         <ErrorState
           title="Không thể tải đơn hàng"
           description={error}
-          action={<button type="button" onClick={() => setReloadKey((value) => value + 1)}>Thử lại</button>}
+          action={<button type="button" onClick={reload}>Thử lại</button>}
         />
       ) : null}
       {!error && !orders ? <LoadingState label="Đang tải đơn hàng…" /> : null}
