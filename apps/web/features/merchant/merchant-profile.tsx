@@ -9,6 +9,7 @@ import styles from "./merchant-profile.module.css";
 type Merchant = components["schemas"]["PublicMerchantResponse"];
 type Reviews = components["schemas"]["ReviewPageResponse"];
 type Contact = components["schemas"]["PublicMerchantContactResponse"];
+type ProfilePresentation = "SHOP" | "PROVIDER";
 
 function initials(name?: string) {
   const words = name?.trim().split(/\s+/).filter(Boolean) ?? [];
@@ -38,7 +39,18 @@ function distance(value?: number) {
   return `${(value / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km`;
 }
 
-export function MerchantProfile({ merchant, reviews }: { merchant: Merchant; reviews?: Reviews }) {
+export function MerchantProfile({
+  merchant,
+  reviews,
+  presentation = "SHOP",
+}: {
+  merchant: Merchant;
+  reviews?: Reviews;
+  presentation?: ProfilePresentation;
+}) {
+  const provider = presentation === "PROVIDER";
+  const surfaceLabel = provider ? "Nhà cung cấp" : "Cửa hàng";
+  const fallbackName = provider ? "Nhà cung cấp CoVie" : "Cửa hàng CoVie";
   const completionPoints = merchant.reputation?.completionRateBasisPoints;
   const completionRate = completionPoints == null ? null : Math.round(completionPoints / 100);
   const rating = reviews?.rating;
@@ -52,21 +64,25 @@ export function MerchantProfile({ merchant, reviews }: { merchant: Merchant; rev
     <article className={styles.screen}>
       <header className={styles.appBar}>
         <Link href="/search" aria-label="Quay lại"><CoVieIcon name="back" /></Link>
-        <h1>Cửa hàng</h1>
+        <h1>{surfaceLabel}</h1>
       </header>
 
       <div className={styles.body}>
-        <h1 className={styles.desktopTitle}>Cửa hàng</h1>
+        <h1 className={styles.desktopTitle}>{surfaceLabel}</h1>
         <div className={styles.desktopSummary}>
           <section className={styles.hero} aria-labelledby="merchant-name">
             {merchant.cover?.url && <Image src={merchant.cover.url} alt="" fill sizes="(min-width: 1024px) 420px, 358px" unoptimized />}
-            <div><small>SHOP PUBLIC PROFILE</small><h2 id="merchant-name">{merchant.name ?? "Cửa hàng CoVie"}</h2>{merchant.description && <p>{merchant.description}</p>}</div>
+            <div>
+              <small>{provider ? "PROVIDER PUBLIC PROFILE" : "SHOP PUBLIC PROFILE"}</small>
+              <h2 id="merchant-name">{merchant.name ?? fallbackName}</h2>
+              {merchant.description && <p>{merchant.description}</p>}
+            </div>
           </section>
 
-          <section className={styles.identity} aria-label="Thông tin cửa hàng">
+          <section className={styles.identity} aria-label={`Thông tin ${surfaceLabel.toLocaleLowerCase("vi-VN")}`}>
             <div className={styles.avatar}>{merchant.logo?.url ? <Image src={merchant.logo.url} alt="" fill sizes="48px" unoptimized /> : initials(merchant.name)}</div>
-            <div><strong>{merchant.name ?? "Cửa hàng CoVie"}</strong>{primaryLocation?.name && <small>{primaryLocation.name}</small>}{distance(primaryLocation?.distanceMeters) && <small>Cách bạn {distance(primaryLocation?.distanceMeters)}</small>}{merchant.reputation?.completedOrders != null && <b>Đã hoàn thành {merchant.reputation.completedOrders} đơn</b>}</div>
-            {merchant.id ? <ReportButton targetType="MERCHANT" targetId={merchant.id} contextMerchantId={merchant.id} label="Báo cáo cửa hàng" /> : null}
+            <div><strong>{merchant.name ?? fallbackName}</strong>{primaryLocation?.name && <small>{primaryLocation.name}</small>}{distance(primaryLocation?.distanceMeters) && <small>Cách bạn {distance(primaryLocation?.distanceMeters)}</small>}{merchant.reputation?.completedOrders != null && <b>Đã hoàn thành {merchant.reputation.completedOrders} đơn</b>}</div>
+            {merchant.id ? <ReportButton targetType="MERCHANT" targetId={merchant.id} contextMerchantId={merchant.id} label={`Báo cáo ${surfaceLabel.toLocaleLowerCase("vi-VN")}`} /> : null}
           </section>
 
           <section className={styles.trust}>
@@ -93,8 +109,8 @@ export function MerchantProfile({ merchant, reviews }: { merchant: Merchant; rev
           </section>
 
           <section className={styles.catalog}>
-            <h3>Danh mục công khai</h3>
-            <div className={styles.empty}>Chưa thể tải danh mục của cửa hàng.</div>
+            <h3>{provider ? "Dịch vụ công khai" : "Danh mục công khai"}</h3>
+            <div className={styles.empty}>{provider ? "Chưa thể tải dịch vụ công khai của nhà cung cấp." : "Chưa thể tải danh mục của cửa hàng."}</div>
           </section>
         </div>
 
@@ -102,4 +118,13 @@ export function MerchantProfile({ merchant, reviews }: { merchant: Merchant; rev
       </div>
     </article>
   );
+}
+
+/**
+ * Provider is an explicit presentation mode only. The current public merchant
+ * response does not expose a trustworthy Shop/Provider discriminator, so the
+ * public route must not select this variant heuristically.
+ */
+export function ProviderProfile({ merchant, reviews }: { merchant: Merchant; reviews?: Reviews }) {
+  return <MerchantProfile merchant={merchant} reviews={reviews} presentation="PROVIDER" />;
 }
