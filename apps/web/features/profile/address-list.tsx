@@ -3,7 +3,7 @@
 import type { components } from "@covie/api-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CoVieIcon } from "@/components/ui/covie-icon";
 import { deleteSavedAddress } from "./address-api";
@@ -15,7 +15,15 @@ function addressTitle(address: Address) {
   return [address.label || "Địa chỉ", address.recipientName].filter(Boolean).join(" · ");
 }
 
-function AddressCard({ address, onDelete }: { address: Address; onDelete: () => void }) {
+function AddressCard({
+  address,
+  onDelete,
+  deleteButtonRef,
+}: {
+  address: Address;
+  onDelete: () => void;
+  deleteButtonRef?: (node: HTMLButtonElement | null) => void;
+}) {
   const label = address.label || "Địa chỉ";
   const secondaryNote = [address.note, !address.defaultAddress ? "Không phải địa chỉ mặc định" : undefined]
     .filter(Boolean)
@@ -31,7 +39,7 @@ function AddressCard({ address, onDelete }: { address: Address; onDelete: () => 
       {address.id ? (
         <div className={`${styles.cardActions} ${!address.defaultAddress ? styles.nonDefaultActions : ""}`}>
           <Link href={`/me/addresses/${encodeURIComponent(address.id)}`} aria-label={`Chỉnh sửa ${label}`}>Chỉnh sửa</Link>
-          <button type="button" aria-label={`Xóa ${label}`} onClick={onDelete}>Xóa</button>
+          <button ref={deleteButtonRef} type="button" aria-label={`Xóa ${label}`} onClick={onDelete}>Xóa</button>
         </div>
       ) : null}
     </article>
@@ -51,6 +59,14 @@ export function AddressList({
   const [deleteTarget, setDeleteTarget] = useState<Address>();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string>();
+  const deleteTriggerRefs = useRef(new Map<string, HTMLButtonElement>());
+  const restoreFocusAddressId = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (deleteTarget || !restoreFocusAddressId.current) return;
+    deleteTriggerRefs.current.get(restoreFocusAddressId.current)?.focus();
+    restoreFocusAddressId.current = undefined;
+  }, [deleteTarget]);
 
   async function confirmDelete() {
     if (!deleteTarget?.id || pending) return;
@@ -72,7 +88,24 @@ export function AddressList({
       {message ? <p className={styles.error} role="alert">{message}</p> : null}
       {addresses.length ? (
         <ul className={styles.list}>
-          {addresses.map((address) => <li key={address.id ?? `${address.label}-${address.addressText}`}><AddressCard address={address} onDelete={() => setDeleteTarget(address)} /></li>)}
+          {addresses.map((address) => {
+            const addressId = address.id;
+            return (
+              <li key={addressId ?? `${address.label}-${address.addressText}`}>
+                <AddressCard
+                  address={address}
+                  deleteButtonRef={addressId ? (node) => {
+                    if (node) deleteTriggerRefs.current.set(addressId, node);
+                    else deleteTriggerRefs.current.delete(addressId);
+                  } : undefined}
+                  onDelete={() => {
+                    restoreFocusAddressId.current = addressId;
+                    setDeleteTarget(address);
+                  }}
+                />
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <section className={styles.empty}>

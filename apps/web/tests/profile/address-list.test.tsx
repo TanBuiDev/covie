@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AddressList } from "@/features/profile/address-list";
 
@@ -64,6 +64,26 @@ describe("BUY-003 Address List", () => {
     fireEvent.click(screen.getByRole("button", { name: "Xác nhận xóa" }));
     await waitFor(() => expect(deleteSavedAddress).toHaveBeenCalledWith("address-1"));
     expect(navigation.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("owns dialog focus, labels, and Escape dismissal in one responsive tree", () => {
+    render(<AddressList addresses={addresses} />);
+
+    const trigger = screen.getByRole("button", { name: "Xóa Nhà" });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const dialog = screen.getByRole("dialog");
+    const title = screen.getByRole("heading", { name: "Xóa địa chỉ này?" });
+    const description = screen.getByText("Địa chỉ sẽ bị xóa khỏi tài khoản. Hành động cần xác nhận trước khi thực hiện.");
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(dialog).toHaveAttribute("aria-labelledby", title.id);
+    expect(dialog).toHaveAttribute("aria-describedby", description.id);
+    expect(within(dialog).getByRole("button", { name: "Giữ địa chỉ" })).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Xóa Nhà" })).toHaveFocus();
   });
 
   it("renders the empty state without hiding the create action", () => {
