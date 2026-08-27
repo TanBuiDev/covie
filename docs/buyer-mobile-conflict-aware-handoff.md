@@ -6,11 +6,10 @@
 - Implementation branch: `feature/buyer-mobile-finish-ui`
 - Base branch: `feature/buyer-desktop-figma-ui`
 - Base SHA: `6bf733d43ed07a731faba9dedf6f00812678e478`
-- Implementation + finalized coverage SHA before this handoff document: `da810950f8dba9c88b022041392c4618991656d4`
 - Figma visual source: `03 — Buyer Mobile` (`3:4`)
 - Behavior source: current API/backend contract on the selected base; frontend does not own lifecycle transitions or eligibility.
 
-The handoff document is itself a later commit, so the final branch HEAD is intentionally reported in the delivery message rather than self-referencing a SHA that would change every time this file is edited.
+The handoff document is itself a branch commit, so the final branch HEAD is intentionally reported in the delivery message rather than self-referencing a SHA that changes when this file is edited.
 
 ## Implemented scope
 
@@ -42,6 +41,8 @@ The handoff document is itself a later commit, so the final branch HEAD is inten
 - Finished reusable Buyer mobile review form presentation (1–5 star selector, optional comment, submit/success/error behavior) using the existing review API.
 - Did not auto-mount review CTA from `COMPLETED`; current Order Detail does not expose sufficient authoritative review eligibility + `orderItemId` for that flow.
 - Finished report mobile presentation and wired it back into the existing `ReportButton`, reason codes, idempotency and moderation API behavior.
+- Added optional report target title/meta presentation so the mobile report sheet can show the Figma “NỘI DUNG ĐANG BÁO CÁO” card only when the caller supplies authoritative display data.
+- Catalog Detail and Merchant Profile pass their real API-backed name/type/location/merchant context to the report sheet; missing target context is omitted rather than fabricated.
 - No moderation result/state was invented.
 
 ### Notifications
@@ -107,6 +108,7 @@ These are deliberately not implemented as guessed frontend behavior:
 - `apps/web/app/(buyer)/needs/page.tsx`
 - `apps/web/app/(buyer)/orders/page.tsx`
 - `apps/web/features/auth/session-list.tsx`
+- `apps/web/features/catalog/catalog-detail.tsx`
 - `apps/web/features/location/location-chooser.tsx`
 - `apps/web/features/merchant/merchant-profile.tsx`
 - `apps/web/features/needs/need-create-form.tsx`
@@ -130,12 +132,13 @@ No backend, OpenAPI, generated API client, DB/schema, pricing, inventory, permis
 | --- | --- | --- |
 | New CSS modules / new mobile presentation files | LOW | `SAFE_STANDALONE`; normally take branch version as-is |
 | `/register` new route | LOW | `SAFE_STANDALONE` unless local already added the same route |
-| `merchant-profile.tsx` Provider variant | MEDIUM | Preserve newer local Shop business/data wiring; port only explicit presentation parameter/wrapper |
+| `merchant-profile.tsx` Provider/report presentation | MEDIUM | Preserve newer local Shop business/data wiring; port only explicit presentation parameter/wrapper and report display context |
+| `catalog-detail.tsx` report target context | MEDIUM | Preserve newer local cart/availability behavior; the branch change only passes authoritative display props into `ReportButton` |
 | `location-chooser.tsx` | MEDIUM | Preserve newer local `BrowseLocation` contract/storage behavior; port mobile presentation and saved-address wiring selectively |
 | Need feature components | MEDIUM | Preserve newer local API/error/business logic; port class/wrapper/presentation changes; keep `actionable` authoritative |
 | `notification-inbox.tsx` | MEDIUM | Preserve safe deep-link helper and API calls; presentation is separable via module CSS |
 | `profile-overview.tsx`, sessions | MEDIUM | Presentation-oriented; preserve newer local auth/session APIs if changed |
-| `report-button.tsx` | MEDIUM | Keep current API/reason/idempotency behavior; port CSS-module wiring/mobile markup |
+| `report-button.tsx` | MEDIUM | Keep current API/reason/idempotency behavior; port CSS-module wiring/mobile markup and optional display-only target context |
 | `review-form.tsx` | MEDIUM | Standalone reusable form; do not add order-status eligibility during merge |
 | `order-detail.tsx` | **HIGH** | Do not resolve wholesale. Preserve local loader/refresh/business behavior and `allowedActions`; port `OrderDetailMobile` wiring/presentation selectively |
 
@@ -149,7 +152,7 @@ No backend, OpenAPI, generated API client, DB/schema, pricing, inventory, permis
 6. Add `order-detail-mobile.tsx` + CSS first, then manually port the narrow wiring in `order-detail.tsx`.
 7. Needs list/create/detail/responses presentation.
 8. Review reusable presentation (do not auto-mount from status).
-9. Report CSS + `ReportButton` wiring.
+9. Report CSS + `ReportButton` wiring, then optional Catalog/Merchant target-context commits.
 10. Notifications CSS + inbox wiring.
 11. Profile CSS + overview wiring.
 12. Sessions CSS + list/page wiring.
@@ -171,11 +174,13 @@ Early/domain commits already on the branch include:
 - `ebb67b22`, `506e2f44`, `17fe247a`, `b1c84dc4`, `716634dd`, `2fc7a65e`, `178dde8b`, `55f5d668`, `b50e159d` — Needs
 - `caf675f4`, `ad6ab4f1` — Review
 - `b83c0f77`, `f662f075` — Report presentation + wiring
+- `ff0957de`, `2632a9d1`, `c8dc3827`, `98d228b9` — authoritative Report target-context presentation and caller wiring
 - `97f42576` — Provider presentation variant
 - `4ea2e33c`, `ea76b025`, `79b3b6b6`, `591e4066` — Notification presentation/app bar
 - `bf55badb`, `97e0fb54` — Profile
 - `e0c150f9`, `93b1128f`, `7af2d3cd`, `ccb0d962` — Sessions/security (including explicit preservation of existing revoke behavior)
-- `da810950` — finalized coverage matrix before handoff
+- `da810950` — finalized coverage matrix
+- `16b70b46` — first handoff snapshot; this document was subsequently refined to include final Report context changes
 
 Use `git log --oneline 6bf733d4..feature/buyer-mobile-finish-ui` locally for the exact full ordered commit list.
 
@@ -190,7 +195,7 @@ pnpm web:test
 pnpm web:build
 ```
 
-Current status at handoff creation:
+Current status at final handoff update:
 
 - Typecheck: **NOT EXECUTED**
 - Lint: **NOT EXECUTED**
@@ -220,6 +225,6 @@ Then run the normal local stack and review at minimum:
 - 390×844
 - 360×800
 
-Check: app-bar heights/touch targets, horizontal overflow, bottom-nav safe area, loading/empty/error states, keyboard/focus behavior, report modal scrolling, notification fallback with no deep link, session revoke states, Order `allowedActions`, Need `actionable`, GPS denied/manual location fallback.
+Check: app-bar heights/touch targets, horizontal overflow, bottom-nav safe area, loading/empty/error states, keyboard/focus behavior, report modal scrolling and target context, notification fallback with no deep link, session revoke states, Order `allowedActions`, Need `actionable`, GPS denied/manual location fallback.
 
 Only after these executable/browser gates pass should the branch be called `Buyer Mobile remaining UI — COMPLETE` / `VISUALLY_VERIFIED`.
