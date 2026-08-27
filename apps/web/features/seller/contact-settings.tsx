@@ -61,7 +61,12 @@ export function MerchantContactSettings({
     const form = new FormData(formElement);
     const zaloValue = String(form.get("zaloLink") ?? "").trim();
     const messengerValue = String(form.get("messengerLink") ?? "").trim();
-    const qrFile = form.get("qrFile");
+    const qrEntry = form.get("qrFile");
+    const qrControl = formElement.elements.namedItem("qrFile");
+    const qrInputFile = qrControl && "files" in qrControl
+      ? (qrControl as HTMLInputElement).files?.[0] ?? null
+      : null;
+    const qrFile = qrInputFile ?? (isSelectedFile(qrEntry) ? qrEntry : null);
     const requests: MerchantContactInput[] = [];
 
     if (!zaloContact && zaloValue) {
@@ -75,7 +80,7 @@ export function MerchantContactSettings({
     setMessage(undefined);
     setMessageIsError(false);
     try {
-      if (!qrContact && isSelectedFile(qrFile)) {
+      if (!qrContact && qrFile && qrFile.size > 0) {
         const media = await uploadImage(qrFile, "MERCHANT_CONTACT_QR");
         if (!media.mediaId) throw new Error("MERCHANT_CONTACT_QR_MEDIA_ID_MISSING");
         requests.push({ merchantLocationId, contactType: "ZALO_QR", qrMediaId: media.mediaId, publicContact: true });
