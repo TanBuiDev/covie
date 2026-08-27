@@ -4,10 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
 import { AdminSuspensionAction } from "./admin-suspension-action";
-import { AdminPageHeader, AdminStatusChip, AdminSurface, formatAdminDate, presentAccountStatus } from "./admin-ui";
+import { AdminPageHeader, AdminStatusChip, AdminSurface, formatAdminDate, presentAccountStatus, presentModerationStatus } from "./admin-ui";
 
 type Row = Record<string, unknown> & { id: string; status: string };
+type PagePayload = { items?: Row[]; total?: number; page?: number; size?: number };
 
+const PAGE_SIZE = 50;
 const columnLabels: Record<string, string> = {
   id: "Mã",
   displayName: "Người dùng",
@@ -28,23 +30,26 @@ export function AdminEntityTable({ type, title, columns }: { type: "users" | "me
   const [selectedId, setSelectedId] = useState<string>();
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(undefined);
     try {
-      const response = await requestBrowserApi("GET", `/api/v1/admin/${type}`);
+      const response = await requestBrowserApi("GET", `/api/v1/admin/${type}?page=${page}&size=${PAGE_SIZE}`);
       if (!response.ok) throw await readApiError(response);
-      const payload = await response.json() as { items?: Row[] } | Row[];
-      const nextItems = Array.isArray(payload) ? payload : payload.items ?? [];
+      const payload = await response.json() as PagePayload;
+      const nextItems = payload.items ?? [];
       setItems(nextItems);
+      setTotal(payload.total ?? nextItems.length);
       setSelectedId(current => current && nextItems.some(item => item.id === current) ? current : nextItems[0]?.id);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Không thể tải dữ liệu quản trị");
     } finally {
       setLoading(false);
     }
-  }, [type]);
+  }, [page, type]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -61,6 +66,7 @@ export function AdminEntityTable({ type, title, columns }: { type: "users" | "me
 
   const selected = items.find(item => item.id === selectedId) ?? items[0];
   const subtitle = type === "users" ? "Quản trị vận hành" : "Quản lý tài khoản người bán và nhà cung cấp";
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="admin-page-stack">
@@ -78,7 +84,7 @@ export function AdminEntityTable({ type, title, columns }: { type: "users" | "me
                   <tbody>{items.map(item => {
                     const status = presentAccountStatus(item.status);
                     return <tr key={item.id} data-selected={item.id === selected?.id || undefined}>
-                      {columns.map(column => <td key={column}>{column === "status" ? <AdminStatusChip label={status.label} tone={status.tone} /> : displayValue(item, column)}</td>)}
+                      {columns.map(column => <td key={column}>{column === "status" ? <AdminStatusChip label={status.label} tone={status.tone} /> : column === "moderationStatus" ? (() => { const moderation = presentModerationStatus(item.moderationStatus); return <AdminStatusChip label={moderation.label} tone={moderation.tone} />; })() : displayValue(item, column)}</td>)}
                       <td><button className="admin-row-action" type="button" onClick={() => setSelectedId(item.id)}>Xem</button></td>
                     </tr>;
                   })}</tbody>
@@ -89,13 +95,14 @@ export function AdminEntityTable({ type, title, columns }: { type: "users" | "me
               <div className="admin-entity-summary__top"><strong>{String(selected.displayName ?? selected.name ?? selected.id)}</strong><AdminStatusChip label="Thông tin" tone="neutral" /></div>
               <dl>
                 <div><dt>Trạng thái</dt><dd>{presentAccountStatus(selected.status).label}</dd></div>
-                {type === "merchants" ? <div><dt>Kiểm duyệt</dt><dd>{String(selected.moderationStatus ?? "—")}</dd></div> : null}
+                {type === "merchants" ? <div><dt>Kiểm duyệt</dt><dd>{presentModerationStatus(selected.moderationStatus).label}</dd></div> : null}
                 <div><dt>ID</dt><dd>{selected.id}</dd></div>
                 <div><dt>Cập nhật</dt><dd>{formatAdminDate(selected.updatedAt ?? selected.createdAt)}</dd></div>
               </dl>
               <p className="admin-caption">Thông tin chi tiết theo dữ liệu hệ thống.</p>
             </AdminSurface> : null}
           </div>
+          {totalPages > 1 ? <div className="admin-pagination"><span>Trang {page + 1} / {totalPages} · {total} mục</span><div><button className="admin-button admin-button--secondary" disabled={page === 0 || loading} onClick={() => setPage(value => Math.max(0, value - 1))}>Trước</button><button className="admin-button admin-button--secondary" disabled={page + 1 >= totalPages || loading} onClick={() => setPage(value => value + 1)}>Sau</button></div></div> : null}
           {selected ? <AdminSurface className="admin-safety-card">
             <h2>Tạm ngưng / khôi phục tài khoản</h2>
             <p>Mọi thao tác có tác động đến tài khoản đều yêu cầu xác nhận. Trạng thái được quyết định bởi hệ thống; màn hình này không cung cấp trường sửa trạng thái trực tiếp.</p>

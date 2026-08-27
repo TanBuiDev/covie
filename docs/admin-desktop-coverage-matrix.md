@@ -2,32 +2,41 @@
 
 Figma source: `06 — Admin Desktop` (`3:7`) in `4LcMXFQz3BnU1EXzBk69t2`.
 
-Base decision: `main` (`42693a64139b8213765dafaa57e4fd66bb3d3736`). The Seller Mobile/Desktop branches do not add Admin route/domain/API blobs compared with `main` and would add unrelated Seller UI commits. No accessible dedicated Admin/moderation/settings branch was found.
+Implementation branch: `feature/admin-desktop-figma-ui`.
 
-Status legend: `FOUNDATION` existing production contract/code to reuse; `TODO` implementation pending; `READ_ONLY` mutation intentionally not exposed; `CONTRACT_GAP` API support must not be fabricated; `RUNTIME_PENDING` needs executable backend/browser verification.
+Base decision: branch created from `main` (`42693a64139b8213765dafaa57e4fd66bb3d3736`). Seller Mobile/Desktop branches were intentionally not used because they did not add Admin contracts and would introduce unrelated Seller UI commits.
 
-| ADM | Figma node/frame | Route | Existing code | API dependency | Implementation status | Contract gap | Runtime status | Visual status |
-|---|---|---|---|---|---|---|---|---|
-| ADM-001 | `393:4507` Dashboard | `/admin` | Admin auth layout + API primitives | reports/moderation/settings/audit-backed summary only | TODO | dashboard aggregate/count endpoint not assumed | RUNTIME_PENDING | FIGMA_AUDITED |
-| ADM-002 | `393:4746` Users | `/admin/users` | users route + suspension primitive | admin users + suspend/restore, server auth/concurrency | FOUNDATION → TODO | allowed action/version details must come from server | RUNTIME_PENDING | TODO |
-| ADM-003 | `393:5003` Seller Provider Accounts | `/admin/merchants` | merchants route + suspension primitive | admin merchants + suspend/restore | FOUNDATION → TODO | allowed action/version details must come from server | RUNTIME_PENDING | TODO |
-| ADM-004 | `399:1190` Shops & Locations | `/admin/shops` | shared read-table patterns | authoritative admin shop/location reads | TODO | mutations not assumed | RUNTIME_PENDING | TODO |
-| ADM-005 | `399:1413` Listings | `/admin/listings` | moderation primitives | listing/admin moderation reads/actions | TODO | hidden/unknown target fields degrade safely | RUNTIME_PENDING | TODO |
-| ADM-006 | `400:1545` Order Explorer | `/admin/orders` | orders route + read-table | admin order search/detail | FOUNDATION → TODO, READ_ONLY | no force-status command inferred | RUNTIME_PENDING | TODO |
-| ADM-007 | `400:1818` Order History | `/admin/orders/[orderId]/history` | order domain/history patterns | authoritative order history/snapshots | TODO, READ_ONLY | unavailable snapshot fields stay unavailable | RUNTIME_PENDING | TODO |
-| ADM-008 | `404:2216` Need Requests | `/admin/needs` | needs domain exists | admin need reads/moderation if exposed | TODO | moderation mutations only if authoritative API exists | RUNTIME_PENDING | TODO |
-| ADM-009 | `404:2473` Reports Queue | `/admin/reports` | moderation route/actions | report cases, allowed actions/version | FOUNDATION → TODO | `allowedActions`/case version is authoritative | RUNTIME_PENDING | TODO |
-| ADM-010/011/012 | `407:2674` Policy Settings | `/admin/settings` | admin settings GET/detail/PATCH with `If-Match` | `/api/v1/admin/settings` | FOUNDATION → TODO | ranges/options use server definitions | RUNTIME_PENDING | TODO |
-| ADM-013 | `407:2946` Order Timeout Settings | `/admin/settings?section=orders` | settings editor | settings definitions/detail/PATCH | FOUNDATION → TODO | no sample Figma ranges hard-coded | RUNTIME_PENDING | TODO |
-| ADM-014 | `407:3149`, `408:3265` Need Matching Settings | `/admin/settings?section=needs` | settings editor | settings definitions/detail/PATCH | FOUNDATION → TODO | server limits authoritative | RUNTIME_PENDING | TODO |
-| ADM-015 | `423:17219` Communities & Zones | `/admin/zones` | location/domain read patterns | canonical zone/community reads if present | TODO, READ_ONLY | CONTRACT_GAP until mutation API is proven | RUNTIME_PENDING | TODO |
-| ADM-016 | `423:17230` Categories | `/admin/categories` | catalog/category domain read patterns | canonical category reads | TODO, READ_ONLY | CONTRACT_GAP for CRUD unless API proves otherwise | RUNTIME_PENDING | TODO |
-| ADM-017 | `417:3838` Audit Log | `/admin/audit` | admin read-table patterns | audit query/filter/pagination endpoint if exposed | TODO, READ_ONLY | sensitive/hidden fields never reconstructed | RUNTIME_PENDING | TODO |
+Status legend: `IMPLEMENTED` production UI wired to an authoritative repository contract; `READ_ONLY` mutation intentionally not exposed; `SAFE_CONTRACT_GAP` route is implemented as an explicit safe state because no Admin read/mutation contract exists; `RUNTIME_PENDING` executable browser/backend verification still required; `FIGMA_AUDITED` exact frame/component contract reviewed from Figma.
 
-## Required states
+| ADM | Figma node/frame | Route | Authoritative data/contract | Implementation status | Safety boundary | Runtime | Visual |
+|---|---|---|---|---|---|---|---|
+| ADM-001 | `393:4507` Dashboard | `/admin` | existing Admin users/merchants/orders/moderation endpoints only | IMPLEMENTED | no fabricated `/admin/stats`; unavailable metric degrades safely | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-002 | `393:4746` Users | `/admin/users` | `/api/v1/admin/users`, suspend/restore + Idempotency-Key | IMPLEMENTED | suspend only valid account states; reason + confirmation; server status authoritative | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-003 | `393:5003` Seller Provider Accounts | `/admin/merchants` | `/api/v1/admin/merchants`, suspend/restore | IMPLEMENTED | PAUSED/SUSPENDED/DELETED handled explicitly; moderation status mapped by caller | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-004 | `399:1190` Shops & Locations | `/admin/shops` | no dedicated Admin shop/location read endpoint | SAFE_CONTRACT_GAP | does not reuse Seller/private mutation surfaces | RUNTIME_PENDING | SAFE_STATE |
+| ADM-005 | `399:1413` Listings | `/admin/listings` | moderation cases exist; no independent Admin listing-read endpoint | SAFE_CONTRACT_GAP | no sample listing data; real reports are handled through moderation cases | RUNTIME_PENDING | SAFE_STATE |
+| ADM-006 | `400:1545` Order Explorer | `/admin/orders` | Admin order page + detail endpoint | IMPLEMENTED, READ_ONLY | server order-code search/pagination; no force-status command anywhere | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-007 | `400:1818` Order History | `/admin/orders/[orderId]/history` | Admin order detail + Admin events endpoint | IMPLEMENTED, READ_ONLY | every internal event code maps to human copy; unknown codes never exposed; no lifecycle transitions | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-008 | `404:2216` Need Requests | `/admin/needs` | user/merchant Need APIs exist; no Admin Need read/moderation endpoint | SAFE_CONTRACT_GAP | private participant APIs are not repurposed as Admin data | RUNTIME_PENDING | SAFE_STATE |
+| ADM-009 | `404:2473` Reports Queue | `/admin/reports` | Admin moderation page/detail/action endpoints | IMPLEMENTED | case status/action server-owned; destructive actions confirm; 409/412 shows reload-required state | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-010/011/012 | `407:2674` Policy Settings | `/admin/settings` | `/api/v1/admin/settings`, detail/PATCH + If-Match | IMPLEMENTED | exact registry keys, server definitions/scopes/value types; global changes confirm | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-013 | `407:2946` Order Timeout Settings | `/admin/settings?section=orders` | setting registry + settings API | IMPLEMENTED | no Figma sample ranges hard-coded; server validation authoritative | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-014 | `407:3149`, `408:3265` Need Matching Settings | `/admin/settings?section=needs` | setting registry + settings API | IMPLEMENTED | matching limit sourced from registry/API | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-015 | `423:17219` Communities & Zones | `/admin/zones` | canonical `GET /api/v1/location-areas` | IMPLEMENTED, READ_ONLY | no zone mutation API exists, so no create/edit/delete controls | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-016 | `423:17230` Categories | `/admin/categories` | canonical `GET /api/v1/categories` | IMPLEMENTED, READ_ONLY | no Admin category CRUD contract exists | RUNTIME_PENDING | FIGMA_AUDITED |
+| ADM-017 | `417:3838` Audit Log | `/admin/audit` | `/api/v1/admin/audit-logs` filters + Spring pagination | IMPLEMENTED, READ_ONLY | metadata is summarized with sensitive-key suppression; no raw private blob dump | RUNTIME_PENDING | FIGMA_AUDITED |
 
-All production pages are tracked for loading, empty, error/no-access, unknown or hidden target, long text, pagination, pending/disabled mutation and safe fallback copy. Mutation surfaces additionally track confirmation, no double submit, stale/version conflict and refresh-required/case-changed handling. Orders/history/audit/zones/categories preserve their read-only boundaries unless an authoritative repository API explicitly proves a write contract.
+## Implemented Admin Desktop contract
 
-## Desktop contract
+- Canonical Admin sidebar follows the frozen Figma IA: Dashboard, Users, Seller / Provider, Shops & Locations, Listings, Orders, Cần mua, Reports, Communities / Zones, Categories, Settings, Audit Log.
+- Desktop canvas targets the Figma 1440×900 composition: 252px sidebar + flexible main column. At narrower desktop widths, tables scroll internally rather than introducing page-level horizontal overflow.
+- Status chips are presentation-only: pages map known domain states and fall back to `Trạng thái đã được cập nhật` rather than parsing unknown enums inside the chip.
+- Orders are strictly read-only in Admin. The UI never renders or calls a force-order-status command.
+- User/merchant suspension uses confirmation, Idempotency-Key, reason requirements, disabled invalid states, no double-submit, and refresh after success.
+- Moderation/report actions use explicit confirmation; destructive actions require a reason code; 409/412 is treated as case-changed/stale state and requires reload.
+- Settings use server-provided definitions/details and If-Match when a persisted GLOBAL version is available. Registry keys are grouped explicitly instead of guessing sections from substrings.
+- Audit filtering is sent to the server (`actorUserId`, `action`, `entityType`, `entityId`, `requestId`, `createdFrom`, `createdTo`, `sort`) with page size 50. Audit metadata is shown only as a short safe summary.
 
-Canonical canvas is 1440×900 with 252px sidebar and 1188px main column. Target desktop widths: 1024, 1280 and 1440. At 1024, tables may scroll internally but the page must not introduce horizontal overflow.
+## Remaining verification
+
+No fake API, mock production dataset, or Seller-private Admin substitute is required to finish this branch. Remaining work is executable verification: install dependencies, run web `typecheck`, `lint`, `test`, build, then browser/Playwright checks at 1024/1280/1440 against an authenticated Admin backend. The repository CI workflow does not run for arbitrary feature-branch pushes, so this remains `RUNTIME_PENDING` until the branch is tested locally or through a pull request workflow.
