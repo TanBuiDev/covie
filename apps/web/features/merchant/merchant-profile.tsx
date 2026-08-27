@@ -59,6 +59,7 @@ export function MerchantProfile({
     : null;
   const primaryLocation = merchant.locations?.[0];
   const actions = merchant.contacts?.map(contactAction).filter((action): action is NonNullable<typeof action> => Boolean(action)) ?? [];
+  const reportMeta = [surfaceLabel, primaryLocation?.name, primaryLocation?.addressText].filter(Boolean).join(" · ");
 
   return (
     <article className={styles.screen}>
@@ -82,7 +83,7 @@ export function MerchantProfile({
           <section className={styles.identity} aria-label={`Thông tin ${surfaceLabel.toLocaleLowerCase("vi-VN")}`}>
             <div className={styles.avatar}>{merchant.logo?.url ? <Image src={merchant.logo.url} alt="" fill sizes="48px" unoptimized /> : initials(merchant.name)}</div>
             <div><strong>{merchant.name ?? fallbackName}</strong>{primaryLocation?.name && <small>{primaryLocation.name}</small>}{distance(primaryLocation?.distanceMeters) && <small>Cách bạn {distance(primaryLocation?.distanceMeters)}</small>}{merchant.reputation?.completedOrders != null && <b>Đã hoàn thành {merchant.reputation.completedOrders} đơn</b>}</div>
-            {merchant.id ? <ReportButton targetType="MERCHANT" targetId={merchant.id} contextMerchantId={merchant.id} label={`Báo cáo ${surfaceLabel.toLocaleLowerCase("vi-VN")}`} /> : null}
+            {merchant.id ? <ReportButton targetType="MERCHANT" targetId={merchant.id} contextMerchantId={merchant.id} label={`Báo cáo ${surfaceLabel.toLocaleLowerCase("vi-VN")}`} targetTitle={merchant.name ?? fallbackName} targetMeta={reportMeta || undefined} /> : null}
           </section>
 
           <section className={styles.trust}>
