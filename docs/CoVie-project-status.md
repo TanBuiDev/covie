@@ -1,8 +1,8 @@
 # CoVie V1 — Project Status Dashboard
 
-**Last verified:** 2026-08-26
-**Overall status:** Plans 01–10 are integrated on `main` for planning closure. The requested Public Buyer P0 route chain has populated local flow and screenshot acceptance for PUB-001, PUB-003…008 and BUY-001/002/003/005/006; PUB-009 Shop has a reviewed contract-safe first pass while its Provider variant remains open. BUY-004 create/edit and remaining Figma units, authenticated staging journeys and release acceptance remain open.
-**Current implementation plan:** Verification and carry-over hardening — see `CoVie-plan-closure-audit-2026-08-24.md`.
+**Last verified:** 2026-08-28
+**Overall status:** Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop remote implementations are integrated locally on `codex/integrated-ui-completion`. The integration is not yet remotely reviewed: the baseline has 13 Vitest failures and 11 lint errors, while typecheck and production build pass. Exact-frame runtime acceptance, authenticated staging journeys and release acceptance remain open.
+**Current implementation plan:** Integrated UI completion — see `superpowers/plans/2026-08-28-complete-integrated-ui.md`.
 
 ## Purpose
 
@@ -21,8 +21,8 @@ This is the single progress dashboard for CoVie V1. It records completed work on
 |---|---|---|
 | Product, UX, database, API and technical planning | Complete | Approved documents in `docs/` |
 | Figma design source | Complete | Figma cover records 37/37 production units `FROZEN`; cross-screen QA and critical prototypes `PASS` |
-| Web UI implementation against Figma | In progress | PUB-001, PUB-003…008 and BUY-001/002/003/005/006 use exact frozen frames, exported SVG icons, Inter/Emerald tokens and buyer navigation. PUB-009 Shop now renders public identity, reputation, reviews, safe contacts and locations; the Provider discriminator and public catalog/fulfillment data are absent from current contracts, so the unit remains incomplete. BUY-003 Address List now covers main, delete, empty, loading and error states; BUY-004 remains open. `pnpm ui:verify-local` passed the populated Home → Search → Product Detail → Shop Profile → Address List → Service Detail → Resale Detail → Cart → Checkout → Success → Orders journey and captured target viewport comparisons on 2026-08-26. Other Figma units remain open. |
-| Repository implementation | Integrated through Plan 10 | `main` and `origin/main` point to `42693a6` (`merge: close plans 01-10`); Flyway migrations are sequential from `V001` through `V013`. |
+| Web UI implementation against Figma | Integration hardening in progress | All submitted Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop UI branches are present locally. The earlier Public Buyer evidence remains valid only for its recorded frames; integrated responsive semantics, Seller/Admin runtime acceptance and contract-blocked units remain open. The fresh baseline is documented in `integrated-ui-verification-2026-08-28.md`. |
+| Repository implementation | Integrated locally through all submitted UI branches | `codex/integrated-ui-completion` contains Buyer tip `c69061f`, Seller tip `3aa53ae`, and Admin tip `e81809e`; it is 240 commits ahead of `origin/main`. No integration push or PR has been performed. Flyway migrations remain sequential from `V001` through `V013`. |
 | Local development launcher | Fixed and cold-start verified | `pnpm dev` now runs Maven Wrapper from `apps/api` and derives `JAVA_HOME` from `java` on `PATH` when unset. Regression script passed; API and web returned HTTP 200 after a clean launcher start on 2026-08-25. |
 | Identity, auth and user implementation | Complete | Plan 02 Task 16 fresh gate: backend `clean verify` (84 tests), regenerated OpenAPI/client, web lint/typecheck/test/build (20 web tests), Flyway V001–V003 and secret hygiene checks (2026-08-12) |
 | Production / pilot | Not started | No staging or production environment has been provisioned or deployed. It depends on the carry-over verification and rehearsal gates. |
@@ -39,7 +39,7 @@ This is the single progress dashboard for CoVie V1. It records completed work on
 | 06 | Need Requests & Matching | Closed — locally verified | `V011` and focused concurrency/query gates are integrated |
 | 07 | Reviews, Reputation, Outbox, Notifications & SSE | Closed — locally verified | `V012`, notification/outbox behavior and regression coverage are integrated |
 | 08 | Moderation, Settings & Admin | Closed — locally verified | `V013`, authorization and contract coverage are integrated |
-| 09 | Web Completion / PWA | Closed for planning — UI carry-over in progress | Requested Public Buyer P0 through PUB-008/BUY-006 plus PUB-009 Shop and BUY-003: typecheck, production build and 103 unit tests pass; the populated journey including Shop, Address List and Resale Detail passes (2026-08-26). Lint retains 2 pre-existing warnings and 0 errors; staging P0 journeys remain open. |
+| 09 | Web Completion / PWA | Integrated UI hardening in progress | All submitted role/viewport UI branches are local. Fresh integrated evidence: typecheck/build pass; 106/119 Vitest tests pass with 13 failures; lint has 11 errors and 1 warning. Chunk 1 must close these P0 gates before visual acceptance proceeds. |
 | 10 | Production Hardening & Pilot Launch | Closed — carry-over required | Staging rehearsal and release evidence are open |
 
 ## Public Buyer P0 local acceptance — 2026-08-26

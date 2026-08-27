@@ -1,7 +1,7 @@
 # CoVie project context
 
-**Last updated:** 2026-08-26
-**Repository state:** `main` at `42693a6` (`merge: close plans 01-10`), synchronized with `origin/main`.
+**Last updated:** 2026-08-28
+**Repository state:** `codex/integrated-ui-completion` at the integrated Buyer/Seller/Admin baseline, 240 commits ahead of `origin/main`. The integration has not been pushed.
 
 ## Read this first
 
@@ -62,11 +62,11 @@ The following domain capabilities are present in `main` and have automated verif
 | Area | Status | Evidence / limitation |
 | --- | --- | --- |
 | Backend/domain implementation | Integrated and verified locally | `mvnw clean verify`: 460 tests passed, 1 skipped (2026-08-26). The regression includes buyer/merchant first-page order queries without nullable cursor parameters. |
-| Web functional implementation | Integrated and verified locally | API client/typecheck, 103 Vitest tests and production build pass; standard Playwright has 2 passed and 1 intentional local-fixture skip; populated Public Buyer P0 Playwright has 1 passed (2026-08-26). |
-| Git integration | Complete | Plan branches/worktrees were merged and cleaned; only `main` remains. |
-| Figma UI fidelity | **In progress; not complete** | The requested Public Buyer P0 chain has populated local acceptance for PUB-001, PUB-003…008 and BUY-001/002/003/005/006 against exact frozen frames at 390×844, 360×800 and 1280×900. The PUB-009 Shop variant has a contract-safe first pass and viewport review; the Provider variant and contract-unavailable catalog/capability details remain open. BUY-004 create/edit remains open. Other routes remain scaffold/open unless recorded in the handoff matrix. |
+| Web functional implementation | **Integration hardening in progress** | The merged tree typechecks and builds, but the 2026-08-28 baseline has 106/119 Vitest tests passing, 13 failures, 11 lint errors and 1 warning. See `docs/integrated-ui-verification-2026-08-28.md`; older branch-era counts are not proof for this tree. |
+| Git integration | Integrated locally; not remotely reviewed | Buyer Mobile tip (including Public Buyer and Buyer Desktop), Seller Desktop tip (including Seller Mobile), and Admin Desktop tip are ancestors of the local integration branch. The branch is 240 commits ahead of `origin/main`; nothing has been pushed by this integration work. |
+| Figma UI fidelity | **In progress; not complete** | Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop implementations are present locally. Only the previously recorded Public Buyer P0 units have rendered acceptance evidence; the newly integrated Seller/Admin surfaces and post-merge responsive behavior still require exact-frame runtime review. Contract-blocked units remain open. |
 | Staging/release rehearsal | **Not complete** | No real staging environment, production credentials, or deployment evidence is available. No staging or production deployment has been performed. |
-| Lint | Non-blocking warnings remain | Two existing Next.js warnings remain (`catalog-card` image and catalog-create navigation); no lint errors. |
+| Lint | **Blocking integration failures** | The 2026-08-28 integrated baseline has 11 React effect errors and 1 `catalog-card` image warning. Chunk 1 owns the error cleanup without disabling the rule. |
 
 ## Known UI gap
 
