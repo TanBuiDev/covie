@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { CovieApiError } from "@/lib/api/api-error";
 import { errorCopy } from "@/lib/api/error-copy";
 import { OrderActionDialog, type OrderActorView } from "./order-action-dialog";
@@ -43,13 +43,7 @@ export function OrderActions({
     () => (order.allowedActions ?? []).filter((action): action is OrderAction => action in actionUi),
     [order.allowedActions],
   );
-
-  useEffect(() => {
-    if (selected && !actions.includes(selected)) {
-      setSelected(undefined);
-      setIntentKey(undefined);
-    }
-  }, [actions, selected]);
+  const selectedAction = selected && actions.includes(selected) ? selected : undefined;
 
   function open(action: OrderAction) {
     setMessage(undefined);
@@ -58,12 +52,12 @@ export function OrderActions({
   }
 
   async function submit(input: { reasonCode?: string; note?: string }) {
-    if (!order.id || !selected || !intentKey || pending) return;
+    if (!order.id || !selectedAction || !intentKey || pending) return;
     setPending(true);
     setMessage(undefined);
 
     try {
-      await orderCommand(order.id, selected, intentKey, input);
+      await orderCommand(order.id, selectedAction, intentKey, input);
       setSelected(undefined);
       setIntentKey(undefined);
       await onChanged();
@@ -111,7 +105,7 @@ export function OrderActions({
         })}
       </div>
       <OrderActionDialog
-        action={selected}
+        action={selectedAction}
         actorView={actorView}
         pending={pending}
         onCancel={() => {
