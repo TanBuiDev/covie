@@ -38,13 +38,17 @@ export function AdminReadOnlyCollection({ title, subtitle, path, columns, status
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    requestBrowserApi("GET", path).then(async response => {
-      if (!response.ok) throw await readApiError(response);
-      return response.json();
-    }).then(payload => { if (active) setRows(normalizeRows(payload)); })
-      .catch(cause => { if (active) setError(cause instanceof Error ? cause.message : "Không thể tải dữ liệu"); })
-      .finally(() => { if (active) setLoading(false); });
+    queueMicrotask(() => {
+      if (!active) return;
+      setLoading(true);
+      setError(undefined);
+      requestBrowserApi("GET", path).then(async response => {
+        if (!response.ok) throw await readApiError(response);
+        return response.json();
+      }).then(payload => { if (active) setRows(normalizeRows(payload)); })
+        .catch(cause => { if (active) setError(cause instanceof Error ? cause.message : "Không thể tải dữ liệu"); })
+        .finally(() => { if (active) setLoading(false); });
+    });
     return () => { active = false; };
   }, [path]);
 

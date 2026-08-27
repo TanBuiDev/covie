@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
 import { AdminPageHeader, AdminStatusChip, AdminSurface, formatAdminDate, formatAdminMoney, presentOrderStatus } from "./admin-ui";
@@ -53,8 +53,10 @@ export function AdminOrderHistory({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<OrderDetail>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
+  const loadRequest = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++loadRequest.current;
     setLoading(true); setError(undefined);
     try {
       const [eventsResponse, orderResponse] = await Promise.all([
@@ -63,14 +65,20 @@ export function AdminOrderHistory({ orderId }: { orderId: string }) {
       ]);
       if (!eventsResponse.ok) throw await readApiError(eventsResponse);
       if (!orderResponse.ok) throw await readApiError(orderResponse);
-      setEvents(await eventsResponse.json() as EventRow[]);
-      setOrder(await orderResponse.json() as OrderDetail);
+      const [nextEvents, nextOrder] = await Promise.all([eventsResponse.json() as Promise<EventRow[]>, orderResponse.json() as Promise<OrderDetail>]);
+      if (requestId !== loadRequest.current) return;
+      setEvents(nextEvents);
+      setOrder(nextOrder);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể tải lịch sử đơn hàng");
-    } finally { setLoading(false); }
+      if (requestId === loadRequest.current) setError(cause instanceof Error ? cause.message : "Không thể tải lịch sử đơn hàng");
+    } finally { if (requestId === loadRequest.current) setLoading(false); }
   }, [orderId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => { if (active) void load(); });
+    return () => { active = false; loadRequest.current += 1; };
+  }, [load]);
   const status = presentOrderStatus(order?.status);
 
   return <div className="admin-page-stack">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
 import { AdminSuspensionAction } from "./admin-suspension-action";
@@ -32,26 +32,33 @@ export function AdminEntityTable({ type, title, columns }: { type: "users" | "me
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const loadRequest = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++loadRequest.current;
     setLoading(true);
     setError(undefined);
     try {
       const response = await requestBrowserApi("GET", `/api/v1/admin/${type}?page=${page}&size=${PAGE_SIZE}`);
       if (!response.ok) throw await readApiError(response);
       const payload = await response.json() as PagePayload;
+      if (requestId !== loadRequest.current) return;
       const nextItems = payload.items ?? [];
       setItems(nextItems);
       setTotal(payload.total ?? nextItems.length);
       setSelectedId(current => current && nextItems.some(item => item.id === current) ? current : nextItems[0]?.id);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể tải dữ liệu quản trị");
+      if (requestId === loadRequest.current) setError(cause instanceof Error ? cause.message : "Không thể tải dữ liệu quản trị");
     } finally {
-      setLoading(false);
+      if (requestId === loadRequest.current) setLoading(false);
     }
   }, [page, type]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => { if (active) void load(); });
+    return () => { active = false; loadRequest.current += 1; };
+  }, [load]);
 
   async function mutate(id: string, operation: "suspend" | "restore", reason?: string) {
     const response = await requestBrowserApi(

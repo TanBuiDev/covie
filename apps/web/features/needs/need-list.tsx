@@ -30,20 +30,23 @@ export function NeedList() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(null);
-    listMyNeeds(status || undefined, cursor)
-      .then((page) => {
-        if (!active) return;
-        setItems((current) => cursor ? [...current, ...page.items] : page.items);
-        setNextCursor(page.nextCursor ?? null);
-      })
-      .catch((cause) => {
-        if (active) setError(cause instanceof Error ? cause.message : "Không thể tải nhu cầu.");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    queueMicrotask(() => {
+      if (!active) return;
+      setLoading(true);
+      setError(null);
+      listMyNeeds(status || undefined, cursor)
+        .then((page) => {
+          if (!active) return;
+          setItems((current) => cursor ? [...current, ...page.items] : page.items);
+          setNextCursor(page.nextCursor ?? null);
+        })
+        .catch((cause) => {
+          if (active) setError(cause instanceof Error ? cause.message : "Không thể tải nhu cầu.");
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    });
     return () => { active = false; };
   }, [status, cursor]);
 
@@ -51,6 +54,16 @@ export function NeedList() {
     setStatus(value);
     setCursor(undefined);
     setItems([]);
+    setNextCursor(undefined);
+    setError(null);
+    setLoading(true);
+  }
+
+  function loadMore() {
+    if (!nextCursor) return;
+    setLoading(true);
+    setError(null);
+    setCursor(nextCursor);
   }
 
   return (
@@ -113,7 +126,7 @@ export function NeedList() {
       </div>
 
       {nextCursor ? (
-        <button className={`button-secondary need-list__more ${styles.more}`} disabled={loading} type="button" onClick={() => setCursor(nextCursor)}>
+        <button className={`button-secondary need-list__more ${styles.more}`} disabled={loading} type="button" onClick={loadMore}>
           {loading ? "Đang tải…" : "Xem thêm"}
         </button>
       ) : null}

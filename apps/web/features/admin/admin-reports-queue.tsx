@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
 import { AdminPageHeader, AdminStatusChip, AdminSurface, formatAdminDate, presentModerationStatus } from "./admin-ui";
@@ -36,21 +36,28 @@ export function AdminReportsQueue() {
   const [error, setError] = useState<string>();
   const [page, setPage] = useState(0);
   const [pageInfo, setPageInfo] = useState({ totalPages: 1, totalElements: 0, first: true, last: true });
+  const loadRequest = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++loadRequest.current;
     setLoading(true); setError(undefined);
     try {
       const response = await requestBrowserApi("GET", `/api/v1/admin/moderation-cases?status=OPEN&page=${page}&size=${PAGE_SIZE}&sort=OPENED_DESC`);
       if (!response.ok) throw await readApiError(response);
       const payload = await response.json() as PagePayload;
+      if (requestId !== loadRequest.current) return;
       const content = payload.content ?? [];
       setItems(content);
       setPageInfo({ totalPages: Math.max(1, payload.totalPages ?? 1), totalElements: payload.totalElements ?? content.length, first: payload.first ?? page === 0, last: payload.last ?? true });
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Không thể tải hàng đợi báo cáo"); }
-    finally { setLoading(false); }
+    } catch (cause) { if (requestId === loadRequest.current) setError(cause instanceof Error ? cause.message : "Không thể tải hàng đợi báo cáo"); }
+    finally { if (requestId === loadRequest.current) setLoading(false); }
   }, [page]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => { if (active) void load(); });
+    return () => { active = false; loadRequest.current += 1; };
+  }, [load]);
 
   return <div className="admin-page-stack">
     <AdminPageHeader title="Hàng đợi báo cáo" subtitle="Quản trị vận hành" />

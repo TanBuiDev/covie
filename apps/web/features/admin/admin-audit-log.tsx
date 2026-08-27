@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
 import { AdminPageHeader, AdminStatusChip, AdminSurface, formatAdminDate } from "./admin-ui";
@@ -78,8 +78,10 @@ export function AdminAuditLog() {
   const [pageInfo, setPageInfo] = useState({ totalPages: 1, totalElements: 0, first: true, last: true });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
+  const loadRequest = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++loadRequest.current;
     setLoading(true);
     setError(undefined);
     try {
@@ -97,6 +99,7 @@ export function AdminAuditLog() {
       const response = await requestBrowserApi("GET", `/api/v1/admin/audit-logs?${params.toString()}`);
       if (!response.ok) throw await readApiError(response);
       const payload = await response.json() as AuditPage;
+      if (requestId !== loadRequest.current) return;
       const content = payload.content ?? [];
       setRows(content);
       setPageInfo({
@@ -106,13 +109,17 @@ export function AdminAuditLog() {
         last: payload.last ?? true,
       });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể tải nhật ký quản trị");
+      if (requestId === loadRequest.current) setError(cause instanceof Error ? cause.message : "Không thể tải nhật ký quản trị");
     } finally {
-      setLoading(false);
+      if (requestId === loadRequest.current) setLoading(false);
     }
   }, [filters, page]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => { if (active) void load(); });
+    return () => { active = false; loadRequest.current += 1; };
+  }, [load]);
 
   function applyFilters() {
     setPage(0);

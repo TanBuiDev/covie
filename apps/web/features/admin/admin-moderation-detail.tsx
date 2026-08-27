@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
 import { ModerationActions, type ModerationActionKind } from "./moderation-actions";
@@ -40,19 +40,27 @@ export function AdminModerationDetail({ caseId }: { caseId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [conflict, setConflict] = useState<string>();
+  const loadRequest = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++loadRequest.current;
     setLoading(true); setError(undefined);
     try {
       const response = await requestBrowserApi("GET", `/api/v1/admin/moderation-cases/${encodeURIComponent(caseId)}`);
       if (!response.ok) throw await readApiError(response);
-      setDetail(await response.json() as CaseDetail);
+      const nextDetail = await response.json() as CaseDetail;
+      if (requestId !== loadRequest.current) return;
+      setDetail(nextDetail);
       setConflict(undefined);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Không thể tải hồ sơ kiểm duyệt"); }
-    finally { setLoading(false); }
+    } catch (cause) { if (requestId === loadRequest.current) setError(cause instanceof Error ? cause.message : "Không thể tải hồ sơ kiểm duyệt"); }
+    finally { if (requestId === loadRequest.current) setLoading(false); }
   }, [caseId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => { if (active) void load(); });
+    return () => { active = false; loadRequest.current += 1; };
+  }, [load]);
   const actions = useMemo(() => availableActions(detail), [detail]);
   const status = presentModerationStatus(detail?.moderationCase.status);
 

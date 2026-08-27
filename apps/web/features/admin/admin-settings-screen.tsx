@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminPageHeader, AdminStatusChip, AdminSurface } from "./admin-ui";
 import { loadAdminSettingDefinitions, loadAdminSettingDetail, updateGlobalAdminSetting } from "./admin-api";
 import { SettingsEditor, type AdminSettingDefinition } from "./settings-editor";
@@ -32,22 +32,29 @@ export function AdminSettingsScreen({ section: requestedSection }: { section?: s
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [etags, setEtags] = useState<Record<string, string>>({});
+  const loadRequest = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++loadRequest.current;
     setLoading(true); setError(undefined);
     try {
       const values = await loadAdminSettingDefinitions();
       const details = await Promise.all(values.map(value => loadAdminSettingDetail(value.key)));
+      if (requestId !== loadRequest.current) return;
       setDefinitions(values.map((value, index) => ({ ...value, effectiveValue: details[index]?.effectiveValue })));
       setEtags(Object.fromEntries(values.map((value, index) => {
         const global = details[index]?.persistedOverrides.find(override => override.scopeType === "GLOBAL");
         return [value.key, global ? `"${global.version}"` : ""];
       })));
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Không thể tải cấu hình hệ thống"); }
-    finally { setLoading(false); }
+    } catch (cause) { if (requestId === loadRequest.current) setError(cause instanceof Error ? cause.message : "Không thể tải cấu hình hệ thống"); }
+    finally { if (requestId === loadRequest.current) setLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => { if (active) void load(); });
+    return () => { active = false; loadRequest.current += 1; };
+  }, [load]);
   const filtered = useMemo(() => definitions.filter(definition => sectionKeys[section].has(definition.key)), [definitions, section]);
 
   return <div className="admin-page-stack">

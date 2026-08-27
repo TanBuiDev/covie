@@ -59,36 +59,48 @@ export function AdminOrdersExplorer() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(undefined);
-    const params = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
-    if (appliedQuery.trim()) params.set("orderCode", appliedQuery.trim());
-    requestBrowserApi("GET", `/api/v1/admin/orders?${params.toString()}`)
-      .then(async response => { if (!response.ok) throw await readApiError(response); return response.json() as Promise<OrderPage>; })
-      .then(payload => {
-        if (!active) return;
-        const nextItems = payload.items ?? [];
-        setItems(nextItems);
-        setTotal(payload.total ?? nextItems.length);
-        setSelectedId(current => current && nextItems.some(item => item.id === current) ? current : nextItems[0]?.id);
-      })
-      .catch(cause => { if (active) setError(cause instanceof Error ? cause.message : "Không thể tải đơn hàng"); })
-      .finally(() => { if (active) setLoading(false); });
+    queueMicrotask(() => {
+      if (!active) return;
+      setLoading(true);
+      setError(undefined);
+      const params = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
+      if (appliedQuery.trim()) params.set("orderCode", appliedQuery.trim());
+      requestBrowserApi("GET", `/api/v1/admin/orders?${params.toString()}`)
+        .then(async response => { if (!response.ok) throw await readApiError(response); return response.json() as Promise<OrderPage>; })
+        .then(payload => {
+          if (!active) return;
+          const nextItems = payload.items ?? [];
+          setItems(nextItems);
+          setTotal(payload.total ?? nextItems.length);
+          setSelectedId(current => current && nextItems.some(item => item.id === current) ? current : nextItems[0]?.id);
+        })
+        .catch(cause => { if (active) setError(cause instanceof Error ? cause.message : "Không thể tải đơn hàng"); })
+        .finally(() => { if (active) setLoading(false); });
+    });
     return () => { active = false; };
   }, [appliedQuery, page]);
 
   useEffect(() => {
-    if (!selectedId) { setDetail(undefined); return; }
+    if (!selectedId) return;
     let active = true;
-    setDetailLoading(true);
-    setDetailError(undefined);
-    requestBrowserApi("GET", `/api/v1/admin/orders/${encodeURIComponent(selectedId)}`)
-      .then(async response => { if (!response.ok) throw await readApiError(response); return response.json() as Promise<OrderDetail>; })
-      .then(payload => { if (active) setDetail(payload); })
-      .catch(cause => { if (active) { setDetail(undefined); setDetailError(cause instanceof Error ? cause.message : "Không thể tải chi tiết đơn hàng"); } })
-      .finally(() => { if (active) setDetailLoading(false); });
+    queueMicrotask(() => {
+      if (!active) return;
+      setDetailLoading(true);
+      setDetailError(undefined);
+      requestBrowserApi("GET", `/api/v1/admin/orders/${encodeURIComponent(selectedId)}`)
+        .then(async response => { if (!response.ok) throw await readApiError(response); return response.json() as Promise<OrderDetail>; })
+        .then(payload => { if (active) setDetail(payload); })
+        .catch(cause => { if (active) { setDetail(undefined); setDetailError(cause instanceof Error ? cause.message : "Không thể tải chi tiết đơn hàng"); } })
+        .finally(() => { if (active) setDetailLoading(false); });
+    });
     return () => { active = false; };
   }, [selectedId]);
+
+  function selectOrder(id: string) {
+    setDetail(undefined);
+    setDetailError(undefined);
+    setSelectedId(id);
+  }
 
   const selected = items.find(item => item.id === selectedId) ?? items[0];
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -110,7 +122,7 @@ export function AdminOrdersExplorer() {
         const status = presentOrderStatus(item.status);
         return <tr key={item.id} data-selected={item.id === selected?.id || undefined}>
           <td>{String(item.orderCode ?? item.id)}</td><td>{String(item.merchantId ?? "—")}</td><td><AdminStatusChip label={status.label} tone={status.tone} /></td><td>{formatAdminDate(item.updatedAt ?? item.createdAt)}</td>
-          <td><button className="admin-row-action" type="button" onClick={() => setSelectedId(item.id)}>Xem</button></td>
+          <td><button className="admin-row-action" type="button" onClick={() => selectOrder(item.id)}>Xem</button></td>
         </tr>;
       }) : <tr><td colSpan={5}><span className="admin-muted">Không tìm thấy đơn phù hợp.</span></td></tr>}</tbody></table></div>
     </AdminSurface> : null}

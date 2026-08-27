@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AdminStatusChip } from "./admin-ui";
 
 export type AdminSettingDefinition = {
@@ -26,8 +26,6 @@ function SettingRow({ definition, onSave, onReload }: { definition: AdminSetting
   const [error, setError] = useState<string>();
   const canEditGlobal = definition.allowedScopes.includes("GLOBAL") && Boolean(onSave);
 
-  useEffect(() => { setValue(effective); }, [effective]);
-
   async function save() {
     if (!onSave) return;
     setSaving(true); setError(undefined);
@@ -49,5 +47,5 @@ function SettingRow({ definition, onSave, onReload }: { definition: AdminSetting
 
 export function SettingsEditor({ definitions, onSave, onReload }: { definitions: AdminSettingDefinition[]; onSave?: (key: string, value: string) => Promise<void>; onReload?: () => Promise<void> }) {
   if (!definitions.length) return <div className="admin-surface"><p className="admin-muted">Không có cấu hình phù hợp section hiện tại hoặc API chưa trả định nghĩa.</p></div>;
-  return <div className="admin-settings-list">{definitions.map(definition => <SettingRow key={definition.key} definition={definition} onSave={onSave} onReload={onReload} />)}</div>;
+  return <div className="admin-settings-list">{definitions.map(definition => <SettingRow key={`${definition.key}:${serializeSettingValue(definition.effectiveValue ?? definition.defaultValue)}`} definition={definition} onSave={onSave} onReload={onReload} />)}</div>;
 }
