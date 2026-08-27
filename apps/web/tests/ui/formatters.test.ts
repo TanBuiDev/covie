@@ -10,7 +10,7 @@ describe("presentation formatters", () => {
   });
 
   it("uses safe fallback copy for future enum values", () => {
-    expect(statusCopy("SOME_FUTURE_STATE")).toBe("Trạng thái mới");
+    expect(statusCopy("SOME_FUTURE_STATE")).toBe("Trạng thái đã được cập nhật");
     expect(contentTypeCopy("SOME_FUTURE_TYPE")).toBe("Nội dung");
   });
 
