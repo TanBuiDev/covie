@@ -3,18 +3,26 @@ import { describe, expect, it } from "vitest";
 import { SellerShell } from "@/components/layout/seller-shell";
 
 describe("SellerShell", () => {
-  it("keeps the merchant id in every seller route and exposes all P0 sections", () => {
+  it("keeps the merchant id in every IA-locked seller route", () => {
     render(
-      <SellerShell merchantId="merchant-1" merchantName="Tiệm A" switcher={<span>Đổi cửa hàng</span>}>
+      <SellerShell merchantId="merchant-1" switcher={<span>Tiệm A · Đổi cửa hàng</span>}>
         <p>Nội dung</p>
       </SellerShell>,
     );
 
-    expect(screen.getByText("Tiệm A")).toBeInTheDocument();
-    expect(screen.getByText("Đổi cửa hàng")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Orders" })).toHaveAttribute("href", "/seller/merchant-1/orders");
-    expect(screen.getByRole("link", { name: "Catalog" })).toHaveAttribute("href", "/seller/merchant-1/catalog");
-    expect(screen.getByRole("link", { name: "Locations" })).toHaveAttribute("href", "/seller/merchant-1/locations");
-    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/seller/merchant-1/settings");
+    expect(screen.getAllByText("Tiệm A · Đổi cửa hàng").length).toBeGreaterThan(0);
+
+    for (const link of screen.getAllByRole("link", { name: "Đơn hàng" })) {
+      expect(link).toHaveAttribute("href", "/seller/merchant-1/orders");
+    }
+    for (const link of screen.getAllByRole("link", { name: "Danh mục" })) {
+      expect(link).toHaveAttribute("href", "/seller/merchant-1/catalog");
+    }
+    for (const link of screen.getAllByRole("link", { name: "Điểm bán" })) {
+      expect(link).toHaveAttribute("href", "/seller/merchant-1/locations");
+    }
+    for (const link of screen.getAllByRole("link", { name: "Cài đặt" })) {
+      expect(link).toHaveAttribute("href", "/seller/merchant-1/settings");
+    }
   });
 });
