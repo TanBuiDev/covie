@@ -7,6 +7,11 @@ async function dataOrThrow<T>(response: Response, data: T | undefined): Promise<
   return data;
 }
 
+export async function listSavedAddressesClient() {
+  const { data, response } = await createApiClient().GET("/api/v1/me/addresses");
+  return dataOrThrow(response, data);
+}
+
 export async function createSavedAddress(input: components["schemas"]["CreateUserAddressRequest"]) {
   const { data, response } = await createApiClient().POST("/api/v1/me/addresses", { body: input });
   return dataOrThrow(response, data);
