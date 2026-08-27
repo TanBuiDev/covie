@@ -19,11 +19,15 @@ export function ReportButton({
   targetId,
   contextMerchantId,
   label = "Báo cáo",
+  targetTitle,
+  targetMeta,
 }: {
   targetType: ReportTargetType;
   targetId: string;
   contextMerchantId?: string;
   label?: string;
+  targetTitle?: string;
+  targetMeta?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [reasonCode, setReasonCode] = useState<(typeof reasons)[number][0]>("MISLEADING_CONTENT");
@@ -91,6 +95,13 @@ export function ReportButton({
               </div>
             ) : (
               <form className={`report-control__form ${styles.form}`} onSubmit={submit}>
+                {targetTitle ? (
+                  <div className={styles.target} aria-label="Nội dung đang báo cáo">
+                    <small>NỘI DUNG ĐANG BÁO CÁO</small>
+                    <strong>{targetTitle}</strong>
+                    {targetMeta ? <span>{targetMeta}</span> : null}
+                  </div>
+                ) : null}
                 <label>
                   <span>Lý do báo cáo</span>
                   <select value={reasonCode} onChange={(event) => setReasonCode(event.target.value as (typeof reasons)[number][0])}>
