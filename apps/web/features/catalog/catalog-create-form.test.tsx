@@ -195,9 +195,9 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
     fireEvent.change(screen.getByLabelText("Loại sản phẩm"), { target: { value: "RESALE" } });
     fillBaseFields({ categoryId: "cat-resale", name: "Nồi chiên không dầu" });
 
-    await waitFor(() => expect(screen.getByLabelText("Tình trạng")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText(/^Tình trạng/)).toBeInTheDocument());
 
-    fireEvent.change(screen.getByLabelText("Tình trạng"), { target: { value: "condition-good" } });
+    fireEvent.change(screen.getByLabelText(/^Tình trạng/), { target: { value: "condition-good" } });
     fireEvent.change(screen.getByLabelText("Tháng đã sử dụng"), { target: { value: "8" } });
     fireEvent.change(screen.getByLabelText("Còn bảo hành"), { target: { value: "true" } });
     fireEvent.click(screen.getByLabelText("Có hộp"));
@@ -232,6 +232,6 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
     fireEvent.change(screen.getByLabelText("Danh mục"), { target: { value: "cat-resale" } });
 
     expect(await screen.findByText("Danh mục này chưa có tùy chọn tình trạng để chọn.")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Tình trạng")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Tình trạng/)).not.toBeInTheDocument();
   });
 });
