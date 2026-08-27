@@ -2,9 +2,10 @@
 
 @media(min-width:1024px){
   .screen{border:0;min-height:calc(100dvh - 112px)}
-  .appBar{display:none}
-  .body{display:grid;gap:20px 24px;grid-template-columns:360px minmax(0,560px);margin:0 auto;max-width:1024px;padding:24px 32px 64px;width:100%}
-  .desktopTitle{display:block;font-size:28px;grid-column:1/-1;line-height:36px;margin:0}
+  .appBar{border:0;height:auto;margin:0 auto;max-width:1024px;padding:24px 32px 20px;position:static}
+  .appBar a{display:none}
+  .appBar h1{font-size:28px;line-height:36px}
+  .body{display:grid;gap:20px 24px;grid-template-columns:360px minmax(0,560px);margin:0 auto;max-width:1024px;padding:0 32px 64px;width:100%}
   .desktopSummary,.desktopPublicContent{gap:16px;min-width:0}
   .hero{height:140px}
   .identity{border-radius:16px;height:auto;min-height:150px;padding:20px}
@@ -17,6 +18,7 @@
 
 @media(min-width:1280px){
   .screen{min-height:calc(100dvh - 72px)}
-  .body{grid-template-columns:420px minmax(0,760px);max-width:1280px;padding:32px 32px 64px}
+  .appBar{max-width:1280px;padding-top:32px}
+  .body{grid-template-columns:420px minmax(0,760px);max-width:1280px;padding:0 32px 64px}
   .hero{height:156px}
 }

@@ -69,7 +69,6 @@ export function MerchantProfile({
       </header>
 
       <div className={styles.body}>
-        <h1 className={styles.desktopTitle}>{surfaceLabel}</h1>
         <div className={styles.desktopSummary}>
           <section className={styles.hero} aria-labelledby="merchant-name">
             {merchant.cover?.url && <Image src={merchant.cover.url} alt="" fill sizes="(min-width: 1024px) 420px, 358px" unoptimized />}

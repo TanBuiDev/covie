@@ -83,6 +83,7 @@ export function CatalogDetail({ item }: { item: CatalogDetailData }) {
   const ratingText = rating?.averageRating != null && rating.reviewCount ? `${rating.averageRating.toLocaleString("vi-VN")} · ${rating.reviewCount} đánh giá` : null;
   const reportType = service ? "Dịch vụ" : resale ? "Thanh lý" : "Sản phẩm";
   const reportMeta = [reportType, item.merchant?.name, item.resolvedLocation?.name].filter(Boolean).join(" · ");
+  const pageTitle = service ? "Chi tiết dịch vụ" : resale ? "Chi tiết thanh lý" : "Chi tiết sản phẩm";
 
   const media = resale ? (
     <div className={resaleStyles.resaleMedia}>
@@ -99,9 +100,8 @@ export function CatalogDetail({ item }: { item: CatalogDetailData }) {
 
   return (
     <article className={`${styles.detail} ${service ? styles.serviceDetail : resale ? resaleStyles.resaleDetail : ""}`}>
-      <header className={styles.appBar}><button aria-label="Quay lại" onClick={() => router.back()}><CoVieIcon name="back" /></button><h1>{service ? "Chi tiết dịch vụ" : resale ? "Chi tiết thanh lý" : "Chi tiết sản phẩm"}</h1></header>
+      <header className={styles.appBar}><button aria-label="Quay lại" onClick={() => router.back()}><CoVieIcon name="back" /></button><h1>{pageTitle}</h1></header>
       <div className={styles.desktopContainer}>
-        <h1 className={styles.desktopTitle}>{service ? "Chi tiết dịch vụ" : resale ? "Chi tiết thanh lý" : "Chi tiết sản phẩm"}</h1>
         <div className={styles.desktopColumns}>
           <div className={styles.mediaColumn}>{media}</div>
           <div className={styles.body}>

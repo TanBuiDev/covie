@@ -39,13 +39,14 @@ describe("BUY-003 Address List", () => {
   it("renders contract-backed address cards and dedicated create/edit links", () => {
     render(<AddressList addresses={addresses} />);
 
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "Địa chỉ của tôi" })).toBeInTheDocument();
     expect(screen.getByText("MẶC ĐỊNH")).toBeInTheDocument();
     expect(screen.getByText("Nhà · Nguyễn Văn Minh")).toBeInTheDocument();
     expect(screen.getByText("0909 123 456")).toBeInTheDocument();
     expect(screen.getByText("Giao tại lễ tân · Không phải địa chỉ mặc định")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Chỉnh sửa Nhà" })).toHaveAttribute("href", "/me/addresses/address-1");
-    expect(screen.queryByRole("link", { name: "Chỉnh sửa Công ty" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Chỉnh sửa Công ty" })).toHaveLength(1);
     expect(screen.getByRole("link", { name: "Thêm địa chỉ mới" })).toHaveAttribute("href", "/me/addresses/new");
   });
 
@@ -54,6 +55,8 @@ describe("BUY-003 Address List", () => {
     render(<AddressList addresses={addresses} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Xóa Nhà" }));
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(screen.getByRole("dialog")).toHaveAccessibleName("Xóa địa chỉ này?");
     expect(screen.getByRole("heading", { name: "Xóa địa chỉ này?" })).toBeInTheDocument();
     expect(screen.getByText("Địa chỉ sẽ bị xóa khỏi tài khoản. Hành động cần xác nhận trước khi thực hiện.")).toBeInTheDocument();
     expect(screen.queryByText("Công ty · Nguyễn Văn Minh")).not.toBeInTheDocument();

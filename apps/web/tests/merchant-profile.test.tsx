@@ -25,6 +25,7 @@ describe("PUB-009 Merchant profile", () => {
   it("renders only contract-backed public identity, trust, contacts and locations", () => {
     render(<MerchantProfile merchant={merchant} reviews={reviews} />);
 
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "Cửa hàng" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Cửa hàng Chợ Xanh" })).toBeInTheDocument();
     expect(screen.getByText("96%")).toBeInTheDocument();

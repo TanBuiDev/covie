@@ -44,6 +44,7 @@ describe("PUB-006 Catalog detail", () => {
   it("renders contract-backed listing, trust and product quantity state", async () => {
     mocks.listCatalogReviews.mockResolvedValue({ rating: { averageRating: 4.8, reviewCount: 96 }, items: [] });
     render(<CatalogDetail item={product} />);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "Chi tiết sản phẩm" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Coca-Cola 1.5L" })).toBeInTheDocument();
     expect(screen.getByText("85.000 ₫")).toBeInTheDocument();

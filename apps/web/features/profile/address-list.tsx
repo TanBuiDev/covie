@@ -93,7 +93,6 @@ export function AddressList({
       </header>
 
       <div className={`${styles.content} ${deleteTarget ? styles.deleting : ""}`}>
-        <h1 className={styles.desktopTitle}>Địa chỉ của tôi</h1>
         {state === "loading" ? (
           <div className={styles.loading} role="status">
             <span>Đang tải địa chỉ…</span>
@@ -107,33 +106,26 @@ export function AddressList({
           </section>
         ) : (
           <>
-            {readyContent}
+            {!deleteTarget ? readyContent : null}
             {deleteTarget ? (
-              <div className={styles.mobileDeleteFlow}>
-                <AddressCard address={deleteTarget} onDelete={() => undefined} />
-                <section className={styles.warning} role="alert">
-                  <CoVieIcon name="feedback-warning" />
-                  <div><h2>Xóa địa chỉ này?</h2><p>Địa chỉ sẽ bị xóa khỏi tài khoản. Hành động cần xác nhận trước khi thực hiện.</p></div>
-                </section>
-                {message ? <p className={styles.error} role="alert">{message}</p> : null}
-                <div className={styles.confirmActions}>
-                  <button type="button" disabled={pending} onClick={() => { setDeleteTarget(undefined); setMessage(undefined); }}>Giữ địa chỉ</button>
-                  <button type="button" disabled={pending} onClick={() => void confirmDelete()}>{pending ? "Đang xóa…" : "Xác nhận xóa"}</button>
-                </div>
+              <div className={styles.addressConfirm}>
+                <ConfirmDialog
+                  open
+                  title="Xóa địa chỉ này?"
+                  description="Địa chỉ sẽ bị xóa khỏi tài khoản. Hành động cần xác nhận trước khi thực hiện."
+                  cancelLabel="Giữ địa chỉ"
+                  confirmLabel={pending ? "Đang xóa…" : "Xác nhận xóa"}
+                  dangerous
+                  cancelDisabled={pending}
+                  confirmDisabled={pending}
+                  onCancel={() => { setDeleteTarget(undefined); setMessage(undefined); }}
+                  onConfirm={() => void confirmDelete()}
+                >
+                  <div className={styles.deleteTargetCard}><AddressCard address={deleteTarget} onDelete={() => undefined} /></div>
+                  {message ? <p className={styles.error} role="alert">{message}</p> : null}
+                </ConfirmDialog>
               </div>
             ) : null}
-            <div className={styles.desktopConfirm}>
-              <ConfirmDialog
-                open={Boolean(deleteTarget)}
-                title="Xóa địa chỉ này?"
-                description="Địa chỉ sẽ bị xóa khỏi tài khoản. Hành động này không thể hoàn tác."
-                cancelLabel="Giữ địa chỉ"
-                confirmLabel={pending ? "Đang xóa…" : "Xác nhận xóa"}
-                dangerous
-                onCancel={() => { if (!pending) { setDeleteTarget(undefined); setMessage(undefined); } }}
-                onConfirm={() => void confirmDelete()}
-              />
-            </div>
           </>
         )}
       </div>
