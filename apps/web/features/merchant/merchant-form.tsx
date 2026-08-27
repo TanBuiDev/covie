@@ -144,7 +144,14 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
 
       <label>
         {editing ? "Tên shop" : "Tên cửa hàng"}
-        <input name="name" required disabled={pending} defaultValue={merchant?.data.name ?? ""} autoComplete="organization" />
+        <input
+          aria-label={editing ? "Tên shop" : "Tên cửa hàng"}
+          name="name"
+          required
+          disabled={pending}
+          defaultValue={merchant?.data.name ?? ""}
+          autoComplete="organization"
+        />
         {editing ? <small>Tên hiển thị công khai</small> : null}
       </label>
       <label>
