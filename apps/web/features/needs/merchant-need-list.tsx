@@ -20,22 +20,15 @@ function distanceCopy(distanceMeters?: number) {
 export function MerchantNeedList({ merchantId, locations }: { merchantId: string; locations: Location[] }) {
   const firstLocationId = locations.find((location) => location.id)?.id ?? "";
   const [locationId, setLocationId] = useState(firstLocationId);
-  const [items, setItems] = useState<MerchantNeedMatch[]>();
+  const [items, setItems] = useState<MerchantNeedMatch[] | undefined>(() => firstLocationId ? undefined : []);
   const [nextCursor, setNextCursor] = useState<string>();
   const [error, setError] = useState<string>();
   const [reloadKey, setReloadKey] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    if (!locationId) {
-      setItems([]);
-      setNextCursor(undefined);
-      return;
-    }
+    if (!locationId) return;
     let active = true;
-    setItems(undefined);
-    setNextCursor(undefined);
-    setError(undefined);
     void discoverMerchantNeeds(merchantId, locationId)
       .then((page) => {
         if (!active) return;
@@ -49,6 +42,20 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
       active = false;
     };
   }, [merchantId, locationId, reloadKey]);
+
+  function selectLocation(nextLocationId: string) {
+    setLocationId(nextLocationId);
+    setItems(nextLocationId ? undefined : []);
+    setNextCursor(undefined);
+    setError(undefined);
+  }
+
+  function reload() {
+    setItems(undefined);
+    setNextCursor(undefined);
+    setError(undefined);
+    setReloadKey((value) => value + 1);
+  }
 
   async function loadMore() {
     if (!locationId || !nextCursor || loadingMore) return;
@@ -73,7 +80,7 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
     <section className="seller-stack" aria-label="Nhu cầu phù hợp">
       <label className="seller-need-location-filter">
         Điểm bán đang phản hồi
-        <select required value={locationId} onChange={(event) => setLocationId(event.target.value)}>
+        <select required value={locationId} onChange={(event) => selectLocation(event.target.value)}>
           {locations.map((location) => location.id ? <option key={location.id} value={location.id}>{location.name ?? "Điểm bán"}</option> : null)}
         </select>
         <small>Chỉ dùng nội dung đang bán tại điểm bán này</small>
@@ -83,7 +90,7 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
         <ErrorState
           title="Không thể tải nhu cầu"
           description={error}
-          action={<button type="button" onClick={() => setReloadKey((value) => value + 1)}>Thử lại</button>}
+          action={<button type="button" onClick={reload}>Thử lại</button>}
         />
       ) : null}
       {!error && !items ? <LoadingState label="Đang tìm nhu cầu phù hợp…" /> : null}
