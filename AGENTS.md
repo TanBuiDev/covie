@@ -1,7 +1,7 @@
 # CoVie project context
 
 **Last updated:** 2026-08-28
-**Repository state:** `codex/integrated-ui-completion` at the integrated Buyer/Seller/Admin baseline, 240 commits ahead of `origin/main`. The integration has not been pushed.
+**Repository state:** `codex/integrated-ui-completion` contains the integrated Buyer/Seller/Admin baseline and locally verified Chunk 1 implementation through `aa5517d`. The integration has not been pushed.
 
 ## Read this first
 
@@ -61,12 +61,12 @@ The following domain capabilities are present in `main` and have automated verif
 
 | Area | Status | Evidence / limitation |
 | --- | --- | --- |
-| Backend/domain implementation | Integrated and verified locally | `mvnw clean verify`: 460 tests passed, 1 skipped (2026-08-26). The regression includes buyer/merchant first-page order queries without nullable cursor parameters. |
-| Web functional implementation | **Integration hardening in progress** | The merged tree typechecks and builds, but the 2026-08-28 baseline has 106/119 Vitest tests passing, 13 failures, 11 lint errors and 1 warning. See `docs/integrated-ui-verification-2026-08-28.md`; older branch-era counts are not proof for this tree. |
-| Git integration | Integrated locally; not remotely reviewed | Buyer Mobile tip (including Public Buyer and Buyer Desktop), Seller Desktop tip (including Seller Mobile), and Admin Desktop tip are ancestors of the local integration branch. The branch is 240 commits ahead of `origin/main`; nothing has been pushed by this integration work. |
+| Backend/domain implementation | Integrated and verified locally | Fresh `mvnw clean verify`: 460 tests, 0 failures, 0 errors, 1 skipped on JDK 25.0.2 (2026-08-28). |
+| Web functional implementation | **Chunk 1 locally verified** | API-client check, typecheck, 54-file/131-test Vitest suite and 34-page production build pass. Lint has 0 errors and one documented `catalog-card` image warning. See `docs/integrated-ui-verification-2026-08-28.md`. |
+| Git integration | Integrated locally; not remotely reviewed | Buyer Mobile tip (including Public Buyer and Buyer Desktop), Seller Desktop tip (including Seller Mobile), and Admin Desktop tip are ancestors of the local integration branch. Chunk 1 is committed locally; nothing has been pushed by this integration work. |
 | Figma UI fidelity | **In progress; not complete** | Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop implementations are present locally. Only the previously recorded Public Buyer P0 units have rendered acceptance evidence; the newly integrated Seller/Admin surfaces and post-merge responsive behavior still require exact-frame runtime review. Contract-blocked units remain open. |
 | Staging/release rehearsal | **Not complete** | No real staging environment, production credentials, or deployment evidence is available. No staging or production deployment has been performed. |
-| Lint | **Blocking integration failures** | The 2026-08-28 integrated baseline has 11 React effect errors and 1 `catalog-card` image warning. Chunk 1 owns the error cleanup without disabling the rule. |
+| Lint | **Pass with one warning** | Fresh integrated lint has 0 errors and one `catalog-card` `no-img-element` warning; no rule was disabled. |
 
 ## Known UI gap
 
