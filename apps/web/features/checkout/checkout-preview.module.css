@@ -2,24 +2,27 @@
 
 @media(min-width:1024px){
   .screen{border:0;margin:0;max-width:none;min-height:calc(100dvh - 112px)}
-  .appBar{display:none}
-  .content{display:grid;gap:16px;grid-auto-rows:min-content;grid-template-columns:minmax(0,600px) minmax(280px,320px);margin:0 auto;max-width:1024px;padding:24px 32px 64px;width:100%}
-  .desktopTitle{display:block;font-size:28px;grid-column:1/-1;line-height:36px;margin:0 0 4px}
+  .appBar{border:0;height:auto;margin:0 auto;max-width:1024px;padding:24px 32px 20px;position:static}
+  .appBar a{display:none}
+  .appBar h1{font-size:28px;line-height:36px}
+  .content{display:grid;gap:16px;grid-auto-rows:min-content;grid-template-columns:minmax(0,600px) minmax(280px,320px);margin:0 auto;max-width:1024px;padding:0 32px 64px;width:100%}
   .selectField,.addressSection,.fulfillment,.shipping,.payment,.error,.previewButton,.changed{grid-column:1}
   .addressSection,.fulfillment,.shipping,.payment,.summary{border-radius:16px;padding:20px}
   .fulfillment{border:1px solid #e2e8f0}
   .option,.optionSelected{border:0;min-height:36px;padding:0}
   .summary{align-self:start;grid-column:2;grid-row:2 / span 7;position:sticky;top:136px}
   .summary h2{font-size:20px;line-height:28px}
-  .desktopCommit{align-self:flex-start;display:block;height:40px}
+  .commitBar{background:transparent;border:0;display:flex;height:auto;justify-content:flex-end;left:auto;padding:0;position:static;right:auto;transform:none;width:auto}
+  .commitBar>div{display:none}
+  .commitBar button{height:40px;width:auto}
   .previewButton{height:40px;justify-self:start}
-  .commitBar{display:none}
   .safeError{margin:0 auto;max-width:1024px;padding:72px 32px}
 }
 
 @media(min-width:1280px){
   .screen{min-height:calc(100dvh - 72px)}
-  .content{grid-template-columns:760px 420px;max-width:1280px;padding:32px 32px 64px}
+  .appBar{max-width:1280px;padding-top:32px}
+  .content{grid-template-columns:760px 420px;max-width:1280px;padding:0 32px 64px}
   .summary{top:96px}
   .safeError{max-width:1280px;padding:72px 32px}
 }

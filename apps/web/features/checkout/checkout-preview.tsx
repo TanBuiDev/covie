@@ -3,7 +3,7 @@
 import type { components } from "@covie/api-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CoVieIcon } from "@/components/ui/covie-icon";
 import { commitCheckout, previewCheckout } from "./checkout-api";
 import { CheckoutChangeDialog } from "./checkout-change-dialog";
@@ -43,6 +43,7 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
   const [preview, setPreview] = useState<Preview>();
   const [commitKey, setCommitKey] = useState<string>();
   const [committing, setCommitting] = useState(false);
+  const committingRef = useRef(false);
   const [changed, setChanged] = useState(false);
   const [message, setMessage] = useState<string>();
   const selectedCart = carts.find((cart) => cart.id === cartId);
@@ -81,7 +82,8 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
   }
 
   async function commit() {
-    if (!preview?.checkoutToken || !commitKey || committing) return;
+    if (!preview?.checkoutToken || !commitKey || committingRef.current) return;
+    committingRef.current = true;
     setCommitting(true);
     setMessage(undefined);
     try {
@@ -100,6 +102,7 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
         setMessage("Không thể xác nhận đơn hàng. Vui lòng thử lại.");
       }
     } finally {
+      committingRef.current = false;
       setCommitting(false);
     }
   }
@@ -117,7 +120,6 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
         <h1>Xác nhận đơn</h1>
       </header>
       <section className={styles.content}>
-        <h1 className={styles.desktopTitle}>Xác nhận đơn</h1>
         {changed ? <CheckoutChangeDialog onPreviewAgain={requestPreview} /> : (
           <>
             {carts.length > 1 ? (
@@ -166,7 +168,7 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
                   <h2>Tóm tắt thanh toán</h2>
                   <dl><div><dt>Tạm tính</dt><dd>{money(preview.subtotal)}</dd></div><div><dt>Phí giao hàng</dt><dd>{negotiated ? "Thỏa thuận với người bán" : money(preview.shippingFee)}</dd></div><div><dt>{totalLabel}</dt><dd>{money(totalValue)}</dd></div></dl>
                   <p className={negotiated ? styles.negotiatedNote : undefined}>{negotiated ? "Phí giao sẽ được thỏa thuận; khoản tiền trên chưa phải tổng cuối cùng." : "Số tiền hiển thị theo bản xem trước từ hệ thống."}</p>
-                  <button className={styles.desktopCommit} type="button" onClick={commit} disabled={committing}>{committing ? "Đang đặt hàng…" : "Đặt hàng"}</button>
+                  <div className={styles.commitBar}><div><span>{totalLabel}</span><strong>{money(totalValue)}</strong></div><button type="button" onClick={commit} disabled={committing}>{committing ? "Đang đặt hàng…" : "Đặt hàng"}</button></div>
                 </section>
               </>
             ) : null}
@@ -175,7 +177,6 @@ export function CheckoutPreview({ carts, addresses, initialCartId }: { carts: Ca
           </>
         )}
       </section>
-      {preview && !changed ? <div className={styles.commitBar}><div><span>{totalLabel}</span><strong>{money(totalValue)}</strong></div><button type="button" onClick={commit} disabled={committing}>{committing ? "Đang đặt hàng…" : "Đặt hàng"}</button></div> : null}
     </div>
   );
 }

@@ -22,8 +22,25 @@ it("renders a negotiated delivery preview without inventing a zero fee", async (
   fireEvent.change(screen.getByLabelText("Địa chỉ"), { target: { value: "address" } });
   fireEvent.click(screen.getByRole("button", { name: "Xem trước" }));
   await waitFor(() => expect(screen.getAllByText("Thỏa thuận với người bán").length).toBeGreaterThan(0));
+  expect(screen.getAllByRole("button", { name: "Đặt hàng" })).toHaveLength(1);
   expect(screen.getAllByText("Khoản tiền đã biết").length).toBeGreaterThan(0);
   expect(screen.queryByText("0 ₫")).not.toBeInTheDocument();
+});
+
+it("exposes one commit owner and ignores repeated clicks while commit is pending", async () => {
+  previewCheckout.mockResolvedValueOnce({ checkoutToken: "token", subtotal: 100_000, shippingFee: 0, total: 100_000, currency: "VND", fulfillmentMethod: "PICKUP" });
+  let resolveCommit: ((value: { id: string }) => void) | undefined;
+  commitCheckout.mockImplementationOnce(() => new Promise((resolve) => { resolveCommit = resolve; }));
+  render(<CheckoutPreview carts={carts} addresses={[]} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Xem trước" }));
+  const commitButton = await screen.findByRole("button", { name: "Đặt hàng" });
+  expect(screen.getAllByRole("button", { name: "Đặt hàng" })).toHaveLength(1);
+
+  fireEvent.click(commitButton);
+  fireEvent.click(commitButton);
+  expect(commitCheckout).toHaveBeenCalledTimes(1);
+  resolveCommit?.({ id: "order-id" });
 });
 
 it("discards a changed checkout token and requires a fresh preview", async () => {
@@ -34,6 +51,7 @@ it("discards a changed checkout token and requires a fresh preview", async () =>
   await waitFor(() => expect(screen.getByRole("button", { name: "Đặt hàng" })).toBeInTheDocument());
   fireEvent.click(screen.getByRole("button", { name: "Đặt hàng" }));
   await waitFor(() => expect(screen.getByRole("alertdialog")).toBeInTheDocument());
+  expect(commitCheckout).toHaveBeenCalledTimes(1);
   expect(screen.getByText("Giá hoặc thông tin đã thay đổi")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Kiểm tra giá/thông tin mới" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Đặt hàng" })).not.toBeInTheDocument();
