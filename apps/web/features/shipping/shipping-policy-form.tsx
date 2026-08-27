@@ -149,7 +149,7 @@ export function ShippingPolicyForm({
 
       <label>
         Loại phí giao
-        <select disabled={pending} value={mode} onChange={(event) => setMode(event.target.value as ShippingMode)}>
+        <select aria-label="Loại phí giao" disabled={pending} value={mode} onChange={(event) => setMode(event.target.value as ShippingMode)}>
           <option value="FREE">Freeship</option>
           <option value="FIXED">Cố định</option>
           <option value="CONDITIONAL">Theo điều kiện</option>
