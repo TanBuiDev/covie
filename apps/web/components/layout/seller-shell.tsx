@@ -16,13 +16,11 @@ function statusLabel(status?: string) {
 
 export function SellerShell({
   merchantId,
-  merchantName,
   merchantStatus,
   switcher,
   children,
 }: {
   merchantId: string;
-  merchantName?: string;
   merchantStatus?: "ACTIVE" | "PAUSED" | "SUSPENDED" | "DELETED";
   switcher?: ReactNode;
   children: ReactNode;

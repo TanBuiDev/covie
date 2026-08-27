@@ -27,7 +27,6 @@ export default async function MerchantSellerLayout({
   return (
     <SellerShell
       merchantId={merchantId}
-      merchantName={merchant.data.name}
       merchantStatus={merchant.data.status}
       switcher={<MerchantSwitcher merchants={merchants} currentMerchantId={merchantId} />}
     >
