@@ -80,7 +80,7 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
     <section className="seller-stack" aria-label="Nhu cầu phù hợp">
       <label className="seller-need-location-filter">
         Điểm bán đang phản hồi
-        <select required value={locationId} onChange={(event) => selectLocation(event.target.value)}>
+        <select aria-label="Điểm bán đang phản hồi" required value={locationId} onChange={(event) => selectLocation(event.target.value)}>
           {locations.map((location) => location.id ? <option key={location.id} value={location.id}>{location.name ?? "Điểm bán"}</option> : null)}
         </select>
         <small>Chỉ dùng nội dung đang bán tại điểm bán này</small>
