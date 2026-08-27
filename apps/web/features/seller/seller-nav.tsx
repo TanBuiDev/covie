@@ -47,8 +47,8 @@ function sectionIsActive(key: SellerSectionKey, pathname: string, base: string) 
 }
 
 export function SellerNavLinks({ merchantId, scrollActiveIntoView = false }: { merchantId: string; scrollActiveIntoView?: boolean }) {
-  const pathname = usePathname();
   const base = sellerBasePath(merchantId);
+  const pathname = usePathname() ?? base;
   const activeLinkRef = useRef<HTMLAnchorElement | null>(null);
 
   useEffect(() => {
