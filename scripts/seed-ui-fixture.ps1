@@ -79,6 +79,21 @@ $serviceVariantOneName = ConvertFrom-UiFixtureBase64 "MSBtw6F5"
 $serviceVariantTwoName = ConvertFrom-UiFixtureBase64 "MiBtw6F5"
 $serviceVariantThreeName = ConvertFrom-UiFixtureBase64 "MyBtw6F5"
 $resaleVariantName = ConvertFrom-UiFixtureBase64 "TeG7mXQgY2hp4bq/Yw=="
+$pausedLocationName = ConvertFrom-UiFixtureBase64 "xJBp4buDbSBiw6FuIHThuqFtIG5nxrBuZw=="
+$pausedLocationAddress = ConvertFrom-UiFixtureBase64 "VGjhu6cgxJDhu6ljLCBUUCBI4buTIENow60gTWluaA=="
+$activeNeedTitle = ConvertFrom-UiFixtureBase64 "Q+G6p24gcmF1IGPhu6cgZ2lhbyB0cm9uZyBuZ8OgeQ=="
+$activeNeedQuery = ConvertFrom-UiFixtureBase64 "cmF1IGPhu6cgZ2lhbyBuaGFuaA=="
+$activeNeedDescription = ConvertFrom-UiFixtureBase64 "Q+G6p24gbeG7mXQgZ2nhu48gcmF1IGPhu6cgdGhlbyBtw7lhLCDGsHUgdGnDqm4gbmd14buTbiBn4buRYyByw7UgcsOgbmcuIE7hu5lpIGR1bmcgZMOgaSBkw7luZyDEkeG7gyBraeG7g20gdHJhIHh14buRbmcgZMOybmcsIGNvIGdpw6NuIHRo4bq7IHbDoCBraOG6oyBuxINuZyDEkeG7jWMgdHLDqm4gbcOgbiBow6xuaCBo4bq5cCBtw6Aga2jDtG5nIGzDoG0gbOG7mSDEkeG7i2EgY2jhu4kgY2jDrW5oIHjDoWMgY+G7p2EgbmfGsOG7nWkgbXVhLg=="
+$needArea = ConvertFrom-UiFixtureBase64 "VGjhu6cgxJDhu6lj"
+$restrictedNeedTitle = ConvertFrom-UiFixtureBase64 "ROG7i2NoIHbhu6UgxJHDoyDEkcOzbmc="
+$restrictedNeedQuery = ConvertFrom-UiFixtureBase64 "c+G7rWEga2jDs2E="
+$restrictedNeedDescription = ConvertFrom-UiFixtureBase64 "S+G7i2NoIGLhuqNuIHJlc3RyaWN0ZWQgxJHhu4MgeMOhYyBtaW5oIGjDoG5oIMSR4buZbmcga2jDtG5nIGPDsm4gaOG7o3AgbOG7hy4="
+$needResponseNote = ConvertFrom-UiFixtureBase64 "Q8OzIHRo4buDIGdpYW8gdHJvbmcgbmfDoHku"
+$reviewComment = ConvertFrom-UiFixtureBase64 "UmF1IHTGsMahaSwgxJHDs25nIGfDs2kga+G7uSB2w6AgZ2lhbyDEkcO6bmcgaOG6uW4u"
+$openReportDescription = ConvertFrom-UiFixtureBase64 "QsOhbyBjw6FvIG3hu58gZMO5bmcgY2hvIGjDoG5nIHRoYW5oIGzDvS4="
+$resolvedReportDescription = ConvertFrom-UiFixtureBase64 "QsOhbyBjw6FvIMSRw6MgeOG7rSBsw70gxJHhu4Mga2nhu4NtIHRyYSBs4buLY2ggc+G7rSBraeG7g20gZHV54buHdC4="
+$moderationActionNote = ConvertFrom-UiFixtureBase64 "xJDDoyDhuqluIG7hu5lpIGR1bmcgdGhlbyBiw6FvIGPDoW8u"
+$longSettingValue = ConvertFrom-UiFixtureBase64 "TuG7mWkgZHVuZyBj4bqldSBow6xuaCBkw6BpIGTDuW5nIMSR4buDIGtp4buDbSB0cmEgZ2lhbyBkaeG7h24gcXXhuqNuIHRy4buLIHbDoCB0cuG6oW5nIHRow6FpIGFuIHRvw6BuIGtoaSBk4buvIGxp4buHdSB2xrDhu6N0IHF1w6EgbeG7mXQgZMOybmcu"
 
 $javaExecutable = (Get-Command java -ErrorAction Stop).Source
 $env:JAVA_HOME = Split-Path -Parent (Split-Path -Parent $javaExecutable)
@@ -160,8 +175,8 @@ values('$locationId','$merchantId','$locationName','S5.03, Vinhomes Grand Park',
 on conflict(id) do update set name=excluded.name,address_text=excluded.address_text,location_status='ACTIVE',pickup_enabled=true,seller_delivery_enabled=true,service_enabled=true,updated_at=now();
 
 insert into merchant_locations(id,merchant_profile_id,name,address_text,geo_point,pin_source,timezone,location_status,pickup_enabled,seller_delivery_enabled,service_enabled,minimum_delivery_order,currency_code,created_at,updated_at,version)
-values('$pausedLocationId','$merchantId','Điểm bán tạm ngưng','Thủ Đức, TP Hồ Chí Minh',ST_SetSRID(ST_MakePoint(106.81,10.85),4326)::geography,'USER_ADJUSTED','Asia/Ho_Chi_Minh','PAUSED',false,false,false,null,'VND',now(),now(),3)
-on conflict(id) do update set location_status='PAUSED',pickup_enabled=false,seller_delivery_enabled=false,service_enabled=false,minimum_delivery_order=null,updated_at=now(),version=3;
+values('$pausedLocationId','$merchantId','$pausedLocationName','$pausedLocationAddress',ST_SetSRID(ST_MakePoint(106.81,10.85),4326)::geography,'USER_ADJUSTED','Asia/Ho_Chi_Minh','PAUSED',false,false,false,null,'VND',now(),now(),3)
+on conflict(id) do update set name=excluded.name,address_text=excluded.address_text,location_status='PAUSED',pickup_enabled=false,seller_delivery_enabled=false,service_enabled=false,minimum_delivery_order=null,updated_at=now(),version=3;
 
 insert into categories(id,name,slug,catalog_type,status,sort_order,version)
 values
@@ -234,22 +249,22 @@ insert into orders(id,order_code,order_type,buyer_user_id,merchant_profile_id,me
 on conflict(id) do update set status=excluded.status,shipping_fee_type=excluded.shipping_fee_type,shipping_fee=excluded.shipping_fee,known_total=excluded.known_total,total_amount=excluded.total_amount,updated_at=excluded.updated_at,version=excluded.version;
 
 insert into order_items(id,order_id,catalog_item_id,variant_id,location_variant_id,item_type,quantity,unit_price,line_total,currency_code,item_snapshot,created_at) values
-('dddddddd-dddd-4ddd-8ddd-dddddddddda1','$completedOrderId','$productItemId','$productVariantId','$productOfferId','PRODUCT',1,85000,85000,'VND','{"name":"Rau củ theo mùa","scenario":"completed"}'::jsonb,now() - interval '9 days'),
-('dddddddd-dddd-4ddd-8ddd-dddddddddda2','$negotiatedOrderId','$resaleItemId','$resaleVariantId','$resaleOfferId','PRODUCT',1,320000,320000,'VND','{"name":"Kệ gỗ thanh lý","scenario":"negotiated"}'::jsonb,now() - interval '3 hours')
+('dddddddd-dddd-4ddd-8ddd-dddddddddda1','$completedOrderId','$productItemId','$productVariantId','$productOfferId','PRODUCT',1,85000,85000,'VND','{"name":"$productName","scenario":"completed"}'::jsonb,now() - interval '9 days'),
+('dddddddd-dddd-4ddd-8ddd-dddddddddda2','$negotiatedOrderId','$resaleItemId','$resaleVariantId','$resaleOfferId','PRODUCT',1,320000,320000,'VND','{"name":"$resaleName","scenario":"negotiated"}'::jsonb,now() - interval '3 hours')
 on conflict(id) do update set quantity=excluded.quantity,unit_price=excluded.unit_price,line_total=excluded.line_total,item_snapshot=excluded.item_snapshot;
 
 insert into product_fulfillments(order_id,fulfillment_method,pickup_location_id,buyer_address_id,distance_meters,pickup_location_snapshot,delivery_address_snapshot,buyer_contact_snapshot,merchant_contact_snapshot,shipping_policy_snapshot,seller_marked_ready_at,seller_marked_delivered_at,awaiting_buyer_confirmation_at,out_for_delivery_at,auto_complete_at,no_show_eligible_at) values
-('$completedOrderId','SELLER_DELIVERY',null,'99999999-9999-4999-8999-999999999999',1800,'{}'::jsonb,'{"label":"Nhà","scenario":"completed"}'::jsonb,'{"name":"Minh Buyer"}'::jsonb,'{"name":"Cửa hàng Chợ Xanh"}'::jsonb,'{"mode":"FIXED","fee":25000}'::jsonb,null,now() - interval '7 days 2 hours',now() - interval '7 days 2 hours',now() - interval '7 days 4 hours',now() - interval '7 days',null),
-('$negotiatedOrderId','PICKUP','$locationId',null,null,'{"name":"Chợ Xanh Grand Park"}'::jsonb,null,'{"name":"Minh Buyer"}'::jsonb,'{"name":"Cửa hàng Chợ Xanh"}'::jsonb,'{"mode":"NEGOTIATED"}'::jsonb,null,null,null,null,null,null)
+('$completedOrderId','SELLER_DELIVERY',null,'99999999-9999-4999-8999-999999999999',1800,'{}'::jsonb,'{"label":"$addressLabel","scenario":"completed"}'::jsonb,'{"name":"Minh Buyer"}'::jsonb,'{"name":"$merchantName"}'::jsonb,'{"mode":"FIXED","fee":25000}'::jsonb,null,now() - interval '7 days 2 hours',now() - interval '7 days 2 hours',now() - interval '7 days 4 hours',now() - interval '7 days',null),
+('$negotiatedOrderId','PICKUP','$locationId',null,null,'{"name":"$locationName"}'::jsonb,null,'{"name":"Minh Buyer"}'::jsonb,'{"name":"$merchantName"}'::jsonb,'{"mode":"NEGOTIATED"}'::jsonb,null,null,null,null,null,null)
 on conflict(order_id) do update set shipping_policy_snapshot=excluded.shipping_policy_snapshot;
 
 insert into need_requests(id,buyer_user_id,need_type,category_id,title,query_text,description,requested_quantity,geo_point,location_snapshot,search_radius_meters,request_status,expires_at,created_at,updated_at,closed_at,moderation_status) values
-('$activeNeedId','$buyerId','PRODUCT','$categoryId','Cần rau củ giao trong ngày','rau củ giao nhanh','Cần một giỏ rau củ theo mùa, ưu tiên nguồn gốc rõ ràng. Nội dung dài dùng để kiểm tra xuống dòng, co giãn thẻ và khả năng đọc trên màn hình hẹp mà không làm lộ địa chỉ chính xác của người mua.',2,ST_SetSRID(ST_MakePoint(106.842,10.842),4326)::geography,'{"area":"Thủ Đức","scenario":"long-content"}'::jsonb,5000,'ACTIVE',now() + interval '3 days',now() - interval '2 hours',now() - interval '2 hours',null,'APPROVED'),
-('$restrictedNeedId','$buyerId','SERVICE','$serviceCategoryId','Dịch vụ đã đóng','sửa khóa','Kịch bản restricted để xác minh hành động không còn hợp lệ.',1,ST_SetSRID(ST_MakePoint(106.842,10.842),4326)::geography,'{"area":"Thủ Đức","scenario":"restricted"}'::jsonb,3000,'CANCELLED',now() + interval '1 day',now() - interval '1 day',now() - interval '4 hours',now() - interval '4 hours','HIDDEN')
+('$activeNeedId','$buyerId','PRODUCT','$categoryId','$activeNeedTitle','$activeNeedQuery','$activeNeedDescription',2,ST_SetSRID(ST_MakePoint(106.842,10.842),4326)::geography,'{"area":"$needArea","scenario":"long-content"}'::jsonb,5000,'ACTIVE',now() + interval '3 days',now() - interval '2 hours',now() - interval '2 hours',null,'APPROVED'),
+('$restrictedNeedId','$buyerId','SERVICE','$serviceCategoryId','$restrictedNeedTitle','$restrictedNeedQuery','$restrictedNeedDescription',1,ST_SetSRID(ST_MakePoint(106.842,10.842),4326)::geography,'{"area":"$needArea","scenario":"restricted"}'::jsonb,3000,'CANCELLED',now() + interval '1 day',now() - interval '1 day',now() - interval '4 hours',now() - interval '4 hours','HIDDEN')
 on conflict(id) do update set title=excluded.title,description=excluded.description,request_status=excluded.request_status,expires_at=excluded.expires_at,updated_at=excluded.updated_at,closed_at=excluded.closed_at,moderation_status=excluded.moderation_status;
 
 insert into need_responses(id,need_request_id,merchant_profile_id,merchant_location_id,response_status,note,created_by_user_id,created_at,updated_at,withdrawn_at,version)
-values('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3','$activeNeedId','$merchantId','$locationId','ACTIVE','Có thể giao trong ngày.','$sellerId',now() - interval '1 hour',now() - interval '1 hour',null,2)
+values('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3','$activeNeedId','$merchantId','$locationId','ACTIVE','$needResponseNote','$sellerId',now() - interval '1 hour',now() - interval '1 hour',null,2)
 on conflict(id) do update set response_status='ACTIVE',note=excluded.note,withdrawn_at=null,updated_at=excluded.updated_at,version=2;
 
 insert into need_response_items(id,need_response_id,catalog_item_id,variant_id,location_variant_id,item_status,price_snapshot,currency_code,availability_snapshot,created_at,retired_at)
@@ -257,21 +272,21 @@ values('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee4','eeeeeeee-eeee-4eee-8eee-eeeeeeeee
 on conflict(id) do update set item_status='ACTIVE',price_snapshot=85000,availability_snapshot=excluded.availability_snapshot,retired_at=null;
 
 insert into reviews(id,order_item_id,order_id,buyer_user_id,catalog_item_id,variant_id,merchant_profile_id,rating,comment,review_status,created_at,updated_at,deleted_at)
-values('$reviewId','dddddddd-dddd-4ddd-8ddd-dddddddddda1','$completedOrderId','$buyerId','$productItemId','$productVariantId','$merchantId',5,'Rau tươi, đóng gói kỹ và giao đúng hẹn.','ACTIVE',now() - interval '6 days',now() - interval '6 days',null)
+values('$reviewId','dddddddd-dddd-4ddd-8ddd-dddddddddda1','$completedOrderId','$buyerId','$productItemId','$productVariantId','$merchantId',5,'$reviewComment','ACTIVE',now() - interval '6 days',now() - interval '6 days',null)
 on conflict(id) do update set rating=5,comment=excluded.comment,review_status='ACTIVE',updated_at=excluded.updated_at,deleted_at=null;
 
 insert into moderation_cases(id,case_type,reporter_user_id,target_type,target_catalog_item_id,target_need_request_id,reason_code,description,case_status,assigned_admin_user_id,opened_at,resolved_at,closed_at) values
-('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3','USER_REPORT','$buyerId','CATALOG_ITEM','$resaleItemId',null,'MISLEADING','Báo cáo mở dùng cho hàng thanh lý.','OPEN','$adminId',now() - interval '5 hours',null,null),
-('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4','USER_REPORT','$buyerId','NEED_REQUEST',null,'$restrictedNeedId','OTHER','Báo cáo đã xử lý để kiểm tra lịch sử kiểm duyệt.','RESOLVED','$adminId',now() - interval '2 days',now() - interval '1 day',null)
+('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3','USER_REPORT','$buyerId','CATALOG_ITEM','$resaleItemId',null,'MISLEADING','$openReportDescription','OPEN','$adminId',now() - interval '5 hours',null,null),
+('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4','USER_REPORT','$buyerId','NEED_REQUEST',null,'$restrictedNeedId','OTHER','$resolvedReportDescription','RESOLVED','$adminId',now() - interval '2 days',now() - interval '1 day',null)
 on conflict(id) do update set description=excluded.description,case_status=excluded.case_status,assigned_admin_user_id=excluded.assigned_admin_user_id,resolved_at=excluded.resolved_at,closed_at=excluded.closed_at;
 
 insert into moderation_actions(id,moderation_case_id,action_type,actor_admin_user_id,reason_code,note,metadata,created_at)
-values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4','HIDE','$adminId','OTHER','Đã ẩn nội dung theo báo cáo.','{"fixture":"resolved"}'::jsonb,now() - interval '1 day')
+values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4','HIDE','$adminId','OTHER','$moderationActionNote','{"fixture":"resolved"}'::jsonb,now() - interval '1 day')
 on conflict(id) do update set note=excluded.note,metadata=excluded.metadata;
 
 insert into system_settings(id,setting_key,value_type,value_json,scope_type,location_area_id,category_id,merchant_profile_id,version,updated_by_user_id,created_at,updated_at) values
 ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa6','ui.fixture.discovery.enabled','BOOLEAN','true'::jsonb,'GLOBAL',null,null,null,3,'$adminId',now() - interval '4 days',now()),
-('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa7','ui.fixture.merchant.long-content','STRING','"Nội dung cấu hình dài dùng để kiểm tra giao diện quản trị và trạng thái an toàn khi dữ liệu vượt quá một dòng."'::jsonb,'MERCHANT',null,null,'$merchantId',4,'$adminId',now() - interval '4 days',now())
+('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa7','ui.fixture.merchant.long-content','STRING',to_jsonb('$longSettingValue'::text),'MERCHANT',null,null,'$merchantId',4,'$adminId',now() - interval '4 days',now())
 on conflict(id) do update set value_json=excluded.value_json,version=excluded.version,updated_by_user_id=excluded.updated_by_user_id,updated_at=now();
 commit;
 "@
