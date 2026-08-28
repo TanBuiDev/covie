@@ -74,7 +74,7 @@ public class PilotReferenceDataBootstrapRunner implements ApplicationRunner {
                 select id from location_areas
                  where parent_id is not distinct from :parentId
                    and slug = :slug
-                   and deleted_at is null
+                   and status <> 'DELETED'
                 """, params, (rs, rowNum) -> rs.getObject(1, UUID.class));
         if (ids.size() > 1) throw new IllegalStateException("Duplicate location bootstrap key: " + seed.slug());
         if (ids.size() == 1) {
@@ -83,7 +83,8 @@ public class PilotReferenceDataBootstrapRunner implements ApplicationRunner {
             jdbc.update(
                     """
                     update location_areas
-                       set name = :name, area_type = :areaType, sort_order = :sortOrder, updated_at = now()
+                       set name = :name, area_type = :areaType, status = 'ACTIVE',
+                           sort_order = :sortOrder, updated_at = now()
                      where id = :id
                     """, params);
             return id;
@@ -120,7 +121,7 @@ public class PilotReferenceDataBootstrapRunner implements ApplicationRunner {
                     """
                     update categories
                        set name = :name, catalog_type = :catalogType, status = 'ACTIVE',
-                           sort_order = :sortOrder, updated_at = now()
+                           sort_order = :sortOrder, deleted_at = null
                      where id = :id
                     """, params);
             return id;
@@ -129,8 +130,8 @@ public class PilotReferenceDataBootstrapRunner implements ApplicationRunner {
         params.addValue("id", id);
         jdbc.update(
                 """
-                insert into categories(id, parent_id, slug, name, catalog_type, status, sort_order, created_at, updated_at)
-                values (:id, :parentId, :slug, :name, :catalogType, 'ACTIVE', :sortOrder, now(), now())
+                insert into categories(id, parent_id, slug, name, catalog_type, status, sort_order, deleted_at, version)
+                values (:id, :parentId, :slug, :name, :catalogType, 'ACTIVE', :sortOrder, null, 0)
                 """, params);
         return id;
     }
