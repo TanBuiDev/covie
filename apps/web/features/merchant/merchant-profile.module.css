@@ -22,3 +22,5 @@
   .body{grid-template-columns:420px minmax(0,760px);max-width:1280px;padding:0 32px 64px}
   .hero{height:156px}
 }
+
+.capabilities{display:flex;flex-wrap:wrap;gap:6px}.capabilities small{background:#ecfdf5;border-radius:999px;color:#047857;padding:4px 8px}.catalogGrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}.catalogGrid article{border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;padding:14px}.catalogGrid img{height:160px;object-fit:cover;width:100%}.catalogGrid h2{font-size:16px;line-height:24px;margin:8px 0}.catalogGrid h2 a{color:#0f172a;text-decoration:none}.catalogGrid p{color:#475569;font-size:13px;line-height:18px;margin:4px 0}

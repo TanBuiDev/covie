@@ -11,9 +11,12 @@ import vn.covie.catalog.api.dto.publicview.PublicMerchantResponse;
 import vn.covie.catalog.application.CatalogDetailService;
 import vn.covie.catalog.application.CatalogDiscoveryService;
 import vn.covie.catalog.application.PublicMerchantViewService;
+import vn.covie.catalog.application.PublicMerchantCatalogService;
 import vn.covie.catalog.api.dto.discovery.CatalogDiscoveryQuery;
 import vn.covie.catalog.api.dto.discovery.CatalogDiscoveryResponse;
 import vn.covie.catalog.api.dto.discovery.CatalogSort;
+import vn.covie.catalog.api.dto.discovery.CatalogItemSummaryResponse;
+import vn.covie.catalog.api.dto.discovery.CursorPageResponse;
 import vn.covie.catalog.model.CatalogItemType;
 import vn.covie.catalog.model.ListingKind;
 import vn.covie.shipping.model.ShippingMode;
@@ -27,12 +30,14 @@ public class PublicCatalogController {
     private final CatalogDetailService details;
     private final PublicMerchantViewService merchants;
     private final CatalogDiscoveryService discovery;
+    private final PublicMerchantCatalogService merchantCatalog;
 
     public PublicCatalogController(CatalogDetailService details, PublicMerchantViewService merchants,
-            CatalogDiscoveryService discovery) {
+            CatalogDiscoveryService discovery, PublicMerchantCatalogService merchantCatalog) {
         this.details = details;
         this.merchants = merchants;
         this.discovery = discovery;
+        this.merchantCatalog = merchantCatalog;
     }
 
     @GetMapping("/items/{itemId}")
@@ -47,6 +52,13 @@ public class PublicCatalogController {
     @GetMapping("/merchants/{merchantId}")
     public PublicMerchantResponse merchant(@PathVariable UUID merchantId) {
         return merchants.get(merchantId);
+    }
+
+    @GetMapping("/merchants/{merchantId}/items")
+    public CursorPageResponse<CatalogItemSummaryResponse> merchantItems(@PathVariable UUID merchantId,
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) String cursor) {
+        return merchantCatalog.list(merchantId, limit, cursor);
     }
 
     @GetMapping("/items")

@@ -87,10 +87,28 @@ class PublicCatalogDetailControllerIntegrationTest extends PostgresIntegrationTe
 
         mockMvc.perform(get("/api/v1/catalog/merchants/{merchantId}", fixture.merchantId()))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.merchantKind").value("SHOP"))
                 .andExpect(jsonPath("$.locations.length()").value(1))
                 .andExpect(jsonPath("$.locations[0].id").value(fixture.locationId().toString()))
+                .andExpect(jsonPath("$.locations[0].pickupEnabled").value(false))
+                .andExpect(jsonPath("$.locations[0].sellerDeliveryEnabled").value(false))
+                .andExpect(jsonPath("$.locations[0].serviceEnabled").value(false))
+                .andExpect(jsonPath("$.locations[0].openNow").value(false))
                 .andExpect(jsonPath("$.contacts.length()").value(1))
                 .andExpect(jsonPath("$.contacts[0].value").value("0900000000"));
+    }
+
+    @Test
+    void filtersThePublicCatalogByMerchantAndExposesAvailability() throws Exception {
+        Fixture selected = fixture();
+        fixture();
+
+        mockMvc.perform(get("/api/v1/catalog/merchants/{merchantId}/items", selected.merchantId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].id").value(selected.itemId().toString()))
+                .andExpect(jsonPath("$.items[0].merchant.id").value(selected.merchantId().toString()))
+                .andExpect(jsonPath("$.items[0].availability").value("AVAILABLE"));
     }
 
     @Test

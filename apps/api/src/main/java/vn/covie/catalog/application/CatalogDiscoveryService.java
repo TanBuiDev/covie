@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import vn.covie.catalog.api.dto.discovery.CatalogCursor;
+import vn.covie.catalog.api.dto.discovery.CatalogAvailability;
 import vn.covie.catalog.api.dto.discovery.CatalogDiscoveryQuery;
 import vn.covie.catalog.api.dto.discovery.CatalogDiscoveryResponse;
 import vn.covie.catalog.api.dto.discovery.CatalogItemSummaryResponse;
@@ -89,7 +90,7 @@ public class CatalogDiscoveryService {
                 new PublicMerchantSummary(row.merchantId(), row.merchantName(), row.merchantSlug()),
                 new ResolvedMerchantLocationResponse(row.locationId(), row.locationName(), row.addressText(),
                         (double) row.distanceMeters(), context.source()),
-                new Money(row.minPrice(), row.currencyCode()));
+                new Money(row.minPrice(), row.currencyCode()), CatalogAvailability.AVAILABLE);
     }
 
     private URI publicUrl(String key) {

@@ -17,4 +17,5 @@ public record CatalogItemSummaryResponse(
         PublicMediaResponse primaryMedia,
         PublicMerchantSummary merchant,
         ResolvedMerchantLocationResponse resolvedLocation,
-        Money priceFrom) {}
+        Money priceFrom,
+        CatalogAvailability availability) {}

@@ -1656,6 +1656,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/merchants/{merchantId}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["merchantItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalog/items": {
         parameters: {
             query?: never;
@@ -2502,6 +2518,8 @@ export interface components {
         CreateMerchantRequest: {
             name: string;
             description?: string;
+            /** @enum {string} */
+            merchantKind?: "SHOP" | "PROVIDER";
         };
         MerchantSummaryResponse: {
             /** Format: uuid */
@@ -2759,6 +2777,8 @@ export interface components {
             logoMediaId?: string;
             /** Format: uuid */
             coverMediaId?: string;
+            /** @enum {string} */
+            merchantKind?: "SHOP" | "PROVIDER";
             /** @enum {string} */
             status?: "ACTIVE" | "PAUSED" | "SUSPENDED" | "DELETED";
             /** Format: int64 */
@@ -3294,6 +3314,8 @@ export interface components {
         PublicMerchantResponse: {
             /** Format: uuid */
             id?: string;
+            /** @enum {string} */
+            merchantKind?: "SHOP" | "PROVIDER";
             name?: string;
             slug?: string;
             description?: string;
@@ -3312,9 +3334,10 @@ export interface components {
             distanceMeters?: number;
             /** @enum {string} */
             resolutionSource?: "COORDINATES" | "SAVED_ADDRESS" | "EXPLICIT_MERCHANT_LOCATION" | "DEFAULT_MERCHANT_LOCATION";
-        };
-        CatalogDiscoveryResponse: {
-            page?: components["schemas"]["CursorPageResponseCatalogItemSummaryResponse"];
+            pickupEnabled?: boolean;
+            sellerDeliveryEnabled?: boolean;
+            serviceEnabled?: boolean;
+            openNow?: boolean;
         };
         CatalogItemSummaryResponse: {
             /** Format: uuid */
@@ -3329,6 +3352,8 @@ export interface components {
             merchant?: components["schemas"]["PublicMerchantSummary"];
             resolvedLocation?: components["schemas"]["ResolvedMerchantLocationResponse"];
             priceFrom?: components["schemas"]["Money"];
+            /** @enum {string} */
+            availability?: "AVAILABLE" | "UNAVAILABLE";
         };
         CursorPageResponseCatalogItemSummaryResponse: {
             items?: components["schemas"]["CatalogItemSummaryResponse"][];
@@ -3345,6 +3370,9 @@ export interface components {
             id?: string;
             name?: string;
             slug?: string;
+        };
+        CatalogDiscoveryResponse: {
+            page?: components["schemas"]["CursorPageResponseCatalogItemSummaryResponse"];
         };
         CatalogItemDetailResponse: {
             /** Format: uuid */
@@ -3467,12 +3495,12 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             unpaged?: boolean;
-            sort?: components["schemas"]["SortObject"];
             paged?: boolean;
-            /** Format: int32 */
-            pageSize?: number;
+            sort?: components["schemas"]["SortObject"];
             /** Format: int32 */
             pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
         };
         SortObject: {
             empty?: boolean;
@@ -6739,6 +6767,31 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PublicMerchantResponse"];
+                };
+            };
+        };
+    };
+    merchantItems: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursorPageResponseCatalogItemSummaryResponse"];
                 };
             };
         };

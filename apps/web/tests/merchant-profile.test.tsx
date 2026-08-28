@@ -5,6 +5,7 @@ import { MerchantProfile } from "@/features/merchant/merchant-profile";
 
 const merchant: components["schemas"]["PublicMerchantResponse"] = {
   id: "merchant-1",
+  merchantKind: "SHOP",
   name: "Cửa hàng Chợ Xanh",
   description: "Thực phẩm · Tạp hóa · Thanh lý địa phương",
   locations: [{ id: "location-1", name: "Điểm bán Long Bình", addressText: "123 Nguyễn Xiển, TP. Thủ Đức", distanceMeters: 850 }],
@@ -14,6 +15,27 @@ const merchant: components["schemas"]["PublicMerchantResponse"] = {
     { id: "contact-3", type: "OTHER", value: "javascript:alert(1)" },
   ],
   reputation: { eligibleOrders: 125, completedOrders: 120, completionRateBasisPoints: 9600 },
+};
+
+const catalog: components["schemas"]["CursorPageResponseCatalogItemSummaryResponse"] = {
+  items: [{
+    id: "service-1",
+    type: "SERVICE",
+    listingKind: "STANDARD",
+    name: "Vệ sinh máy lạnh",
+    merchant: { id: "merchant-1", name: "Cửa hàng Chợ Xanh" },
+    resolvedLocation: {
+      id: "location-1",
+      name: "Điểm bán Long Bình",
+      pickupEnabled: false,
+      sellerDeliveryEnabled: false,
+      serviceEnabled: true,
+      openNow: true,
+    },
+    priceFrom: { amount: 350_000, currency: "VND" },
+    availability: "AVAILABLE",
+  }],
+  hasMore: false,
 };
 
 const reviews: components["schemas"]["ReviewPageResponse"] = {
@@ -43,5 +65,29 @@ describe("PUB-009 Merchant profile", () => {
 
     expect(screen.getByRole("heading", { name: "Danh mục công khai" })).toBeInTheDocument();
     expect(screen.getByText("Chưa thể tải danh mục của cửa hàng.")).toBeInTheDocument();
+  });
+
+  it("uses the authoritative provider discriminator and renders public catalog capabilities", () => {
+    render(<MerchantProfile
+      merchant={{
+        ...merchant,
+        merchantKind: "PROVIDER",
+        locations: [{
+          ...merchant.locations?.[0],
+          id: "location-1",
+          name: "Điểm bán Long Bình",
+          serviceEnabled: true,
+          openNow: true,
+        }],
+      }}
+      reviews={reviews}
+      catalog={catalog}
+    />);
+
+    expect(screen.getByRole("heading", { name: "Nhà cung cấp" })).toBeInTheDocument();
+    expect(screen.getByText("Đang mở cửa")).toBeInTheDocument();
+    expect(screen.getByText("Có phục vụ dịch vụ")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Vệ sinh máy lạnh" })).toHaveAttribute("href", "/items/service-1");
+    expect(screen.queryByText("Chưa thể tải dịch vụ công khai của nhà cung cấp.")).not.toBeInTheDocument();
   });
 });

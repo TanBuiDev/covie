@@ -76,7 +76,8 @@ public class MerchantApplicationService {
             UUID merchantId = ids.generate();
             try {
                 return MerchantProfileEntity.create(merchantId, requiredName(request.name()),
-                        slugs.uniqueSlug(request.name(), merchantId), cleanNullable(request.description()), now);
+                        slugs.uniqueSlug(request.name(), merchantId), cleanNullable(request.description()),
+                        request.merchantKind(), now);
             } catch (MerchantSlugService.SlugCollisionException ignored) {
                 // A pre-existing suffix collided; retry with a fresh merchant ID while still holding the base-slug lock.
             }
@@ -137,6 +138,6 @@ public class MerchantApplicationService {
     private static MerchantManagementResponse management(MerchantProfileEntity merchant) {
         return new MerchantManagementResponse(merchant.getId(), merchant.getName(), merchant.getSlug(),
                 merchant.getDescription(), merchant.getLogoMediaId(), merchant.getCoverMediaId(),
-                merchant.getMerchantStatus(), merchant.getVersion());
+                merchant.getMerchantKind(), merchant.getMerchantStatus(), merchant.getVersion());
     }
 }

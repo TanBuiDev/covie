@@ -2,12 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import type { components } from "@covie/api-client";
 import { CoVieIcon } from "@/components/ui/covie-icon";
+import { CatalogCard } from "@/features/catalog/catalog-card";
 import { ReportButton } from "@/features/reports/report-button";
 import { ReviewList } from "@/features/reviews/review-list";
 import styles from "./merchant-profile.module.css";
 
 type Merchant = components["schemas"]["PublicMerchantResponse"];
 type Reviews = components["schemas"]["ReviewPageResponse"];
+type Catalog = components["schemas"]["CursorPageResponseCatalogItemSummaryResponse"];
 type Contact = components["schemas"]["PublicMerchantContactResponse"];
 type ProfilePresentation = "SHOP" | "PROVIDER";
 
@@ -42,13 +44,15 @@ function distance(value?: number) {
 export function MerchantProfile({
   merchant,
   reviews,
-  presentation = "SHOP",
+  catalog,
+  presentation,
 }: {
   merchant: Merchant;
   reviews?: Reviews;
+  catalog?: Catalog;
   presentation?: ProfilePresentation;
 }) {
-  const provider = presentation === "PROVIDER";
+  const provider = (presentation ?? merchant.merchantKind) === "PROVIDER";
   const surfaceLabel = provider ? "Nhà cung cấp" : "Cửa hàng";
   const fallbackName = provider ? "Nhà cung cấp CoVie" : "Cửa hàng CoVie";
   const completionPoints = merchant.reputation?.completionRateBasisPoints;
@@ -105,12 +109,21 @@ export function MerchantProfile({
               <strong>{location.name ?? "Điểm phục vụ"}</strong>
               {location.addressText && <p>{location.addressText}</p>}
               {distance(location.distanceMeters) && <small>Cách bạn {distance(location.distanceMeters)}</small>}
+              {location.openNow != null && <small>{location.openNow ? "Đang mở cửa" : "Đang đóng cửa"}</small>}
+              <div className={styles.capabilities}>
+                {location.pickupEnabled && <small>Nhận tại điểm bán</small>}
+                {location.sellerDeliveryEnabled && <small>Giao tận nơi</small>}
+                {location.serviceEnabled && <small>Có phục vụ dịch vụ</small>}
+              </div>
             </div>) : <p className={styles.empty}>Chưa có điểm phục vụ công khai.</p>}
           </section>
 
           <section className={styles.catalog}>
             <h3>{provider ? "Dịch vụ công khai" : "Danh mục công khai"}</h3>
-            <div className={styles.empty}>{provider ? "Chưa thể tải dịch vụ công khai của nhà cung cấp." : "Chưa thể tải danh mục của cửa hàng."}</div>
+            {catalog ? catalog.items?.length
+              ? <div className={styles.catalogGrid}>{catalog.items.map((item) => <CatalogCard key={item.id} item={item} />)}</div>
+              : <div className={styles.empty}>{provider ? "Chưa có dịch vụ công khai." : "Chưa có sản phẩm công khai."}</div>
+              : <div className={styles.empty}>{provider ? "Chưa thể tải dịch vụ công khai của nhà cung cấp." : "Chưa thể tải danh mục của cửa hàng."}</div>}
           </section>
         </div>
 
@@ -121,10 +134,9 @@ export function MerchantProfile({
 }
 
 /**
- * Provider is an explicit presentation mode only. The current public merchant
- * response does not expose a trustworthy Shop/Provider discriminator, so the
- * public route must not select this variant heuristically.
+ * ProviderProfile remains available for routes that intentionally force the
+ * provider presentation. Public merchant routes use the contract discriminator.
  */
-export function ProviderProfile({ merchant, reviews }: { merchant: Merchant; reviews?: Reviews }) {
-  return <MerchantProfile merchant={merchant} reviews={reviews} presentation="PROVIDER" />;
+export function ProviderProfile({ merchant, reviews, catalog }: { merchant: Merchant; reviews?: Reviews; catalog?: Catalog }) {
+  return <MerchantProfile merchant={merchant} reviews={reviews} catalog={catalog} presentation="PROVIDER" />;
 }

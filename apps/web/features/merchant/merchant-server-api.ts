@@ -34,6 +34,14 @@ export async function listPublicMerchantReviewsForServer(merchantId: string) {
   return data;
 }
 
+export async function listPublicMerchantCatalogForServer(merchantId: string) {
+  const client = await createServerReadClient();
+  const { data, response } = await client.GET("/api/v1/catalog/merchants/{merchantId}/items", {
+    params: { path: { merchantId }, query: {} },
+  });
+  return requireData(response, data);
+}
+
 export async function listLocationsForServer(merchantId: string) {
   const client = await createServerReadClient();
   const { data, response } = await client.GET("/api/v1/merchants/{merchantId}/locations", { params: { path: { merchantId } } });

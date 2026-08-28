@@ -17,6 +17,7 @@ public class MerchantProfileEntity {
     @Column(nullable = false, length = 180) private String name;
     @Column(nullable = false, length = 200) private String slug;
     private String description;
+    @Enumerated(EnumType.STRING) @Column(name = "merchant_kind", nullable = false, length = 20) private MerchantKind merchantKind;
     @Column(name = "logo_media_id") private UUID logoMediaId;
     @Column(name = "cover_media_id") private UUID coverMediaId;
     @Enumerated(EnumType.STRING) @Column(name = "merchant_status", nullable = false, length = 30) private MerchantStatus merchantStatus;
@@ -34,8 +35,15 @@ public class MerchantProfileEntity {
     }
 
     public static MerchantProfileEntity create(UUID id, String name, String slug, String description, Instant now) {
+        return create(id, name, slug, description, MerchantKind.SHOP, now);
+    }
+
+    public static MerchantProfileEntity create(UUID id, String name, String slug, String description,
+            MerchantKind merchantKind, Instant now) {
         MerchantProfileEntity profile = new MerchantProfileEntity();
-        profile.id = id; profile.name = name; profile.slug = slug; profile.description = description; profile.merchantStatus = MerchantStatus.ACTIVE;
+        profile.id = id; profile.name = name; profile.slug = slug; profile.description = description;
+        profile.merchantKind = merchantKind == null ? MerchantKind.SHOP : merchantKind;
+        profile.merchantStatus = MerchantStatus.ACTIVE;
         profile.moderationStatus = MerchantModerationStatus.NOT_REQUIRED; profile.createdAt = now; profile.updatedAt = now;
         return profile;
     }
@@ -86,6 +94,7 @@ public class MerchantProfileEntity {
     public String getName() { return name; }
     public String getSlug() { return slug; }
     public String getDescription() { return description; }
+    public MerchantKind getMerchantKind() { return merchantKind; }
     public UUID getLogoMediaId() { return logoMediaId; }
     public UUID getCoverMediaId() { return coverMediaId; }
     public MerchantStatus getMerchantStatus() { return merchantStatus; }

@@ -38,6 +38,7 @@ class OpenApiExportTest extends PostgresIntegrationTest {
                 "/api/v1/media/{mediaId}/complete",
                 "/api/v1/merchants/{merchantId}/catalog-items",
                 "/api/v1/catalog/items",
+                "/api/v1/catalog/merchants/{merchantId}/items",
                 "/api/v1/catalog/items/{itemId}");
         assertThat(json).contains("/api/v1/health");
 

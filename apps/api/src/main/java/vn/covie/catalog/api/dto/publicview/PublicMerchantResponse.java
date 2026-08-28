@@ -2,10 +2,12 @@ package vn.covie.catalog.api.dto.publicview;
 
 import java.util.List;
 import java.util.UUID;
+import vn.covie.merchants.model.MerchantKind;
 import vn.covie.reputation.api.dto.MerchantReputationSummary;
 
 public record PublicMerchantResponse(
         UUID id,
+        MerchantKind merchantKind,
         String name,
         String slug,
         String description,

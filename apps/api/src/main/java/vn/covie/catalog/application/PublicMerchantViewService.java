@@ -23,12 +23,15 @@ import vn.covie.merchants.model.MerchantLocationStatus;
 import vn.covie.merchants.model.MerchantModerationStatus;
 import vn.covie.merchants.model.MerchantProfileEntity;
 import vn.covie.merchants.model.MerchantStatus;
+import vn.covie.merchants.model.OperationType;
+import vn.covie.merchants.application.MerchantHoursService;
 import vn.covie.merchants.persistence.MerchantContactMethodRepository;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
 import vn.covie.reputation.application.ReputationReadService;
+import vn.covie.shared.time.AppClock;
 
 @Service
 public class PublicMerchantViewService {
@@ -38,15 +41,20 @@ public class PublicMerchantViewService {
     private final MediaAssetRepository media;
     private final MediaUrlResolver urls;
     private final ReputationReadService reputation;
+    private final MerchantHoursService hours;
+    private final AppClock clock;
 
     public PublicMerchantViewService(MerchantProfileRepository merchants, MerchantLocationRepository locations,
-            MerchantContactMethodRepository contacts, MediaAssetRepository media, MediaUrlResolver urls, ReputationReadService reputation) {
+            MerchantContactMethodRepository contacts, MediaAssetRepository media, MediaUrlResolver urls,
+            ReputationReadService reputation, MerchantHoursService hours, AppClock clock) {
         this.merchants = merchants;
         this.locations = locations;
         this.contacts = contacts;
         this.media = media;
         this.urls = urls;
         this.reputation = reputation;
+        this.hours = hours;
+        this.clock = clock;
     }
 
     public PublicMerchantResponse get(UUID merchantId) {
@@ -74,7 +82,7 @@ public class PublicMerchantViewService {
                 .map(this::publicContact)
                 .flatMap(Optional::stream)
                 .toList();
-        return new PublicMerchantResponse(merchant.getId(), merchant.getName(), merchant.getSlug(),
+        return new PublicMerchantResponse(merchant.getId(), merchant.getMerchantKind(), merchant.getName(), merchant.getSlug(),
                 merchant.getDescription(), publicMedia(merchant.getLogoMediaId()), publicMedia(merchant.getCoverMediaId()),
                 activeLocations, publicContacts, reputation.merchant(merchant.getId()));
     }
@@ -86,7 +94,8 @@ public class PublicMerchantViewService {
     public ResolvedMerchantLocationResponse locationResponse(MerchantLocationEntity location, Double distanceMeters,
             LocationResolutionSource source) {
         return new ResolvedMerchantLocationResponse(location.getId(), location.getName(), location.getAddressText(),
-                distanceMeters, source);
+                distanceMeters, source, location.isPickupEnabled(), location.isSellerDeliveryEnabled(),
+                location.isServiceEnabled(), hours.isOpen(location.getId(), OperationType.SHOP, clock.now()));
     }
 
     public static boolean isVisible(MerchantProfileEntity merchant) {

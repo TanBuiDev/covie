@@ -8,4 +8,13 @@ public record ResolvedMerchantLocationResponse(
         String name,
         String addressText,
         Double distanceMeters,
-        LocationResolutionSource resolutionSource) {}
+        LocationResolutionSource resolutionSource,
+        Boolean pickupEnabled,
+        Boolean sellerDeliveryEnabled,
+        Boolean serviceEnabled,
+        Boolean openNow) {
+    public ResolvedMerchantLocationResponse(UUID id, String name, String addressText, Double distanceMeters,
+            LocationResolutionSource resolutionSource) {
+        this(id, name, addressText, distanceMeters, resolutionSource, null, null, null, null);
+    }
+}
