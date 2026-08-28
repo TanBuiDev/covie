@@ -60,9 +60,9 @@ Added:
 
 - `infra/scripts/import-demo-media.py`
 
-The media pack contract is immutable for v1:
+The downloadable media pack contract for v1 is:
 
-- manifest SHA-256: `0cca53918b5b8b1ec129b4a0220a54a5805d95925105062c27c0b5d726cb8f01`
+- manifest SHA-256: `87e267134a880afc3b2de2e16bec3465d4de73cfff52cfc63663f4e0064214f7`
 - 172 total assets
 - 162 AI/local images
 - 10 contact QR assets
@@ -111,22 +111,23 @@ See `docs/DEMO_DATA.md` for the operator guide and safety details.
 
 ## Validation completed in this implementation pass
 
-- Python source for both helpers was syntax-compiled successfully before commit preparation.
-- `demo-data.py --help` exposed all expected lifecycle commands.
-- Prepared file checksums were compared with the intended final artifacts before the GitHub write step.
-- The branch head was re-read before writing so the final commit can be created as a fast-forward from the existing `demo-data-v1` head.
+- The downloadable ZIP was reopened and tested with Python's ZIP integrity check; no corrupt entry was found.
+- The pack contains 172 manifest records and exactly 60 product ready images.
+- The downloadable pack manifest hash was recalculated as `87e267134a880afc3b2de2e16bec3465d4de73cfff52cfc63663f4e0064214f7`.
+- `infra/scripts/import-demo-media.py` was syntax-compiled after syncing that hash.
+- `demo-data.py --help` exposes all expected lifecycle commands.
 
 ## Runtime validation still required locally
 
-This connector session does not provide the project's running PostgreSQL/API/storage stack or the operator's media-pack directory, so the following should be run after pulling the branch:
+This connector session does not provide the project's running PostgreSQL/API/storage stack or the operator's local extracted media-pack directory, so the following should be run after pulling the branch:
 
 1. Start the normal CoVie PostgreSQL/API/storage services and migrations.
 2. Run `COVIE_ALLOW_DEMO_DATA=1 python infra/scripts/demo-data.py reseed`.
 3. Run `python infra/scripts/demo-data.py verify` and require all pinned counts to show `OK`.
-4. Run the media importer with `--dry-run` against the final pack.
+4. Run the media importer with `--dry-run` against the extracted downloadable pack.
 5. Login to obtain a valid access token, upload the 172 media assets, optionally attach them, then spot-check Buyer/Seller/Admin flows.
 6. Run reset followed by verify/status once more to prove ordinary non-demo rows are preserved.
 
 ## Handoff
 
-Implementation is intentionally kept on branch `demo-data-v1`. Do not merge it into `main` automatically and do not open a PR as part of this handoff. The branch is intended to be pulled and exercised locally first.
+Implementation remains on branch `demo-data-v1`. Do not merge it into `main` automatically and do not open a PR as part of this handoff. The branch is intended to be pulled and exercised locally first.
