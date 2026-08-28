@@ -341,12 +341,12 @@ Do not reuse branch-era counts. Record the new test count, warnings, build resul
 - Modify: `apps/web/features/merchant/merchant-profile.tsx`
 - Test: `apps/web/tests/merchant-profile.test.tsx`
 
-- [ ] **Step 1: Write failing API tests** for `merchantKind`, public catalog page, location fulfillment capabilities, and explicit availability/open state.
-- [ ] **Step 2: Define DTOs that disclose only public fields**; do not expose private Seller configuration or raw internal identifiers unnecessarily.
-- [ ] **Step 3: Implement repository/service/controller reads** with pagination and moderation visibility policy.
-- [ ] **Step 4: Export OpenAPI and regenerate the client.**
-- [ ] **Step 5: Implement PUB-009 Shop/Provider routing from the discriminator** and render real catalog/capability states.
-- [ ] **Step 6: Run API/web tests and commit** with `feat(catalog): expose public merchant profile capabilities`.
+- [x] **Step 1: Write failing API tests** for `merchantKind`, public catalog page, location fulfillment capabilities, and explicit availability/open state.
+- [x] **Step 2: Define DTOs that disclose only public fields**; do not expose private Seller configuration or raw internal identifiers unnecessarily.
+- [x] **Step 3: Implement repository/service/controller reads** with pagination and moderation visibility policy.
+- [x] **Step 4: Export OpenAPI and regenerate the client.**
+- [x] **Step 5: Implement PUB-009 Shop/Provider routing from the discriminator** and render real catalog/capability states.
+- [x] **Step 6: Run API/web tests and commit** with `feat(catalog): expose public merchant profile capabilities`.
 
 ### Task 9: Add Buyer reputation, review eligibility, and Need cancel eligibility
 
@@ -359,12 +359,12 @@ Do not reuse branch-era counts. Record the new test count, warnings, build resul
 - Create: `apps/web/app/(buyer)/me/reputation/page.tsx`
 - Create/Modify: Buyer reputation, order detail, review, and Need components/tests.
 
-- [ ] **Step 1: Write failing authorization and policy tests** for `GET /api/v1/me/reputation`.
-- [ ] **Step 2: Expose explicit review targets/eligibility** including `orderItemId`; reject already-reviewed/ineligible items server-side.
-- [ ] **Step 3: Expose Need `allowedActions` or `canCancel`** computed by the same policy used by the command endpoint.
-- [ ] **Step 4: Regenerate the client and mount BUY-009/010 and Need cancel UI only from these fields.**
-- [ ] **Step 5: Add loading/empty/error/unauthorized/conflict tests.**
-- [ ] **Step 6: Commit** with separate API and web commits.
+- [x] **Step 1: Write failing authorization and policy tests** for `GET /api/v1/me/reputation`.
+- [x] **Step 2: Expose explicit review targets/eligibility** including `orderItemId`; reject already-reviewed/ineligible items server-side.
+- [x] **Step 3: Expose Need `allowedActions` or `canCancel`** computed by the same policy used by the command endpoint.
+- [x] **Step 4: Regenerate the client and mount BUY-009/010 and Need cancel UI only from these fields.**
+- [x] **Step 5: Add loading/empty/error/unauthorized/conflict tests.**
+- [x] **Step 6: Commit** with separate API and web commits.
 
 ### Task 10: Add authoritative Seller Need response candidates
 
@@ -376,12 +376,12 @@ Do not reuse branch-era counts. Record the new test count, warnings, build resul
 - Modify: `apps/web/features/needs/merchant-need-response-form.tsx`
 - Test: `apps/web/tests/needs/seller-needs.test.tsx`
 
-- [ ] **Step 1: Write a failing policy-equivalence integration test** proving candidate read and submit validation use the same category, moderation, coverage, ownership, availability, and stock rules.
-- [ ] **Step 2: Implement a paginated candidate read endpoint** scoped to merchant, Need, and location.
-- [ ] **Step 3: Return display-safe catalog/variant labels and current availability**, not UUID-only rows.
-- [ ] **Step 4: Regenerate the client and replace NEED-006 safe fallback with a real selector.**
-- [ ] **Step 5: Test empty, stale candidate, submit conflict, and existing response states.**
-- [ ] **Step 6: Commit** with `feat(needs): expose eligible seller response candidates`.
+- [x] **Step 1: Write a failing policy-equivalence integration test** proving candidate read and submit validation use the same category, moderation, coverage, ownership, availability, and stock rules.
+- [x] **Step 2: Implement a paginated candidate read endpoint** scoped to merchant, Need, and location.
+- [x] **Step 3: Return display-safe catalog/variant labels and current availability**, not UUID-only rows.
+- [x] **Step 4: Regenerate the client and replace NEED-006 safe fallback with a real selector.**
+- [x] **Step 5: Test empty, stale candidate, submit conflict, and existing response states.**
+- [x] **Step 6: Commit** with `feat(needs): expose eligible seller response candidates`.
 
 ### Task 11: Add Seller catalog/contact edit concurrency contracts
 
@@ -392,12 +392,12 @@ Do not reuse branch-era counts. Record the new test count, warnings, build resul
 - Modify: `apps/web/features/seller/contact-settings.tsx`.
 - Add API and web tests.
 
-- [ ] **Step 1: Specify management detail DTO and ETag/version behavior** for existing catalog aggregate, variants, offers, media, and lifecycle capability.
-- [ ] **Step 2: Specify contact detail/version read + PATCH contract.**
-- [ ] **Step 3: Write concurrency tests** for stale `If-Match`, lost update prevention, ownership, and moderation restrictions.
-- [ ] **Step 4: Implement endpoints and regenerate the client.**
-- [ ] **Step 5: Add edit routes/modes without duplicating create validation.**
-- [ ] **Step 6: Verify Seller Mobile at 360/390/768 and Desktop at 1024/1280/1440.**
+- [x] **Step 1: Specify management detail DTO and ETag/version behavior** for existing catalog aggregate, variants, offers, media, and lifecycle capability.
+- [x] **Step 2: Specify contact detail/version read + PATCH contract.**
+- [x] **Step 3: Write concurrency tests** for stale `If-Match`, lost update prevention, ownership, and moderation restrictions.
+- [x] **Step 4: Implement endpoints and regenerate the client.**
+- [x] **Step 5: Add edit routes/modes without duplicating create validation.**
+- [x] **Step 6: Verify Seller Mobile at 360/390/768 and Desktop at 1024/1280/1440.**
 
 ### Task 12: Add Admin read contracts for Shops, Listings, and Needs
 
@@ -408,12 +408,12 @@ Do not reuse branch-era counts. Record the new test count, warnings, build resul
 - Replace safe-state pages: `apps/web/app/(admin)/admin/shops/page.tsx`, `listings/page.tsx`, `needs/page.tsx`.
 - Add Admin feature components and tests.
 
-- [ ] **Step 1: Write Admin role/permission integration tests** for paginated/filterable reads.
-- [ ] **Step 2: Define minimum safe DTOs** for shop/location, listing/moderation link, and Need status; suppress private buyer/contact data not required by Figma.
-- [ ] **Step 3: Implement read-only APIs first.** Do not add mutation merely because the Figma sample shows a control.
-- [ ] **Step 4: Regenerate the client and replace `AdminCapabilityPage` safe states with real tables/details.**
-- [ ] **Step 5: Preserve unknown-state fallbacks and no-force-status rule.**
-- [ ] **Step 6: Decide zone/category mutation scope separately.** Keep ADM-015/016 read-only until explicit product approval and API design exist.
+- [x] **Step 1: Write Admin role/permission integration tests** for paginated/filterable reads.
+- [x] **Step 2: Define minimum safe DTOs** for shop/location, listing/moderation link, and Need status; suppress private buyer/contact data not required by Figma.
+- [x] **Step 3: Implement read-only APIs first.** Do not add mutation merely because the Figma sample shows a control.
+- [x] **Step 4: Regenerate the client and replace `AdminCapabilityPage` safe states with real tables/details.**
+- [x] **Step 5: Preserve unknown-state fallbacks and no-force-status rule.**
+- [x] **Step 6: Decide zone/category mutation scope separately.** Keep ADM-015/016 read-only until explicit product approval and API design exist.
 
 ---
 
@@ -427,10 +427,10 @@ Do not reuse branch-era counts. Record the new test count, warnings, build resul
 - Modify/Create: `apps/web/e2e/fixtures/**`
 - Keep generated credentials/evidence only under ignored `.local/`.
 
-- [ ] Seed one Buyer, one Seller/Provider, and one Admin with representative public listings, carts, addresses, orders, Needs, reviews, reports, settings, catalog variants, locations, shipping, inventory, and moderation states.
-- [ ] Include empty, error-safe, restricted, negotiated shipping, stale version/action, and long-content scenarios.
-- [ ] Make the script idempotent and local-only; never commit credentials.
-- [ ] Add a smoke assertion for each seeded actor and commit.
+- [x] Seed one Buyer, one Seller/Provider, and one Admin with representative public listings, carts, addresses, orders, Needs, reviews, reports, settings, catalog variants, locations, shipping, inventory, and moderation states.
+- [x] Include empty, error-safe, restricted, negotiated shipping, stale version/action, and long-content scenarios.
+- [x] Make the script idempotent and local-only; never commit credentials.
+- [x] Add a smoke assertion for each seeded actor and commit.
 
 ### Task 14: Buyer Mobile/Desktop visual acceptance
 

@@ -1,7 +1,7 @@
 # CoVie project context
 
-**Last updated:** 2026-08-28
-**Repository state:** `codex/integrated-ui-completion` contains the integrated Buyer/Seller/Admin baseline and locally verified Chunk 1 implementation through `aa5517d`. The integration has not been pushed.
+**Last updated:** 2026-08-29
+**Repository state:** `codex/integrated-ui-completion` contains the integrated Buyer/Seller/Admin baseline, completed Tasks 8–13, and responsive verification fixes through `0ec9460`. The integration has not been pushed.
 
 ## Read this first
 
@@ -61,16 +61,16 @@ The following domain capabilities are present in `main` and have automated verif
 
 | Area | Status | Evidence / limitation |
 | --- | --- | --- |
-| Backend/domain implementation | Integrated and verified locally | Fresh `mvnw clean verify`: 460 tests, 0 failures, 0 errors, 1 skipped on JDK 25.0.2 (2026-08-28). |
-| Web functional implementation | **Chunk 1 locally verified** | API-client check, typecheck, 54-file/131-test Vitest suite and 34-page production build pass. Lint has 0 errors and one documented `catalog-card` image warning. See `docs/integrated-ui-verification-2026-08-28.md`. |
-| Git integration | Integrated locally; not remotely reviewed | Buyer Mobile tip (including Public Buyer and Buyer Desktop), Seller Desktop tip (including Seller Mobile), and Admin Desktop tip are ancestors of the local integration branch. Chunk 1 is committed locally; nothing has been pushed by this integration work. |
-| Figma UI fidelity | **In progress; not complete** | Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop implementations are present locally. Only the previously recorded Public Buyer P0 units have rendered acceptance evidence; the newly integrated Seller/Admin surfaces and post-merge responsive behavior still require exact-frame runtime review. Contract-blocked units remain open. |
+| Backend/domain implementation | Integrated and verified locally | Fresh `mvnw clean verify`: 472 tests, 0 failures, 0 errors, 1 skipped on JDK 25.0.2 (2026-08-29). |
+| Web functional implementation | **Tasks 8–13 locally verified** | API-client check, typecheck, 58-file/145-test Vitest suite and 35-page production build pass. Lint has 0 errors and one documented `catalog-card` image warning. See `docs/integrated-ui-verification-2026-08-29.md`. |
+| Git integration | Integrated locally; not remotely reviewed | Buyer Mobile tip (including Public Buyer and Buyer Desktop), Seller Desktop tip (including Seller Mobile), and Admin Desktop tip are ancestors of the local integration branch. Tasks 8–13 and their verification follow-up are committed locally; nothing has been pushed by this integration work. |
+| Figma UI fidelity | **In progress; not complete** | Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop implementations are present locally. Public Buyer P0 retains its recorded exact-frame evidence. Seller catalog/contact management now has runtime evidence and overflow checks at 360/390/768/1024/1280/1440; Admin shops has runtime evidence at 1024/1280/1440. These are not substitutes for the remaining exact-frame acceptance in Tasks 14–16. |
 | Staging/release rehearsal | **Not complete** | No real staging environment, production credentials, or deployment evidence is available. No staging or production deployment has been performed. |
 | Lint | **Pass with one warning** | Fresh integrated lint has 0 errors and one `catalog-card` `no-img-element` warning; no rule was disabled. |
 
 ## Known UI gap
 
-PUB-001, PUB-003…008 and BUY-001/002/003/005/006 now use the frozen Inter/Emerald foundation, exact exported SVG assets and buyer navigation. Search covers URL filters, FilterSheet and category states, including the queryless-category sort adapter required to avoid backend 422. Product and Service detail use real offer availability/price; Product Detail links its contract-backed merchant to the PUB-009 profile. Service selection uses native radios, always submits quantity one and explains V1 coordination without inventing calendar booking. Resale detail uses the exact media/listing/card/action anatomy, always submits one unit, and does not invent the sample condition percentage or pickup/delivery eligibility absent from the public contract. The PUB-009 Shop first pass renders public merchant identity, reputation, reviews, safe contacts and locations; its Provider discriminator, fulfillment/open cues and public catalog cards are unavailable in current public contracts and remain open. BUY-003 uses dedicated contract-backed address cards, focused navigation, inline destructive confirmation and loading/empty/error states; BUY-004 create/edit routes remain open. Cart/checkout preserve separate Product/Service quantities, `If-Match` and checkout-token conflict recovery, backend-only totals and truthful order-created semantics. `pnpm ui:verify-local` creates a deterministic ignored fixture and verifies the real Home → Search → Product Detail → Shop Profile → Address List → Service Detail → Resale Detail → Cart → Checkout → Success → Orders journey, while writing viewport comparisons to `.local/dev/visual-review/`. Exact type-specific wording in route-level `loading.tsx`/`error.tsx` remains constrained because Next.js supplies no route params to `loading.tsx`; see the handoff matrix. Remaining routes are functional scaffolds unless recorded otherwise.
+PUB-001, PUB-003…008 and BUY-001/002/003/005/006 use the frozen Inter/Emerald foundation, exact exported SVG assets and buyer navigation. Search covers URL filters, FilterSheet and category states, including the queryless-category sort adapter required to avoid backend 422. Product, Service and Resale detail use contract-backed price/availability without inventing unsupported fulfillment or booking claims. PUB-009 now receives the public Shop/Provider discriminator, paginated merchant catalog, location fulfillment capabilities and explicit open/availability state. Buyer reputation, order-item review eligibility and Need cancel actions now come from authoritative server policies. Seller Need responses use eligible contract-backed candidates; catalog/contact editing uses versioned reads, `ETag`/`If-Match` and stale-conflict recovery. Admin Shops, Listings and Needs are real paginated/filterable read-only collections; zone/category mutation remains intentionally out of scope pending product/API approval. BUY-004 create/edit remains open in the recorded baseline. `pnpm ui:verify-local` creates deterministic ignored Buyer/Seller/Admin fixtures, verifies the populated Buyer journey plus actor smoke paths, checks Seller horizontal overflow, and writes viewport evidence under `.local/dev/visual-review/`. Exact type-specific wording in route-level `loading.tsx`/`error.tsx` remains constrained because Next.js supplies no route params to `loading.tsx`; see the handoff matrix. Full Buyer/Seller/Admin exact-frame visual acceptance remains Tasks 14–16.
 
 Before changing a UI route:
 
@@ -100,7 +100,7 @@ http://localhost:3000
 
 Required API local configuration includes PostgreSQL (`5433`), Redis (`6379`), MinIO (`9000`) and disposable local JWT PEM files in ignored `infra/secrets/dev/`. Generate missing local keys with `infra/scripts/generate-dev-jwt-keys.sh`; never commit PEM files or real OAuth credentials.
 
-For repeatable populated Public Buyer P0 acceptance, run `pnpm ui:verify-local`. It seeds only deterministic local fixture records, stores the generated buyer credential in ignored `.local/dev/ui-fixture.json`, and writes screenshots under ignored `.local/dev/visual-review/`.
+For repeatable local acceptance, run `pnpm ui:verify-local`. It seeds deterministic Buyer/Seller/Admin fixture records, stores disposable credentials only in ignored `.local/dev/ui-fixture.json`, runs the populated Buyer journey and actor smoke paths, and writes screenshots under ignored `.local/dev/visual-review/`.
 
 ## Verification commands
 
