@@ -7,11 +7,19 @@
   ],
   "categories": [
     {"parentSlug": null, "slug": "food-drink", "name": "Ăn uống", "catalogType": "PRODUCT", "sortOrder": 10},
+    {"parentSlug": "food-drink", "slug": "prepared-meals", "name": "Món ăn chế biến", "catalogType": "PRODUCT", "sortOrder": 10},
+    {"parentSlug": "food-drink", "slug": "bakery-drinks", "name": "Bánh & đồ uống", "catalogType": "PRODUCT", "sortOrder": 20},
     {"parentSlug": null, "slug": "grocery", "name": "Tạp hóa", "catalogType": "PRODUCT", "sortOrder": 20},
+    {"parentSlug": "grocery", "slug": "fresh-produce", "name": "Rau củ & thực phẩm tươi", "catalogType": "PRODUCT", "sortOrder": 10},
     {"parentSlug": null, "slug": "home-personal", "name": "Nhà cửa & cá nhân", "catalogType": "PRODUCT", "sortOrder": 30},
+    {"parentSlug": "home-personal", "slug": "household-goods", "name": "Đồ tiện ích gia đình", "catalogType": "PRODUCT", "sortOrder": 10},
+    {"parentSlug": "home-personal", "slug": "secondhand-home", "name": "Nội thất đã qua sử dụng", "catalogType": "PRODUCT", "sortOrder": 20},
+    {"parentSlug": "home-personal", "slug": "secondhand-appliances", "name": "Đồ gia dụng đã qua sử dụng", "catalogType": "PRODUCT", "sortOrder": 30},
     {"parentSlug": null, "slug": "services", "name": "Dịch vụ", "catalogType": "SERVICE", "sortOrder": 40},
     {"parentSlug": "services", "slug": "cleaning", "name": "Vệ sinh", "catalogType": "SERVICE", "sortOrder": 10},
-    {"parentSlug": "services", "slug": "repair", "name": "Sửa chữa", "catalogType": "SERVICE", "sortOrder": 20},
+    {"parentSlug": "services", "slug": "home-repair", "name": "Sửa chữa gia đình", "catalogType": "SERVICE", "sortOrder": 20},
+    {"parentSlug": "services", "slug": "pet-care", "name": "Chăm sóc thú cưng", "catalogType": "SERVICE", "sortOrder": 30},
+    {"parentSlug": "services", "slug": "local-errands", "name": "Giao nhận & đi chợ hộ", "catalogType": "SERVICE", "sortOrder": 40},
     {"parentSlug": "services", "slug": "other-services", "name": "Dịch vụ khác", "catalogType": "SERVICE", "sortOrder": 90}
   ]
 }
