@@ -1820,6 +1820,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/shops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["shops"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings": {
         parameters: {
             query?: never;
@@ -1900,6 +1916,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/needs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["needs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/moderation-cases": {
         parameters: {
             query?: never;
@@ -1956,6 +1988,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["detail_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/listings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listings"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3517,6 +3565,35 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string;
         };
+        AdminPageResponseAdminShopLocationResponse: {
+            items?: components["schemas"]["AdminShopLocationResponse"][];
+            /** Format: int64 */
+            total?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+        };
+        AdminShopLocationResponse: {
+            /** Format: uuid */
+            merchantId?: string;
+            merchantName?: string;
+            /** @enum {string} */
+            merchantStatus?: "ACTIVE" | "PAUSED" | "SUSPENDED" | "DELETED";
+            /** @enum {string} */
+            merchantModerationStatus?: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED" | "HIDDEN";
+            /** Format: uuid */
+            locationId?: string;
+            locationName?: string;
+            addressText?: string;
+            /** @enum {string} */
+            locationStatus?: "ACTIVE" | "PAUSED" | "DELETED";
+            pickupEnabled?: boolean;
+            sellerDeliveryEnabled?: boolean;
+            serviceEnabled?: boolean;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
         SystemSettingDefinitionResponse: {
             key?: string;
             /** @enum {string} */
@@ -3549,32 +3626,32 @@ export interface components {
             updatedAt?: string;
         };
         PageSystemSettingHistoryResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["SystemSettingHistoryResponse"][];
             /** Format: int32 */
             number?: number;
+            pageable?: components["schemas"]["PageableObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
-            sort?: components["schemas"]["SortObject"];
-            paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            sort?: components["schemas"]["SortObject"];
+            paged?: boolean;
             unpaged?: boolean;
         };
         SortObject: {
@@ -3639,6 +3716,37 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        AdminNeedSummaryResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            title?: string;
+            /** Format: uuid */
+            categoryId?: string;
+            categoryName?: string;
+            /** @enum {string} */
+            status?: "ACTIVE" | "FULFILLED" | "EXPIRED" | "CANCELLED";
+            /** Format: int32 */
+            searchRadiusMeters?: number;
+            /** Format: int64 */
+            responseCount?: number;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        AdminPageResponseAdminNeedSummaryResponse: {
+            items?: components["schemas"]["AdminNeedSummaryResponse"][];
+            /** Format: int64 */
+            total?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+        };
         ModerationCaseSummaryResponse: {
             /** Format: uuid */
             id?: string;
@@ -3657,21 +3765,21 @@ export interface components {
             resolvedAt?: string;
         };
         PageModerationCaseSummaryResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["ModerationCaseSummaryResponse"][];
             /** Format: int32 */
             number?: number;
+            pageable?: components["schemas"]["PageableObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ModerationActionResponse: {
@@ -3713,6 +3821,37 @@ export interface components {
             /** Format: int32 */
             size?: number;
         };
+        AdminListingSummaryResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            merchantId?: string;
+            merchantName?: string;
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** @enum {string} */
+            listingKind?: "STANDARD" | "RESALE";
+            name?: string;
+            /** @enum {string} */
+            listingStatus?: "DRAFT" | "ACTIVE" | "PAUSED" | "DELETED";
+            /** @enum {string} */
+            moderationStatus?: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED" | "HIDDEN";
+            /** Format: uuid */
+            moderationCaseId?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        AdminPageResponseAdminListingSummaryResponse: {
+            items?: components["schemas"]["AdminListingSummaryResponse"][];
+            /** Format: int64 */
+            total?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+        };
         AdminAuditLogResponse: {
             /** Format: uuid */
             id?: string;
@@ -3730,21 +3869,21 @@ export interface components {
             createdAt?: string;
         };
         PageAdminAuditLogResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["AdminAuditLogResponse"][];
             /** Format: int32 */
             number?: number;
+            pageable?: components["schemas"]["PageableObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
     };
@@ -6013,6 +6152,7 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -6086,6 +6226,7 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -7142,6 +7283,33 @@ export interface operations {
             };
         };
     };
+    shops: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+                merchantStatus?: "ACTIVE" | "PAUSED" | "SUSPENDED" | "DELETED";
+                locationStatus?: "ACTIVE" | "PAUSED" | "DELETED";
+                q?: string;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminPageResponseAdminShopLocationResponse"];
+                };
+            };
+        };
+    };
     list_13: {
         parameters: {
             query?: never;
@@ -7262,6 +7430,33 @@ export interface operations {
             };
         };
     };
+    needs: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+                status?: "ACTIVE" | "FULFILLED" | "EXPIRED" | "CANCELLED";
+                type?: "PRODUCT" | "SERVICE";
+                q?: string;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminPageResponseAdminNeedSummaryResponse"];
+                };
+            };
+        };
+    };
     page: {
         parameters: {
             query?: {
@@ -7354,6 +7549,34 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AdminMerchantSummaryResponse"];
+                };
+            };
+        };
+    };
+    listings: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+                status?: "DRAFT" | "ACTIVE" | "PAUSED" | "DELETED";
+                moderationStatus?: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED" | "HIDDEN";
+                type?: "PRODUCT" | "SERVICE";
+                q?: string;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminPageResponseAdminListingSummaryResponse"];
                 };
             };
         };
