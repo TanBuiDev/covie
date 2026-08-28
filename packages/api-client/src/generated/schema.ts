@@ -1383,6 +1383,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/need-requests/{needRequestId}/responses/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["candidates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{merchantId}/reviews": {
         parameters: {
             query?: never;
@@ -3074,6 +3090,26 @@ export interface components {
             eligible?: boolean;
             reason?: string;
         };
+        NeedResponseCandidateCursorPage: {
+            items?: components["schemas"]["NeedResponseCandidateResponse"][];
+            hasMore?: boolean;
+            nextCursor?: string;
+            /** Format: int32 */
+            maxItems?: number;
+        };
+        NeedResponseCandidateResponse: {
+            /** Format: uuid */
+            locationVariantId?: string;
+            /** Format: uuid */
+            catalogItemId?: string;
+            /** Format: uuid */
+            variantId?: string;
+            itemName?: string;
+            variantName?: string;
+            currentPrice?: components["schemas"]["MoneyResponse"];
+            available?: boolean;
+            availability?: components["schemas"]["JsonNode"];
+        };
         PublicReviewResponse: {
             /** Format: uuid */
             id?: string;
@@ -3505,24 +3541,24 @@ export interface components {
             content?: components["schemas"]["SystemSettingHistoryResponse"][];
             /** Format: int32 */
             number?: number;
-            pageable?: components["schemas"]["PageableObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             sort?: components["schemas"]["SortObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
-            /** Format: int32 */
-            pageNumber?: number;
+            unpaged?: boolean;
             /** Format: int32 */
             pageSize?: number;
-            unpaged?: boolean;
-            paged?: boolean;
+            /** Format: int32 */
+            pageNumber?: number;
             sort?: components["schemas"]["SortObject"];
+            paged?: boolean;
         };
         SortObject: {
             empty?: boolean;
@@ -3613,11 +3649,11 @@ export interface components {
             content?: components["schemas"]["ModerationCaseSummaryResponse"][];
             /** Format: int32 */
             number?: number;
-            pageable?: components["schemas"]["PageableObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             sort?: components["schemas"]["SortObject"];
             empty?: boolean;
         };
@@ -3686,11 +3722,11 @@ export interface components {
             content?: components["schemas"]["AdminAuditLogResponse"][];
             /** Format: int32 */
             number?: number;
-            pageable?: components["schemas"]["PageableObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             sort?: components["schemas"]["SortObject"];
             empty?: boolean;
         };
@@ -6406,6 +6442,33 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["OrderTimelineEventResponse"][];
+                };
+            };
+        };
+    };
+    candidates: {
+        parameters: {
+            query: {
+                merchantId: string;
+                merchantLocationId: string;
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                needRequestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NeedResponseCandidateCursorPage"];
                 };
             };
         };

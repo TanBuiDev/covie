@@ -16,12 +16,14 @@ export function MerchantNeedResponseForm({
   maxItems,
   offers,
   onCreated,
+  onSubmitError,
 }: {
   needId: string;
   merchantLocationId: string;
   maxItems: number;
   offers: NeedOfferOption[];
   onCreated?: () => void;
+  onSubmitError?: () => void;
 }) {
   const intentKeyRef = useRef<string | undefined>(undefined);
   const [selected, setSelected] = useState<string[]>([]);
@@ -54,6 +56,7 @@ export function MerchantNeedResponseForm({
       onCreated?.();
     } catch (cause) {
       setMessage(cause instanceof Error ? cause.message : "Không thể gửi phản hồi. Vui lòng thử lại.");
+      onSubmitError?.();
     } finally {
       setSubmitting(false);
     }

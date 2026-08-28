@@ -81,13 +81,8 @@ public class NeedResponseEligibilityPolicy {
             throw invalid(ErrorCode.NEED_RESPONSE_ITEM_INVALID, "At least one response item is required.");
         }
 
-        merchantAccess.requireLocation(merchantId, merchantLocationId, MerchantCapability.RESPOND_TO_NEEDS);
-        MerchantLocationEntity location = locations
-                .findByIdAndMerchantProfileIdAndDeletedAtIsNull(merchantLocationId, merchantId)
-                .orElseThrow(NeedResponseEligibilityPolicy::notFound);
-
-        NeedPolicySnapshot policy = policies.resolve(merchantId, need.getCategoryId(), need.getLocationAreaId());
-        if (requestedLocationVariantIds.size() > policy.maxResponseItems()) {
+        int maxResponseItems = validateCandidateScope(need, merchantId, merchantLocationId, now);
+        if (requestedLocationVariantIds.size() > maxResponseItems) {
             throw invalid(ErrorCode.NEED_RESPONSE_ITEM_LIMIT_EXCEEDED,
                     "Response contains more items than the current Need policy allows.");
         }
@@ -96,15 +91,27 @@ public class NeedResponseEligibilityPolicy {
             throw invalid(ErrorCode.NEED_RESPONSE_ITEM_INVALID, "Duplicate location variants are not allowed.");
         }
 
-        ensureServiceable(need, location);
         List<EligibleNeedResponseItem> result = new ArrayList<>(requestedLocationVariantIds.size());
         for (UUID locationVariantId : requestedLocationVariantIds) {
-            result.add(validateItem(need, merchantId, merchantLocationId, locationVariantId));
+            result.add(validateCandidateItem(need, merchantId, merchantLocationId, locationVariantId));
         }
         return List.copyOf(result);
     }
 
-    private EligibleNeedResponseItem validateItem(
+    int validateCandidateScope(
+            NeedRequestEntity need, UUID merchantId, UUID merchantLocationId, Instant now) {
+        if (!need.isActiveAt(now)) {
+            throw conflict(ErrorCode.NEED_NOT_ACTIVE, "Need is not active.");
+        }
+        merchantAccess.requireLocation(merchantId, merchantLocationId, MerchantCapability.RESPOND_TO_NEEDS);
+        MerchantLocationEntity location = locations
+                .findByIdAndMerchantProfileIdAndDeletedAtIsNull(merchantLocationId, merchantId)
+                .orElseThrow(NeedResponseEligibilityPolicy::notFound);
+        ensureServiceable(need, location);
+        return policies.resolve(merchantId, need.getCategoryId(), need.getLocationAreaId()).maxResponseItems();
+    }
+
+    EligibleNeedResponseItem validateCandidateItem(
             NeedRequestEntity need, UUID merchantId, UUID merchantLocationId, UUID locationVariantId) {
         LocationVariantEntity offer = locationVariants.findUsableById(locationVariantId)
                 .filter(v -> merchantLocationId.equals(v.getMerchantLocationId()))
@@ -149,6 +156,7 @@ public class NeedResponseEligibilityPolicy {
             snapshot.put("preparationTimeMinutes", offer.getPreparationTimeMinutes());
         }
         return new EligibleNeedResponseItem(item.getId(), variant.getId(), offer.getId(),
+                item.getName(), variant.getVariantName(),
                 offer.getPrice(), offer.getCurrencyCode(), snapshot);
     }
 

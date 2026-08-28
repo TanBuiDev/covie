@@ -7,7 +7,13 @@ import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { StatusChip } from "@/components/ui/status-chip";
 import { countdownPresentation } from "@/lib/format/time";
-import { discoverMerchantNeeds, type MerchantNeedMatch } from "./need-api";
+import { MerchantNeedResponseForm, type NeedOfferOption } from "./merchant-need-response-form";
+import {
+  discoverMerchantNeeds,
+  listNeedResponseCandidates,
+  type MerchantNeedMatch,
+  type NeedResponseCandidatePage,
+} from "./need-api";
 
 type Location = components["schemas"]["MerchantLocationResponse"];
 
@@ -15,6 +21,98 @@ function distanceCopy(distanceMeters?: number) {
   if (distanceMeters == null) return undefined;
   if (distanceMeters < 1000) return `${Math.max(0, Math.round(distanceMeters))} m`;
   return `${(distanceMeters / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km`;
+}
+
+function candidateLabel(candidate: NonNullable<NeedResponseCandidatePage["items"]>[number]) {
+  const parts = [candidate.itemName, candidate.variantName];
+  const amount = candidate.currentPrice?.amount;
+  if (amount != null) {
+    parts.push(new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: candidate.currentPrice?.currency ?? "VND",
+      maximumFractionDigits: 0,
+    }).format(amount));
+  }
+  const availability = candidate.availability as { availableQuantity?: unknown } | undefined;
+  const quantity = typeof availability?.availableQuantity === "number"
+    ? availability.availableQuantity : undefined;
+  if (quantity != null) parts.push(`còn ${quantity}`);
+  return parts.filter(Boolean).join(" · ");
+}
+
+function MerchantNeedCandidateForm({
+  needId,
+  merchantId,
+  merchantLocationId,
+  onCreated,
+}: {
+  needId: string;
+  merchantId: string;
+  merchantLocationId: string;
+  onCreated: () => void;
+}) {
+  const [page, setPage] = useState<NeedResponseCandidatePage>();
+  const [error, setError] = useState<string>();
+  const [reloadKey, setReloadKey] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setError(undefined);
+    void listNeedResponseCandidates(needId, merchantId, merchantLocationId)
+      .then((result) => active && setPage(result))
+      .catch((cause) => active && setError(cause instanceof Error ? cause.message : "Không thể tải nội dung phù hợp."));
+    return () => { active = false; };
+  }, [needId, merchantId, merchantLocationId, reloadKey]);
+
+  async function loadMoreCandidates() {
+    if (!page?.nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    setError(undefined);
+    try {
+      const next = await listNeedResponseCandidates(needId, merchantId, merchantLocationId, page.nextCursor);
+      setPage({
+        ...next,
+        items: [...(page.items ?? []), ...(next.items ?? [])],
+      });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể tải thêm nội dung phù hợp.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  if (!page && !error) return <LoadingState label="Đang tải nội dung phù hợp…" />;
+  if (!page && error) {
+    return <ErrorState title="Không thể tải nội dung phù hợp" description={error}
+      action={<button type="button" onClick={() => setReloadKey((value) => value + 1)}>Thử lại</button>} />;
+  }
+
+  const offers: NeedOfferOption[] = (page?.items ?? []).flatMap((candidate) => candidate.locationVariantId ? [{
+    locationVariantId: candidate.locationVariantId,
+    label: candidateLabel(candidate),
+    available: candidate.available,
+    actionable: true,
+  }] : []);
+
+  return (
+    <div className="seller-stack">
+      <MerchantNeedResponseForm
+        needId={needId}
+        merchantLocationId={merchantLocationId}
+        maxItems={page?.maxItems ?? 1}
+        offers={offers}
+        onCreated={onCreated}
+        onSubmitError={() => setReloadKey((value) => value + 1)}
+      />
+      {error ? <p role="alert">{error}</p> : null}
+      {page?.nextCursor ? (
+        <button type="button" disabled={loadingMore} onClick={() => void loadMoreCandidates()}>
+          {loadingMore ? "Đang tải…" : "Tải thêm nội dung"}
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 export function MerchantNeedList({ merchantId, locations }: { merchantId: string; locations: Location[] }) {
@@ -126,9 +224,14 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
                 />
 
                 {!match.alreadyResponded ? (
-                  <p className="seller-contract-note" role="status">
-                    Hiện chưa thể chọn nội dung để phản hồi nhu cầu này. Hệ thống chưa cung cấp danh sách mục phù hợp cho điểm bán đã chọn.
-                  </p>
+                  need?.id && locationId ? (
+                    <MerchantNeedCandidateForm
+                      needId={need.id}
+                      merchantId={merchantId}
+                      merchantLocationId={locationId}
+                      onCreated={reload}
+                    />
+                  ) : null
                 ) : null}
               </article>
             );

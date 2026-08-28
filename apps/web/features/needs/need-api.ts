@@ -18,6 +18,7 @@ export type MerchantNeedMatch = components["schemas"]["MerchantNeedMatchResponse
 export type NeedCategory = components["schemas"]["CategorySummary"];
 export type NeedAddress = components["schemas"]["UserAddressResponse"];
 export type MerchantNeedPage = components["schemas"]["MerchantNeedCursorPage"];
+export type NeedResponseCandidatePage = components["schemas"]["NeedResponseCandidateCursorPage"];
 type CursorPage<T> = { items: T[]; hasMore: boolean; nextCursor?: string | null };
 export type CreateNeedInput = components["schemas"]["CreateNeedRequest"];
 
@@ -81,6 +82,20 @@ export async function discoverMerchantNeeds(
   return jsonOrThrow(await requestBrowserApi(
     "GET",
     `/api/v1/merchants/${encodeURIComponent(merchantId)}/need-requests${params.size ? `?${params}` : ""}`,
+  ));
+}
+
+export async function listNeedResponseCandidates(
+  needId: string,
+  merchantId: string,
+  merchantLocationId: string,
+  cursor?: string,
+): Promise<NeedResponseCandidatePage> {
+  const params = new URLSearchParams({ merchantId, merchantLocationId, limit: "20" });
+  if (cursor) params.set("cursor", cursor);
+  return jsonOrThrow(await requestBrowserApi(
+    "GET",
+    `/api/v1/need-requests/${encodeURIComponent(needId)}/responses/candidates?${params}`,
   ));
 }
 

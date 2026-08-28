@@ -8,6 +8,8 @@ public record EligibleNeedResponseItem(
         UUID catalogItemId,
         UUID variantId,
         UUID locationVariantId,
+        String itemName,
+        String variantName,
         long currentPrice,
         String currency,
         JsonNode availabilitySnapshot) {}
