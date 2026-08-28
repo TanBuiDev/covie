@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.HashSet;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,18 +32,21 @@ import vn.covie.reputation.application.ReputationReadService;
 import vn.covie.orders.api.dto.OrderReputationContext;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
+import vn.covie.reviews.application.ReviewEligibilityPolicy;
+import vn.covie.reviews.application.ReviewPolicyProvider;
+import vn.covie.reviews.persistence.ReviewRepository;
 
 @Service
 public class OrderReadService {
     private final OrderRepository orders; private final OrderAccessPolicy access; private final OrderAllowedActionService actions;
-    private final MerchantAccessPolicy merchantAccess; private final ProductFulfillmentRepository products; private final ServiceFulfillmentRepository services; private final OrderEventRepository events; private final OrderItemRepository items; private final OrderCancellationRequestRepository cancellations; private final OrderIssueRepository issues; private final vn.covie.shared.time.AppClock clock; private final ReputationReadService reputation;
+    private final MerchantAccessPolicy merchantAccess; private final ProductFulfillmentRepository products; private final ServiceFulfillmentRepository services; private final OrderEventRepository events; private final OrderItemRepository items; private final OrderCancellationRequestRepository cancellations; private final OrderIssueRepository issues; private final vn.covie.shared.time.AppClock clock; private final ReputationReadService reputation; private final ReviewRepository reviews; private final ReviewPolicyProvider reviewPolicy;
     private final OrderCursorCodec cursors=new OrderCursorCodec();
     @org.springframework.beans.factory.annotation.Autowired
-    public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, ProductFulfillmentRepository products, ServiceFulfillmentRepository services, OrderEventRepository events, OrderItemRepository items, OrderCancellationRequestRepository cancellations, OrderIssueRepository issues, vn.covie.shared.time.AppClock clock, ReputationReadService reputation) {
-        this.orders=orders;this.access=access;this.actions=actions;this.merchantAccess=merchantAccess;this.products=products;this.services=services;this.events=events;this.items=items;this.cancellations=cancellations;this.issues=issues;this.clock=clock;this.reputation=reputation;
+    public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, ProductFulfillmentRepository products, ServiceFulfillmentRepository services, OrderEventRepository events, OrderItemRepository items, OrderCancellationRequestRepository cancellations, OrderIssueRepository issues, vn.covie.shared.time.AppClock clock, ReputationReadService reputation, ReviewRepository reviews, ReviewPolicyProvider reviewPolicy) {
+        this.orders=orders;this.access=access;this.actions=actions;this.merchantAccess=merchantAccess;this.products=products;this.services=services;this.events=events;this.items=items;this.cancellations=cancellations;this.issues=issues;this.clock=clock;this.reputation=reputation;this.reviews=reviews;this.reviewPolicy=reviewPolicy;
     }
     public OrderReadService(OrderRepository orders, OrderAccessPolicy access, OrderAllowedActionService actions, MerchantAccessPolicy merchantAccess, vn.covie.shared.time.AppClock clock) {
-        this(orders,access,actions,merchantAccess,null,null,null,null,null,null,clock,null);
+        this(orders,access,actions,merchantAccess,null,null,null,null,null,null,clock,null,null,null);
     }
     public OrderDetailResponse detail(UUID id) { OrderEntity order=orders.findById(id).orElseThrow(this::notFound); return map(order,access.requireVisible(order)); }
     public OrderPageResponse myOrders(UUID buyerId) {
@@ -80,10 +84,18 @@ public class OrderReadService {
             case MERCHANT -> new OrderReputationContext(null, reputation.buyer(order.getBuyerUserId()));
             case ADMIN -> new OrderReputationContext(reputation.merchant(order.getMerchantProfileId()), reputation.buyer(order.getBuyerUserId()));
         };
+        var orderItems = items == null ? List.<vn.covie.orders.model.OrderItemEntity>of()
+                : items.findAllByOrderIdOrderByCreatedAtAscIdAsc(order.getId());
+        var reviewedItemIds = new HashSet<UUID>();
+        if (actor.actorType() == OrderActorType.BUYER && reviews != null) {
+            reviews.findAllByOrderId(order.getId()).forEach(review -> reviewedItemIds.add(review.getOrderItemId()));
+        }
+        boolean reviewCreationEnabled = reviewPolicy != null && reviewPolicy.creationEnabled();
         return new OrderDetailResponse(order.getId(),order.getOrderCode(),order.getOrderType(),order.getStatus(),order.getVersion(),
                 order.getSourceType(),new vn.covie.orders.api.dto.OrderPartyResponse(order.getBuyerUserId(),null,null),
                 new vn.covie.orders.api.dto.OrderPartyResponse(null,order.getMerchantProfileId(),order.getMerchantLocationId()),
-                items==null?List.of():items.findAllByOrderIdOrderByCreatedAtAscIdAsc(order.getId()).stream().map(item->new vn.covie.orders.api.dto.OrderItemResponse(item.getId(),item.getCatalogItemId(),item.getVariantId(),item.getLocationVariantId(),item.getItemType(),item.getQuantity(),item.getUnitPrice(),item.getLineTotal(),item.getCurrencyCode(),item.getItemSnapshot())).toList(),
+                orderItems.stream().map(item->new vn.covie.orders.api.dto.OrderItemResponse(item.getId(),item.getCatalogItemId(),item.getVariantId(),item.getLocationVariantId(),item.getItemType(),item.getQuantity(),item.getUnitPrice(),item.getLineTotal(),item.getCurrencyCode(),item.getItemSnapshot(),
+                        ReviewEligibilityPolicy.evaluate(order,item,actor.actorType(),reviewedItemIds.contains(item.getId()),reviewCreationEnabled))).toList(),
                 new vn.covie.orders.api.dto.OrderPricingResponse(order.getSubtotal(),order.getShippingFeeType(),order.getShippingFee(),order.getKnownTotal(),order.getTotalAmount(),order.getCurrencyCode()),
                 fulfillment(product,service,actor),order.getPaymentMethod(),cancellation(order.getId()),issue(order.getId()),events==null?List.of():events(order.getId()),permitted,order.getCreatedAt(),order.getConfirmedAt(),order.getCompletedAt(),order.getClosedAt(),trust);
     }

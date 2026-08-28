@@ -1464,6 +1464,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/reputation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/orders": {
         parameters: {
             query?: never;
@@ -1567,7 +1583,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_4"];
+        get: operations["get_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2503,6 +2519,7 @@ export interface components {
             responseCount?: number;
             /** Format: uuid */
             fulfilledOrderId?: string;
+            canCancel?: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -3008,6 +3025,7 @@ export interface components {
             lineTotal?: number;
             currency?: string;
             snapshot?: components["schemas"]["JsonNode"];
+            reviewEligibility?: components["schemas"]["ReviewEligibilityResponse"];
         };
         OrderPartyResponse: {
             /** Format: uuid */
@@ -3051,6 +3069,10 @@ export interface components {
             note?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        ReviewEligibilityResponse: {
+            eligible?: boolean;
+            reason?: string;
         };
         PublicReviewResponse: {
             /** Format: uuid */
@@ -3474,33 +3496,33 @@ export interface components {
             updatedAt?: string;
         };
         PageSystemSettingHistoryResponse: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["SystemSettingHistoryResponse"][];
             /** Format: int32 */
             number?: number;
+            pageable?: components["schemas"]["PageableObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
-            unpaged?: boolean;
-            paged?: boolean;
-            sort?: components["schemas"]["SortObject"];
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            unpaged?: boolean;
+            paged?: boolean;
+            sort?: components["schemas"]["SortObject"];
         };
         SortObject: {
             empty?: boolean;
@@ -3582,21 +3604,21 @@ export interface components {
             resolvedAt?: string;
         };
         PageModerationCaseSummaryResponse: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["ModerationCaseSummaryResponse"][];
             /** Format: int32 */
             number?: number;
+            pageable?: components["schemas"]["PageableObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ModerationActionResponse: {
@@ -3655,21 +3677,21 @@ export interface components {
             createdAt?: string;
         };
         PageAdminAuditLogResponse: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["AdminAuditLogResponse"][];
             /** Format: int32 */
             number?: number;
+            pageable?: components["schemas"]["PageableObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
     };
@@ -6507,6 +6529,26 @@ export interface operations {
             };
         };
     };
+    get_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BuyerReputationSummary"];
+                };
+            };
+        };
+    };
     list_9: {
         parameters: {
             query?: {
@@ -6640,7 +6682,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;

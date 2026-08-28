@@ -55,6 +55,18 @@ class NeedEndToEndIntegrationTest {
         assertThat(need.getClosedAt()).isEqualTo(now);
     }
 
+    @Test
+    void detailExposesCancelEligibilityFromTheCommandPolicy() {
+        NeedRequestEntity active = activeNeed(now.plusSeconds(3600));
+        assertThat(NeedCommandService.detail(active, now, 0).canCancel()).isTrue();
+
+        active.cancel(now);
+        assertThat(NeedCommandService.detail(active, now, 0).canCancel()).isFalse();
+
+        NeedRequestEntity expired = activeNeed(now.minusSeconds(1));
+        assertThat(NeedCommandService.detail(expired, now, 0).canCancel()).isFalse();
+    }
+
     private NeedRequestEntity activeNeed(Instant expiresAt) {
         Point point = new GeometryFactory().createPoint(new Coordinate(106.7, 10.8));
         point.setSRID(4326);

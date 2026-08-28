@@ -117,7 +117,8 @@ public class NeedCommandService {
                 need.getTitle(), need.getQueryText(), need.getDescription(), need.getRequestedQuantity(),
                 new NeedLocationSummaryResponse(parseUuid(need, "addressId"), need.getLocationAreaId(),
                         need.getLocationSnapshot().path("timezone").asText("UTC")),
-                need.getSearchRadiusMeters(), need.getExpiresAt(), responseCount, need.getFulfilledOrderId(), need.getCreatedAt(), need.getClosedAt());
+                need.getSearchRadiusMeters(), need.getExpiresAt(), responseCount, need.getFulfilledOrderId(), need.isActiveAt(now),
+                need.getCreatedAt(), need.getClosedAt());
     }
 
     static NeedStatus effectiveStatus(NeedRequestEntity need, Instant now) {

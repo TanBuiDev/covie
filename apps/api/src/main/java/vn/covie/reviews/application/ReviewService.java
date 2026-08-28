@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.auth.security.CurrentActorProvider;
-import vn.covie.orders.model.OrderStatus;
+import vn.covie.orders.security.OrderActorType;
 import vn.covie.orders.persistence.OrderItemRepository;
 import vn.covie.orders.persistence.OrderRepository;
 import vn.covie.reviews.api.dto.CreateReviewRequest;
@@ -35,13 +35,17 @@ public class ReviewService {
     }
     @Transactional
     ReviewResponse createInsideTransaction(UUID actorId, CreateReviewRequest request) {
-        if (!policy.creationEnabled()) throw error(ErrorCode.REVIEW_CREATION_DISABLED, HttpStatus.UNPROCESSABLE_ENTITY, "Review creation is disabled.");
         var item = orderItems.findById(request.orderItemId()).orElseThrow(ReviewService::notFound);
         var order = orders.lockById(item.getOrderId()).orElseThrow(ReviewService::notFound);
         if (!order.getBuyerUserId().equals(actorId)) throw notFound();
-        if (order.getStatus() != OrderStatus.COMPLETED) throw error(ErrorCode.REVIEW_ORDER_NOT_COMPLETED, HttpStatus.CONFLICT, "Order is not completed.");
-        if (item.getCatalogItemId() == null) throw notFound();
-        if (reviews.existsByOrderItemId(item.getId())) throw error(ErrorCode.REVIEW_ALREADY_EXISTS, HttpStatus.CONFLICT, "Review already exists.");
+        var eligibility = ReviewEligibilityPolicy.evaluate(order, item, OrderActorType.BUYER,
+                reviews.existsByOrderItemId(item.getId()), policy.creationEnabled());
+        if (!eligibility.eligible()) throw switch (eligibility.reason()) {
+            case "CREATION_DISABLED" -> error(ErrorCode.REVIEW_CREATION_DISABLED, HttpStatus.UNPROCESSABLE_ENTITY, "Review creation is disabled.");
+            case "ORDER_NOT_COMPLETED" -> error(ErrorCode.REVIEW_ORDER_NOT_COMPLETED, HttpStatus.CONFLICT, "Order is not completed.");
+            case "ALREADY_REVIEWED" -> error(ErrorCode.REVIEW_ALREADY_EXISTS, HttpStatus.CONFLICT, "Review already exists.");
+            default -> notFound();
+        };
         ReviewEntity review = ReviewEntity.active(ids.generate(), item.getId(), order.getId(), actorId, item.getCatalogItemId(), item.getVariantId(), order.getMerchantProfileId(), (short) request.rating(), request.comment(), clock.now());
         try { reviews.saveAndFlush(review); } catch (DataIntegrityViolationException exception) { throw error(ErrorCode.REVIEW_ALREADY_EXISTS, HttpStatus.CONFLICT, "Review already exists."); }
         projections.add(review);

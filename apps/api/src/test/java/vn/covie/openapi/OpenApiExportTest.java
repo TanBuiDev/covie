@@ -33,6 +33,7 @@ class OpenApiExportTest extends PostgresIntegrationTest {
         JsonNode paths = document.path("paths");
         assertThat(paths.fieldNames()).toIterable().contains(
                 "/api/v1/me/merchants",
+                "/api/v1/me/reputation",
                 "/api/v1/merchants/{merchantId}/locations",
                 "/api/v1/media/uploads",
                 "/api/v1/media/{mediaId}/complete",

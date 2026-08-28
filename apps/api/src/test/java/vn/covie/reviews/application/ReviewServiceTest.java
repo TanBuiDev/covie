@@ -69,6 +69,19 @@ class ReviewServiceTest {
                 ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
+    @Test
+    void alreadyReviewedItemIsRejectedByTheSameEligibilityPolicy() {
+        Fixture fixture = completedFixture();
+        when(policy.creationEnabled()).thenReturn(true);
+        when(items.findById(fixture.item.getId())).thenReturn(Optional.of(fixture.item));
+        when(orders.lockById(fixture.order.getId())).thenReturn(Optional.of(fixture.order));
+        when(reviews.existsByOrderItemId(fixture.item.getId())).thenReturn(true);
+
+        assertApiError(() -> service.createInsideTransaction(fixture.buyerId,
+                new CreateReviewRequest(fixture.item.getId(), 5, null)),
+                ErrorCode.REVIEW_ALREADY_EXISTS, HttpStatus.CONFLICT);
+    }
+
     private void assertApiError(org.assertj.core.api.ThrowableAssert.ThrowingCallable callable, ErrorCode code, HttpStatus status) {
         assertThatThrownBy(callable).isInstanceOfSatisfying(ApiException.class, error -> { assertThat(error.code()).isEqualTo(code); assertThat(error.status()).isEqualTo(status); });
     }
