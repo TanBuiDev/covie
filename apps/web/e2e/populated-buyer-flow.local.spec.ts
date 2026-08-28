@@ -1,21 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import path from "node:path";
+import { localFixtureEnabled, loginAs, readLocalUiFixture } from "./fixtures/local-actors";
 
-type LocalFixture = {
-  buyerEmail: string;
-  buyerPassword: string;
-  merchantId: string;
-  productItemId: string;
-  serviceItemId: string;
-  resaleItemId: string;
-};
-
-const fixturePath = path.resolve(process.cwd(), "../../.local/dev/ui-fixture.json");
 const evidenceDirectory = path.resolve(process.cwd(), "../../.local/dev/visual-review");
-const enabled = process.env.COVIE_UI_FIXTURE === "1" && existsSync(fixturePath);
 
-test.skip(!enabled, "Run pnpm ui:verify-local with the local Docker stack running.");
+test.skip(!localFixtureEnabled, "Run pnpm ui:verify-local with the local Docker stack running.");
 
 async function screenshotAt(page: Page, route: string, width: number, height: number) {
   await page.setViewportSize({ width, height });
@@ -34,25 +24,17 @@ async function captureResponsive(page: Page, route: string) {
 }
 
 test("populated Public Buyer P0 journey reaches checkout success on the first commit", async ({ page }) => {
-  const fixture = JSON.parse(readFileSync(fixturePath, "utf8")) as LocalFixture;
+  const fixture = readLocalUiFixture();
   mkdirSync(evidenceDirectory, { recursive: true });
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/login");
-  await page.waitForLoadState("networkidle");
-  await expect(page.getByRole("button", { name: "Đăng nhập", exact: true })).toBeEnabled();
-  await page.getByRole("textbox", { name: "Email" }).fill(fixture.buyerEmail);
-  await page.getByRole("textbox", { name: "Mật khẩu" }).fill(fixture.buyerPassword);
-  await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await loginAs(page, fixture.actors.buyer);
 
   await page.getByRole("button", { name: "Chọn vị trí" }).click();
-  await page.getByLabel("Vĩ độ").fill("10.842");
-  await page.getByLabel("Kinh độ").fill("106.842");
-  await page.getByLabel("Tên khu vực").fill("Vinhomes Grand Park");
-  await page.getByRole("button", { name: "Dùng vị trí thủ công" }).click();
+  await expect(page.getByRole("radio", { name: /Nhà —/ })).toBeChecked();
+  await page.getByRole("button", { name: "Dùng địa chỉ đã chọn" }).click();
   await expect(page.getByRole("heading", { name: "Rau củ theo mùa" })).toBeVisible();
   await captureResponsive(page, "pub-001-home");
 
