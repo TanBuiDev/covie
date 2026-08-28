@@ -19,7 +19,7 @@ class Plan06SchemaMigrationTest extends PostgresIntegrationTest {
     @Test
     void v011CreatesNeedSchemaAndSourceConstraints() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
-            assertThat(currentFlywayVersion(connection)).isEqualTo("013");
+            assertThat(currentFlywayVersion(connection)).isEqualTo("014");
             for (String table : new String[] {"need_requests", "need_responses", "need_response_items"}) {
                 assertThat(objectExists(connection, table)).as(table).isTrue();
             }

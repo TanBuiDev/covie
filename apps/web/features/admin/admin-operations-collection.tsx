@@ -8,6 +8,7 @@ import { AdminPageHeader, AdminStatusChip, AdminSurface, formatAdminDate, presen
 
 export type AdminOperationsResource = "shops" | "listings" | "needs";
 type PagePayload = { items?: Record<string, unknown>[]; total?: number; page?: number; size?: number };
+type RequestState = { path: string; items?: Record<string, unknown>[]; total: number; error?: string };
 
 const definitions = {
   shops: {
@@ -77,13 +78,11 @@ function NeedRow({ row }: { row: Record<string, unknown> }) {
 
 export function AdminOperationsCollection({ resource }: { resource: AdminOperationsResource }) {
   const definition = definitions[resource];
-  const [items, setItems] = useState<Record<string, unknown>[]>();
-  const [total, setTotal] = useState(0);
+  const [requestState, setRequestState] = useState<RequestState>();
   const [page, setPage] = useState(0);
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [error, setError] = useState<string>();
   const size = 50;
   const path = useMemo(() => {
     const params = new URLSearchParams({ page: String(page), size: String(size) });
@@ -94,20 +93,26 @@ export function AdminOperationsCollection({ resource }: { resource: AdminOperati
 
   useEffect(() => {
     let active = true;
-    setItems(undefined);
-    setError(undefined);
     void requestBrowserApi("GET", path).then(async (response) => {
       if (!response.ok) throw await readApiError(response);
       return response.json() as Promise<PagePayload>;
     }).then((payload) => {
       if (!active) return;
-      setItems(payload.items ?? []);
-      setTotal(payload.total ?? 0);
+      setRequestState({ path, items: payload.items ?? [], total: payload.total ?? 0 });
     }).catch((cause) => {
-      if (active) setError(cause instanceof Error ? cause.message : "Không thể tải dữ liệu quản trị.");
+      if (active) setRequestState({
+        path,
+        total: 0,
+        error: cause instanceof Error ? cause.message : "Không thể tải dữ liệu quản trị.",
+      });
     });
     return () => { active = false; };
   }, [path]);
+
+  const currentState = requestState?.path === path ? requestState : undefined;
+  const items = currentState?.items;
+  const total = currentState?.total ?? 0;
+  const error = currentState?.error;
 
   function search(event: FormEvent) {
     event.preventDefault();

@@ -86,7 +86,8 @@ class MerchantCatalogCreateControllerIntegrationTest extends PostgresIntegration
         mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt())
                         .header("Idempotency-Key", "catalog-create-key").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated()).andExpect(jsonPath("$.listingStatus").value("DRAFT"))
-                .andExpect(jsonPath("$.variants[0].isDefault").value(true)).andExpect(jsonPath("$.variants[0].name").doesNotExist());
+                .andExpect(jsonPath("$.variants[0].isDefault").value(true))
+                .andExpect(jsonPath("$.variants[0].name").value("Default"));
         mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt())
                         .header("Idempotency-Key", "catalog-create-key").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated());

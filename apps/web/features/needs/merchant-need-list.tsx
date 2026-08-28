@@ -51,32 +51,45 @@ function MerchantNeedCandidateForm({
   merchantLocationId: string;
   onCreated: () => void;
 }) {
-  const [page, setPage] = useState<NeedResponseCandidatePage>();
-  const [error, setError] = useState<string>();
+  const [requestState, setRequestState] = useState<{
+    key: string;
+    page?: NeedResponseCandidatePage;
+    error?: string;
+  }>();
   const [reloadKey, setReloadKey] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const resourceKey = `${needId}:${merchantId}:${merchantLocationId}`;
 
   useEffect(() => {
     let active = true;
-    setError(undefined);
     void listNeedResponseCandidates(needId, merchantId, merchantLocationId)
-      .then((result) => active && setPage(result))
-      .catch((cause) => active && setError(cause instanceof Error ? cause.message : "Không thể tải nội dung phù hợp."));
+      .then((result) => active && setRequestState({ key: resourceKey, page: result }))
+      .catch((cause) => active && setRequestState({
+        key: resourceKey,
+        error: cause instanceof Error ? cause.message : "Không thể tải nội dung phù hợp.",
+      }));
     return () => { active = false; };
-  }, [needId, merchantId, merchantLocationId, reloadKey]);
+  }, [needId, merchantId, merchantLocationId, reloadKey, resourceKey]);
+
+  const currentState = requestState?.key === resourceKey ? requestState : undefined;
+  const page = currentState?.page;
+  const error = currentState?.error;
 
   async function loadMoreCandidates() {
     if (!page?.nextCursor || loadingMore) return;
     setLoadingMore(true);
-    setError(undefined);
     try {
       const next = await listNeedResponseCandidates(needId, merchantId, merchantLocationId, page.nextCursor);
-      setPage({
-        ...next,
-        items: [...(page.items ?? []), ...(next.items ?? [])],
-      });
+      setRequestState({ key: resourceKey, page: {
+          ...next,
+          items: [...(page.items ?? []), ...(next.items ?? [])],
+        } });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể tải thêm nội dung phù hợp.");
+      setRequestState({
+        key: resourceKey,
+        page,
+        error: cause instanceof Error ? cause.message : "Không thể tải thêm nội dung phù hợp.",
+      });
     } finally {
       setLoadingMore(false);
     }
