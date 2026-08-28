@@ -90,10 +90,10 @@ The fixture identifies demo users by `user_identities.provider='EMAIL'` plus the
 
 The importer expects a directory containing `manifest.json` and the ready assets referenced by that manifest.
 
-Pinned manifest SHA-256:
+Pinned manifest SHA-256 for the downloadable v1 pack:
 
 ```text
-0cca53918b5b8b1ec129b4a0220a54a5805d95925105062c27c0b5d726cb8f01
+87e267134a880afc3b2de2e16bec3465d4de73cfff52cfc63663f4e0064214f7
 ```
 
 Expected inventory:
