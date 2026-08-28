@@ -118,7 +118,10 @@ public class CatalogCreateService {
         outbox.append(new OutboxEventIntent("CATALOG_ITEM_CREATED", "CATALOG_ITEM", itemId,
                 Map.of("merchantId", merchantId.toString(), "catalogItemId", itemId.toString())));
         return new CatalogItemManagementResponse(itemId, item.getItemType(), item.getListingKind(), item.getPrimaryCategoryId(),
-                item.getName(), item.getDescription(), item.getListingStatus(), variantState.responses(), offers, item.getVersion());
+                item.getName(), item.getDescription(), item.getListingStatus(), item.getModerationStatus(),
+                request.mediaIds() == null ? List.of() : List.copyOf(request.mediaIds()),
+                variantState.responses(), offers,
+                new CatalogItemManagementResponse.LifecycleCapabilities(true, false, false, true), item.getVersion());
     }
 
     private VariantState createOptionsAndVariants(CatalogItemEntity item, List<OptionGroupCreateRequest> requestedGroups,
@@ -128,7 +131,8 @@ public class CatalogCreateService {
         if (groups.isEmpty() && inputVariants.isEmpty()) {
             VariantEntity variant = variants.save(VariantEntity.createDefault(ids.generate(), item.getId(), "Default", now));
             return new VariantState(Map.of(DEFAULT_VARIANT_KEY, variant), List.of(new CatalogItemManagementResponse.VariantResponse(
-                    variant.getId(), null, true, List.of())));
+                    variant.getId(), variant.getSku(), variant.getVariantName(), true, variant.getVariantStatus(),
+                    List.of(), variant.getVersion())));
         }
         if (groups.isEmpty() || inputVariants.isEmpty()) throw variantReject("Options and variants must be supplied together.");
         ensureUnique(groups.stream().map(OptionGroupCreateRequest::clientKey).toList(), "Option group clientKey is duplicated.");
@@ -163,8 +167,9 @@ public class CatalogCreateService {
             VariantEntity variant = variants.save(VariantEntity.create(ids.generate(), item.getId(), cleanNullable(request.sku()), cleaned(request.name()), false, variantIndex, now));
             for (OptionValueEntity value : selected) variantOptions.save(VariantOptionValueEntity.associate(variant, value));
             byClientKey.put(request.clientKey(), variant);
-            responses.add(new CatalogItemManagementResponse.VariantResponse(variant.getId(), variant.getVariantName(), false,
-                    selected.stream().map(OptionValueEntity::getId).toList()));
+            responses.add(new CatalogItemManagementResponse.VariantResponse(variant.getId(), variant.getSku(),
+                    variant.getVariantName(), false, variant.getVariantStatus(),
+                    selected.stream().map(OptionValueEntity::getId).toList(), variant.getVersion()));
         }
         return new VariantState(byClientKey, responses);
     }
@@ -182,7 +187,8 @@ public class CatalogCreateService {
                     offer.price(), offer.currency(), offer.available(), offer.inventoryMode(), offer.preparationTimeMinutes(), now));
             inventory.onOfferCreated(persisted, type);
             result.add(new CatalogItemManagementResponse.LocationOfferResponse(persisted.getId(), location.getId(), variant.getId(),
-                    persisted.getPrice(), persisted.getCurrencyCode(), persisted.isAvailable(), persisted.getInventoryMode(), persisted.getPreparationTimeMinutes()));
+                    persisted.getPrice(), persisted.getCurrencyCode(), persisted.isAvailable(), persisted.getInventoryMode(),
+                    persisted.getPreparationTimeMinutes(), persisted.getVersion()));
         }
         return result;
     }

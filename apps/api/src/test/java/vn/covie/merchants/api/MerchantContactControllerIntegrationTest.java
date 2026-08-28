@@ -77,6 +77,10 @@ class MerchantContactControllerIntegrationTest extends PostgresIntegrationTest {
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         UUID contactId = UUID.fromString(new com.fasterxml.jackson.databind.ObjectMapper().readTree(created).get("id").asText());
 
+        mockMvc.perform(get("/api/v1/merchants/{merchantId}/contacts/{contactId}", merchantId, contactId).with(owner.jwt()))
+                .andExpect(status().isOk()).andExpect(header().string("ETag", "\"v0\""))
+                .andExpect(jsonPath("$.value").value("0900000001"));
+
         mockMvc.perform(patch("/api/v1/merchants/{merchantId}/contacts/{contactId}", merchantId, contactId)
                         .with(owner.jwt()).contentType(MediaType.APPLICATION_JSON).content(phone("0900000002", false, null)))
                 .andExpect(status().isPreconditionRequired()).andExpect(jsonPath("$.error.code").value("IF_MATCH_REQUIRED"));
@@ -84,8 +88,17 @@ class MerchantContactControllerIntegrationTest extends PostgresIntegrationTest {
                         .with(owner.jwt()).header("If-Match", "\"v0\"").contentType(MediaType.APPLICATION_JSON)
                         .content(phone("0900000002", false, null)))
                 .andExpect(status().isOk()).andExpect(header().string("ETag", "\"v1\""));
+        mockMvc.perform(patch("/api/v1/merchants/{merchantId}/contacts/{contactId}", merchantId, contactId)
+                        .with(owner.jwt()).header("If-Match", "\"v0\"").contentType(MediaType.APPLICATION_JSON)
+                        .content(phone("0900000003", false, null)))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("RESOURCE_VERSION_CONFLICT"));
+        assertThat(contacts.findById(contactId)).get().satisfies(contact ->
+                assertThat(contact.getValue()).isEqualTo("0900000002"));
 
         Actor other = actor("other"); UUID otherMerchantId = merchant(other, MerchantRole.OWNER);
+        mockMvc.perform(get("/api/v1/merchants/{merchantId}/contacts/{contactId}", otherMerchantId, contactId)
+                        .with(other.jwt()))
+                .andExpect(status().isNotFound()).andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"));
         MerchantLocationEntity foreign = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(),
                 otherMerchantId, "Foreign", "Address", 10, 106, NOW));
         mockMvc.perform(post("/api/v1/merchants/{merchantId}/contacts", merchantId).with(owner.jwt())

@@ -18,6 +18,22 @@ export async function createMerchantContact(merchantId: string, input: MerchantC
   return requireData(response, data);
 }
 
+export async function updateMerchantContact(
+  merchantId: string,
+  contactId: string,
+  version: number,
+  input: MerchantContactInput,
+) {
+  const { data, response } = await createApiClient().PATCH("/api/v1/merchants/{merchantId}/contacts/{contactId}", {
+    params: {
+      path: { merchantId, contactId },
+      header: { "If-Match": `"v${version}"` },
+    },
+    body: input,
+  });
+  return requireData(response, data);
+}
+
 export async function deleteMerchantContact(merchantId: string, contactId: string) {
   const { response } = await createApiClient().DELETE("/api/v1/merchants/{merchantId}/contacts/{contactId}", {
     params: { path: { merchantId, contactId } },

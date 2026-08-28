@@ -53,6 +53,8 @@ class OpenApiExportTest extends PostgresIntegrationTest {
         assertHeaderParameter(paths, "/api/v1/merchants/{merchantId}/catalog-items/{itemId}", "patch", "If-Match");
         assertHeaderResponse(paths, "/api/v1/merchants/{merchantId}", "get", "ETag");
         assertHeaderResponse(paths, "/api/v1/merchants/{merchantId}/locations/{locationId}", "get", "ETag");
+        assertHeaderResponse(paths, "/api/v1/merchants/{merchantId}/catalog-items/{itemId}", "get", "ETag");
+        assertHeaderResponse(paths, "/api/v1/merchants/{merchantId}/contacts/{contactId}", "get", "ETag");
         String output = System.getProperty("covie.openapi.output", "target/openapi/openapi.json");
         Path outputPath = Path.of(output).toAbsolutePath().normalize();
         Files.createDirectories(outputPath.getParent());

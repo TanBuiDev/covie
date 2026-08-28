@@ -28,6 +28,13 @@ public class MerchantContactController {
     @GetMapping
     public List<MerchantContactResponse> list(@PathVariable UUID merchantId) { return contacts.list(merchantId); }
 
+    @GetMapping("/{contactId}")
+    public ResponseEntity<MerchantContactResponse> get(
+            @PathVariable UUID merchantId, @PathVariable UUID contactId) {
+        MerchantContactResponse contact = contacts.get(merchantId, contactId);
+        return ResponseEntity.ok().eTag(VersionPrecondition.format(contact.version())).body(contact);
+    }
+
     @PostMapping
     public ResponseEntity<MerchantContactResponse> create(@PathVariable UUID merchantId,
             @Valid @RequestBody MerchantContactRequest request) {

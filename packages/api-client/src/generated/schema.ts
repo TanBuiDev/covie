@@ -1209,7 +1209,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["get_3"];
         put?: never;
         post?: never;
         delete: operations["delete_3"];
@@ -1225,7 +1225,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["get_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1326,7 +1326,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_5"];
         put?: never;
         post?: never;
         delete: operations["delete_6"];
@@ -1487,7 +1487,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_4"];
+        get: operations["get_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1599,7 +1599,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2407,10 +2407,20 @@ export interface components {
             description?: string;
             /** @enum {string} */
             listingStatus?: "DRAFT" | "ACTIVE" | "PAUSED" | "DELETED";
+            /** @enum {string} */
+            moderationStatus?: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED" | "HIDDEN";
+            mediaIds?: string[];
             variants?: components["schemas"]["VariantResponse"][];
             locationOffers?: components["schemas"]["LocationOfferResponse"][];
+            lifecycle?: components["schemas"]["LifecycleCapabilities"];
             /** Format: int64 */
             version?: number;
+        };
+        LifecycleCapabilities: {
+            canPublish?: boolean;
+            canPause?: boolean;
+            canActivate?: boolean;
+            canArchive?: boolean;
         };
         LocationOfferResponse: {
             /** Format: uuid */
@@ -2427,13 +2437,20 @@ export interface components {
             inventoryMode?: "TRACKED" | "UNTRACKED";
             /** Format: int32 */
             preparationTimeMinutes?: number;
+            /** Format: int64 */
+            version?: number;
         };
         VariantResponse: {
             /** Format: uuid */
             id?: string;
+            sku?: string;
             name?: string;
             isDefault?: boolean;
+            /** @enum {string} */
+            status?: "ACTIVE" | "PAUSED" | "DELETED";
             selectedOptionIds?: string[];
+            /** Format: int64 */
+            version?: number;
         };
         CreateVariantRequest: {
             sku?: string;
@@ -3545,25 +3562,25 @@ export interface components {
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
-            unpaged?: boolean;
-            /** Format: int32 */
-            pageSize?: number;
-            /** Format: int32 */
-            pageNumber?: number;
             sort?: components["schemas"]["SortObject"];
             paged?: boolean;
+            /** Format: int32 */
+            pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            unsorted?: boolean;
             sorted?: boolean;
+            unsorted?: boolean;
         };
         SystemSettingHistoryResponse: {
             /** Format: uuid */
@@ -3653,8 +3670,8 @@ export interface components {
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ModerationActionResponse: {
@@ -3726,8 +3743,8 @@ export interface components {
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
     };
@@ -5981,6 +5998,29 @@ export interface operations {
             };
         };
     };
+    get_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                contactId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MerchantContactResponse"];
+                };
+            };
+        };
+    };
     delete_3: {
         parameters: {
             query?: never;
@@ -6027,6 +6067,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MerchantContactResponse"];
+                };
+            };
+        };
+    };
+    get_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogItemManagementResponse"];
                 };
             };
         };
@@ -6280,7 +6343,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -6592,7 +6655,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -6745,7 +6808,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;

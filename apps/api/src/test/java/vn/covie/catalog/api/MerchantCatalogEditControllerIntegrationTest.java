@@ -3,6 +3,7 @@ package vn.covie.catalog.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -76,6 +77,11 @@ class MerchantCatalogEditControllerIntegrationTest extends PostgresIntegrationTe
     @Test
     void editsEachResourceAgainstItsOwnEtag() throws Exception {
         Actor owner = actor(); Fixture fixture = fixtureWithOptions(owner);
+        mockMvc.perform(get(itemPath(fixture)).with(owner.jwt()))
+                .andExpect(status().isOk()).andExpect(header().string("ETag", "\"v0\""))
+                .andExpect(jsonPath("$.variants[0].version").value(0))
+                .andExpect(jsonPath("$.locationOffers[0].version").value(0))
+                .andExpect(jsonPath("$.lifecycle.canPublish").value(true));
         mockMvc.perform(patch(itemPath(fixture), fixture.itemId()).with(owner.jwt()).header("If-Match", "\"v0\"")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Edited coffee\",\"tags\":[\"arabica\"]}"))
                 .andExpect(status().isNoContent()).andExpect(header().string("ETag", "\"v1\""));

@@ -78,6 +78,7 @@ export function CatalogManagementList({ merchantId, items }: { merchantId: strin
                 </div>
                 <div className="seller-catalog-card__status">
                   <StatusChip label={presentation.label} tone={presentation.tone} />
+                  <Link href={`/seller/${encodeURIComponent(merchantId)}/catalog/${encodeURIComponent(item.id)}/edit`}>Chỉnh sửa</Link>
                 </div>
               </li>
             );

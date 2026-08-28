@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { uploadImage } from "@/features/media/direct-image-upload";
-import { createMerchantContact, deleteMerchantContact } from "./contact-api";
+import { CovieApiError } from "@/lib/api/api-error";
+import { createMerchantContact, deleteMerchantContact, updateMerchantContact } from "./contact-api";
 
 type MerchantContact = components["schemas"]["MerchantContactResponse"];
 type MerchantContactInput = components["schemas"]["MerchantContactRequest"];
@@ -67,39 +68,47 @@ export function MerchantContactSettings({
       ? (qrControl as HTMLInputElement).files?.[0] ?? null
       : null;
     const qrFile = qrInputFile ?? (isSelectedFile(qrEntry) ? qrEntry : null);
-    const requests: MerchantContactInput[] = [];
+    const operations: Array<{ current?: MerchantContact; input: MerchantContactInput }> = [];
 
-    if (!zaloContact && zaloValue) {
-      requests.push({ merchantLocationId, contactType: "ZALO_LINK", value: zaloValue, publicContact: true });
+    if (zaloValue && zaloValue !== (zaloContact?.value ?? "")) {
+      operations.push({ current: zaloContact, input: { merchantLocationId, contactType: "ZALO_LINK", value: zaloValue, publicContact: true } });
     }
-    if (!messengerContact && messengerValue) {
-      requests.push({ merchantLocationId, contactType: "MESSENGER_LINK", value: messengerValue, publicContact: true });
+    if (messengerValue && messengerValue !== (messengerContact?.value ?? "")) {
+      operations.push({ current: messengerContact, input: { merchantLocationId, contactType: "MESSENGER_LINK", value: messengerValue, publicContact: true } });
     }
 
     setPending(true);
     setMessage(undefined);
     setMessageIsError(false);
     try {
-      if (!qrContact && qrFile && qrFile.size > 0) {
+      if (qrFile && qrFile.size > 0) {
         const media = await uploadImage(qrFile, "MERCHANT_CONTACT_QR");
         if (!media.mediaId) throw new Error("MERCHANT_CONTACT_QR_MEDIA_ID_MISSING");
-        requests.push({ merchantLocationId, contactType: "ZALO_QR", qrMediaId: media.mediaId, publicContact: true });
+        operations.push({ current: qrContact, input: { merchantLocationId, contactType: "ZALO_QR", qrMediaId: media.mediaId, publicContact: true } });
       }
 
-      if (requests.length === 0) {
-        setMessage("Không có kênh mới để lưu. Các kênh đã tồn tại hiện chỉ có thể xem hoặc xóa trong phần quản lý.");
+      if (operations.length === 0) {
+        setMessage("Không có thay đổi để lưu.");
         return;
       }
 
-      for (const request of requests) {
-        await createMerchantContact(merchantId, request);
+      for (const operation of operations) {
+        if (operation.current?.id && operation.current.version != null) {
+          await updateMerchantContact(merchantId, operation.current.id, operation.current.version, operation.input);
+        } else if (operation.current) {
+          throw new Error("CONTACT_VERSION_MISSING");
+        } else {
+          await createMerchantContact(merchantId, operation.input);
+        }
       }
       setMessage("Đã lưu liên hệ.");
       formElement.reset();
       router.refresh();
-    } catch {
+    } catch (cause) {
       setMessageIsError(true);
-      setMessage("Không thể lưu đầy đủ liên hệ. Các kênh đã lưu thành công vẫn được giữ; hãy tải lại và kiểm tra trước khi thử lại.");
+      setMessage(cause instanceof CovieApiError && cause.code === "RESOURCE_VERSION_CONFLICT"
+        ? "Liên hệ đã thay đổi ở nơi khác. Trang sẽ tải lại để bạn kiểm tra trước khi lưu tiếp."
+        : "Không thể lưu đầy đủ liên hệ. Các kênh đã lưu thành công vẫn được giữ; hãy tải lại và kiểm tra trước khi thử lại.");
       router.refresh();
     } finally {
       setPending(false);
@@ -135,11 +144,10 @@ export function MerchantContactSettings({
             type="url"
             inputMode="url"
             defaultValue={zaloContact?.value ?? ""}
-            readOnly={Boolean(zaloContact)}
             disabled={pending}
             placeholder={zaloContact ? undefined : "https://zalo.me/..."}
           />
-          <small>{zaloContact ? "Liên kết đã lưu hiện chỉ có thể xem." : "Liên kết liên hệ công khai"}</small>
+          <small>Liên kết liên hệ công khai</small>
         </label>
 
         <label>
@@ -149,24 +157,20 @@ export function MerchantContactSettings({
             type="url"
             inputMode="url"
             defaultValue={messengerContact?.value ?? ""}
-            readOnly={Boolean(messengerContact)}
             disabled={pending}
             placeholder={messengerContact ? undefined : "https://m.me/..."}
           />
-          <small>{messengerContact ? "Liên kết đã lưu hiện chỉ có thể xem." : "Liên kết liên hệ công khai"}</small>
+          <small>Liên kết liên hệ công khai</small>
         </label>
 
         <section className="seller-contact-qr" aria-labelledby="seller-contact-qr-heading">
           <strong id="seller-contact-qr-heading">QR liên hệ</strong>
           <p>Ảnh QR dùng để liên hệ Zalo. Không dùng cho thanh toán.</p>
-          {qrContact ? (
-            <p className="seller-contact-qr__saved" role="status">Ảnh QR liên hệ đã được lưu. Hiện chưa hỗ trợ thay trực tiếp ảnh đã lưu.</p>
-          ) : (
-            <label className="seller-contact-qr__picker">
-              <span>Chọn ảnh QR liên hệ</span>
-              <input name="qrFile" type="file" accept="image/jpeg,image/png,image/webp" disabled={pending} />
-            </label>
-          )}
+          {qrContact ? <p className="seller-contact-qr__saved" role="status">Ảnh QR liên hệ đã được lưu. Chọn ảnh mới để thay thế.</p> : null}
+          <label className="seller-contact-qr__picker">
+            <span>{qrContact ? "Thay ảnh QR liên hệ" : "Chọn ảnh QR liên hệ"}</span>
+            <input name="qrFile" type="file" accept="image/jpeg,image/png,image/webp" disabled={pending} />
+          </label>
         </section>
 
         {hasDuplicateFrozenType ? (

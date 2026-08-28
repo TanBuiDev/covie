@@ -48,6 +48,14 @@ public class MerchantContactService {
                 .stream().map(MerchantContactService::response).toList();
     }
 
+    @Transactional(readOnly = true)
+    public MerchantContactResponse get(UUID merchantId, UUID contactId) {
+        access.require(merchantId, MerchantCapability.MANAGE_HOURS_CONTACTS);
+        return contacts.findByIdAndMerchantProfileIdAndStatus(contactId, merchantId, ContactStatus.ACTIVE)
+                .map(MerchantContactService::response)
+                .orElseThrow(MerchantContactService::notFound);
+    }
+
     @Transactional
     public MerchantContactResponse create(UUID merchantId, MerchantContactRequest request) {
         MerchantAccess granted = access.require(merchantId, MerchantCapability.MANAGE_HOURS_CONTACTS);

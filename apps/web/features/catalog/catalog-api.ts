@@ -16,6 +16,56 @@ export async function createCatalogItem(merchantId: string, idempotencyKey: stri
   return requireData(response, data);
 }
 
+export async function updateCatalogItem(
+  merchantId: string,
+  itemId: string,
+  version: number,
+  input: components["schemas"]["UpdateCatalogItemRequest"],
+) {
+  const { response } = await createApiClient().PATCH("/api/v1/merchants/{merchantId}/catalog-items/{itemId}", {
+    params: { path: { merchantId, itemId }, header: { "If-Match": `"v${version}"` } },
+    body: input,
+  });
+  if (!response.ok) throw await readApiError(response);
+}
+
+export async function updateCatalogLocationOffer(
+  merchantId: string,
+  itemId: string,
+  locationVariantId: string,
+  version: number,
+  input: components["schemas"]["UpdateLocationOfferRequest"],
+) {
+  const { response } = await createApiClient().PATCH(
+    "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/location-offers/{locationVariantId}",
+    {
+      params: {
+        path: { merchantId, itemId, locationVariantId },
+        header: { "If-Match": `"v${version}"` },
+      },
+      body: input,
+    },
+  );
+  if (!response.ok) throw await readApiError(response);
+}
+
+export async function transitionCatalogItem(
+  merchantId: string,
+  itemId: string,
+  version: number,
+  action: "publish" | "pause" | "activate" | "archive",
+) {
+  const { response } = await createApiClient().POST(
+    `/api/v1/merchants/{merchantId}/catalog-items/{itemId}/${action}` as
+      | "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/publish"
+      | "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/pause"
+      | "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/activate"
+      | "/api/v1/merchants/{merchantId}/catalog-items/{itemId}/archive",
+    { params: { path: { merchantId, itemId }, header: { "If-Match": `"v${version}"` } } },
+  );
+  if (!response.ok) throw await readApiError(response);
+}
+
 export async function getCategoryDetail(categoryId: string): Promise<components["schemas"]["CategoryDetail"]> {
   const client = createApiClient();
   const { data, response } = await client.GET("/api/v1/categories/{categoryId}", {

@@ -8,6 +8,7 @@ type MerchantContact = components["schemas"]["MerchantContactResponse"];
 const mocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   create: vi.fn(),
+  update: vi.fn(),
   remove: vi.fn(),
   upload: vi.fn(),
 }));
@@ -18,6 +19,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("./contact-api", () => ({
   createMerchantContact: mocks.create,
+  updateMerchantContact: mocks.update,
   deleteMerchantContact: mocks.remove,
 }));
 
@@ -28,23 +30,43 @@ vi.mock("@/features/media/direct-image-upload", () => ({
 beforeEach(() => {
   mocks.refresh.mockReset();
   mocks.create.mockReset().mockResolvedValue({});
+  mocks.update.mockReset().mockResolvedValue({});
   mocks.remove.mockReset().mockResolvedValue(undefined);
   mocks.upload.mockReset().mockResolvedValue({ mediaId: "media-qr-1" });
 });
 
-it("renders existing frozen contact channels read-only instead of guessing PATCH concurrency", () => {
+it("renders existing versioned contact channels as editable", () => {
   const contacts: MerchantContact[] = [
-    { id: "zalo-1", merchantLocationId: "location-1", contactType: "ZALO_LINK", value: "https://zalo.me/shop", publicContact: true },
-    { id: "messenger-1", merchantLocationId: "location-1", contactType: "MESSENGER_LINK", value: "https://m.me/shop", publicContact: true },
-    { id: "qr-1", merchantLocationId: "location-1", contactType: "ZALO_QR", qrMediaId: "media-existing", publicContact: true },
+    { id: "zalo-1", merchantLocationId: "location-1", contactType: "ZALO_LINK", value: "https://zalo.me/shop", publicContact: true, version: 2 },
+    { id: "messenger-1", merchantLocationId: "location-1", contactType: "MESSENGER_LINK", value: "https://m.me/shop", publicContact: true, version: 3 },
+    { id: "qr-1", merchantLocationId: "location-1", contactType: "ZALO_QR", qrMediaId: "media-existing", publicContact: true, version: 1 },
   ];
 
   render(<MerchantContactSettings merchantId="merchant-1" merchantLocationId="location-1" contacts={contacts} />);
 
-  expect(screen.getByLabelText(/^Zalo link/)).toHaveAttribute("readonly");
-  expect(screen.getByLabelText(/^Messenger link/)).toHaveAttribute("readonly");
-  expect(screen.getByText("Ảnh QR liên hệ đã được lưu. Hiện chưa hỗ trợ thay trực tiếp ảnh đã lưu.")).toBeInTheDocument();
-  expect(screen.queryByLabelText(/^Chọn ảnh QR liên hệ/)).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/^Zalo link/)).not.toHaveAttribute("readonly");
+  expect(screen.getByLabelText(/^Messenger link/)).not.toHaveAttribute("readonly");
+  expect(screen.getByText("Ảnh QR liên hệ đã được lưu. Chọn ảnh mới để thay thế.")).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Thay ảnh QR liên hệ/)).toBeInTheDocument();
+});
+
+it("updates an existing contact with its exact version", async () => {
+  const contacts: MerchantContact[] = [{
+    id: "zalo-1", merchantLocationId: "location-1", contactType: "ZALO_LINK",
+    value: "https://zalo.me/shop", publicContact: true, version: 7,
+  }];
+  render(<MerchantContactSettings merchantId="merchant-1" merchantLocationId="location-1" contacts={contacts} />);
+
+  fireEvent.change(screen.getByLabelText(/^Zalo link/), { target: { value: "https://zalo.me/new-shop" } });
+  fireEvent.click(screen.getByRole("button", { name: "Lưu liên hệ" }));
+
+  await waitFor(() => expect(mocks.update).toHaveBeenCalledWith("merchant-1", "zalo-1", 7, {
+    merchantLocationId: "location-1",
+    contactType: "ZALO_LINK",
+    value: "https://zalo.me/new-shop",
+    publicContact: true,
+  }));
+  expect(mocks.create).not.toHaveBeenCalled();
 });
 
 it("creates only missing Zalo and Messenger channels as public backend contacts", async () => {

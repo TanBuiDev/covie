@@ -12,6 +12,15 @@ export async function listCatalogItemsForServer(merchantId: string) {
   return data;
 }
 
+export async function getManagedCatalogItemForServer(merchantId: string, itemId: string) {
+  const client = await createServerReadClient();
+  const { data, response } = await client.GET("/api/v1/merchants/{merchantId}/catalog-items/{itemId}", {
+    params: { path: { merchantId, itemId } },
+  });
+  if (!response.ok || !data) throw await readApiError(response);
+  return data;
+}
+
 export async function listCategoriesForServer(type?: components["schemas"]["CreateCatalogItemRequest"]["type"]) {
   const client = await createServerReadClient();
   const { data, response } = await client.GET("/api/v1/categories", {
