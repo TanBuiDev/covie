@@ -12,6 +12,7 @@ import { OrderDetailMobile } from "./order-detail-mobile";
 import mobileStyles from "./order-detail-mobile.module.css";
 import { OrderStatusLabel } from "./order-status";
 import { OrderTimeline } from "./order-timeline";
+import { ReviewForm } from "@/features/reviews/review-form";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -67,7 +68,7 @@ function BuyerOrderDetail({ order, error, refresh }: { order: OrderDetail; error
           </section>
           <aside className="order-detail__aside" aria-label="Sản phẩm và thao tác">
             <h2>{order.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"}</h2>
-            <div className="order-detail__items">{(order.items ?? []).map((item, index) => <div className="order-detail__item" key={item.id ?? `${item.locationVariantId ?? "item"}-${index}`}><span>{item.quantity ?? 1} × {itemName(item.snapshot)}</span><strong>{money(item.lineTotal ?? (item.unitPrice != null && item.quantity != null ? item.unitPrice * item.quantity : item.unitPrice), item.currency ?? currency)}</strong></div>)}{!order.items?.length ? <p>Chi tiết sản phẩm chưa có trong phản hồi hiện tại.</p> : null}</div>
+            <div className="order-detail__items">{(order.items ?? []).map((item, index) => <div className="order-detail__item" key={item.id ?? `${item.locationVariantId ?? "item"}-${index}`}><span>{item.quantity ?? 1} × {itemName(item.snapshot)}</span><strong>{money(item.lineTotal ?? (item.unitPrice != null && item.quantity != null ? item.unitPrice * item.quantity : item.unitPrice), item.currency ?? currency)}</strong>{item.id && item.reviewEligibility?.eligible ? <ReviewForm orderItemId={item.id} onCreated={() => void refresh()} /> : null}</div>)}{!order.items?.length ? <p>Chi tiết sản phẩm chưa có trong phản hồi hiện tại.</p> : null}</div>
             <p className="order-detail__fulfillment">{fulfillmentCopy(order)}{order.pricing?.shippingFee != null && currency ? ` · Phí giao ${money(order.pricing.shippingFee, currency)}` : ""}</p>
             <div className="order-detail__total"><span>Tổng theo đơn</span><strong>{money(total, currency)}</strong></div>
             <h3>Hành động khả dụng</h3><OrderActions order={order} actorView="BUYER" onChanged={refresh} />

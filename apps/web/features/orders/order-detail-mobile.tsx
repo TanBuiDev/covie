@@ -7,6 +7,7 @@ import type { OrderDetail } from "./order-api";
 import { OrderActions } from "./order-actions";
 import { OrderStatusLabel } from "./order-status";
 import { OrderTimeline } from "./order-timeline";
+import { ReviewForm } from "@/features/reviews/review-form";
 import styles from "./order-detail-mobile.module.css";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -106,10 +107,13 @@ export function OrderDetailMobile({ order, error, onChanged }: { order: OrderDet
         <section className={styles.summary} aria-label="Tóm tắt đơn hàng">
           <p className={styles.summaryLabel}>{order.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"}</p>
           {(order.items ?? []).map((item, index) => (
-            <p className={styles.item} key={item.id ?? `${item.locationVariantId ?? "item"}-${index}`}>
-              <span>{item.quantity ?? 1} × {itemName(item.snapshot)}</span>
-              <strong>{formatAmount(item.lineTotal ?? (item.unitPrice != null && item.quantity != null ? item.unitPrice * item.quantity : item.unitPrice), item.currency ?? currency)}</strong>
-            </p>
+            <div key={item.id ?? `${item.locationVariantId ?? "item"}-${index}`}>
+              <p className={styles.item}>
+                <span>{item.quantity ?? 1} × {itemName(item.snapshot)}</span>
+                <strong>{formatAmount(item.lineTotal ?? (item.unitPrice != null && item.quantity != null ? item.unitPrice * item.quantity : item.unitPrice), item.currency ?? currency)}</strong>
+              </p>
+              {item.id && item.reviewEligibility?.eligible ? <ReviewForm orderItemId={item.id} onCreated={() => void onChanged()} /> : null}
+            </div>
           ))}
           {!order.items?.length ? <p>Chi tiết sản phẩm chưa có trong phản hồi hiện tại.</p> : null}
           <p>{fulfillmentCopy(order)}{order.pricing?.shippingFee != null && currency ? ` · Phí giao ${formatAmount(order.pricing.shippingFee, currency)}` : ""}{order.paymentMethod ? ` · ${paymentCopy(order)}` : ""}</p>

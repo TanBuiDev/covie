@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LoadingState } from "@/components/ui/loading-state";
-import { getMyNeed, type NeedDetail as NeedDetailModel } from "./need-api";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { cancelNeed, getMyNeed, type NeedDetail as NeedDetailModel } from "./need-api";
 import { NeedResponseList } from "./need-response-list";
 import styles from "./buyer-needs-mobile.module.css";
 
@@ -17,6 +18,8 @@ const statusCopy = {
 export function NeedDetail({ needId }: { needId: string }) {
   const [need, setNeed] = useState<NeedDetailModel | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -28,6 +31,19 @@ export function NeedDetail({ needId }: { needId: string }) {
 
   if (error && !need) return <p className="form-alert" role="alert">{error}</p>;
   if (!need) return <LoadingState label="Đang tải nhu cầu…" />;
+
+  async function submitCancellation() {
+    if (!need || cancelling) return;
+    setCancelling(true); setError(null);
+    try {
+      setNeed(await cancelNeed(need.id));
+      setConfirmCancel(false);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể hủy nhu cầu.");
+      try { setNeed(await getMyNeed(need.id)); } catch { /* Keep the last truthful snapshot. */ }
+      setConfirmCancel(false);
+    } finally { setCancelling(false); }
+  }
 
   return (
     <div className={`need-detail ${styles.detailRoot}`}>
@@ -49,10 +65,12 @@ export function NeedDetail({ needId }: { needId: string }) {
         </dl>
 
         {need.fulfilledOrderId ? <p className={`need-detail__fulfilled ${styles.fulfilled}`}>Đã tạo đơn đáp ứng: <Link href={`/orders/${need.fulfilledOrderId}`}>Xem đơn hàng</Link></p> : null}
+        {need.canCancel ? <button className="button-danger" type="button" onClick={() => setConfirmCancel(true)}>Hủy nhu cầu</button> : null}
         {error ? <p className="form-alert" role="alert">{error}</p> : null}
       </section>
 
       <NeedResponseList needId={needId} />
+      <ConfirmDialog open={confirmCancel} title="Hủy nhu cầu này?" description="Các phản hồi hiện có sẽ không còn dùng để tạo đơn." confirmLabel={cancelling ? "Đang hủy…" : "Xác nhận hủy"} dangerous confirmDisabled={cancelling} cancelDisabled={cancelling} onConfirm={() => void submitCancellation()} onCancel={() => setConfirmCancel(false)} />
     </div>
   );
 }
