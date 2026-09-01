@@ -28,9 +28,11 @@ describe("AddressForm", () => {
     render(<AddressForm />);
 
     fireEvent.change(screen.getByLabelText(/Nhãn/), { target: { value: "Nhà" } });
-    fireEvent.change(screen.getByLabelText("Địa chỉ"), { target: { value: "TP.HCM" } });
-    fireEvent.change(screen.getByLabelText("Vĩ độ"), { target: { value: "10.77" } });
-    fireEvent.change(screen.getByLabelText("Kinh độ"), { target: { value: "106.69" } });
+    fireEvent.change(screen.getByLabelText(/Người nhận/), { target: { value: "Nguyễn Văn Minh" } });
+    fireEvent.change(screen.getByLabelText(/Số điện thoại/), { target: { value: "0909123456" } });
+    fireEvent.change(screen.getByLabelText(/Địa chỉ/), { target: { value: "TP.HCM" } });
+    fireEvent.change(screen.getByLabelText(/Vĩ độ/), { target: { value: "10.77" } });
+    fireEvent.change(screen.getByLabelText(/Kinh độ/), { target: { value: "106.69" } });
     fireEvent.click(screen.getByRole("button", { name: "Lưu địa chỉ" }));
 
     await waitFor(() => expect(screen.getByText("Trường này là bắt buộc.")).toBeInTheDocument());
@@ -40,9 +42,11 @@ describe("AddressForm", () => {
     createSavedAddress.mockResolvedValueOnce({ id: "address-1" });
     render(<AddressForm />);
     fireEvent.change(screen.getByLabelText(/Nhãn/), { target: { value: "Nhà" } });
-    fireEvent.change(screen.getByLabelText("Địa chỉ"), { target: { value: "TP.HCM" } });
-    fireEvent.change(screen.getByLabelText("Vĩ độ"), { target: { value: "10.77" } });
-    fireEvent.change(screen.getByLabelText("Kinh độ"), { target: { value: "106.69" } });
+    fireEvent.change(screen.getByLabelText(/Người nhận/), { target: { value: "Nguyễn Văn Minh" } });
+    fireEvent.change(screen.getByLabelText(/Số điện thoại/), { target: { value: "0909123456" } });
+    fireEvent.change(screen.getByLabelText(/Địa chỉ/), { target: { value: "TP.HCM" } });
+    fireEvent.change(screen.getByLabelText(/Vĩ độ/), { target: { value: "10.77" } });
+    fireEvent.change(screen.getByLabelText(/Kinh độ/), { target: { value: "106.69" } });
     fireEvent.click(screen.getByLabelText(/Đặt làm địa chỉ mặc định/));
     fireEvent.click(screen.getByRole("button", { name: "Lưu địa chỉ" }));
     await waitFor(() => expect(createSavedAddress).toHaveBeenCalledWith(expect.objectContaining({ defaultAddress: true })));
