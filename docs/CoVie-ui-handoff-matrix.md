@@ -1,8 +1,8 @@
 # CoVie V1 — UI Handoff Matrix
 
 **Visual source of truth:** [CoVie — V1 UI Design](https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie-%E2%80%94-V1-UI-Design?node-id=0-1)
-**Last reconciled:** 2026-09-01
-**Status:** Figma production units are frozen. Tasks 8–17 are integrated and locally verified at `fc93244`. The Chunk 3 matrix exercises Buyer, Seller and Admin route/state units at 360/390/768/1024/1280/1440 where applicable, asserts route landmarks, Axe accessibility and horizontal overflow, and records 267 ignored screenshots under `.local/dev/visual-review/chunk3/`. Human visual/product review, PR CI and staging remain separate open gates.
+**Last reconciled:** 2026-09-02
+**Status:** Figma production units are frozen. Tasks 8–17 are integrated and locally verified at `fc93244`, with clean CI stabilization through `177b89e`. The Chunk 3 matrix exercises Buyer, Seller and Admin route/state units at 360/390/768/1024/1280/1440 where applicable, asserts route landmarks, Axe accessibility and horizontal overflow, and records 267 ignored screenshots under `.local/dev/visual-review/chunk3/`. PR CI #130 is green; human visual/product review and staging remain separate open gates.
 **Implementation target:** Figma UI delivery carry-over after Plan 09. This matrix is a handoff aid, not a replacement for API contracts or detailed plan acceptance criteria.
 
 ## Rules

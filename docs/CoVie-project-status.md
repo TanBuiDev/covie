@@ -1,7 +1,7 @@
 # CoVie V1 — Project Status Dashboard
 
-**Last verified:** 2026-09-01
-**Overall status:** Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop are integrated on `codex/integrated-ui-completion` and published in integration PR #6. Chunk 3 local acceptance passes: API-client check, typecheck, 58-file/146-test Vitest suite, lint with 0 errors/1 warning, 35-page production build, 476-test API verification and four cross-role Playwright acceptance suites with 267 viewport screenshots. PR CI review, human visual approval, authenticated staging journeys and release acceptance remain open.
+**Last verified:** 2026-09-02
+**Overall status:** Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop are integrated on `codex/integrated-ui-completion` and published in integration PR #6. Chunk 3 local acceptance passes: API-client check, typecheck, 58-file/146-test Vitest suite, lint with 0 errors/1 warning, 35-page production build, 476-test API verification and four cross-role Playwright acceptance suites with 267 viewport screenshots. Clean PR CI #130 also passes all frontend/contract, backend and source-security jobs at `177b89e`. Human visual approval, authenticated staging journeys and release acceptance remain open.
 **Current implementation plan:** Integrated UI completion — see `superpowers/plans/2026-08-28-complete-integrated-ui.md`.
 
 ## Purpose
@@ -22,7 +22,7 @@ This is the single progress dashboard for CoVie V1. It records completed work on
 | Product, UX, database, API and technical planning | Complete | Approved documents in `docs/` |
 | Figma design source | Complete | Figma cover records 37/37 production units `FROZEN`; cross-screen QA and critical prototypes `PASS` |
 | Web UI implementation against Figma | Chunk 3 runtime accepted locally; human review open | All Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop units are present. Exact-frame context, route landmarks, Axe accessibility and overflow assertions run at their required widths. Evidence is in `integrated-ui-verification-2026-09-01.md`; staging and human pixel review are not implied. |
-| Repository implementation | Pushed in PR #6; review open | `codex/integrated-ui-completion` contains all submitted UI histories and Chunk 3 implementation `fc93244`. The branch was pushed without force/history rewrite; CI and human review are required before merge. Flyway migrations remain sequential from `V001` through `V013`. |
+| Repository implementation | Pushed in PR #6; CI green, human review open | `codex/integrated-ui-completion` contains all submitted UI histories, Chunk 3 implementation `fc93244` and CI stabilization through `177b89e`. The branch was pushed without force/history rewrite; CI #130 passed all three jobs. Human review is required before merge. Flyway migrations remain sequential from `V001` through `V013`. |
 | Local development launcher | Fixed and cold-start verified | `pnpm dev` now runs Maven Wrapper from `apps/api` and derives `JAVA_HOME` from `java` on `PATH` when unset. Regression script passed; API and web returned HTTP 200 after a clean launcher start on 2026-08-25. |
 | Identity, auth and user implementation | Complete | Plan 02 Task 16 fresh gate: backend `clean verify` (84 tests), regenerated OpenAPI/client, web lint/typecheck/test/build (20 web tests), Flyway V001–V003 and secret hygiene checks (2026-08-12) |
 | Production / pilot | Not started | No staging or production environment has been provisioned or deployed. It depends on the carry-over verification and rehearsal gates. |
@@ -39,7 +39,7 @@ This is the single progress dashboard for CoVie V1. It records completed work on
 | 06 | Need Requests & Matching | Closed — locally verified | `V011` and focused concurrency/query gates are integrated |
 | 07 | Reviews, Reputation, Outbox, Notifications & SSE | Closed — locally verified | `V012`, notification/outbox behavior and regression coverage are integrated |
 | 08 | Moderation, Settings & Admin | Closed — locally verified | `V013`, authorization and contract coverage are integrated |
-| 09 | Web Completion / PWA | Chunk 3 locally accepted; remote review open | Fresh evidence: API-client/typecheck pass; 58/58 Vitest files and 146/146 tests pass; lint has 0 errors/1 warning; production build generates 35/35 static pages; four role acceptance suites and 267 viewport captures pass. |
+| 09 | Web Completion / PWA | Chunk 3 accepted locally; PR CI green, human review open | Fresh local evidence: API-client/typecheck pass; 58/58 Vitest files and 146/146 tests pass; lint has 0 errors/1 warning; production build generates 35/35 static pages; four role acceptance suites and 267 viewport captures pass. Clean PR CI #130 passes its committed 58-file/143-test suite and all contract, build, backend and security gates. |
 | 10 | Production Hardening & Pilot Launch | Closed — carry-over required | Staging rehearsal and release evidence are open |
 
 ## Public Buyer P0 local acceptance — 2026-08-26

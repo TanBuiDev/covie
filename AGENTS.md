@@ -1,7 +1,7 @@
 # CoVie project context
 
-**Last updated:** 2026-09-01
-**Repository state:** `codex/integrated-ui-completion` contains the integrated Buyer/Seller/Admin baseline and completed Tasks 8–17 through implementation commit `fc93244`. The branch is pushed and integration PR #6 is open; local release gates pass while PR CI/human review and staging remain open.
+**Last updated:** 2026-09-02
+**Repository state:** `codex/integrated-ui-completion` contains the integrated Buyer/Seller/Admin baseline and completed Tasks 8–17 through implementation commit `fc93244`, plus CI-stabilization fixes through `177b89e`. The branch is pushed and integration PR #6 is open; CI #130 and local release gates pass while human review and staging remain open.
 
 ## Read this first
 
@@ -62,8 +62,8 @@ The following domain capabilities are present in `main` and have automated verif
 | Area | Status | Evidence / limitation |
 | --- | --- | --- |
 | Backend/domain implementation | Integrated and verified locally | Fresh `mvnw clean verify`: 476 tests, 0 failures, 0 errors, 1 skipped on JDK 25.0.2 (2026-09-01). |
-| Web functional implementation | **Tasks 8–17 locally verified** | API-client check, typecheck, 58-file/146-test Vitest suite and 35-page production build pass. Lint has 0 errors and one documented `catalog-card` image warning. See `docs/integrated-ui-verification-2026-09-01.md`. |
-| Git integration | Pushed; PR review pending | All submitted Buyer, Seller and Admin histories are ancestors of the integration branch. Chunk 3 implementation is `fc93244`; integration PR #6 targets `main` without rewriting feature history. CI and human review are required before merge. |
+| Web functional implementation | **Tasks 8–17 locally and in PR CI verified** | Local API-client check, typecheck, 58-file/146-test Vitest suite and 35-page production build pass. Clean PR CI #130 also passes its 58-file/143-test committed suite, contract drift, typecheck, lint and build gates. Local lint has 0 errors and one documented `catalog-card` image warning. See `docs/integrated-ui-verification-2026-09-01.md`. |
+| Git integration | Pushed; human review pending | All submitted Buyer, Seller and Admin histories are ancestors of the integration branch. Chunk 3 implementation is `fc93244`, with deterministic contract/test stabilization through `177b89e`; integration PR #6 targets `main` without rewriting feature history. CI #130 is green; human review is required before merge. |
 | Figma UI fidelity | **Runtime accepted locally; human review pending** | Exact production-frame context was retrieved for Buyer, Seller and Admin. The deterministic acceptance matrix covers role-specific routes and states at 360/390/768/1024/1280/1440 where applicable, with route landmarks, Axe checks, overflow checks and 267 ignored screenshots under `.local/dev/visual-review/chunk3/`. This is not staging or final human visual approval. |
 | Staging/release rehearsal | **Not complete** | No real staging environment, production credentials, or deployment evidence is available. No staging or production deployment has been performed. |
 | Lint | **Pass with one warning** | Fresh integrated lint has 0 errors and one `catalog-card` `no-img-element` warning; no rule was disabled. |

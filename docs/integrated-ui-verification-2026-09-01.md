@@ -4,7 +4,8 @@
 
 - Branch: `codex/integrated-ui-completion`
 - Implementation commit: `fc93244` (`feat(ui): complete integrated visual acceptance`)
-- Remote review: [integration PR #6](https://github.com/TanBuiDev/covie/pull/6); CI and human visual/product review are required before merge.
+- CI stabilization head: `177b89e` (`test(web): populate required address fields`)
+- Remote review: [integration PR #6](https://github.com/TanBuiDev/covie/pull/6); CI #130 passed all three jobs on 2026-09-02. Human visual/product review is still required before merge.
 - Visual source: frozen Figma file `CoVie — V1 UI Design`, using exact production-frame nodes from Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop pages.
 - Local runtime: Windows, Node.js 24.11.1, Playwright 1.62.1, Chromium 151.0.7922.34, JDK 25.0.2.
 - Evidence is local and ignored: `.local/dev/visual-review/chunk3/`. It is not committed as product source.
@@ -46,6 +47,8 @@ Coverage uses 360×800, 390×844, 768, 1024, 1280×900 and 1440×900 where the m
 | `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/dev-script.test.ps1` | Passed, exit 0 |
 | `apps/api/mvnw clean verify` | 476 tests, 0 failures, 0 errors, 1 skipped; build success |
 
+The 146-test count above records the integrated local workspace at the acceptance point. A separate clean checkout of the committed PR head passed 58 files and 143 tests. GitHub Actions CI #130 then passed `frontend-and-contract`, `backend` and `release-security-source`, including generated-contract drift, API-client/web typecheck, lint, the committed 143-test web suite, production build, the 476-test backend gate and source security scanning.
+
 Focused runtime matrices for Seller and Admin also passed after responsive fixes. Seller coverage includes SEL-001…019 and required Need interactions across 360/390/768/1024/1280/1440. Admin coverage includes ADM-001…017 across 1024/1280/1440 and preserves the approved read-only boundaries for unsupported mutations.
 
 ## Defects closed during acceptance
@@ -58,10 +61,17 @@ Focused runtime matrices for Seller and Admin also passed after responsive fixes
 
 Each backend correction has a focused regression test and is included in the 476-test API gate.
 
+## Pull-request CI stabilization
+
+- Sorted generated Spring Page/Pageable/Sort schema properties so OpenAPI export is deterministic across Windows and Ubuntu.
+- Removed unstable address-form memoization caught by CI lint.
+- Scoped the notification-delivery integration assertion to its notification instead of global suite data.
+- Updated direct-upload and address-form test mocks/selectors to match CSRF refresh, router/location context and the current required address contract.
+
 ## Explicit limitations
 
 - This document proves local implementation, automated test verification and local runtime acceptance only.
 - The screenshots require human visual/product review before merge; automated landmarks, Axe and overflow checks do not prove pixel-perfect approval.
-- Pull-request CI and human review remain open at this evidence point.
+- Pull-request CI #130 is green; human visual/product review remains open.
 - No staging or production environment was used. Authenticated staging journeys, deployment rehearsal and production release remain open.
 - The standard E2E command intentionally skips fixture-gated suites unless the local fixture environment is present; `pnpm ui:verify-local` supplies that environment and passed all four suites.
