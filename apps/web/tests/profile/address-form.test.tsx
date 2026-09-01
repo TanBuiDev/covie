@@ -2,15 +2,17 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CovieApiError } from "@/lib/api/api-error";
 
-const { createSavedAddress, updateSavedAddress } = vi.hoisted(() => ({
+const { createSavedAddress, updateSavedAddress, navigation } = vi.hoisted(() => ({
   createSavedAddress: vi.fn(),
   updateSavedAddress: vi.fn(),
+  navigation: { back: vi.fn(), push: vi.fn(), refresh: vi.fn() },
 }));
 
 vi.mock("@/features/profile/address-api", () => ({
   createSavedAddress,
   updateSavedAddress,
 }));
+vi.mock("next/navigation", () => ({ useRouter: () => navigation }));
 
 import { AddressForm } from "@/features/profile/address-form";
 
