@@ -1,5 +1,7 @@
 # Seller Mobile — Engineering Handoff
 
+> Integrated acceptance update (2026-09-01): local runtime/browser verification is complete on `codex/integrated-ui-completion` at `fc93244`. See `integrated-ui-verification-2026-09-01.md`. Historical connector limitations below are retained as branch provenance, not current integrated status.
+
 ## Scope
 
 This branch implements the production-safe Seller/Provider mobile surfaces from Figma page `04 — Seller Mobile` while preserving the existing responsive/desktop Seller composition and backend-owned business behavior.

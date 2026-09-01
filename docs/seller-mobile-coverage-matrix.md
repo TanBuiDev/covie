@@ -1,5 +1,7 @@
 # Seller Mobile — Figma Coverage Matrix
 
+> Integrated acceptance update (2026-09-01): the historical `RUNTIME_PENDING` limitation below is closed locally by the integrated Seller matrix at `fc93244`, covering 360/390/768/1024/1280/1440 with landmarks, Axe and overflow assertions. See `integrated-ui-verification-2026-09-01.md`. PR CI, human visual review and staging remain open.
+
 **Implementation branch:** `feature/seller-mobile-figma-ui`  
 **Baseline:** `main` @ `42693a64139b8213765dafaa57e4fd66bb3d3736`  
 **Visual source of truth:** Figma `CoVie — V1 UI Design`, page `04 — Seller Mobile` (`3:5`)  

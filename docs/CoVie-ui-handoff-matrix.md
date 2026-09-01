@@ -1,8 +1,8 @@
 # CoVie V1 — UI Handoff Matrix
 
 **Visual source of truth:** [CoVie — V1 UI Design](https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie-%E2%80%94-V1-UI-Design?node-id=0-1)
-**Last reconciled:** 2026-08-26
-**Status:** Figma production units are frozen. The Public Buyer P0 route chain through BUY-006 retains populated local flow and exact-frame viewport acceptance for PUB-001, PUB-003…008 and BUY-001/002/003/005/006. Tasks 8–13 have removed the recorded public merchant, Buyer eligibility, Seller candidate/concurrency, Admin read and deterministic-fixture contract blockers. Seller catalog/contact and Admin shops have fresh runtime viewport evidence, but full exact-frame acceptance remains Tasks 14–16. BUY-004 create/edit remains open in the recorded baseline. Other routes remain functional scaffolds unless recorded below.
+**Last reconciled:** 2026-09-01
+**Status:** Figma production units are frozen. Tasks 8–17 are integrated and locally verified at `fc93244`. The Chunk 3 matrix exercises Buyer, Seller and Admin route/state units at 360/390/768/1024/1280/1440 where applicable, asserts route landmarks, Axe accessibility and horizontal overflow, and records 267 ignored screenshots under `.local/dev/visual-review/chunk3/`. Human visual/product review, PR CI and staging remain separate open gates.
 **Implementation target:** Figma UI delivery carry-over after Plan 09. This matrix is a handoff aid, not a replacement for API contracts or detailed plan acceptance criteria.
 
 ## Rules
@@ -18,8 +18,8 @@
 |---|---|---|
 | Foundations: color, type, spacing, radius, elevation | CSS custom properties and shared UI primitives | Plan 09 |
 | Components: action, input, selection, navigation, feedback, overlay | `apps/web/components/ui` and `apps/web/components/layout` | Plan 09 |
-| Marketplace, commerce, order, need and trust components | Feature-owned presentation components | Functional data flows exist; Figma component implementation remains open |
-| Seller/Admin navigation and data views | Seller/Admin route layouts and feature components | Functional data views exist; Seller catalog/contact has responsive runtime evidence and Admin shops has desktop runtime evidence; full exact-frame composition remains open |
+| Marketplace, commerce, order, need and trust components | Feature-owned presentation components | Implemented and covered by the local Chunk 3 route/state matrix; human visual approval remains open |
+| Seller/Admin navigation and data views | Seller/Admin route layouts and feature components | Implemented with responsive runtime, accessibility and overflow evidence; PR CI and human review remain open |
 
 ## Figma → route implementation map
 
@@ -28,14 +28,14 @@
 | Figma screens | Intended route(s) | Current code route | Delivery state |
 |---|---|---|---|
 | PUB-001…005 — Home, location, search, results, category | `/`, `/search` | Exists; PUB-005 is the canonical `/search?categoryId=…` state rather than a duplicate category route | PUB-001 and PUB-003/004/005 are populated-flow reviewed at 390×844, 360×800 and 1280×900. Manual browse-location selection is covered in the P0 E2E; a dedicated PUB-002 route is not required by the current flow. |
-| PUB-006…009 — Listing and shop detail | `/items/[itemId]`, `/merchants/[merchantId]` | `/items/[itemId]` serves PUB-006 Product, PUB-007 Service and PUB-008 Resale; `/merchants/[merchantId]` serves Shop/Provider from the public discriminator and paginated merchant catalog | PUB-006, PUB-007 and PUB-008 populated main frames and purchase contracts are reviewed. PUB-009 now renders contract-backed merchant kind, catalog, fulfillment capabilities, open state and availability; exact-frame re-acceptance of those newly mounted states remains Task 14. |
-| AUTH-001/002 — Login and registration | `/login`, `/register`, `/onboarding/password`, `/reset-password` | Login, onboarding and reset exist; register missing | Functional forms only; complete auth screen system and decide/create registration entry route. |
-| BUY-001…006 — Cart, address and checkout | `/cart`, `/cart/[cartId]`, `/checkout`, `/checkout/success/[orderId]`, `/me/addresses`, `/me/addresses/new`, `/me/addresses/[addressId]` | Cart/checkout and Address List exist; separate address create/edit routes are missing | BUY-001/002/003/005/006 populated main frames are reviewed. BUY-004 create/edit remains open. |
-| BUY-007…011 + ORD-001…012 — Orders, review, report | `/orders`, `/orders/[orderId]`, review/report overlays | Order routes exist; review targets include authoritative `orderItemId` eligibility and server rejection of stale/ineligible review attempts | Functional state-driven order/review/action views exist; full exact-frame timeline, overlay and edge-state acceptance remains Task 14. |
-| NEED-001…004 — Buyer needs | `/needs`, `/needs/new`, `/needs/[needId]` | All exist | Functional flows only; rebuild need list/form/detail/response components. |
-| BUY-008/009 + shared — Profile, trust, notifications, sessions | `/me`, `/me/addresses`, `/me/notifications`, `/me/security/sessions`, reputation | Account routes and contract-backed `/me/reputation` surface exist | Functional account/trust views are mounted; full exact-frame composition remains Task 14. |
-| SEL-001…019 — Seller Center | `/seller/[merchantId]`, `/seller/[merchantId]/{settings,locations,catalog,inventory,orders,needs}` | Core routes, catalog create/edit, versioned contact edit and eligible Need response selector exist | Catalog/contact runtime checks pass at 360/390/768/1024/1280/1440 with no horizontal overflow; complete Seller exact-frame/state acceptance remains Task 15. |
-| ADM-001…017 — Admin desktop | `/admin`, `/admin/{users,merchants,shops,listings,orders,needs,moderation,settings,reports,audit,zones,categories}` | Core routes plus reports/audit and paginated Shops/Listings/Needs reads exist; zones/categories remain deliberately read-only | Shops runtime checks pass at 1024/1280/1440. Full Admin exact-frame, interaction and accessibility acceptance remains Task 16. |
+| PUB-006…009 — Listing and shop detail | `/items/[itemId]`, `/merchants/[merchantId]` | `/items/[itemId]` serves PUB-006 Product, PUB-007 Service and PUB-008 Resale; `/merchants/[merchantId]` serves Shop/Provider from the public discriminator and paginated merchant catalog | Contract-backed populated and safe states are included in Buyer runtime acceptance at the required mobile/desktop widths. |
+| AUTH-001/002 — Login and registration | `/login`, `/register`, `/onboarding/password`, `/reset-password` | All routes exist | Login/register responsive runtime and accessibility checks pass locally. |
+| BUY-001…006 — Cart, address and checkout | `/cart`, `/cart/[cartId]`, `/checkout`, `/checkout/success/[orderId]`, `/me/addresses`, `/me/addresses/new`, `/me/addresses/[addressId]` | All routes, including BUY-004 create/edit, exist | Populated cart/address/checkout flow and responsive address forms are locally accepted. |
+| BUY-007…011 + ORD-001…012 — Orders, review, report | `/orders`, `/orders/[orderId]`, review/report overlays | Order routes exist; review targets include authoritative `orderItemId` eligibility and server rejection of stale/ineligible review attempts | State-driven order/review/action views are covered by local route/state and unit/integration assertions. |
+| NEED-001…004 — Buyer needs | `/needs`, `/needs/new`, `/needs/[needId]` | All exist | Buyer Need list/create/detail and policy-backed actions are locally accepted. |
+| BUY-008/009 + shared — Profile, trust, notifications, sessions | `/me`, `/me/addresses`, `/me/notifications`, `/me/security/sessions`, reputation | Account routes and contract-backed `/me/reputation` surface exist | Account/trust/notification/session surfaces pass local responsive and accessibility acceptance. |
+| SEL-001…019 — Seller Center | `/seller/[merchantId]`, `/seller/[merchantId]/{settings,locations,catalog,inventory,orders,needs}` | Core routes, catalog create/edit, versioned contact edit and eligible Need response selector exist | Seller runtime matrix passes at 360/390/768/1024/1280/1440 with route landmarks, Axe and no-horizontal-overflow assertions. |
+| ADM-001…017 — Admin desktop | `/admin`, `/admin/{users,merchants,shops,listings,orders,needs,moderation,settings,reports,audit,zones,categories}` | Core routes plus reports/audit and paginated Shops/Listings/Needs reads exist; zones/categories remain deliberately read-only | Admin runtime matrix passes at 1024/1280/1440; read-only boundaries remain explicit. |
 
 ## Priority order
 

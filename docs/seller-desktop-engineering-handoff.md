@@ -1,5 +1,7 @@
 # Seller Desktop — Engineering Handoff
 
+> Integrated acceptance update (2026-09-01): the outstanding local runtime/browser gate described below is now satisfied on `codex/integrated-ui-completion` at `fc93244`. See `integrated-ui-verification-2026-09-01.md`; human visual review and staging remain open.
+
 ## Scope
 
 This handoff covers the Seller Desktop implementation on `feature/seller-desktop-figma-ui` using Figma page `05 — Seller Desktop` (`3:6`) as the visual source of truth and `feature/seller-mobile-figma-ui` as the business/data baseline.

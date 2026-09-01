@@ -1,7 +1,7 @@
 # CoVie project context
 
-**Last updated:** 2026-08-29
-**Repository state:** `codex/integrated-ui-completion` contains the integrated Buyer/Seller/Admin baseline, completed Tasks 8–13, and responsive verification fixes through `0ec9460`. The integration has not been pushed.
+**Last updated:** 2026-09-01
+**Repository state:** `codex/integrated-ui-completion` contains the integrated Buyer/Seller/Admin baseline and completed Tasks 8–17 through implementation commit `fc93244`. Local release gates and the cross-role responsive acceptance suite pass; remote PR/CI review and staging remain open.
 
 ## Read this first
 
@@ -61,16 +61,16 @@ The following domain capabilities are present in `main` and have automated verif
 
 | Area | Status | Evidence / limitation |
 | --- | --- | --- |
-| Backend/domain implementation | Integrated and verified locally | Fresh `mvnw clean verify`: 472 tests, 0 failures, 0 errors, 1 skipped on JDK 25.0.2 (2026-08-29). |
-| Web functional implementation | **Tasks 8–13 locally verified** | API-client check, typecheck, 58-file/145-test Vitest suite and 35-page production build pass. Lint has 0 errors and one documented `catalog-card` image warning. See `docs/integrated-ui-verification-2026-08-29.md`. |
-| Git integration | Integrated locally; not remotely reviewed | Buyer Mobile tip (including Public Buyer and Buyer Desktop), Seller Desktop tip (including Seller Mobile), and Admin Desktop tip are ancestors of the local integration branch. Tasks 8–13 and their verification follow-up are committed locally; nothing has been pushed by this integration work. |
-| Figma UI fidelity | **In progress; not complete** | Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop implementations are present locally. Public Buyer P0 retains its recorded exact-frame evidence. Seller catalog/contact management now has runtime evidence and overflow checks at 360/390/768/1024/1280/1440; Admin shops has runtime evidence at 1024/1280/1440. These are not substitutes for the remaining exact-frame acceptance in Tasks 14–16. |
+| Backend/domain implementation | Integrated and verified locally | Fresh `mvnw clean verify`: 476 tests, 0 failures, 0 errors, 1 skipped on JDK 25.0.2 (2026-09-01). |
+| Web functional implementation | **Tasks 8–17 locally verified** | API-client check, typecheck, 58-file/146-test Vitest suite and 35-page production build pass. Lint has 0 errors and one documented `catalog-card` image warning. See `docs/integrated-ui-verification-2026-09-01.md`. |
+| Git integration | Integrated locally; remote review pending | All submitted Buyer, Seller and Admin histories are ancestors of the integration branch. Chunk 3 implementation is committed at `fc93244`; push, PR CI and human review are Task 18 gates. |
+| Figma UI fidelity | **Runtime accepted locally; human review pending** | Exact production-frame context was retrieved for Buyer, Seller and Admin. The deterministic acceptance matrix covers role-specific routes and states at 360/390/768/1024/1280/1440 where applicable, with route landmarks, Axe checks, overflow checks and 267 ignored screenshots under `.local/dev/visual-review/chunk3/`. This is not staging or final human visual approval. |
 | Staging/release rehearsal | **Not complete** | No real staging environment, production credentials, or deployment evidence is available. No staging or production deployment has been performed. |
 | Lint | **Pass with one warning** | Fresh integrated lint has 0 errors and one `catalog-card` `no-img-element` warning; no rule was disabled. |
 
 ## Known UI gap
 
-PUB-001, PUB-003…008 and BUY-001/002/003/005/006 use the frozen Inter/Emerald foundation, exact exported SVG assets and buyer navigation. Search covers URL filters, FilterSheet and category states, including the queryless-category sort adapter required to avoid backend 422. Product, Service and Resale detail use contract-backed price/availability without inventing unsupported fulfillment or booking claims. PUB-009 now receives the public Shop/Provider discriminator, paginated merchant catalog, location fulfillment capabilities and explicit open/availability state. Buyer reputation, order-item review eligibility and Need cancel actions now come from authoritative server policies. Seller Need responses use eligible contract-backed candidates; catalog/contact editing uses versioned reads, `ETag`/`If-Match` and stale-conflict recovery. Admin Shops, Listings and Needs are real paginated/filterable read-only collections; zone/category mutation remains intentionally out of scope pending product/API approval. BUY-004 create/edit remains open in the recorded baseline. `pnpm ui:verify-local` creates deterministic ignored Buyer/Seller/Admin fixtures, verifies the populated Buyer journey plus actor smoke paths, checks Seller horizontal overflow, and writes viewport evidence under `.local/dev/visual-review/`. Exact type-specific wording in route-level `loading.tsx`/`error.tsx` remains constrained because Next.js supplies no route params to `loading.tsx`; see the handoff matrix. Full Buyer/Seller/Admin exact-frame visual acceptance remains Tasks 14–16.
+PUB-001…009, AUTH, BUY-001…011, ORD-001…012, NEED-001…006, SEL-001…019 and ADM-001…017 are mounted in the integrated responsive application and covered by the Chunk 3 runtime matrix. BUY-004 create/edit routes are implemented. Search, catalog details, merchant capability presentation, Buyer eligibility, Seller candidate/concurrency and Admin reads remain contract-backed. Zone/category mutation remains intentionally out of scope pending product/API approval. `pnpm ui:verify-local` creates deterministic ignored Buyer/Seller/Admin fixtures and writes evidence under `.local/dev/visual-review/`; the Chunk 3 suite adds route-unique landmarks, accessibility and overflow assertions with 267 screenshots under `.local/dev/visual-review/chunk3/`. Exact type-specific wording in route-level `loading.tsx`/`error.tsx` remains constrained because Next.js supplies no route params to `loading.tsx`; see the handoff matrix. Human visual/product approval, authenticated staging journeys and production deployment are still open.
 
 Before changing a UI route:
 

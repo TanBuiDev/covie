@@ -1,5 +1,7 @@
 # Seller Desktop — Figma Coverage Matrix
 
+> Integrated acceptance update (2026-09-01): Seller Desktop runtime acceptance is complete locally at `fc93244` across the required desktop widths, with route landmarks, Axe and overflow assertions. See `integrated-ui-verification-2026-09-01.md`. PR CI, human visual review and staging remain open.
+
 **Implementation branch:** `feature/seller-desktop-figma-ui`  
 **Baseline:** `feature/seller-mobile-figma-ui` @ `aae96f38ce7a4b7ecfa5bed40a6489ddcffa3078`  
 **Baseline relationship:** Seller Mobile was 88 commits ahead / 0 behind `main` when the branch was audited. The separate `codex/plan-10-seller-mobile-ci` branch only contributed CI-oriented divergence and was not used as the implementation base.  

@@ -1,5 +1,7 @@
 # Buyer Mobile remaining coverage matrix
 
+> Integrated acceptance update (2026-09-01): the units in this historical branch matrix are integrated at `fc93244`; BUY-004 create/edit is implemented, and the Buyer/Auth runtime matrix passes with route landmarks, Axe and responsive overflow checks. See `integrated-ui-verification-2026-09-01.md`. Human visual review and staging remain open.
+
 **Implementation branch:** `feature/buyer-mobile-finish-ui`  
 **Base branch:** `feature/buyer-desktop-figma-ui`  
 **Base SHA:** `6bf733d43ed07a731faba9dedf6f00812678e478`  

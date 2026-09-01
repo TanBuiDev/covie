@@ -1,5 +1,7 @@
 # Buyer Desktop — Engineering Handoff
 
+> Integrated acceptance update (2026-09-01): Buyer Desktop is integrated at `fc93244` and passes the local responsive route/state, Axe and overflow matrix. See `integrated-ui-verification-2026-09-01.md`. Human visual review and staging remain open.
+
 ## Source of truth
 
 - Figma file: `CoVie — V1 UI Design`

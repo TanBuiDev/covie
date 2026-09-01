@@ -1,5 +1,7 @@
 # Admin Desktop coverage matrix
 
+> Integrated acceptance update (2026-09-01): the Admin matrix passes locally at 1024/1280/1440 on `fc93244`, including route landmarks, Axe, overflow and explicit read-only boundaries. See `integrated-ui-verification-2026-09-01.md`. PR CI, human visual review and staging remain open.
+
 Figma source: `06 — Admin Desktop` (`3:7`) in `4LcMXFQz3BnU1EXzBk69t2`.
 
 Implementation branch: `feature/admin-desktop-figma-ui`.

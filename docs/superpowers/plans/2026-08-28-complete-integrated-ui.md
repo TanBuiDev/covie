@@ -436,29 +436,29 @@ Do not reuse branch-era counts. Record the new test count, warnings, build resul
 
 **Exact Figma source:** page `03 — Buyer Mobile` (`3:4`) and the Buyer Desktop production frames recorded in the remote handoff.
 
-- [ ] Retrieve exact route frame context with `@figma:figma-design-to-code`; never use only a page node as implementation evidence.
-- [ ] Compare 360×800, 390×844, 768 tablet where specified, 1024, 1280×900, and the canonical desktop frame.
-- [ ] Cover PUB-001…009, AUTH, BUY-001…011, ORD-001…012, NEED-001…004, notifications, profile, sessions, loading/empty/error/unauthorized/pending/conflict states.
-- [ ] Assert destination URL and a route-unique landmark before every screenshot.
-- [ ] Store screenshot evidence under ignored `.local/dev/visual-review/` and record names/results in the handoff matrix.
+- [x] Retrieve exact route frame context with `@figma:figma-design-to-code`; never use only a page node as implementation evidence.
+- [x] Compare 360×800, 390×844, 768 tablet where specified, 1024, 1280×900, and the canonical desktop frame.
+- [x] Cover PUB-001…009, AUTH, BUY-001…011, ORD-001…012, NEED-001…004, notifications, profile, sessions, loading/empty/error/unauthorized/pending/conflict states.
+- [x] Assert destination URL and a route-unique landmark before every screenshot.
+- [x] Store screenshot evidence under ignored `.local/dev/visual-review/` and record names/results in the handoff matrix.
 
 ### Task 15: Seller Mobile/Desktop visual acceptance
 
 **Exact Figma source:** Seller Mobile page `3:5`; Seller Desktop page `3:6`.
 
-- [ ] Verify SEL-001…019 and NEED-005/006 at 360, 390, 768, 1024, 1280, and 1440×900.
-- [ ] Confirm the five-item IA, no horizontal overflow, location filter/cursor behavior, Catalog create/edit, inventory, order actions, Need response, reputation, and notices.
-- [ ] Exercise long labels, missing summaries, restricted merchant, stale ETag, revoked action, destructive confirmations, and keyboard navigation.
-- [ ] Record exact frame IDs and visual deltas before calling any unit visually verified.
+- [x] Verify SEL-001…019 and NEED-005/006 at 360, 390, 768, 1024, 1280, and 1440×900.
+- [x] Confirm the five-item IA, no horizontal overflow, location filter/cursor behavior, Catalog create/edit, inventory, order actions, Need response, reputation, and notices.
+- [x] Exercise long labels, missing summaries, restricted merchant, stale ETag, revoked action, destructive confirmations, and keyboard navigation.
+- [x] Record exact frame IDs and visual deltas before calling any unit visually verified.
 
 ### Task 16: Admin Desktop visual/runtime acceptance
 
 **Exact Figma source:** Admin page `3:7`, ADM-001…017 canonical frames.
 
-- [ ] Verify 1024 minimum usable desktop, 1280 intermediate, and 1440×900 canonical layout.
-- [ ] Exercise every real Admin read/mutation, pagination/filtering, 409/412 refresh-required state, unknown code mapping, sensitive audit metadata suppression, and read-only boundaries.
-- [ ] Verify sidebar keyboard navigation, sticky table headers, dialog focus/escape/backdrop behavior, and no page overflow.
-- [ ] Keep ADM-004/005/008 safe states until Task 12 contracts ship; do not visually pass sample-data substitutes.
+- [x] Verify 1024 minimum usable desktop, 1280 intermediate, and 1440×900 canonical layout.
+- [x] Exercise every real Admin read/mutation, pagination/filtering, 409/412 refresh-required state, unknown code mapping, sensitive audit metadata suppression, and read-only boundaries.
+- [x] Verify sidebar keyboard navigation, sticky table headers, dialog focus/escape/backdrop behavior, and no page overflow.
+- [x] Keep ADM-004/005/008 safe states until Task 12 contracts ship; do not visually pass sample-data substitutes.
 
 ### Task 17: Run the integrated acceptance suite
 
@@ -476,10 +476,10 @@ Set-Location apps/api
 ./mvnw clean verify
 ```
 
-- [ ] Run accessibility checks for keyboard, focus, labels, landmark uniqueness, contrast, and reduced motion.
-- [ ] Run responsive overflow checks at every target width.
-- [ ] Record exact pass counts, warnings, skipped tests, commit SHA, browser versions, and evidence paths.
-- [ ] Do not convert a local pass into a staging or production claim.
+- [x] Run accessibility checks for keyboard, focus, labels, landmark uniqueness, contrast, and reduced motion.
+- [x] Run responsive overflow checks at every target width.
+- [x] Record exact pass counts, warnings, skipped tests, commit SHA, browser versions, and evidence paths.
+- [x] Do not convert a local pass into a staging or production claim.
 
 ### Task 18: Update source-of-truth documentation and integrate remotely
 
@@ -490,7 +490,7 @@ Set-Location apps/api
 - Modify: Buyer/Seller/Admin coverage matrices and engineering handoffs.
 - Modify only if behavior changed: relevant technical plans and operations runbooks.
 
-- [ ] Mark separately: implemented, test-verified, runtime-verified, visually verified, staging-verified, production-deployed.
+- [x] Mark separately: implemented, test-verified, runtime-verified, visually verified, staging-verified, production-deployed.
 - [ ] Reconcile or close superseded UI PRs only after the integrated branch is pushed and reviewed.
 - [ ] Push `codex/integrated-ui-completion` without rewriting remote feature history.
 - [ ] Open one integration PR to `main` with conflict rationale, gate evidence, known contract gaps, and rollback guidance.

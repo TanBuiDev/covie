@@ -1,5 +1,7 @@
 # Buyer Mobile conflict-aware handoff
 
+> Integrated acceptance update (2026-09-01): this branch history is preserved in `codex/integrated-ui-completion`; the Buyer/Auth acceptance matrix passes locally at `fc93244`. See `integrated-ui-verification-2026-09-01.md`. Human visual review and staging remain open.
+
 ## Branch / base
 
 - Repository: `TanBuiDev/covie`
