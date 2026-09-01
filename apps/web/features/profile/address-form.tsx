@@ -1,7 +1,7 @@
 "use client";
 
 import type { components } from "@covie/api-client";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CoVieIcon } from "@/components/ui/covie-icon";
 import { useBrowseLocation } from "@/features/location/use-browse-location";
@@ -29,11 +29,9 @@ export function AddressForm({ address }: { address?: Address }) {
   const [message, setMessage] = useState<string>();
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<AddressField, string>>>({});
   const editing = Boolean(address?.id);
-  const initialCoordinates = useMemo(() => {
-    if (address?.latitude != null && address.longitude != null) return { latitude: address.latitude, longitude: address.longitude };
-    if (location?.kind === "coordinates") return { latitude: location.lat, longitude: location.lng };
-    return undefined;
-  }, [address?.latitude, address?.longitude, location]);
+  const initialCoordinates = address?.latitude != null && address.longitude != null
+    ? { latitude: address.latitude, longitude: address.longitude }
+    : location?.kind === "coordinates" ? { latitude: location.lat, longitude: location.lng } : undefined;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
