@@ -13,6 +13,7 @@ vi.mock("@/features/profile/address-api", () => ({
   updateSavedAddress,
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => navigation }));
+vi.mock("@/features/location/use-browse-location", () => ({ useBrowseLocation: () => ({ location: null }) }));
 
 import { AddressForm } from "@/features/profile/address-form";
 
