@@ -1,7 +1,7 @@
 # CoVie project context
 
 **Last updated:** 2026-09-02
-**Repository state:** `codex/integrated-ui-completion` contains the integrated Buyer/Seller/Admin baseline and completed Tasks 8–17 through implementation commit `fc93244`, plus CI-stabilization fixes through `177b89e`. The branch is pushed and integration PR #6 is open; CI #130 and local release gates pass while human review and staging remain open.
+**Repository state:** `codex/integrated-ui-completion` contains the integrated Buyer/Seller/Admin baseline and completed Tasks 8–17 through implementation commit `fc93244`, plus CI-stabilization fixes through `177b89e`. The branch is pushed and integration PR #6 is open; CI #131 and local release gates pass. Four integrated-plan Definition-of-Done items are now evidence-closed; merge, clean-checkout Playwright, final Figma review/approval, authoritative Admin action eligibility and staging remain open.
 
 ## Read this first
 

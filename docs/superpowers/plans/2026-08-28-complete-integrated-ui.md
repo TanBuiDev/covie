@@ -491,19 +491,19 @@ Set-Location apps/api
 - Modify only if behavior changed: relevant technical plans and operations runbooks.
 
 - [x] Mark separately: implemented, test-verified, runtime-verified, visually verified, staging-verified, production-deployed.
-- [ ] Reconcile or close superseded UI PRs only after the integrated branch is pushed and reviewed.
+- [ ] Reconcile or close superseded UI PRs only after the integrated branch is pushed and reviewed. The branch is pushed; review and superseded-PR reconciliation remain open.
 - [x] Push `codex/integrated-ui-completion` without rewriting remote feature history.
 - [x] Open one integration PR to `main` with conflict rationale, gate evidence, known contract gaps, and rollback guidance.
-- [ ] Require green CI and human visual/product review before merge. CI #130 is green at `177b89e`; human visual/product review remains open.
-- [ ] After merge, run staging rehearsal and authenticated P0 journeys; production remains blocked until release checklist evidence is complete.
+- [ ] Require green CI and human visual/product review before merge. CI #131 is green at `4ecc799`; human visual/product review remains open.
+- [ ] After merge, run staging rehearsal and authenticated P0 journeys; production remains blocked until release checklist evidence is complete. PR #6 is not merged and no staging environment evidence exists.
 
 ## Definition of done
 
-- [ ] `origin/main` contains all five UI branches through a reviewed integration PR; no feature history was force-rewritten.
-- [ ] No unmerged paths or conflict markers remain; user-owned pre-sync work is preserved and explicitly accounted for.
-- [ ] API-client drift, typecheck, lint, all Vitest, production build, API `clean verify`, and required Playwright suites pass from a clean checkout.
-- [ ] Every Figma unit has one of: visually verified implementation, explicit authoritative contract blocker, or approved out-of-scope decision.
-- [ ] Responsive DOM exposes one semantic heading/control/dialog per active surface.
-- [ ] Buyer/Seller/Admin commands are mounted only from server permissions/capabilities; no status-derived business state is introduced.
-- [ ] Required viewport screenshots and route assertions exist for all implemented units.
-- [ ] Staging and production status are reported only from direct environment evidence.
+- [ ] `origin/main` contains all five UI branches through a reviewed integration PR; no feature history was force-rewritten. PR #6 remains open and unmerged.
+- [x] No unmerged paths or conflict markers remain; user-owned pre-sync work is preserved and explicitly accounted for. Fresh reconciliation on 2026-09-02 found 0 unmerged index entries and 0 conflict markers; the PR records the excluded user-owned working-tree changes.
+- [ ] API-client drift, typecheck, lint, all Vitest, production build, API `clean verify`, and required Playwright suites pass from a clean checkout. CI #131 proves the clean contract/frontend/backend/security gates; the fixture-backed Playwright matrix has local evidence but has not been rerun from a clean checkout.
+- [ ] Every Figma unit has one of: visually verified implementation, explicit authoritative contract blocker, or approved out-of-scope decision. Human visual approval is open and PUB-009 still records a fresh exact-frame comparison requirement.
+- [x] Responsive DOM exposes one semantic heading/control/dialog per active surface. The Chunk 3 route matrix asserts exactly one route-unique landmark at every target width; focused dialog tests cover accessible naming, focus ownership and dismissal behavior.
+- [ ] Buyer/Seller/Admin commands are mounted only from server permissions/capabilities; no status-derived business state is introduced. Order, Need, catalog and settings commands are contract-backed, but Admin suspension/moderation presentation still derives available actions from returned status values.
+- [x] Required viewport screenshots and route assertions exist for all implemented units. Fresh reconciliation found 267 PNG captures and the acceptance helper verifies URL plus a unique landmark before every capture.
+- [x] Staging and production status are reported only from direct environment evidence. Source-of-truth documents explicitly report both as not completed because no environment evidence exists.
