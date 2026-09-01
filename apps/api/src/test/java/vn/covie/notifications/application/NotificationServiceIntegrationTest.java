@@ -39,7 +39,7 @@ class NotificationServiceIntegrationTest extends PostgresIntegrationTest {
         assertThat(first.created()).isTrue(); assertThat(retried.created()).isFalse(); assertThat(retried.notificationId()).isEqualTo(first.notificationId());
         var stored=notifications.findById(first.notificationId()).orElseThrow();
         assertThat(stored.getPayload().toString()).doesNotContain("latitude", "longitude", "address", "geo");
-        assertThat(deliveries.count()).isEqualTo(1);
+        assertThat(deliveries.countByNotificationId(first.notificationId())).isEqualTo(1);
     }
 
     @Test @Transactional

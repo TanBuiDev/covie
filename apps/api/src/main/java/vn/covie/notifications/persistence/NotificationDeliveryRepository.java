@@ -1,3 +1,3 @@
 package vn.covie.notifications.persistence;
 import java.util.UUID; import org.springframework.data.jpa.repository.JpaRepository; import vn.covie.notifications.model.NotificationDeliveryEntity;
-public interface NotificationDeliveryRepository extends JpaRepository<NotificationDeliveryEntity,UUID> {}
+public interface NotificationDeliveryRepository extends JpaRepository<NotificationDeliveryEntity,UUID> { long countByNotificationId(UUID notificationId); }
