@@ -144,7 +144,7 @@ with demo_users as (
   where r.buyer_user_id in (select user_id from demo_users)
      or r.catalog_item_id in (select id from demo_items)
      or r.merchant_profile_id in (select id from demo_merchants)
-), pairs as (
+), pairs(metric, value) as (
   select 'users', count(*)::bigint from demo_users union all
   select 'merchants', count(*) from demo_merchants union all
   select 'catalog_items', count(*) from demo_items union all
@@ -169,7 +169,7 @@ with demo_users as (
       or target_need_request_id in (select id from demo_needs)
       or target_review_id in (select id from demo_reviews)
 )
-select column1 || '=' || column2 from pairs order by column1;
+select metric || '=' || value from pairs order by metric;
 """
 
 
