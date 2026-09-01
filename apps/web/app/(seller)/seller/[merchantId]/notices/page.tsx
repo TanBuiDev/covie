@@ -40,5 +40,13 @@ export default async function SellerNoticesPage({ params }: { params: Promise<{ 
     }];
   });
 
-  return <SellerModerationNotices merchantId={merchantId} initialNotices={notices} />;
+  return (
+    <section className="seller-stack">
+      <header className="surface-header seller-desktop-only">
+        <h1>Thông báo kiểm duyệt</h1>
+        <p>Trung tâm bán hàng</p>
+      </header>
+      <SellerModerationNotices merchantId={merchantId} initialNotices={notices} />
+    </section>
+  );
 }

@@ -75,6 +75,20 @@ beforeEach(() => {
 });
 
 describe("CatalogCreateForm Seller Mobile contracts", () => {
+  it("opens directly in the requested service state", () => {
+    render(
+      <CatalogCreateForm
+        merchantId="merchant-1"
+        categories={serviceCategories}
+        locations={locations}
+        initialType="SERVICE"
+      />,
+    );
+
+    expect(screen.getByLabelText("Loại")).toHaveValue("SERVICE");
+    expect(screen.queryByLabelText("Loại sản phẩm")).not.toBeInTheDocument();
+  });
+
   it("creates one independently priced and available location offer per service variant", async () => {
     const detail: CategoryDetail = {
       id: "cat-service",

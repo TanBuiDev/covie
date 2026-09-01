@@ -153,14 +153,16 @@ export function CatalogCreateForm({
   merchantId,
   categories,
   locations,
+  initialType = "PRODUCT",
 }: {
   merchantId: string;
   categories: Category[];
   locations: Location[];
+  initialType?: CatalogType;
 }) {
   const router = useRouter();
   const idempotencyKeyRef = useRef<string | undefined>(undefined);
-  const [type, setType] = useState<CatalogType>("PRODUCT");
+  const [type, setType] = useState<CatalogType>(initialType);
   const [listingKind, setListingKind] = useState<ListingKind>("STANDARD");
   const [inventoryMode, setInventoryMode] = useState<InventoryMode>("UNTRACKED");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");

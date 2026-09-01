@@ -1,9 +1,9 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { sellerBasePath } from "./seller-context";
 
-function resolveSellerTitle(pathname: string, merchantId: string) {
+function resolveSellerTitle(pathname: string, merchantId: string, catalogType?: string | null) {
   const base = sellerBasePath(merchantId);
   const relative = pathname.slice(base.length);
   if (!relative || relative === "/") return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Tổng quan" };
@@ -15,20 +15,24 @@ function resolveSellerTitle(pathname: string, merchantId: string) {
   if (relative === "/locations/new") return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Thêm điểm bán" };
   if (relative.startsWith("/locations/") && relative.split("/").filter(Boolean).length >= 2) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Sửa điểm bán" };
   if (relative.startsWith("/locations")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Điểm bán" };
-  if (relative.startsWith("/catalog/new")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Thêm sản phẩm / dịch vụ" };
+  if (relative.startsWith("/catalog/new")) return {
+    eyebrow: "TRUNG TÂM BÁN HÀNG",
+    title: catalogType === "SERVICE" ? "Dịch vụ" : "Thêm sản phẩm / dịch vụ",
+  };
   if (relative.startsWith("/catalog")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Danh mục" };
   if (relative.startsWith("/inventory")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Tồn kho" };
   if (relative.startsWith("/orders/") && relative.split("/").filter(Boolean).length >= 2) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Chi tiết đơn" };
   if (relative.startsWith("/orders")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Đơn hàng" };
   if (relative.startsWith("/needs")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Cần mua phù hợp" };
-  if (relative.startsWith("/reputation")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Uy tín Seller" };
+  if (relative.startsWith("/reputation")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Uy tín cửa hàng" };
   if (relative.startsWith("/notices")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Thông báo kiểm duyệt" };
   return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Seller Center" };
 }
 
 export function SellerPageTitle({ merchantId }: { merchantId: string }) {
   const pathname = usePathname() ?? sellerBasePath(merchantId);
-  const copy = resolveSellerTitle(pathname, merchantId);
+  const searchParams = useSearchParams();
+  const copy = resolveSellerTitle(pathname, merchantId, searchParams?.get("type"));
   return (
     <div className="seller-page-title">
       <p>{copy.eyebrow}</p>

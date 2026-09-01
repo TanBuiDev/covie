@@ -18,6 +18,7 @@ export type LocalUiFixture = {
   productItemId: string;
   serviceItemId: string;
   resaleItemId: string;
+  addressId: string;
   actors: {
     buyer: LocalActor;
     seller: LocalActor;

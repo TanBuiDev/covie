@@ -2959,7 +2959,7 @@ export interface components {
             key?: string;
             /** @enum {string} */
             valueType?: "BOOLEAN" | "INTEGER" | "STRING" | "ENUM";
-            value?: components["schemas"]["JsonNode"];
+            value?: unknown;
             /** @enum {string} */
             scopeType?: "GLOBAL" | "LOCATION_AREA" | "CATEGORY" | "MERCHANT";
             /** Format: uuid */
@@ -3598,7 +3598,7 @@ export interface components {
             key?: string;
             /** @enum {string} */
             valueType?: "BOOLEAN" | "INTEGER" | "STRING" | "ENUM";
-            defaultValue?: components["schemas"]["JsonNode"];
+            defaultValue?: unknown;
             allowedScopes?: ("GLOBAL" | "LOCATION_AREA" | "CATEGORY" | "MERCHANT")[];
             resolutionOrder?: ("GLOBAL" | "LOCATION_AREA" | "CATEGORY" | "MERCHANT")[];
         };
@@ -3606,9 +3606,9 @@ export interface components {
             key?: string;
             /** @enum {string} */
             valueType?: "BOOLEAN" | "INTEGER" | "STRING" | "ENUM";
-            defaultValue?: components["schemas"]["JsonNode"];
+            defaultValue?: unknown;
             allowedScopes?: ("GLOBAL" | "LOCATION_AREA" | "CATEGORY" | "MERCHANT")[];
-            effectiveValue?: components["schemas"]["JsonNode"];
+            effectiveValue?: unknown;
             effectiveSource?: components["schemas"]["SystemSettingOverrideResponse"];
             persistedOverrides?: components["schemas"]["SystemSettingOverrideResponse"][];
         };
@@ -3619,7 +3619,7 @@ export interface components {
             scopeType?: "GLOBAL" | "LOCATION_AREA" | "CATEGORY" | "MERCHANT";
             /** Format: uuid */
             scopeId?: string;
-            value?: components["schemas"]["JsonNode"];
+            value?: unknown;
             /** Format: int64 */
             version?: number;
             /** Format: date-time */
@@ -3635,24 +3635,24 @@ export interface components {
             content?: components["schemas"]["SystemSettingHistoryResponse"][];
             /** Format: int32 */
             number?: number;
-            pageable?: components["schemas"]["PageableObject"];
+            sort?: components["schemas"]["SortObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
+            sort?: components["schemas"]["SortObject"];
+            paged?: boolean;
+            unpaged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
-            sort?: components["schemas"]["SortObject"];
-            paged?: boolean;
-            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
@@ -3662,8 +3662,8 @@ export interface components {
         SystemSettingHistoryResponse: {
             /** Format: uuid */
             id?: string;
-            oldValue?: components["schemas"]["JsonNode"];
-            newValue?: components["schemas"]["JsonNode"];
+            oldValue?: unknown;
+            newValue?: unknown;
             /** Format: int64 */
             oldVersion?: number;
             /** Format: int64 */
@@ -3774,12 +3774,12 @@ export interface components {
             content?: components["schemas"]["ModerationCaseSummaryResponse"][];
             /** Format: int32 */
             number?: number;
-            pageable?: components["schemas"]["PageableObject"];
+            sort?: components["schemas"]["SortObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ModerationActionResponse: {
@@ -3878,12 +3878,12 @@ export interface components {
             content?: components["schemas"]["AdminAuditLogResponse"][];
             /** Format: int32 */
             number?: number;
-            pageable?: components["schemas"]["PageableObject"];
+            sort?: components["schemas"]["SortObject"];
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
     };

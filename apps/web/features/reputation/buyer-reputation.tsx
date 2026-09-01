@@ -6,7 +6,12 @@ type Reputation = components["schemas"]["BuyerReputationSummary"];
 
 export function BuyerReputation({ reputation }: { reputation: Reputation }) {
   if (reputation.completionRateBasisPoints == null) {
-    return <EmptyState title="Chưa có dữ liệu uy tín" description="Chỉ số sẽ xuất hiện sau khi bạn có đơn đủ điều kiện đánh giá uy tín." />;
+    return (
+      <section className={styles.surface} aria-labelledby="buyer-reputation-title">
+        <header><p className="eyebrow">BUY-009</p><h1 id="buyer-reputation-title">Uy tín người mua</h1></header>
+        <EmptyState title="Chưa có dữ liệu uy tín" description="Chỉ số sẽ xuất hiện sau khi bạn có đơn đủ điều kiện đánh giá uy tín." />
+      </section>
+    );
   }
   const rate = Math.min(100, Math.max(0, reputation.completionRateBasisPoints / 100));
   return (

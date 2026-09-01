@@ -23,6 +23,7 @@
   .seller-order-list-cards {
     display: grid;
     gap: 12px;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .seller-order-list-card {
@@ -31,6 +32,7 @@
     gap: 16px;
     grid-template-columns: minmax(220px, 1.25fr) minmax(130px, .75fr) minmax(180px, 1fr) auto;
     min-height: 72px;
+    min-width: 0;
     padding: 12px;
   }
 

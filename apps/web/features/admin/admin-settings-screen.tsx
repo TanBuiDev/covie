@@ -18,7 +18,7 @@ const sectionKeys: Record<AdminSettingsSection, Set<string>> = {
 const titles: Record<AdminSettingsSection, [string, string]> = {
   policy: ["Kiểm duyệt · Đánh giá · Uy tín", "Cấu hình hệ thống"],
   orders: ["Thời hạn đơn hàng", "Cấu hình timeout và vòng đời do máy chủ định nghĩa"],
-  needs: ["Ghép nối Cần mua", "Giới hạn phản hồi và matching do máy chủ định nghĩa"],
+  needs: ["Giới hạn phản hồi Cần mua", "Cấu hình hệ thống"],
   advanced: ["Chính sách nâng cao", "Các tham số vận hành bổ sung trong registry hệ thống"],
 };
 

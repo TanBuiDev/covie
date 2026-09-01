@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.notifications.model.NotificationType;
 import vn.covie.notifications.persistence.NotificationDeliveryRepository;
@@ -39,5 +40,19 @@ class NotificationServiceIntegrationTest extends PostgresIntegrationTest {
         var stored=notifications.findById(first.notificationId()).orElseThrow();
         assertThat(stored.getPayload().toString()).doesNotContain("latitude", "longitude", "address", "geo");
         assertThat(deliveries.count()).isEqualTo(1);
+    }
+
+    @Test @Transactional
+    void loadsTheFirstNotificationPageWithoutNullableCursorBindings() {
+        UUID userId = UUID.randomUUID(), orderId = UUID.randomUUID();
+        users.saveAndFlush(UserEntity.active(userId, "notification-page-test", Instant.now()));
+        UUID eventId = outbox.append(new OutboxEventIntent("ORDER_CREATED", "ORDER", orderId, Map.of()));
+        outboxEvents.flush();
+        service.createFromOutbox(eventId, userId, NotificationType.ORDER_NEW, "New order", "An order is waiting.",
+                "ORDER", orderId, Map.of("orderId", orderId.toString()));
+
+        var page = notifications.findByUserIdOrderByCreatedAtDescIdDesc(userId, PageRequest.of(0, 21));
+
+        assertThat(page).hasSize(1);
     }
 }

@@ -17,5 +17,6 @@ it("renders the policy-backed buyer reputation summary and warning", () => {
 
 it("renders an honest empty state before any eligible orders", () => {
   render(<BuyerReputation reputation={{ eligibleOrders: 0, completedOrders: 0, warning: false }} />);
+  expect(screen.getByRole("heading", { name: "Uy tín người mua" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Chưa có dữ liệu uy tín" })).toBeInTheDocument();
 });

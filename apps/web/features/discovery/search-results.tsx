@@ -77,7 +77,7 @@ export function SearchResults({ initial }: { initial: SearchInitialFilters }) {
         </label>
       </>}
       {!location && <div className={styles.center}><strong>Chọn khu vực để xem kết quả gần bạn</strong></div>}
-      {loading && searching && <div className={styles.list} aria-label="Đang tải kết quả">{[1,2,3].map(n => <div className={styles.skeleton} key={n}/>)}</div>}
+      {loading && searching && <div className={styles.list} role="status" aria-label="Đang tải kết quả">{[1,2,3].map(n => <div className={styles.skeleton} key={n}/>)}</div>}
       {error && <div className={styles.center}><strong>Không thể tải kết quả tìm kiếm.</strong><p>Kiểm tra kết nối rồi thử lại.</p><button onClick={() => { setLoading(true); setAttempt(v=>v+1); }}>Thử lại tìm kiếm</button></div>}
       {!loading && !error && searching && page?.items?.length === 0 && <div className={styles.center}><strong>Chưa tìm thấy kết quả phù hợp</strong><p>Thử từ khóa hoặc bộ lọc khác.</p><Link href="/needs/new">Đăng nhu cầu cần mua</Link></div>}
       {!loading && !error && <div className={styles.list}>{page?.items?.map(item => <ResultCard key={item.id} item={item}/>)}</div>}

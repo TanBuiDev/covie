@@ -68,6 +68,7 @@ export function LocationForm({ merchantId, location, onSaved, onReload }: {
 
   return (
     <form className="seller-location-form" onSubmit={submit} aria-busy={pending}>
+      <h1 className="seller-desktop-only">{location ? "Sửa điểm bán" : "Thêm điểm bán"}</h1>
       <label>
         Tên điểm bán <span aria-hidden="true">*</span>
         <input name="name" required maxLength={150} disabled={pending} defaultValue={location?.data.name ?? ""} />

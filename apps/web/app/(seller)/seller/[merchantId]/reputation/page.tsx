@@ -13,5 +13,13 @@ export default async function SellerReputationPage({ params }: { params: Promise
     throw await readApiError(result.response);
   }
 
-  return <SellerReputation reputation={result.data?.reputation} />;
+  return (
+    <section className="seller-stack">
+      <header className="surface-header seller-desktop-only">
+        <h1>Uy tín cửa hàng</h1>
+        <p>Trung tâm bán hàng</p>
+      </header>
+      <SellerReputation reputation={result.data?.reputation} />
+    </section>
+  );
 }

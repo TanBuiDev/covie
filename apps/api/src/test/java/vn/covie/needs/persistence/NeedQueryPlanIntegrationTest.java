@@ -2,7 +2,10 @@ package vn.covie.needs.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -10,6 +13,16 @@ import vn.covie.support.PostgresIntegrationTest;
 
 class NeedQueryPlanIntegrationTest extends PostgresIntegrationTest {
     @Autowired JdbcTemplate jdbc;
+    @Autowired NeedDiscoveryRepository discovery;
+
+    @Test
+    void discoveryBindsTheCurrentInstantAsATimestampWithTimeZone() {
+        List<NeedMatchRow> matches = discovery.findCandidates(
+                UUID.randomUUID(), Set.of(UUID.randomUUID()), null,
+                Instant.parse("2026-08-29T00:00:00Z"), null, 20);
+
+        assertThat(matches).isEmpty();
+    }
 
     @Test
     void planSixIndexesBackBuyerExpiryGeoAndResponseAccessPaths() {

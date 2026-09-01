@@ -23,6 +23,22 @@
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+@media (max-width: 1023px) {
+  .seller-settings-page > .seller-workspace-header { display: none; }
+
+  .seller-locations-page > .seller-workspace-header--action {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .seller-locations-page > .seller-workspace-header--action > div {
+    display: none;
+  }
+
+  .seller-locations-page .seller-location-add {
+    width: 100%;
+  }
+}
+
 .seller-location-count {
   color: var(--seller-text-secondary);
   font-size: 13px;

@@ -3,7 +3,7 @@
 @media(min-width:1024px){
   .screen{min-height:calc(100dvh - 112px)}
   .appBar,.searchBlock{display:none}
-  .content{margin:0 auto;max-width:1024px;padding:24px 32px 56px;width:100%}
+  .content{box-sizing:border-box;margin:0 auto;max-width:1024px;padding:24px 32px 56px;width:100%}
   .hint{margin-top:0;max-width:680px}
   .chips{margin:0}
   .sort{display:inline-flex;gap:12px;justify-content:flex-end;margin:16px 0 12px 24px;vertical-align:top;width:260px}

@@ -2,6 +2,13 @@
   display: none;
 }
 
+[data-consumer-focus],
+[data-consumer-focus] *,
+[data-consumer-focus] *::before,
+[data-consumer-focus] *::after {
+  box-sizing: border-box;
+}
+
 .button-primary,
 .button-secondary,
 .button-link {
@@ -436,6 +443,7 @@
   .profile-surface,
   .notifications-surface,
   .trust-surface {
+    box-sizing: border-box;
     margin: 0 auto;
     max-width: 1280px;
     min-height: calc(100dvh - 112px);

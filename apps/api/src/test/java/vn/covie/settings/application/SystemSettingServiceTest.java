@@ -22,19 +22,35 @@ import vn.covie.shared.security.SystemRole;
 import vn.covie.shared.time.AppClock;
 
 class SystemSettingServiceTest {
+    @Test void exposesSettingValuesAsJsonPrimitivesInsteadOfJsonNodeBeanMetadata() {
+        CurrentActor actor = new CurrentActor(UUID.randomUUID(), Set.of(SystemRole.ADMIN), UUID.randomUUID());
+        CurrentActorProvider actors = Mockito.mock(CurrentActorProvider.class); when(actors.currentActor()).thenReturn(actor);
+        SystemSettingService service = service(actors, Mockito.mock(SystemSettingRepository.class));
+
+        var reviewEnabled = service.definitions().stream()
+                .filter(definition -> definition.key().equals("review.enabled"))
+                .findFirst().orElseThrow();
+
+        assertThat(reviewEnabled.defaultValue()).isEqualTo(true);
+    }
+
     @Test void createsGlobalOverrideWithoutIfMatch() {
         SystemSettingRepository settings = Mockito.mock(SystemSettingRepository.class);
         when(settings.findBySettingKeyAndScopeType("review.enabled", SettingScopeType.GLOBAL)).thenReturn(Optional.empty());
         when(settings.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         CurrentActor actor = new CurrentActor(UUID.randomUUID(), Set.of(SystemRole.ADMIN), UUID.randomUUID());
         CurrentActorProvider actors = Mockito.mock(CurrentActorProvider.class); when(actors.currentActor()).thenReturn(actor);
-        SystemSettingService service = new SystemSettingService(new AdminAccessPolicy(actors), new SystemSettingRegistry(), settings,
-                Mockito.mock(SystemSettingHistoryRepository.class), Mockito.mock(vn.covie.audit.AuditLogWriter.class),
-                Mockito.mock(vn.covie.shared.outbox.OutboxEventWriter.class), Mockito.mock(vn.covie.shared.web.RequestIdAccessor.class), new UuidV7Generator(), () -> java.time.Instant.parse("2026-08-24T00:00:00Z"), null, null, null);
+        SystemSettingService service = service(actors, settings);
 
         var result = service.patch("review.enabled", null, new PatchSystemSettingRequest(SettingScopeType.GLOBAL, null, JsonNodeFactory.instance.booleanNode(false)));
 
         assertThat(result.created()).isTrue();
         assertThat(result.setting().getValueJson().booleanValue()).isFalse();
+    }
+
+    private static SystemSettingService service(CurrentActorProvider actors, SystemSettingRepository settings) {
+        return new SystemSettingService(new AdminAccessPolicy(actors), new SystemSettingRegistry(), settings,
+                Mockito.mock(SystemSettingHistoryRepository.class), Mockito.mock(vn.covie.audit.AuditLogWriter.class),
+                Mockito.mock(vn.covie.shared.outbox.OutboxEventWriter.class), Mockito.mock(vn.covie.shared.web.RequestIdAccessor.class), new UuidV7Generator(), () -> java.time.Instant.parse("2026-08-24T00:00:00Z"), null, null, null);
     }
 }

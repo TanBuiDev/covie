@@ -41,6 +41,17 @@ class ShippingPolicyServiceIntegrationTest extends PostgresIntegrationTest {
         assertThat(rules.findByShippingPolicyIdOrderByPriority(created.id())).hasSize(1);
     }
 
+    @Test
+    void listsPoliciesInsideAReadOnlyTransactionWithoutRequestingAWriteLock() {
+        UUID merchantId = UUID.randomUUID(), locationId = UUID.randomUUID(); Instant now = Instant.now();
+        merchants.saveAndFlush(MerchantProfileEntity.create(merchantId, "Store", "store-" + merchantId, now));
+        locations.saveAndFlush(MerchantLocationEntity.create(locationId, merchantId, "Main", "Address", 10.8, 106.7, now));
+        when(access.requireLocation(merchantId, locationId, vn.covie.merchants.security.MerchantCapability.MANAGE_LOCATION_OFFER)).thenReturn(null);
+        var created = service.create(merchantId, locationId, conditional(List.of(rule(100_000, 0))));
+
+        assertThat(service.list(merchantId, locationId)).extracting("id").containsExactly(created.id());
+    }
+
     private static ShippingPolicyUpsertRequest conditional(List<ShippingRuleRequest> rules) {
         return new ShippingPolicyUpsertRequest(ShippingMode.CONDITIONAL, 20_000L, "VND", ShippingRuleMatchMode.ANY, ShippingPolicyStatus.ACTIVE, rules);
     }
