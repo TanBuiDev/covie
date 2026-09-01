@@ -492,8 +492,8 @@ Set-Location apps/api
 
 - [x] Mark separately: implemented, test-verified, runtime-verified, visually verified, staging-verified, production-deployed.
 - [ ] Reconcile or close superseded UI PRs only after the integrated branch is pushed and reviewed.
-- [ ] Push `codex/integrated-ui-completion` without rewriting remote feature history.
-- [ ] Open one integration PR to `main` with conflict rationale, gate evidence, known contract gaps, and rollback guidance.
+- [x] Push `codex/integrated-ui-completion` without rewriting remote feature history.
+- [x] Open one integration PR to `main` with conflict rationale, gate evidence, known contract gaps, and rollback guidance.
 - [ ] Require green CI and human visual/product review before merge.
 - [ ] After merge, run staging rehearsal and authenticated P0 journeys; production remains blocked until release checklist evidence is complete.
 

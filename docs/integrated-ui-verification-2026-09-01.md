@@ -4,6 +4,7 @@
 
 - Branch: `codex/integrated-ui-completion`
 - Implementation commit: `fc93244` (`feat(ui): complete integrated visual acceptance`)
+- Remote review: [integration PR #6](https://github.com/TanBuiDev/covie/pull/6); CI and human visual/product review are required before merge.
 - Visual source: frozen Figma file `CoVie — V1 UI Design`, using exact production-frame nodes from Buyer Mobile/Desktop, Seller Mobile/Desktop and Admin Desktop pages.
 - Local runtime: Windows, Node.js 24.11.1, Playwright 1.62.1, Chromium 151.0.7922.34, JDK 25.0.2.
 - Evidence is local and ignored: `.local/dev/visual-review/chunk3/`. It is not committed as product source.
@@ -61,6 +62,6 @@ Each backend correction has a focused regression test and is included in the 476
 
 - This document proves local implementation, automated test verification and local runtime acceptance only.
 - The screenshots require human visual/product review before merge; automated landmarks, Axe and overflow checks do not prove pixel-perfect approval.
-- Pull-request CI has not yet run at this evidence point.
+- Pull-request CI and human review remain open at this evidence point.
 - No staging or production environment was used. Authenticated staging journeys, deployment rehearsal and production release remain open.
 - The standard E2E command intentionally skips fixture-gated suites unless the local fixture environment is present; `pnpm ui:verify-local` supplies that environment and passed all four suites.
