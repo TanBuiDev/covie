@@ -27,7 +27,7 @@ describe("AddressForm", () => {
     createSavedAddress.mockRejectedValueOnce(new CovieApiError(422, "VALIDATION_FAILED", "invalid", undefined, { label: ["REQUIRED"] }));
     render(<AddressForm />);
 
-    fireEvent.change(screen.getByLabelText("Nhãn"), { target: { value: "Nhà" } });
+    fireEvent.change(screen.getByLabelText(/Nhãn/), { target: { value: "Nhà" } });
     fireEvent.change(screen.getByLabelText("Địa chỉ"), { target: { value: "TP.HCM" } });
     fireEvent.change(screen.getByLabelText("Vĩ độ"), { target: { value: "10.77" } });
     fireEvent.change(screen.getByLabelText("Kinh độ"), { target: { value: "106.69" } });
@@ -39,7 +39,7 @@ describe("AddressForm", () => {
   it("marks an address as default when selected", async () => {
     createSavedAddress.mockResolvedValueOnce({ id: "address-1" });
     render(<AddressForm />);
-    fireEvent.change(screen.getByLabelText("Nhãn"), { target: { value: "Nhà" } });
+    fireEvent.change(screen.getByLabelText(/Nhãn/), { target: { value: "Nhà" } });
     fireEvent.change(screen.getByLabelText("Địa chỉ"), { target: { value: "TP.HCM" } });
     fireEvent.change(screen.getByLabelText("Vĩ độ"), { target: { value: "10.77" } });
     fireEvent.change(screen.getByLabelText("Kinh độ"), { target: { value: "106.69" } });
