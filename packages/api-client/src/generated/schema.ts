@@ -3626,33 +3626,33 @@ export interface components {
             updatedAt?: string;
         };
         PageSystemSettingHistoryResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            /** Format: int32 */
-            size?: number;
             content?: components["schemas"]["SystemSettingHistoryResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
+            empty?: boolean;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
             numberOfElements?: number;
             pageable?: components["schemas"]["PageableObject"];
-            empty?: boolean;
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
-            sort?: components["schemas"]["SortObject"];
-            paged?: boolean;
-            unpaged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            paged?: boolean;
+            sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
@@ -3765,22 +3765,22 @@ export interface components {
             resolvedAt?: string;
         };
         PageModerationCaseSummaryResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            /** Format: int32 */
-            size?: number;
             content?: components["schemas"]["ModerationCaseSummaryResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
+            empty?: boolean;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
             numberOfElements?: number;
             pageable?: components["schemas"]["PageableObject"];
-            empty?: boolean;
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
         ModerationActionResponse: {
             /** Format: uuid */
@@ -3869,22 +3869,22 @@ export interface components {
             createdAt?: string;
         };
         PageAdminAuditLogResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            /** Format: int32 */
-            size?: number;
             content?: components["schemas"]["AdminAuditLogResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
+            empty?: boolean;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
             numberOfElements?: number;
             pageable?: components["schemas"]["PageableObject"];
-            empty?: boolean;
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
     };
     responses: never;

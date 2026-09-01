@@ -6,8 +6,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.TreeMap;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +63,27 @@ class OpenApiExportTest extends PostgresIntegrationTest {
         String output = System.getProperty("covie.openapi.output", "target/openapi/openapi.json");
         Path outputPath = Path.of(output).toAbsolutePath().normalize();
         Files.createDirectories(outputPath.getParent());
-        Files.writeString(outputPath, json);
+        normalizeGeneratedPageSchemaOrder(document);
+        Files.writeString(outputPath, objectMapper.writeValueAsString(document));
+    }
+
+    private void normalizeGeneratedPageSchemaOrder(JsonNode document) {
+        JsonNode schemas = document.path("components").path("schemas");
+        if (!schemas.isObject()) {
+            return;
+        }
+        schemas.fields().forEachRemaining(entry -> {
+            String schemaName = entry.getKey();
+            if (schemaName.startsWith("Page") || schemaName.equals("SortObject")) {
+                JsonNode properties = entry.getValue().path("properties");
+                if (properties instanceof ObjectNode objectProperties) {
+                    TreeMap<String, JsonNode> sorted = new TreeMap<>();
+                    objectProperties.fields().forEachRemaining(property -> sorted.put(property.getKey(), property.getValue()));
+                    objectProperties.removeAll();
+                    sorted.forEach(objectProperties::set);
+                }
+            }
+        });
     }
 
     private void assertHeaderParameter(JsonNode paths, String path, String method, String headerName) {
