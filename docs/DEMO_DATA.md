@@ -6,6 +6,7 @@
 
 - `infra/demo/seed-demo-data-v1.sql.gz` — compressed PostgreSQL snapshot.
 - `infra/demo/reset-demo-data-v1.sql` — guarded dependency-aware cleanup for the fixture.
+- `infra/scripts/generate-demo-seed.py` — deterministic source generator for the compressed snapshot.
 - `infra/scripts/demo-data.py` — `seed`, `reset`, `reseed`, `status`, and `verify` lifecycle helper.
 - `infra/scripts/import-demo-media.py` — validates the immutable local media pack, uploads files through the Media API, writes a resumable media map, and can attach uploaded media to demo entities.
 
@@ -31,6 +32,20 @@
 | moderation cases | 7 |
 
 `verify` fails when any of these counts drifts.
+
+All 22 reserved local identities use this disposable demo-only credential:
+
+```text
+email: <buyer-01..08|seller-01..10|staff-01..02|admin-01..02>@demo.covie.invalid
+password: CoVieDemo!2026
+```
+
+Regenerate and verify the checked-in snapshot with:
+
+```bash
+python infra/scripts/generate-demo-seed.py
+python infra/scripts/generate-demo-seed.py --check
+```
 
 ## Safety guard
 
@@ -126,7 +141,7 @@ Provide a valid CoVie access token with permission to create/complete media uplo
 export COVIE_ACCESS_TOKEN='...'
 python infra/scripts/import-demo-media.py \
   --pack /absolute/path/to/demo-media-pack \
-  --api-base http://localhost:8080
+  --api-base http://localhost:8081
 ```
 
 Uploads use the application Media API rather than inserting storage metadata directly. Progress is written to `media-map.json` inside the pack, so rerunning without `--force` reuses already mapped assets.
@@ -136,7 +151,7 @@ After upload, the importer writes `attach-media.sql`. To apply it immediately:
 ```bash
 COVIE_ALLOW_DEMO_DATA=1 python infra/scripts/import-demo-media.py \
   --pack /absolute/path/to/demo-media-pack \
-  --api-base http://localhost:8080 \
+  --api-base http://localhost:8081 \
   --attach
 ```
 
@@ -148,7 +163,11 @@ COVIE_ALLOW_DEMO_DATA=1 python infra/scripts/import-demo-media.py \
 COVIE_ALLOW_DEMO_DATA=1 python infra/scripts/demo-data.py reseed
 python infra/scripts/demo-data.py verify
 python infra/scripts/import-demo-media.py --pack /absolute/path/to/demo-media-pack --dry-run
-# Start/login to the API and export COVIE_ACCESS_TOKEN, then upload/attach media.
+# Reseed removes demo media metadata, so rebuild the media map with --force.
+COVIE_ALLOW_DEMO_DATA=1 COVIE_ACCESS_TOKEN='...' python infra/scripts/import-demo-media.py \
+  --pack /absolute/path/to/demo-media-pack --api-base http://localhost:8081 --force --attach
 ```
 
 Run `verify` again after any fixture change before relying on the dataset for UI or end-to-end demonstrations.
+
+The verified local extraction used on 2026-09-03 is `.local/demo-media/covie-demo-media-v1`. It contains all 172 ready assets plus ignored `media-map.json` and `attach-media.sql` artifacts. The source ZIP may be removed after confirming this extracted directory remains available.

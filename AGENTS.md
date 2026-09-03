@@ -1,6 +1,6 @@
 # CoVie project context
 
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-03
 **Repository state:** `codex/integrated-ui-completion` contains the integrated Buyer/Seller/Admin baseline and completed Tasks 8–17 through implementation commit `fc93244`, plus CI-stabilization fixes through `177b89e`. The branch is pushed and integration PR #6 is open; CI #131 and local release gates pass. Four integrated-plan Definition-of-Done items are now evidence-closed; merge, clean-checkout Playwright, final Figma review/approval, authoritative Admin action eligibility and staging remain open.
 
 ## Read this first
@@ -67,6 +67,7 @@ The following domain capabilities are present in `main` and have automated verif
 | Figma UI fidelity | **Runtime accepted locally; human review pending** | Exact production-frame context was retrieved for Buyer, Seller and Admin. The deterministic acceptance matrix covers role-specific routes and states at 360/390/768/1024/1280/1440 where applicable, with route landmarks, Axe checks, overflow checks and 267 ignored screenshots under `.local/dev/visual-review/chunk3/`. This is not staging or final human visual approval. |
 | Staging/release rehearsal | **Not complete** | No real staging environment, production credentials, or deployment evidence is available. No staging or production deployment has been performed. |
 | Lint | **Pass with one warning** | Fresh integrated lint has 0 errors and one `catalog-card` `no-img-element` warning; no rule was disabled. |
+| Demo data and local media | **Verified locally** | Guarded deterministic seed passes all 16 pinned counts on PostgreSQL 18/PostGIS. The v1 pack has 172/172 uploads attached (22 avatars, 20 merchant brand images, 10 QR contacts, 120 catalog images); a public WebP URL returned HTTP 200 on 2026-09-03. This is local evidence only. |
 
 ## Known UI gap
 
@@ -102,6 +103,8 @@ Required API local configuration includes PostgreSQL (`5433`), Redis (`6379`), M
 
 For repeatable local acceptance, run `pnpm ui:verify-local`. It seeds deterministic Buyer/Seller/Admin fixture records, stores disposable credentials only in ignored `.local/dev/ui-fixture.json`, runs the populated Buyer journey and actor smoke paths, and writes screenshots under ignored `.local/dev/visual-review/`.
 
+The separate rich demo fixture is documented in `docs/DEMO_DATA.md`. Its checked-in gzip must match `infra/scripts/generate-demo-seed.py --check`. The verified media extraction is ignored at `.local/demo-media/covie-demo-media-v1`; local MinIO permits anonymous download for public API media URLs, while production storage remains private.
+
 ## Verification commands
 
 ```powershell
@@ -119,6 +122,9 @@ pnpm --filter @covie/web test:e2e
 pnpm ui:verify-local
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/seed-ui-fixture.test.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/dev-script.test.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/local-media-config.test.ps1
+python -m unittest discover -s infra/scripts/tests -p "test_*.py"
+python infra/scripts/generate-demo-seed.py --check
 ```
 
 ## Documentation maintenance checklist

@@ -15,6 +15,7 @@ The branch already contains the reference bootstrap corrections required by the 
 A compressed deterministic snapshot is stored at:
 
 - `infra/demo/seed-demo-data-v1.sql.gz`
+- deterministic generator: `infra/scripts/generate-demo-seed.py`
 
 The fixture target is:
 
@@ -97,13 +98,13 @@ python infra/scripts/import-demo-media.py --pack /path/to/demo-media-pack --dry-
 # Media upload (requires a valid CoVie access token)
 COVIE_ACCESS_TOKEN='...' python infra/scripts/import-demo-media.py \
   --pack /path/to/demo-media-pack \
-  --api-base http://localhost:8080
+  --api-base http://localhost:8081
 
 # Upload + DB attachment
 COVIE_ALLOW_DEMO_DATA=1 COVIE_ACCESS_TOKEN='...' \
 python infra/scripts/import-demo-media.py \
   --pack /path/to/demo-media-pack \
-  --api-base http://localhost:8080 \
+  --api-base http://localhost:8081 \
   --attach
 ```
 
@@ -117,17 +118,19 @@ See `docs/DEMO_DATA.md` for the operator guide and safety details.
 - `infra/scripts/import-demo-media.py` was syntax-compiled after syncing that hash.
 - `demo-data.py --help` exposes all expected lifecycle commands.
 
-## Runtime validation still required locally
+## Runtime validation completed locally — 2026-09-03
 
-This connector session does not provide the project's running PostgreSQL/API/storage stack or the operator's local extracted media-pack directory, so the following should be run after pulling the branch:
+The originally committed gzip blob had the expected Git hash and gzip header but failed full decompression with `EOFError`. It was replaced by deterministic generator output and verified end-to-end:
 
-1. Start the normal CoVie PostgreSQL/API/storage services and migrations.
-2. Run `COVIE_ALLOW_DEMO_DATA=1 python infra/scripts/demo-data.py reseed`.
-3. Run `python infra/scripts/demo-data.py verify` and require all pinned counts to show `OK`.
-4. Run the media importer with `--dry-run` against the extracted downloadable pack.
-5. Login to obtain a valid access token, upload the 172 media assets, optionally attach them, then spot-check Buyer/Seller/Admin flows.
-6. Run reset followed by verify/status once more to prove ordinary non-demo rows are preserved.
+1. `generate-demo-seed.py --check` passed; a full gzip read produced 188,963 SQL bytes ending in `commit;`.
+2. Guarded `reseed` committed against PostgreSQL 18/PostGIS with the current V001–V014 schema.
+3. `demo-data.py verify` reported all 16 pinned counts as `OK`.
+4. `.local/demo-media/covie-demo-media-v1` passed validation with 172 assets (162 generated visuals + 10 QR codes).
+5. A reserved demo admin authenticated through the local API; all 172 assets uploaded and attached as 22 avatars, 10 logos, 10 covers, 10 QR contacts and 120 catalog images.
+6. Public catalog discovery returned populated items and a returned WebP media URL responded HTTP 200.
+
+The local MinIO initializer grants anonymous `download` only for `covie-local`, matching the API's local public media URLs. Production object storage remains private. After a database reseed, use the importer with `--force --attach` because reset intentionally removes demo media metadata.
 
 ## Handoff
 
-Implementation remains on branch `demo-data-v1`. Do not merge it into `main` automatically and do not open a PR as part of this handoff. The branch is intended to be pulled and exercised locally first.
+The demo workflow has been integrated and exercised on `codex/integrated-ui-completion`. Merge/release still follows the existing PR review and staging gates; this local validation is not staging evidence.

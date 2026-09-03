@@ -28,6 +28,10 @@ playwright-report/
 .idea/
 *.iml
 
+# Python
+__pycache__/
+*.py[cod]
+
 # OS/editor
 .DS_Store
 Thumbs.db
