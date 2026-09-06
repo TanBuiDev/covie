@@ -45,12 +45,24 @@ export function LoginForm({ onNavigate = (path) => window.location.assign(path) 
 
   return (
     <form className="auth-form" method="post" onSubmit={submit}>
-      <label htmlFor="email"><span>Email</span><input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+      <label htmlFor="email">
+        <span>Email</span>
+        <input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+      </label>
+      <small className="auth-field-hint">Email đã liên kết với tài khoản CoVie.</small>
       {fields.email?.map((error) => <p className="field-error" key={error}>{error}</p>)}
-      <label htmlFor="password"><span>Mật khẩu</span><input id="password" name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+
+      <label htmlFor="password">
+        <span>Mật khẩu</span>
+        <input id="password" name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+      </label>
+      <small className="auth-field-hint">Mật khẩu CoVie của bạn.</small>
       {fields.password?.map((error) => <p className="field-error" key={error}>{error}</p>)}
+
       {message ? <p className="form-alert" role="alert">{message}</p> : null}
-      <button className="button-primary auth-form__submit" type="submit" disabled={!hydrated || submitting}>{submitting ? "Đang đăng nhập…" : "Đăng nhập"}</button>
+      <button className="button-primary auth-form__submit" type="submit" disabled={!hydrated || submitting}>
+        {submitting ? "Đang đăng nhập…" : "Đăng nhập"}
+      </button>
     </form>
   );
 }
