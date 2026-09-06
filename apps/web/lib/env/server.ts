@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const schema = z.object({
-  API_INTERNAL_BASE_URL: z.string().url().default("http://localhost:8080"),
+  API_INTERNAL_BASE_URL: z.string().url().default("http://localhost:8081"),
   COVIE_PUBLIC_URL: z.string().url().default("http://localhost:3000"),
 });
 
