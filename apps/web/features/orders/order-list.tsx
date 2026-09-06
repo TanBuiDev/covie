@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
+import { CoVieIcon } from "@/components/ui/covie-icon";
 import { formatDateTime } from "@/lib/format/time";
 import { merchantOrders, myOrders, type OrderSummary } from "./order-api";
 import { OrderStatusLabel } from "./order-status";
@@ -75,22 +76,81 @@ export function OrderList({
   }
 
   if (buyer) {
-    if (error) return <section className={`${styles.state} buyer-orders-state buyer-orders-error`} role="alert"><h2>Không thể tải đơn hàng</h2><p>{error}</p><button type="button" onClick={reload}>Thử lại</button></section>;
-    if (!orders) return <div className={`${styles.state} buyer-orders-state`}><LoadingState label="Đang tải đơn hàng…" /></div>;
-    if (!orders.length) return <section className={`${styles.state} buyer-orders-state buyer-orders-empty`}><h2>Chưa có đơn hàng nào.</h2><p>Khi bạn đặt mua sản phẩm hoặc dịch vụ, đơn sẽ xuất hiện tại đây.</p><Link href="/">Khám phá marketplace</Link></section>;
+    if (error) {
+      const isAuthError = Boolean(
+        error.toLowerCase().includes("token") ||
+        error.toLowerCase().includes("unauthorized") ||
+        error.toLowerCase().includes("401") ||
+        error.toLowerCase().includes("đăng nhập")
+      );
+
+      if (isAuthError) {
+        return (
+          <section className={`buyer-orders-empty ${styles.state}`} aria-label="Đăng nhập để xem đơn hàng">
+            <h2>Đăng nhập để xem đơn hàng</h2>
+            <p>Vui lòng đăng nhập tài khoản CoVie để quản lý và theo dõi trạng thái các đơn hàng của bạn.</p>
+            <Link className="button-primary" href="/login?redirect=/orders">Đăng nhập ngay</Link>
+          </section>
+        );
+      }
+
+      return (
+        <section className={`buyer-orders-error ${styles.state}`} role="alert">
+          <div className="buyer-orders-error__icon-surface">
+            <CoVieIcon name="feedback-error" />
+          </div>
+          <h2>Không thể tải đơn hàng</h2>
+          <p>Không thể tải danh sách đơn hàng. Hãy thử lại sau ít phút.</p>
+          <div className="buyer-orders-error__actions">
+            <button className="button-primary" type="button" onClick={reload}>Thử lại</button>
+          </div>
+        </section>
+      );
+    }
+
+    if (!orders) {
+      return (
+        <div className={`buyer-orders-loading ${styles.state}`}>
+          <LoadingState label="Đang tải đơn hàng…" />
+        </div>
+      );
+    }
+
+    if (!orders.length) {
+      return (
+        <section className={`buyer-orders-empty ${styles.state}`} aria-label="Chưa có đơn hàng">
+          <h2>Chưa có đơn hàng</h2>
+          <p>Các đơn mua và dịch vụ của bạn sẽ xuất hiện tại đây.</p>
+          <Link className="button-primary" href="/">Khám phá</Link>
+        </section>
+      );
+    }
+
     return (
-      <section className={`orders-ledger buyer-orders-ledger ${styles.ledger}`} aria-label="Danh sách đơn hàng">
-        {orders.map((order) => order.id ? (
-          <Link className={`order-row buyer-order-row ${styles.card}`} key={order.id} href={`/orders/${encodeURIComponent(order.id)}`}>
-            <span className={`buyer-order-main ${styles.meta}`}>
-              <span className={`buyer-order-heading ${styles.heading}`}><strong>{order.orderCode ?? "Đơn hàng"}</strong><OrderStatusLabel status={order.status} /></span>
-              <small className={styles.type}>{order.type === "SERVICE" ? "Đơn dịch vụ" : order.type === "PRODUCT" ? "Đơn sản phẩm" : "Đơn hàng"}</small>
-              {order.createdAt ? <small>Tạo {formatDateTime(order.createdAt)}</small> : null}
-            </span>
-            <span className={`buyer-order-detail-action ${styles.detailAction}`}>Xem chi tiết</span>
-          </Link>
-        ) : null)}
-      </section>
+      <div className="buyer-orders-content">
+        <h2 className="buyer-orders-section-title">Đơn gần đây</h2>
+        <section className={`orders-ledger buyer-orders-ledger ${styles.ledger}`} aria-label="Danh sách đơn hàng">
+          {orders.map((order) => order.id ? (
+            <Link className={`order-row buyer-order-row ${styles.card}`} key={order.id} href={`/orders/${encodeURIComponent(order.id)}`}>
+              <div className={`buyer-order-main ${styles.meta}`}>
+                <div className={`buyer-order-heading ${styles.heading}`}>
+                  <strong>{order.orderCode ?? "Đơn hàng"}</strong>
+                  <OrderStatusLabel status={order.status} />
+                </div>
+                <span className={`buyer-order-type ${styles.type}`}>
+                  {order.type === "SERVICE" ? "Đơn dịch vụ" : order.type === "PRODUCT" ? "Đơn sản phẩm" : "Đơn hàng"}
+                </span>
+                {order.createdAt ? (
+                  <small className={styles.date}>Tạo {formatDateTime(order.createdAt)}</small>
+                ) : null}
+              </div>
+              <span className={`button-secondary buyer-order-detail-action ${styles.detailAction}`}>
+                Xem chi tiết
+              </span>
+            </Link>
+          ) : null)}
+        </section>
+      </div>
     );
   }
 

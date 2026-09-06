@@ -11,8 +11,7 @@ export default function NeedsPage() {
         <h1>Cần mua</h1>
       </header>
       <header className={styles.desktopHeader}>
-        <h1>Nhu cầu của tôi</h1>
-        <p>Đăng điều bạn cần và theo dõi phản hồi từ người bán.</p>
+        <h1>Cần mua</h1>
       </header>
       <div className={styles.body}><NeedList /></div>
     </main>

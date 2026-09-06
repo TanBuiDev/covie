@@ -12,7 +12,6 @@ export default function OrdersPage() {
       </header>
       <header className={styles.desktopHeader}><h1>Đơn hàng của tôi</h1></header>
       <div className={styles.body}>
-        <h2 className={styles.sectionTitle}>Đơn gần đây</h2>
         <OrderList />
       </div>
     </main>
