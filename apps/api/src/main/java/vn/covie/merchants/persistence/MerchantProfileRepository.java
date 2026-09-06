@@ -19,6 +19,6 @@ public interface MerchantProfileRepository extends JpaRepository<MerchantProfile
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select profile from MerchantProfileEntity profile where profile.id = :id and profile.deletedAt is null")
     Optional<MerchantProfileEntity> findActiveForUpdate(@Param("id") UUID id);
-    @Query("select p from MerchantProfileEntity p where p.deletedAt is null and (:status is null or p.merchantStatus = :status) and (:moderationStatus is null or p.moderationStatus = :moderationStatus) and (:q is null or lower(p.name) like lower(concat('%', :q, '%')) or lower(p.slug) like lower(concat('%', :q, '%')))")
+    @Query("select p from MerchantProfileEntity p where p.deletedAt is null and (:status is null or p.merchantStatus = :status) and (:moderationStatus is null or p.moderationStatus = :moderationStatus) and (cast(:q as string) is null or lower(p.name) like concat('%', lower(cast(:q as string)), '%') or lower(p.slug) like concat('%', lower(cast(:q as string)), '%'))")
     Page<MerchantProfileEntity> searchAdmin(@Param("status") vn.covie.merchants.model.MerchantStatus status, @Param("moderationStatus") vn.covie.merchants.model.MerchantModerationStatus moderationStatus, @Param("q") String q, Pageable pageable);
 }

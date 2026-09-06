@@ -1,5 +1,6 @@
 package vn.covie.needs.persistence;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -54,7 +55,7 @@ public class JdbcNeedDiscoveryRepository implements NeedDiscoveryRepository {
                 order by text_rank desc,distance_meters asc,need_id asc,merchant_location_id asc limit :limit
                 """;
         MapSqlParameterSource p = new MapSqlParameterSource().addValue("merchantId", merchantId).addValue("locationIds", locationIds)
-                .addValue("now", now).addValue("cursorAbsent", after == null).addValue("rank", after == null ? 0d : after.textRank())
+                .addValue("now", Timestamp.from(now)).addValue("cursorAbsent", after == null).addValue("rank", after == null ? 0d : after.textRank())
                 .addValue("distance", after == null ? 0L : after.distanceMeters()).addValue("needId", after == null ? new UUID(0, 0) : after.needId())
                 .addValue("locationId", after == null ? new UUID(0, 0) : after.merchantLocationId()).addValue("limit", candidateLimit);
         return jdbc.query(sql, p, (rs, row) -> new NeedMatchRow((UUID) rs.getObject("need_id"), NeedType.valueOf(rs.getString("need_type")),

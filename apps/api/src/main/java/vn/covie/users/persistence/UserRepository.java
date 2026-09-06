@@ -14,6 +14,6 @@ import vn.covie.users.model.UserEntity;
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select u from UserEntity u where u.id = :id")
     Optional<UserEntity> findByIdForUpdate(@Param("id") UUID id);
-    @Query("select u from UserEntity u where (:status is null or u.accountStatus = :status) and (:q is null or lower(u.displayName) like lower(concat('%', :q, '%')))")
+    @Query("select u from UserEntity u where (:status is null or u.accountStatus = :status) and (cast(:q as string) is null or lower(u.displayName) like concat('%', lower(cast(:q as string)), '%'))")
     Page<UserEntity> searchAdmin(@Param("status") vn.covie.users.model.AccountStatus status, @Param("q") String q, Pageable pageable);
 }

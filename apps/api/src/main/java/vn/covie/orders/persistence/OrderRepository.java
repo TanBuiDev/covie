@@ -59,6 +59,6 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
 
     @Query("select o.id from OrderEntity o, ServiceFulfillmentEntity f where f.orderId=o.id and o.status=:status and f.autoCompleteAt <= :now order by f.autoCompleteAt asc")
     List<UUID> findDueServiceAutoCompletionIds(@Param("status") vn.covie.orders.model.OrderStatus status, @Param("now") java.time.Instant now, org.springframework.data.domain.Pageable page);
-    @Query("select o from OrderEntity o where (:status is null or o.status = :status) and (:type is null or o.orderType = :type) and (:merchantId is null or o.merchantProfileId = :merchantId) and (:buyerUserId is null or o.buyerUserId = :buyerUserId) and (:orderCode is null or lower(o.orderCode) like lower(concat('%', :orderCode, '%')))")
+    @Query("select o from OrderEntity o where (:status is null or o.status = :status) and (:type is null or o.orderType = :type) and (:merchantId is null or o.merchantProfileId = :merchantId) and (:buyerUserId is null or o.buyerUserId = :buyerUserId) and (cast(:orderCode as string) is null or lower(o.orderCode) like concat('%', lower(cast(:orderCode as string)), '%'))")
     Page<OrderEntity> searchAdmin(@Param("status") vn.covie.orders.model.OrderStatus status, @Param("type") vn.covie.orders.model.OrderType type, @Param("merchantId") UUID merchantId, @Param("buyerUserId") UUID buyerUserId, @Param("orderCode") String orderCode, Pageable pageable);
 }

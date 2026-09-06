@@ -47,7 +47,8 @@ public class InventoryBalanceEntity {
     }
 
     public void releaseReserved(long quantity, Instant now) {
-        adjust(0, -quantity, now);
+        long toRelease = Math.min(Math.max(0, quantity), reservedQuantity);
+        adjust(0, -toRelease, now);
     }
 
     public void commitReservedSale(long quantity, Instant now) {

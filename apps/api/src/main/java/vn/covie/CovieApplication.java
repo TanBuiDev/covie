@@ -24,7 +24,20 @@ public class CovieApplication {
 
     @Bean
     ObjectMapper objectMapper() {
-        return new ObjectMapper().findAndRegisterModules();
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
+        com.fasterxml.jackson.databind.module.SimpleModule module = new com.fasterxml.jackson.databind.module.SimpleModule();
+        module.addSerializer(com.fasterxml.jackson.databind.JsonNode.class, new com.fasterxml.jackson.databind.JsonSerializer<>() {
+            @Override
+            public void serialize(com.fasterxml.jackson.databind.JsonNode value, com.fasterxml.jackson.core.JsonGenerator gen, com.fasterxml.jackson.databind.SerializerProvider serializers) throws java.io.IOException {
+                if (value == null) {
+                    gen.writeNull();
+                } else {
+                    gen.writeTree(value);
+                }
+            }
+        });
+        mapper.registerModule(module);
+        return mapper;
     }
 
     @Bean
