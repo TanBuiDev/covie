@@ -40,7 +40,21 @@ export function BuyerDesktopHeader() {
     <header className="buyer-desktop-header">
       <div className="buyer-desktop-header__inner">
         <Link className="buyer-desktop-brand" href="/" aria-label="CoVie - Trang chủ">
-          <Image src="/figma/covie-logo-primary.svg" alt="CoVie — Chợ Việt" width={152} height={54} priority />
+          <div className="buyer-desktop-brand__lockup">
+            <Image
+              className="buyer-desktop-brand__mark"
+              src="/figma/covie-market-pin.svg"
+              alt=""
+              width={40}
+              height={45}
+              priority
+              unoptimized
+            />
+            <div className="buyer-desktop-brand__words">
+              <strong>CoVie</strong>
+              <small>Chợ Việt</small>
+            </div>
+          </div>
         </Link>
 
         <div className="buyer-desktop-location-wrap">
