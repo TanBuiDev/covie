@@ -11,9 +11,17 @@ export type AdminSettingDefinition = {
   effectiveValue?: unknown;
 };
 
-export function serializeSettingValue(value: unknown) {
+export function serializeSettingValue(value: unknown): string {
+  if (value === undefined || value === null) return "";
   if (typeof value === "string") return value;
-  if (value === undefined) return "";
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    if ("nodeType" in obj) {
+      if (obj.nodeType === "BOOLEAN") return String(Boolean(obj.boolean));
+      if (obj.nodeType === "STRING" && "textValue" in obj) return String(obj.textValue ?? "");
+    }
+  }
   try { return JSON.stringify(value); }
   catch { return String(value ?? ""); }
 }
