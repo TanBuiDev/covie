@@ -22,6 +22,7 @@
 
   .seller-order-list-cards {
     display: grid;
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
@@ -54,6 +55,7 @@
   }
 
   .seller-order-open {
+    grid-column: 4;
     justify-self: end;
     white-space: nowrap;
   }
