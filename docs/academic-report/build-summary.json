@@ -1,0 +1,22 @@
+{
+  "output": "E:\\WebApp\\CoVie\\covie\\docs\\academic-report\\CoVie_BaoCaoDoAn.docx",
+  "characters": 135633,
+  "whitespace_tokens_vietnamese_not_linguistic_words": 25615,
+  "chapters": 7,
+  "figures": 52,
+  "tables": 40,
+  "headings_h1_h2": 128,
+  "api_paths": 119,
+  "api_operations": 144,
+  "create_tables": 66,
+  "render_qa": "PASS: packaged LibreOffice render, pagination checks and all-page visual review.",
+  "structural_qa": "PASS",
+  "diagram_asset_visual_review": "PASS: 21 generated diagrams and 43 selected product screens inspected as images; not a page-layout review.",
+  "page_count": 113,
+  "cover_logos": 1,
+  "product_screens": 43,
+  "product_figure_groups": 31,
+  "diagrams": 21,
+  "usecase_diagrams_added": 9,
+  "explanatory_figures_added": 7
+}

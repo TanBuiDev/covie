@@ -1,0 +1,2258 @@
+[
+  {
+    "page": "03 — Buyer Mobile",
+    "boards": [
+      {
+        "id": "279:2",
+        "name": "PUB-001 — Home · Production Board",
+        "frames": [
+          {
+            "id": "280:2",
+            "name": "PUB-001 · Board Header",
+            "width": 1352,
+            "height": 80
+          },
+          {
+            "id": "280:6",
+            "name": "PUB-001 · Screen Row",
+            "width": 1352,
+            "height": 1578
+          },
+          {
+            "id": "282:538",
+            "name": "PUB-001 · Core State Row",
+            "width": 1352,
+            "height": 920
+          }
+        ]
+      },
+      {
+        "id": "288:4194",
+        "name": "PUB-002 — Location Chooser · Production Board",
+        "frames": [
+          {
+            "id": "289:729",
+            "name": "PUB-002 · Board Header",
+            "width": 1352,
+            "height": 80
+          },
+          {
+            "id": "289:733",
+            "name": "PUB-002 · Main State Row",
+            "width": 1352,
+            "height": 936
+          },
+          {
+            "id": "290:1017",
+            "name": "PUB-002 · QA Row",
+            "width": 1352,
+            "height": 892
+          }
+        ]
+      },
+      {
+        "id": "294:1140",
+        "name": "PUB-003/004/005 — Search · Results · Category · Production Board",
+        "frames": [
+          {
+            "id": "294:1141",
+            "name": "Search Group · Header",
+            "width": 1352,
+            "height": 80
+          },
+          {
+            "id": "294:1145",
+            "name": "Core Production Row",
+            "width": 1352,
+            "height": 920
+          },
+          {
+            "id": "295:1612",
+            "name": "Search States Row",
+            "width": 1352,
+            "height": 920
+          },
+          {
+            "id": "295:2080",
+            "name": "Error + Responsive QA Row",
+            "width": 1352,
+            "height": 920
+          },
+          {
+            "id": "295:2467",
+            "name": "Search Group · Acceptance",
+            "width": 1352,
+            "height": 126
+          }
+        ]
+      },
+      {
+        "id": "299:2446",
+        "name": "PUB-006 — Product Detail · Production Board",
+        "frames": [
+          {
+            "id": "299:2447",
+            "name": "PUB-006 · Board Header",
+            "width": 1352,
+            "height": 80
+          },
+          {
+            "id": "299:2451",
+            "name": "PUB-006 · Core Row",
+            "width": 1352,
+            "height": 1068
+          },
+          {
+            "id": "300:2604",
+            "name": "PUB-006 · Secondary QA Row",
+            "width": 1352,
+            "height": 1154
+          }
+        ]
+      },
+      {
+        "id": "304:2704",
+        "name": "PUB-007 — Service Detail · Production Board",
+        "frames": [
+          {
+            "id": "304:2708",
+            "name": "PUB-007 · Core Row",
+            "width": 1352,
+            "height": 920
+          },
+          {
+            "id": "304:2962",
+            "name": "PUB-007 · State Row",
+            "width": 1352,
+            "height": 920
+          }
+        ]
+      },
+      {
+        "id": "308:2876",
+        "name": "PUB-008 — Resale / Thanh lý Detail · Production Board",
+        "frames": [
+          {
+            "id": "308:2877",
+            "name": "PUB-008 · Board Header",
+            "width": 1352,
+            "height": 80
+          },
+          {
+            "id": "308:2881",
+            "name": "PUB-008 · Primary Row",
+            "width": 1352,
+            "height": 1328
+          },
+          {
+            "id": "308:3141",
+            "name": "PUB-008 · QA Row",
+            "width": 1352,
+            "height": 936
+          },
+          {
+            "id": "308:3280",
+            "name": "PUB-008 · Acceptance Row",
+            "width": 1352,
+            "height": 180
+          }
+        ]
+      },
+      {
+        "id": "312:3069",
+        "name": "PUB-009 — Shop / Provider Profile · Production Board",
+        "frames": [
+          {
+            "id": "312:3073",
+            "name": "PUB-009 · Main Row",
+            "width": 1352,
+            "height": 1684
+          },
+          {
+            "id": "312:3689",
+            "name": "PUB-009 · State Row",
+            "width": 1352,
+            "height": 898
+          }
+        ]
+      },
+      {
+        "id": "318:3572",
+        "name": "AUTH-001/002 — Login · Register · Production Board",
+        "frames": [
+          {
+            "id": "318:3576",
+            "name": "AUTH · Row 1",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "318:3777",
+            "name": "AUTH · Row 2",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "319:3680",
+            "name": "AUTH · Error States",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "319:3877",
+            "name": "AUTH · Engineering Handoff Row",
+            "width": 1352,
+            "height": 258
+          }
+        ]
+      },
+      {
+        "id": "324:3762",
+        "name": "BUY-001/002 — Multi-Cart · Cart Detail · Production Board",
+        "frames": [
+          {
+            "id": "324:3766",
+            "name": "Core Screens",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "324:4036",
+            "name": "States",
+            "width": 1352,
+            "height": 894
+          }
+        ]
+      },
+      {
+        "id": "327:4016",
+        "name": "BUY-003/004 — Address List · Create/Edit · Production Board",
+        "frames": [
+          {
+            "id": "327:4020",
+            "name": "Address core",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "327:4313",
+            "name": "Address states",
+            "width": 1352,
+            "height": 894
+          }
+        ]
+      },
+      {
+        "id": "328:4159",
+        "name": "BUY-005/006 — Checkout · Order Created · Production Board",
+        "frames": [
+          {
+            "id": "328:4163",
+            "name": "Checkout core",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "328:4360",
+            "name": "Checkout states",
+            "width": 1352,
+            "height": 894
+          }
+        ]
+      },
+      {
+        "id": "332:4356",
+        "name": "BUY-007 — My Orders · Production Board",
+        "frames": [
+          {
+            "id": "332:4357",
+            "name": "BUY-007 Header",
+            "width": 1352,
+            "height": 80
+          },
+          {
+            "id": "332:4361",
+            "name": "BUY-007 Row 1",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "332:4594",
+            "name": "BUY-007 Row 2",
+            "width": 1352,
+            "height": 894
+          }
+        ]
+      },
+      {
+        "id": "334:4744",
+        "name": "ORD-001…012 — Order Detail · State-driven Production Board",
+        "frames": [
+          {
+            "id": "334:4745",
+            "name": "ORD Header",
+            "width": 1352,
+            "height": 80
+          },
+          {
+            "id": "334:4749",
+            "name": "ORD Core Row",
+            "width": 1352,
+            "height": 952
+          },
+          {
+            "id": "334:5031",
+            "name": "ORD-001…012 State Matrix",
+            "width": 1352,
+            "height": 472
+          },
+          {
+            "id": "334:5086",
+            "name": "ORD Support Row 1",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "334:5315",
+            "name": "ORD Support Row 2",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "334:5523",
+            "name": "ORD Confirmation Row",
+            "width": 1352,
+            "height": 342
+          },
+          {
+            "id": "336:5144",
+            "name": "ORD-009 Service Issue Row",
+            "width": 1352,
+            "height": 893
+          }
+        ]
+      },
+      {
+        "id": "342:5202",
+        "name": "NEED-001…004 — Buyer Need · Production Board",
+        "frames": [
+          {
+            "id": "342:5206",
+            "name": "Need Row 1",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "342:5564",
+            "name": "Need Row 2",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "342:5804",
+            "name": "Need Row 3",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "342:5914",
+            "name": "Need Runtime Contract",
+            "width": 1352,
+            "height": 208
+          },
+          {
+            "id": "343:5658",
+            "name": "Need Row 4",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "343:5946",
+            "name": "Need Row 5",
+            "width": 1352,
+            "height": 850
+          },
+          {
+            "id": "344:5888",
+            "name": "Need Row 6",
+            "width": 1352,
+            "height": 894
+          }
+        ]
+      },
+      {
+        "id": "348:6025",
+        "name": "BUY-009/010/011 + Notifications — Trust · Production Board",
+        "frames": [
+          {
+            "id": "348:6029",
+            "name": "Trust Row 1",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "348:6170",
+            "name": "Trust Row 2",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "348:6382",
+            "name": "Trust Row 3",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "348:6587",
+            "name": "Trust Row 4",
+            "width": 1352,
+            "height": 532
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "page": "03B — Buyer Desktop",
+    "boards": [
+      {
+        "id": "539:3",
+        "name": "Buyer Desktop — V1 Production Index",
+        "frames": [
+          {
+            "id": "539:7",
+            "name": "Status · In Design",
+            "width": 1536,
+            "height": 100
+          },
+          {
+            "id": "539:11",
+            "name": "Design principles",
+            "width": 1536,
+            "height": 100
+          },
+          {
+            "id": "539:23",
+            "name": "Planned board columns",
+            "width": 1536,
+            "height": 100
+          },
+          {
+            "id": "539:66",
+            "name": "Initial gate",
+            "width": 1536,
+            "height": 94
+          }
+        ]
+      },
+      {
+        "id": "541:2",
+        "name": "00 — Desktop Shell & Responsive Contract",
+        "frames": [
+          {
+            "id": "541:6",
+            "name": "Breakpoint cards",
+            "width": 1536,
+            "height": 100
+          },
+          {
+            "id": "541:28",
+            "name": "Shell rules",
+            "width": 1536,
+            "height": 100
+          },
+          {
+            "id": "541:42",
+            "name": "Transformation table",
+            "width": 1536,
+            "height": 856
+          }
+        ]
+      },
+      {
+        "id": "541:75",
+        "name": "Component Coverage Matrix — Buyer Desktop",
+        "frames": [
+          {
+            "id": "541:79",
+            "name": "Legend",
+            "width": 348,
+            "height": 100
+          },
+          {
+            "id": "541:86",
+            "name": "Coverage rows",
+            "width": 1536,
+            "height": 1720
+          },
+          {
+            "id": "541:183",
+            "name": "Coverage gate",
+            "width": 1536,
+            "height": 114
+          }
+        ]
+      },
+      {
+        "id": "548:2",
+        "name": "PUB-001 — Home · Desktop Production Board",
+        "frames": [
+          {
+            "id": "548:6",
+            "name": "Status",
+            "width": 1536,
+            "height": 44
+          },
+          {
+            "id": "548:10",
+            "name": "PUB-001 — Home · Full Desktop · Full Scroll",
+            "width": 1440,
+            "height": 1054
+          },
+          {
+            "id": "549:337",
+            "name": "PUB-001 — Home · Full Desktop · 1440×900 Viewport",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "549:370",
+            "name": "PUB-001 — Home · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          },
+          {
+            "id": "550:857",
+            "name": "PUB-001 — Home · Full Desktop · Missing Location",
+            "width": 1440,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "551:19243",
+        "name": "PUB-002 — Location · Desktop Production Board",
+        "frames": [
+          {
+            "id": "551:19247",
+            "name": "Status",
+            "width": 1536,
+            "height": 44
+          },
+          {
+            "id": "551:19251",
+            "name": "PUB-002 — Guest · Default Chooser · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "552:1222",
+            "name": "PUB-002 — GPS Denied · Manual · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "552:1410",
+            "name": "PUB-002 — Auth · Saved Address · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "552:1524",
+            "name": "PUB-002 — Guest · Default Chooser · Compact Desktop",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "556:1686",
+        "name": "PUB-003/004/005 — Search · Results · Category · Desktop Production Board",
+        "frames": [
+          {
+            "id": "556:1690",
+            "name": "Status",
+            "width": 1536,
+            "height": 44
+          },
+          {
+            "id": "556:1694",
+            "name": "PUB-003 — Search · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "556:1868",
+            "name": "PUB-004 — Results · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "556:2060",
+            "name": "PUB-005 — Category · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "558:2147",
+            "name": "PUB-004 — Results · Filter Open · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "558:2287",
+            "name": "PUB-004 — Results · Empty · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "558:2462",
+            "name": "PUB-004 — Results · Loading · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "558:2628",
+            "name": "PUB-004 — Results · Error · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "558:2771",
+            "name": "PUB-004 — Results · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "561:2941",
+        "name": "PUB-006 — Product Detail · Desktop Production Board",
+        "frames": [
+          {
+            "id": "561:2945",
+            "name": "PUB-006 — Product Detail · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:3083",
+            "name": "PUB-006 — Product Detail · Low Completion",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:3224",
+            "name": "PUB-006 — Product Detail · Loading",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:3312",
+            "name": "PUB-006 — Product Detail · Safe Unavailable",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:3403",
+            "name": "PUB-006 — Product Detail · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "561:3516",
+        "name": "PUB-007 — Service Detail · Desktop Production Board",
+        "frames": [
+          {
+            "id": "561:3520",
+            "name": "PUB-007 — Service Detail · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:3660",
+            "name": "PUB-007 — Service Detail · Loading",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:3748",
+            "name": "PUB-007 — Service Detail · Safe Unavailable",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:3839",
+            "name": "PUB-007 — Service Detail · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "561:3960",
+        "name": "PUB-008 — Resale Detail · Desktop Production Board",
+        "frames": [
+          {
+            "id": "561:3964",
+            "name": "PUB-008 — Resale Detail · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:4097",
+            "name": "PUB-008 — Resale Detail · Delivery Unavailable",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:4236",
+            "name": "PUB-008 — Resale Detail · Loading",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:4324",
+            "name": "PUB-008 — Resale Detail · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "561:4440",
+        "name": "PUB-009 — Shop / Provider Profile · Desktop Production Board",
+        "frames": [
+          {
+            "id": "561:4444",
+            "name": "PUB-009 — Shop Profile · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:4600",
+            "name": "PUB-009 — Provider Profile · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "561:4754",
+            "name": "PUB-009 — Shop Profile · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "564:4315",
+        "name": "AUTH-001/002 — Login · Register · Desktop Production Board",
+        "frames": [
+          {
+            "id": "564:4319",
+            "name": "AUTH-001 — Login · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:4393",
+            "name": "AUTH-002 — Register · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:4410",
+            "name": "AUTH — First-time Password · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:4438",
+            "name": "AUTH — Google Recovery · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:4454",
+            "name": "AUTH — Reset Password · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:4482",
+            "name": "AUTH-001 — Invalid Credentials · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:4546",
+            "name": "AUTH-001 — Login · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "564:4595",
+        "name": "BUY-001/002 — Multi-Cart · Cart Detail · Desktop Production Board",
+        "frames": [
+          {
+            "id": "564:4599",
+            "name": "BUY-001 — Multi-Cart · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:4719",
+            "name": "BUY-002 — Product Cart · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:4826",
+            "name": "BUY-002 — Service Cart · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:4933",
+            "name": "BUY-002 — Cart Changed / 409 · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:5036",
+            "name": "BUY-001 — Empty Cart · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:5126",
+            "name": "BUY-002 — Product Cart · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "564:5265",
+        "name": "BUY-003/004 — Address List · Create/Edit · Desktop Production Board",
+        "frames": [
+          {
+            "id": "564:5269",
+            "name": "BUY-003 — Address List · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:5448",
+            "name": "BUY-004 — Create/Edit Address · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:5613",
+            "name": "BUY-004 — Backend Field Error · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:5776",
+            "name": "BUY-003 — Delete Address Confirm · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:5873",
+            "name": "BUY-004 — Create/Edit Address · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "564:6068",
+        "name": "BUY-005/006 — Checkout · Order Created · Desktop Production Board",
+        "frames": [
+          {
+            "id": "564:6072",
+            "name": "BUY-005 — Known Shipping · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:6212",
+            "name": "BUY-005 — Negotiated Shipping · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:6350",
+            "name": "BUY-005 — Checkout Changed · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:6455",
+            "name": "BUY-006 — Order Created · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:6598",
+            "name": "BUY-005 — Invalid Source · Safe Error · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "564:6697",
+            "name": "BUY-005 — Known Shipping · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "565:6080",
+        "name": "BUY-007 — My Orders · Desktop Production Board",
+        "frames": [
+          {
+            "id": "565:6084",
+            "name": "BUY-007 — My Orders · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:6228",
+            "name": "BUY-007 — Loading · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:6315",
+            "name": "BUY-007 — Empty · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:6407",
+            "name": "BUY-007 — Safe Error · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:6514",
+            "name": "BUY-007 — My Orders · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "565:6681",
+        "name": "ORD-001…012 — Order Detail · Desktop Production Board",
+        "frames": [
+          {
+            "id": "565:6685",
+            "name": "ORD — Canonical Template · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:6814",
+            "name": "ORD — State Matrix · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:6937",
+            "name": "ORD-006 — Cancellation Reason · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:7047",
+            "name": "ORD-007 — Cancellation Request · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:7148",
+            "name": "ORD-008/009 — Issue States · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:7248",
+            "name": "ORD-011 — Completed · Review Eligible · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:7364",
+            "name": "ORD-012 — Closed · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:7465",
+            "name": "ORD — 409 State Conflict · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:7561",
+            "name": "ORD — Canonical Template · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "565:7680",
+        "name": "NEED-001…004 — Buyer Need · Desktop Production Board",
+        "frames": [
+          {
+            "id": "565:7684",
+            "name": "NEED-001 — My Needs · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:7854",
+            "name": "NEED-002 — Create Need · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:8076",
+            "name": "NEED-003 — Detail Active · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:8183",
+            "name": "NEED-003 — Order Created, Need Still Active · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:8284",
+            "name": "NEED-004 — Responses · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:8378",
+            "name": "NEED-004 — No Responses Yet · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:8458",
+            "name": "NEED-003 — Fulfilled · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:8546",
+            "name": "NEED-003 — Expired / Cancelled · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:8627",
+            "name": "NEED-002 — 422 Field Errors · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:8849",
+            "name": "NEED-004 — Response Unavailable · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:8939",
+            "name": "NEED-001 — Loading · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:9026",
+            "name": "NEED-001 — Safe Error · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "565:9116",
+            "name": "NEED-001 — My Needs · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "566:8423",
+        "name": "BUY-009/010/011 — Trust · Review · Report · Desktop Production Board",
+        "frames": [
+          {
+            "id": "566:8427",
+            "name": "BUY-010 — Review Form · Eligible · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:8534",
+            "name": "BUY-010 — Review Submitted · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:8626",
+            "name": "BUY-010 — Already Reviewed · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:8714",
+            "name": "BUY-010 — Review System Disabled · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:8794",
+            "name": "BUY-009 — Reputation · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:8882",
+            "name": "BUY-011 — Report Listing · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:8995",
+            "name": "BUY-011 — Report Success · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:9076",
+            "name": "BUY-010 — Review Form · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "566:9168",
+        "name": "Notifications — Desktop Production Board",
+        "frames": [
+          {
+            "id": "566:9172",
+            "name": "Notification Inbox · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:9284",
+            "name": "Notification Empty · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:9364",
+            "name": "Notification Loading · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:9451",
+            "name": "Notification Safe Fallback · Full Desktop",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "566:9547",
+            "name": "Notification Inbox · Compact Desktop · 1024×900",
+            "width": 1024,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "566:9652",
+        "name": "17 — Responsive Matrix · Buyer Desktop",
+        "frames": [
+          {
+            "id": "566:9656",
+            "name": "Responsive Matrix",
+            "width": 1536,
+            "height": 316
+          },
+          {
+            "id": "566:9702",
+            "name": "Responsive Gate",
+            "width": 1536,
+            "height": 92
+          }
+        ]
+      },
+      {
+        "id": "566:9705",
+        "name": "18 — Accessibility States · Buyer Desktop",
+        "frames": [
+          {
+            "id": "566:9709",
+            "name": "Accessibility Contract",
+            "width": 1536,
+            "height": 964
+          },
+          {
+            "id": "566:9737",
+            "name": "Accessibility State Samples · 1440×900",
+            "width": 1440,
+            "height": 900
+          }
+        ]
+      },
+      {
+        "id": "566:9870",
+        "name": "19 — Engineering Handoff · Final Gate",
+        "frames": [
+          {
+            "id": "566:9874",
+            "name": "Final Status",
+            "width": 1536,
+            "height": 92
+          },
+          {
+            "id": "566:9877",
+            "name": "Coverage Gate",
+            "width": 1536,
+            "height": 788
+          },
+          {
+            "id": "566:9978",
+            "name": "Engineering Contract",
+            "width": 1536,
+            "height": 860
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "page": "04 — Seller Mobile",
+    "boards": [
+      {
+        "id": "357:2",
+        "name": "SEL-001…004 — Seller Mobile · Production Board",
+        "frames": [
+          {
+            "id": "357:6",
+            "name": "Seller Row 1",
+            "width": 1352,
+            "height": 1074
+          },
+          {
+            "id": "357:217",
+            "name": "Seller Row 2",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "357:523",
+            "name": "Seller Row 3",
+            "width": 1352,
+            "height": 422
+          }
+        ]
+      },
+      {
+        "id": "362:351",
+        "name": "SEL-005…008 — Seller Config · Production Board",
+        "frames": [
+          {
+            "id": "362:355",
+            "name": "Config Row 1",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "362:644",
+            "name": "Config Row 2",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "362:901",
+            "name": "Config Row 3",
+            "width": 1352,
+            "height": 1074
+          },
+          {
+            "id": "363:702",
+            "name": "Config Row 4",
+            "width": 1352,
+            "height": 180
+          }
+        ]
+      },
+      {
+        "id": "368:702",
+        "name": "SEL-009…013 — Seller Catalog · Production Board",
+        "frames": [
+          {
+            "id": "368:706",
+            "name": "Catalog Row 1",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "368:1136",
+            "name": "Catalog Row 2",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "368:1532",
+            "name": "Catalog Row 3",
+            "width": 1352,
+            "height": 530
+          },
+          {
+            "id": "368:1676",
+            "name": "Catalog Row 4",
+            "width": 1352,
+            "height": 1074
+          },
+          {
+            "id": "369:1333",
+            "name": "Catalog Contract Row",
+            "width": 1352,
+            "height": 206
+          }
+        ]
+      },
+      {
+        "id": "374:1333",
+        "name": "SEL-014/015 — Seller Orders · Production Board",
+        "frames": [
+          {
+            "id": "374:1337",
+            "name": "Seller Orders Row 1",
+            "width": 1352,
+            "height": 1074
+          },
+          {
+            "id": "374:1603",
+            "name": "Seller Orders Row 2",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "374:1981",
+            "name": "Seller Orders Row 3",
+            "width": 1352,
+            "height": 894
+          }
+        ]
+      },
+      {
+        "id": "379:1796",
+        "name": "SEL-016/017 — Seller Order Reasons · Production Board",
+        "frames": [
+          {
+            "id": "379:1800",
+            "name": "Reasons Row 1",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "379:1996",
+            "name": "Reasons Row 2",
+            "width": 1352,
+            "height": 1074
+          },
+          {
+            "id": "381:2026",
+            "name": "Reason Contract Row",
+            "width": 1352,
+            "height": 154
+          }
+        ]
+      },
+      {
+        "id": "387:1994",
+        "name": "NEED-005/006 — Seller Need · Production Board",
+        "frames": [
+          {
+            "id": "387:1998",
+            "name": "Need Seller Row 1",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "387:2410",
+            "name": "Need Seller Row 2",
+            "width": 1352,
+            "height": 1074
+          },
+          {
+            "id": "387:13321",
+            "name": "Seller Need Contract Row",
+            "width": 1352,
+            "height": 174
+          }
+        ]
+      },
+      {
+        "id": "387:13322",
+        "name": "SEL-016/017 — Reject · Cancel Reason · Production Board",
+        "frames": [
+          {
+            "id": "387:13326",
+            "name": "Reason Screens",
+            "width": 1352,
+            "height": 1186
+          },
+          {
+            "id": "387:13656",
+            "name": "Runtime contract",
+            "width": 1352,
+            "height": 116
+          }
+        ]
+      },
+      {
+        "id": "388:13580",
+        "name": "SEL-018/019 — Reputation · Moderation Notices · Production Board",
+        "frames": [
+          {
+            "id": "388:13584",
+            "name": "Trust Screens",
+            "width": 1352,
+            "height": 958
+          },
+          {
+            "id": "388:13758",
+            "name": "Runtime contract",
+            "width": 1352,
+            "height": 116
+          }
+        ]
+      },
+      {
+        "id": "389:13781",
+        "name": "SEL-018/019 — Seller Trust Notices · Production Board",
+        "frames": [
+          {
+            "id": "389:13785",
+            "name": "Trust Seller Row 1",
+            "width": 1352,
+            "height": 894
+          },
+          {
+            "id": "389:13944",
+            "name": "Trust Seller Row 2",
+            "width": 1352,
+            "height": 1074
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "page": "05 — Seller Desktop",
+    "boards": [
+      {
+        "id": "358:2",
+        "name": "SEL-001…004 — Seller Desktop · Production Board",
+        "frames": [
+          {
+            "id": "358:6",
+            "name": "Desktop Dashboard Panel",
+            "width": 1464,
+            "height": 950
+          },
+          {
+            "id": "358:187",
+            "name": "Desktop Settings Panel",
+            "width": 1464,
+            "height": 950
+          },
+          {
+            "id": "358:322",
+            "name": "Desktop Locations Panel",
+            "width": 1464,
+            "height": 950
+          }
+        ]
+      },
+      {
+        "id": "364:396",
+        "name": "SEL-005…008 — Seller Desktop Config · Production Board",
+        "frames": [
+          {
+            "id": "364:400",
+            "name": "Desktop Config Panel",
+            "width": 1464,
+            "height": 950
+          }
+        ]
+      },
+      {
+        "id": "370:542",
+        "name": "SEL-009…013 — Seller Desktop Catalog · Production Board",
+        "frames": [
+          {
+            "id": "370:546",
+            "name": "Desktop Catalog List Panel",
+            "width": 1464,
+            "height": 950
+          },
+          {
+            "id": "370:743",
+            "name": "Desktop Catalog Editor Panel",
+            "width": 1464,
+            "height": 950
+          }
+        ]
+      },
+      {
+        "id": "375:844",
+        "name": "SEL-014/015 — Seller Desktop Orders · Production Board",
+        "frames": [
+          {
+            "id": "375:848",
+            "name": "Desktop Orders List Panel",
+            "width": 1464,
+            "height": 950
+          },
+          {
+            "id": "375:1068",
+            "name": "Desktop Order Detail Panel",
+            "width": 1464,
+            "height": 950
+          }
+        ]
+      },
+      {
+        "id": "382:1109",
+        "name": "SEL-016/017 — Seller Desktop Reasons · Production Board",
+        "frames": [
+          {
+            "id": "382:1112",
+            "name": "Desktop Reasons Panel",
+            "width": 1464,
+            "height": 950
+          }
+        ]
+      },
+      {
+        "id": "387:13660",
+        "name": "NEED-005/006 — Seller Desktop Need · Production Board",
+        "frames": [
+          {
+            "id": "387:13663",
+            "name": "Desktop Need Panel",
+            "width": 1464,
+            "height": 950
+          }
+        ]
+      },
+      {
+        "id": "388:13362",
+        "name": "SEL-016/017 — Desktop Reject · Cancel Reason",
+        "frames": [
+          {
+            "id": "388:13366",
+            "name": "SEL-016 — Reject Reason · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "388:13477",
+            "name": "SEL-017 — Cancel Reason · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "388:13578",
+            "name": "Runtime contract",
+            "width": 1452,
+            "height": 52
+          }
+        ]
+      },
+      {
+        "id": "389:13623",
+        "name": "SEL-018/019 — Desktop Reputation · Moderation Notices",
+        "frames": [
+          {
+            "id": "389:13627",
+            "name": "SEL-018 — Reputation · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "389:13692",
+            "name": "SEL-019 — Moderation Notices · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "389:13779",
+            "name": "Runtime contract",
+            "width": 1452,
+            "height": 52
+          }
+        ]
+      },
+      {
+        "id": "390:1621",
+        "name": "SEL-018/019 — Seller Desktop Trust · Production Board",
+        "frames": [
+          {
+            "id": "390:1624",
+            "name": "Desktop Trust Panel",
+            "width": 1464,
+            "height": 950
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "page": "06 — Admin Desktop",
+    "boards": [
+      {
+        "id": "393:4503",
+        "name": "ADM-001…003 — Dashboard · Users · Seller Accounts",
+        "frames": [
+          {
+            "id": "393:4507",
+            "name": "ADM-001 — Dashboard · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "393:4746",
+            "name": "ADM-002 — Users · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "393:5003",
+            "name": "ADM-003 — Seller Provider Accounts · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "393:5252",
+            "name": "Safety states",
+            "width": 1452,
+            "height": 354
+          }
+        ]
+      },
+      {
+        "id": "398:4048",
+        "name": "ADM-004/005 — Shops & Locations · Listings",
+        "frames": [
+          {
+            "id": "398:4052",
+            "name": "ADM-004 — Shops & Locations · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "398:4225",
+            "name": "ADM-005 — Listings · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "398:4445",
+            "name": "Runtime contract",
+            "width": 1452,
+            "height": 52
+          }
+        ]
+      },
+      {
+        "id": "399:1184",
+        "name": "ADM-004/005 — Shops · Locations · Listings · Production Board",
+        "frames": [
+          {
+            "id": "399:1188",
+            "name": "Shops Locations Panel",
+            "width": 1464,
+            "height": 950
+          },
+          {
+            "id": "399:1411",
+            "name": "Listings Panel",
+            "width": 1464,
+            "height": 950
+          }
+        ]
+      },
+      {
+        "id": "400:1539",
+        "name": "ADM-006/007 — Order Explorer · History · Production Board",
+        "frames": [
+          {
+            "id": "400:1543",
+            "name": "Order Explorer Panel",
+            "width": 1464,
+            "height": 950
+          },
+          {
+            "id": "400:1816",
+            "name": "Order History Panel",
+            "width": 1464,
+            "height": 950
+          }
+        ]
+      },
+      {
+        "id": "400:15564",
+        "name": "ADM-006/007 — Order Explorer · Order History",
+        "frames": [
+          {
+            "id": "400:15568",
+            "name": "ADM-006 — Order Explorer · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "400:15773",
+            "name": "ADM-007 — Order History · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "400:15935",
+            "name": "Runtime contract",
+            "width": 1452,
+            "height": 52
+          }
+        ]
+      },
+      {
+        "id": "404:2212",
+        "name": "ADM-008/009 — Need Requests · Reports Queue",
+        "frames": [
+          {
+            "id": "404:2216",
+            "name": "ADM-008 — Need Requests · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "404:2473",
+            "name": "ADM-009 — Reports Queue · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "404:2734",
+            "name": "Runtime contract",
+            "width": 1452,
+            "height": 52
+          }
+        ]
+      },
+      {
+        "id": "407:2670",
+        "name": "ADM-010…014 — System Settings",
+        "frames": [
+          {
+            "id": "407:2674",
+            "name": "ADM-010/011/012 — Policy Settings · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "407:2946",
+            "name": "ADM-013 — Order Timeout Settings · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "407:3149",
+            "name": "ADM-014 — Need Matching Settings · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "408:3265",
+            "name": "ADM-010/012 — Advanced Policy Values · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "407:3288",
+            "name": "Settings states",
+            "width": 1452,
+            "height": 334
+          },
+          {
+            "id": "407:3349",
+            "name": "Runtime contract",
+            "width": 1452,
+            "height": 52
+          }
+        ]
+      },
+      {
+        "id": "412:3434",
+        "name": "ADM-015/016 — Community Zone · Category Taxonomy",
+        "frames": [
+          {
+            "id": "412:3438",
+            "name": "ADM-015 — Community Zone · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "412:3657",
+            "name": "ADM-016 — Category Management · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "412:3877",
+            "name": "Source contract gap",
+            "width": 1452,
+            "height": 130
+          }
+        ]
+      },
+      {
+        "id": "417:3834",
+        "name": "ADM-017 — Audit Log · Production Board",
+        "frames": [
+          {
+            "id": "417:3838",
+            "name": "ADM-017 — Audit Log · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "417:4220",
+            "name": "Audit states",
+            "width": 1452,
+            "height": 110
+          },
+          {
+            "id": "417:4227",
+            "name": "Runtime contract",
+            "width": 1452,
+            "height": 52
+          }
+        ]
+      },
+      {
+        "id": "423:17215",
+        "name": "ADM-015/016 — Communities · Zones · Categories",
+        "frames": [
+          {
+            "id": "423:17219",
+            "name": "ADM-015 — Communities & Zones · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "423:17230",
+            "name": "ADM-016 — Categories · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "423:17245",
+            "name": "Runtime contract",
+            "width": 1452,
+            "height": 52
+          }
+        ]
+      },
+      {
+        "id": "427:4406",
+        "name": "ADM-017 — Audit Log",
+        "frames": [
+          {
+            "id": "427:4410",
+            "name": "ADM-017 — Audit Log · 1440×900",
+            "width": 1440,
+            "height": 900
+          },
+          {
+            "id": "427:4436",
+            "name": "Runtime contract",
+            "width": 1452,
+            "height": 52
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "page": "06A — Admin Mobile",
+    "boards": [
+      {
+        "id": "608:28948",
+        "name": "ADM-M-001/002 — Dashboard · Users · Production Board",
+        "frames": [
+          {
+            "id": "600:4",
+            "name": "ADM-M-001 — Dashboard · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "600:97",
+            "name": "ADM-M-002 — Users · List · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "600:193",
+            "name": "ADM-M-002 — User Detail · 390×844",
+            "width": 390,
+            "height": 844
+          }
+        ]
+      },
+      {
+        "id": "608:28949",
+        "name": "ADM-M-003/004/005 — Sellers · Shops · Listings · Production Board",
+        "frames": [
+          {
+            "id": "601:179",
+            "name": "ADM-M-003 — Seller Accounts · List · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "601:250",
+            "name": "ADM-M-003 — Seller Detail · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "601:298",
+            "name": "ADM-M-004 — Shops & Locations · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "601:346",
+            "name": "ADM-M-005 — Listings · 390×844",
+            "width": 390,
+            "height": 844
+          }
+        ]
+      },
+      {
+        "id": "608:28950",
+        "name": "ADM-M-006/007 — Orders · Production Board",
+        "frames": [
+          {
+            "id": "602:374",
+            "name": "ADM-M-006 — Order Explorer · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "602:445",
+            "name": "ADM-M-006 — Advanced Filters · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "602:493",
+            "name": "ADM-M-007 — Order Detail / History · 390×844",
+            "width": 390,
+            "height": 844
+          }
+        ]
+      },
+      {
+        "id": "608:28951",
+        "name": "ADM-M-008/009 — Needs · Moderation · Production Board",
+        "frames": [
+          {
+            "id": "603:526",
+            "name": "ADM-M-008 — Need Requests · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "603:574",
+            "name": "ADM-M-009 — Reports Queue · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "603:645",
+            "name": "ADM-M-009 — Report Detail · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "603:693",
+            "name": "ADM-M-009 — Confirm / Stale · 390×844",
+            "width": 390,
+            "height": 844
+          }
+        ]
+      },
+      {
+        "id": "608:28952",
+        "name": "ADM-M-010…014 — System Settings · Production Board",
+        "frames": [
+          {
+            "id": "604:738",
+            "name": "ADM-M-010…014 — Settings · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "604:786",
+            "name": "ADM-M-010/011/012 — Policy · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "604:834",
+            "name": "ADM-M-013 — Order Timeout · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "604:882",
+            "name": "ADM-M-014 — Need Matching · 390×844",
+            "width": 390,
+            "height": 844
+          }
+        ]
+      },
+      {
+        "id": "608:28953",
+        "name": "ADM-M-015/016/017 — Zones · Categories · Audit · Production Board",
+        "frames": [
+          {
+            "id": "605:910",
+            "name": "ADM-M-015 — Zones · List · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "605:958",
+            "name": "ADM-M-015 — Zone Detail · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "605:1006",
+            "name": "ADM-M-016 — Categories · List · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "605:1054",
+            "name": "ADM-M-016 — Category Detail · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "605:1102",
+            "name": "ADM-M-017 — Audit Log · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "605:1150",
+            "name": "ADM-M-017 — Audit Detail · 390×844",
+            "width": 390,
+            "height": 844
+          }
+        ]
+      },
+      {
+        "id": "608:28954",
+        "name": "Admin Mobile — Responsive QA · States · Prototype Support",
+        "frames": [
+          {
+            "id": "606:1170",
+            "name": "QA — 360×800 · Long Vietnamese copy",
+            "width": 360,
+            "height": 800
+          },
+          {
+            "id": "606:1223",
+            "name": "QA — 768×1024 · Tablet Portrait",
+            "width": 768,
+            "height": 1024
+          },
+          {
+            "id": "606:1285",
+            "name": "QA — 1024×768 · Tablet Landscape",
+            "width": 1024,
+            "height": 768
+          },
+          {
+            "id": "606:1410",
+            "name": "State/Loading",
+            "width": 495,
+            "height": 135
+          },
+          {
+            "id": "606:1414",
+            "name": "State/Empty",
+            "width": 495,
+            "height": 135
+          },
+          {
+            "id": "606:1418",
+            "name": "State/Filtered no result",
+            "width": 495,
+            "height": 135
+          },
+          {
+            "id": "606:1422",
+            "name": "State/API error",
+            "width": 495,
+            "height": 135
+          },
+          {
+            "id": "606:1426",
+            "name": "State/Permission denied",
+            "width": 495,
+            "height": 135
+          },
+          {
+            "id": "606:1430",
+            "name": "State/Validation error",
+            "width": 495,
+            "height": 135
+          },
+          {
+            "id": "606:1434",
+            "name": "State/Submitting",
+            "width": 495,
+            "height": 135
+          },
+          {
+            "id": "606:1438",
+            "name": "State/Success",
+            "width": 495,
+            "height": 135
+          },
+          {
+            "id": "606:1442",
+            "name": "State/Server error",
+            "width": 495,
+            "height": 135
+          },
+          {
+            "id": "606:1446",
+            "name": "State/Stale / conflict",
+            "width": 495,
+            "height": 135
+          }
+        ]
+      },
+      {
+        "id": "608:28955",
+        "name": "Admin Mobile — Prototype Support States",
+        "frames": [
+          {
+            "id": "608:1366",
+            "name": "PROTO — Moderation Success · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "608:1414",
+            "name": "PROTO — User Action Confirm · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "608:1462",
+            "name": "PROTO — Settings Save Result · 390×844",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "608:1510",
+            "name": "PROTO — Audit Filter Sheet · 390×844",
+            "width": 390,
+            "height": 844
+          }
+        ]
+      },
+      {
+        "id": "614:1547",
+        "name": "Admin Mobile — Handoff Summary · QA PASS",
+        "frames": [
+          {
+            "id": "614:1550",
+            "name": "Final status",
+            "width": 156,
+            "height": 38
+          },
+          {
+            "id": "614:1552",
+            "name": "Coverage",
+            "width": 540,
+            "height": 310
+          },
+          {
+            "id": "614:1557",
+            "name": "Components",
+            "width": 540,
+            "height": 310
+          },
+          {
+            "id": "614:1563",
+            "name": "Responsive",
+            "width": 540,
+            "height": 330
+          },
+          {
+            "id": "614:1570",
+            "name": "Prototypes",
+            "width": 540,
+            "height": 330
+          },
+          {
+            "id": "614:1578",
+            "name": "QA",
+            "width": 540,
+            "height": 310
+          },
+          {
+            "id": "614:1584",
+            "name": "Engineering",
+            "width": 540,
+            "height": 330
+          },
+          {
+            "id": "614:1592",
+            "name": "Source of truth",
+            "width": 1700,
+            "height": 210
+          }
+        ]
+      }
+    ]
+  }
+]

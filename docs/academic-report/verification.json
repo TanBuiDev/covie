@@ -1,0 +1,496 @@
+{
+  "structural_qa": "PASS",
+  "checks": [
+    {
+      "check": "ZIP CRC",
+      "passed": true
+    },
+    {
+      "check": "Seven chapter headings",
+      "passed": true
+    },
+    {
+      "check": "Twenty-one diagrams, 43 product screens and one cover logo",
+      "passed": true
+    },
+    {
+      "check": "User supplied cover metadata",
+      "passed": true
+    },
+    {
+      "check": "Advisor line omitted",
+      "passed": true
+    },
+    {
+      "check": "Forty tables",
+      "passed": true
+    },
+    {
+      "check": "Nine additional use case diagrams",
+      "passed": true
+    },
+    {
+      "check": "Seven centered chapter titles",
+      "passed": true
+    },
+    {
+      "check": "31 product figure captions",
+      "passed": true
+    },
+    {
+      "check": "Seven explanatory figures",
+      "passed": true
+    },
+    {
+      "check": "27 product chapter sections",
+      "passed": true
+    },
+    {
+      "check": "Figma design source distinguished",
+      "passed": true
+    },
+    {
+      "check": "No unresolved figure directives",
+      "passed": true
+    },
+    {
+      "check": "No internal web citation markers",
+      "passed": true
+    },
+    {
+      "check": "TOC field exists",
+      "passed": true
+    },
+    {
+      "check": "All internal links resolve",
+      "passed": true
+    },
+    {
+      "check": "Meaningful image alternative text",
+      "passed": true
+    },
+    {
+      "check": "Table 1 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 1 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 2 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 2 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 3 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 3 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 4 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 4 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 5 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 5 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 6 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 6 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 7 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 7 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 8 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 8 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 9 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 9 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 10 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 10 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 11 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 11 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 12 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 12 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 13 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 13 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 14 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 14 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 15 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 15 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 16 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 16 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 17 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 17 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 18 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 18 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 19 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 19 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 20 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 20 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 21 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 21 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 22 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 22 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 23 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 23 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 24 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 24 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 25 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 25 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 26 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 26 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 27 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 27 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 28 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 28 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 29 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 29 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 30 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 30 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 31 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 31 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 32 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 32 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 33 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 33 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 34 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 34 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 35 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 35 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 36 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 36 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 37 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 37 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 38 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 38 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 39 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 39 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Table 40 grid width",
+      "passed": true
+    },
+    {
+      "check": "Table 40 repeated heading",
+      "passed": true
+    },
+    {
+      "check": "Every API path included",
+      "passed": true
+    },
+    {
+      "check": "Reference N1",
+      "passed": true
+    },
+    {
+      "check": "Reference N2",
+      "passed": true
+    },
+    {
+      "check": "Reference N3",
+      "passed": true
+    },
+    {
+      "check": "Reference N4",
+      "passed": true
+    },
+    {
+      "check": "Reference N5",
+      "passed": true
+    },
+    {
+      "check": "Reference N6",
+      "passed": true
+    },
+    {
+      "check": "Reference N7",
+      "passed": true
+    },
+    {
+      "check": "Reference N8",
+      "passed": true
+    },
+    {
+      "check": "Reference N9",
+      "passed": true
+    },
+    {
+      "check": "Reference N10",
+      "passed": true
+    },
+    {
+      "check": "Reference N11",
+      "passed": true
+    },
+    {
+      "check": "Reference N12",
+      "passed": true
+    },
+    {
+      "check": "Reference N13",
+      "passed": true
+    },
+    {
+      "check": "Reference T1",
+      "passed": true
+    },
+    {
+      "check": "Reference T2",
+      "passed": true
+    },
+    {
+      "check": "Reference T3",
+      "passed": true
+    },
+    {
+      "check": "Reference T4",
+      "passed": true
+    },
+    {
+      "check": "Reference T5",
+      "passed": true
+    },
+    {
+      "check": "Reference T6",
+      "passed": true
+    },
+    {
+      "check": "No private key material",
+      "passed": true
+    },
+    {
+      "check": "Historical evidence limitation included",
+      "passed": true
+    },
+    {
+      "check": "Concrete checkout distance limitation included",
+      "passed": true
+    },
+    {
+      "check": "24 proposed acceptance cases",
+      "passed": true
+    },
+    {
+      "check": "A4 page geometry",
+      "passed": true
+    }
+  ],
+  "render_qa": "PASS: packaged LibreOffice render, pagination checks and all-page visual review.",
+  "file_bytes": 3941912,
+  "page_count": 113
+}

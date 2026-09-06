@@ -1,0 +1,501 @@
+{
+  "scope": "Academic prose, headings, figure sources and appendices; historical application results retained. Navigation cache changes included in diff.",
+  "changed_blocks": [
+    {
+      "before": [
+        "Các công nghệ, thư viện, tài liệu và mã nguồn được sử dụng cần được ghi nhận đúng nguồn. Kết quả kiểm thử lịch sử, phân tích mã nguồn và kịch bản kiểm thử đề xuất được phân biệt trong báo cáo; những phần chưa có bằng chứng nghiệm thu không được xem là đã hoàn thành. Báo cáo có sử dụng ChatGPT/Codex để hỗ trợ tổng hợp tài liệu, diễn đạt nội dung, xây dựng sơ đồ và dàn trang. Tôi chịu trách nhiệm rà soát nội dung và việc sử dụng các công cụ hỗ trợ khi nộp báo cáo."
+      ],
+      "after": [
+        "Tôi ghi nhận các nguồn tài liệu, công nghệ và thư viện được sử dụng trong đề tài. Báo cáo phân biệt kết quả kiểm thử đã ghi nhận, phân tích mã nguồn và các kịch bản chưa thực thi. Tôi có sử dụng ChatGPT/Codex để hỗ trợ tổng hợp tài liệu, diễn đạt, xây dựng sơ đồ và dàn trang; tôi chịu trách nhiệm về nội dung được trình bày."
+      ]
+    },
+    {
+      "before": [
+        "Tài liệu dự án ghi nhận các kết quả kiểm thử local ở baseline ngày 26/08/2026. Bản báo cáo đối chiếu thêm mã nguồn c477f30 và xác định các giới hạn về tích hợp khoảng cách/coverage, độ đầy đủ snapshot, hợp đồng giao diện và bằng chứng runtime mới. Kết quả được trình bày như một nền tảng đã triển khai và có kiểm chứng cục bộ lịch sử; chưa được kết luận sẵn sàng production hoặc đã kiểm nghiệm tác động với người dùng thật."
+      ],
+      "after": [
+        "Kết quả kiểm thử ngày 26/08/2026 ghi nhận 460 kiểm thử backend đạt, 1 trường hợp bỏ qua và 103 kiểm thử frontend đạt, cùng các hành trình người mua được kiểm tra cục bộ. Phân tích mã nguồn c477f30 xác định những hạn chế về khoảng cách giao hàng, dữ liệu lịch sử và hợp đồng giao diện. Đề tài hình thành nền tảng chức năng cho giao dịch địa phương; khả năng vận hành production và hiệu quả với người dùng thực tế còn cần đánh giá."
+      ]
+    },
+    {
+      "before": [
+        "Historical project records report local verification on 26 August 2026. This report also inspects source snapshot c477f30 and identifies limitations in geographic checkout integration, historical snapshots, UI contracts and current runtime evidence. The result is an implemented software foundation with historical local verification, rather than a claim of production readiness or demonstrated commercial impact."
+      ],
+      "after": [
+        "Project records dated 26 August 2026 report 460 passing backend tests, one skipped case and 103 passing frontend tests, alongside local buyer journey checks. Analysis of source version c477f30 identifies limitations in delivery-distance integration, historical data snapshots and UI contracts. The project establishes a functional foundation for local transactions; production operation and effectiveness with real users remain to be evaluated."
+      ]
+    },
+    {
+      "before": [
+        "Mục lục có liên kết và số trang theo bản dàn trang đã kiểm tra. Khi chỉnh sửa nội dung, cần cập nhật lại các trường mục lục trước khi in."
+      ],
+      "after": []
+    },
+    {
+      "before": [
+        "5.9. Chuẩn bị một bản demo tái lập\t"
+      ],
+      "after": [
+        "5.9. Môi trường và hành trình thử nghiệm\t"
+      ]
+    },
+    {
+      "before": [
+        "PHỤ LỤC A. HƯỚNG DẪN TÁI LẬP VÀ DEMO\t"
+      ],
+      "after": [
+        "PHỤ LỤC A. CÀI ĐẶT VÀ KIỂM THỬ HỆ THỐNG\t"
+      ]
+    },
+    {
+      "before": [
+        "A.3. Lệnh kiểm tra phiên bản nộp cuối\t",
+        "A.4. Kịch bản trình bày đề xuất\t"
+      ],
+      "after": [
+        "A.3. Lệnh kiểm thử hệ thống\t",
+        "A.4. Kịch bản kiểm tra chức năng\t"
+      ]
+    },
+    {
+      "before": [
+        "PHỤ LỤC C. DANH MỤC API TRONG SNAPSHOT\t"
+      ],
+      "after": [
+        "PHỤ LỤC C. DANH MỤC API\t"
+      ]
+    },
+    {
+      "before": [
+        "Tên đề tài đề xuất: “Xây dựng nền tảng mua bán địa phương CoVie ứng dụng kiến trúc web phân lớp và xử lý giao dịch nhất quán”. Tên này mô tả phạm vi triển khai hiện có; tên chính thức cần được thay bằng tên đã đăng ký với khoa nếu khác."
+      ],
+      "after": [
+        "Đề tài “Xây dựng nền tảng mua bán địa phương CoVie” tập trung vào tổ chức giao dịch trong cộng đồng dân cư, với kiến trúc web phân lớp và cơ chế kiểm soát tính nhất quán của đơn hàng."
+      ]
+    },
+    {
+      "before": [
+        "Phạm vi chức năng gồm danh tính và địa chỉ; hồ sơ người bán và điểm bán; danh mục sản phẩm, dịch vụ và thanh lý; tìm kiếm công khai; giỏ hàng; xem trước và xác nhận đặt hàng; vòng đời đơn; yêu cầu “Cần mua”; đánh giá và uy tín; thông báo; kiểm duyệt và cấu hình hệ thống. Danh sách này mô tả các miền đã hiện diện trong mã nguồn, không có nghĩa mọi màn hình đã được nghiệm thu trực quan và mọi luồng đã được chạy lại trên phiên bản hiện tại. [N2, N3]"
+      ],
+      "after": [
+        "Phạm vi chức năng gồm danh tính và địa chỉ; hồ sơ người bán và điểm bán; danh mục sản phẩm, dịch vụ và thanh lý; tìm kiếm công khai; giỏ hàng; xem trước và xác nhận đặt hàng; vòng đời đơn; yêu cầu “Cần mua”; đánh giá và uy tín; thông báo; kiểm duyệt và cấu hình hệ thống. Danh sách này mô tả các miền đã hiện diện trong mã nguồn, mức độ xác minh từng nhóm chức năng được trình bày tại Chương 6. [N2, N3]"
+      ]
+    },
+    {
+      "before": [
+        "Khi biên soạn báo cáo, tài liệu sản phẩm được dùng để giải thích ý định; mã nguồn và migration được dùng để mô tả hiện thực; OpenAPI được dùng để kiểm tra bề mặt hợp đồng; kết quả kiểm thử được ghi theo đúng thời điểm và phạm vi đã lưu. Nếu các nguồn không đồng nhất, báo cáo nêu sự khác biệt thay vì chọn một trạng thái “hoàn tất” thuận tiện.",
+        "Phiên bản mã nguồn được đọc khi lập báo cáo là commit c477f30, với thông điệp “test(admin): align coverage with desktop contracts”, ngày đối chiếu 04/09/2026. Tài liệu tổng kết cấp dự án vẫn mô tả mốc 42693a6 và kết quả ngày 26/08/2026. Vì vậy, số liệu kiểm thử cũ được đặt trong nhóm bằng chứng lịch sử; không được đổi nhãn thành kết quả chạy ngày 04/09/2026. Một số tài liệu giao diện mới hơn tiếp tục ghi trạng thái chờ runtime hoặc chờ kiểm tra trực quan. [N2, N3, N9]"
+      ],
+      "after": [
+        "Phương pháp phân tích kết hợp tài liệu yêu cầu, mã nguồn, migration và hợp đồng OpenAPI. Tài liệu yêu cầu xác định mục tiêu nghiệp vụ; mã nguồn và migration thể hiện cách triển khai; OpenAPI mô tả giao tiếp giữa các thành phần. Kết quả thực thi kiểm thử được đối chiếu theo phiên bản và thời điểm để đánh giá mức độ đáp ứng yêu cầu.",
+        "Phạm vi phân tích mã nguồn là phiên bản c477f30, đối chiếu ngày 04/09/2026. Kết quả kiểm thử tại mục 6.3 thuộc đợt đánh giá ngày 26/08/2026 trên phiên bản được tài liệu dự án ghi nhận. Hai tập dữ liệu có mốc phiên bản khác nhau; kết quả của đợt kiểm thử trước chưa xác nhận các thay đổi bổ sung trong c477f30. [N2, N3, N9]"
+      ]
+    },
+    {
+      "before": [
+        "Giá trị thực nghiệm của đề tài là một hệ thống có thể kiểm tra bằng mã nguồn, dữ liệu fixture và lệnh tái lập. Báo cáo không nhận đóng góp nghiên cứu thuật toán mới, không khẳng định matching sử dụng học máy và không dùng số lượng test như một phép đo trực tiếp về mức độ hài lòng của người sử dụng."
+      ],
+      "after": [
+        "Giá trị thực nghiệm của đề tài nằm ở mô hình phần mềm có thể tái lập bằng mã nguồn, dữ liệu thử và các lệnh kiểm tra. Phạm vi đóng góp tập trung vào tích hợp nghiệp vụ và kiểm soát giao dịch. Hiệu quả sử dụng trong cộng đồng chưa được đo bằng khảo sát hoặc thử nghiệm người dùng."
+      ]
+    },
+    {
+      "before": [
+        "Tại snapshot đã đọc, apps/web/package.json khai báo Next.js 16.3.2, React 19.2.0 và dải TypeScript ^5.9.2. Báo cáo ghi phiên bản dự án theo manifest này, không thay bằng phiên bản mới nhất trên trang tài liệu. React Hook Form và Zod có mặt trong dependencies cho tổ chức biểu mẫu và validation; TanStack Query phục vụ các nhu cầu quản lý dữ liệu máy chủ trên máy khách. [N5]"
+      ],
+      "after": [
+        "Tệp apps/web/package.json tại phiên bản c477f30 khai báo Next.js 16.3.2, React 19.2.0 và TypeScript ^5.9.2. React Hook Form và Zod hỗ trợ tổ chức biểu mẫu và kiểm tra dữ liệu; TanStack Query hỗ trợ quản lý dữ liệu máy chủ tại giao diện. Đây là các phiên bản và thư viện được khai báo trong cấu hình dự án. [N5]"
+      ]
+    },
+    {
+      "before": [
+        "Không phải mọi lớp có hậu tố Service đều là một aggregate độc lập. Các sơ đồ trong báo cáo thể hiện cách tổ chức và dòng xử lý, không khẳng định dự án tuân thủ đầy đủ một phương pháp thiết kế hình thức như Domain-Driven Design hay Clean Architecture."
+      ],
+      "after": [
+        "Các lớp service tổ chức việc điều phối nghiệp vụ, còn các model và policy biểu diễn dữ liệu cùng điều kiện xử lý. Phân lớp giúp tách trách nhiệm tiếp nhận yêu cầu, xử lý giao dịch và truy cập dữ liệu; sơ đồ kiến trúc tại Chương 4 mô tả các quan hệ này."
+      ]
+    },
+    {
+      "before": [
+        "Các đánh đổi trên là lập luận kỹ thuật dựa vào cấu trúc triển khai. Báo cáo không cung cấp benchmark so sánh Next.js với framework khác hoặc Spring Boot với nền tảng khác, vì chưa có thí nghiệm đối chứng tương ứng."
+      ],
+      "after": [
+        "Việc lựa chọn công nghệ dựa trên yêu cầu giao dịch, tổ chức dữ liệu và khả năng tích hợp của CoVie. Phạm vi đánh giá chưa bao gồm thí nghiệm đối chứng về hiệu năng giữa các framework; các lợi ích trong bảng được phân tích từ đặc điểm kiến trúc và cách triển khai."
+      ]
+    },
+    {
+      "before": [
+        "Nguồn: sơ đồ giải thích do bản báo cáo dựng từ mã nguồn và tài liệu CoVie; đã lược giản để dễ đọc."
+      ],
+      "after": [
+        "Nguồn: mô hình hóa từ mã nguồn và tài liệu thiết kế CoVie."
+      ]
+    },
+    {
+      "before": [
+        "Hệ thống cần hỗ trợ quy trình Google onboarding, thiết lập mật khẩu và đăng nhập. Kiến trúc xác thực hiện ghi nhận đăng ký lần đầu qua Google, sau đó yêu cầu đặt mật khẩu để hoàn tất onboarding. Không có cơ sở để mô tả một luồng đăng ký email độc lập chỉ vì tồn tại màn hình Register. Người dùng cần xem và thu hồi phiên, đăng xuất, quản lý thông tin hồ sơ và địa chỉ. [N11]"
+      ],
+      "after": [
+        "Hệ thống hỗ trợ đăng ký lần đầu qua Google, thiết lập mật khẩu và đăng nhập. Sau khi hoàn tất bước xác minh danh tính Google, người dùng đặt mật khẩu để hoàn tất đăng ký. Các chức năng tài khoản còn gồm xem và thu hồi phiên, đăng xuất, quản lý hồ sơ và địa chỉ. Phạm vi hiện tại chưa bao gồm đăng ký độc lập bằng email. [N11]"
+      ]
+    },
+    {
+      "before": [
+        "Đánh giá gắn với giao dịch; uy tín là dữ liệu tổng hợp có thể truy về nguồn. Thông báo cần được lưu, đánh dấu đã đọc và điều hướng an toàn. Quản trị viên cần xem báo cáo, xử lý kiểm duyệt, quản lý cấu hình có phiên bản và đọc audit. Những màn hình mà hợp đồng còn thiếu không được bổ sung dữ liệu giả chỉ để đủ hình thức trình bày."
+      ],
+      "after": [
+        "Đánh giá gắn với giao dịch; uy tín là dữ liệu tổng hợp có thể truy về nguồn. Thông báo cần được lưu, đánh dấu đã đọc và điều hướng an toàn. Quản trị viên cần xem báo cáo, xử lý kiểm duyệt, quản lý cấu hình có phiên bản và đọc audit. Các chức năng phụ thuộc hợp đồng chưa đầy đủ được xác định là phần còn cần hoàn thiện."
+      ]
+    },
+    {
+      "before": [
+        "Các tiêu chí trên được dùng để tổ chức kiểm thử; không phải tất cả đã có bằng chứng đạt ở HEAD. Chưa đặt ra số giao dịch mỗi giây hoặc mức độ sẵn sàng được bảo đảm vì dự án chưa có thí nghiệm tải và vận hành tương ứng để chứng minh."
+      ],
+      "after": [
+        "Các tiêu chí trên là cơ sở xây dựng kế hoạch kiểm thử tại Chương 6. Mức độ đạt được phụ thuộc kết quả thực thi của từng phiên bản. Chỉ tiêu thông lượng và độ sẵn sàng của hệ thống chưa được xác nhận do chưa có thí nghiệm tải và theo dõi vận hành tương ứng."
+      ]
+    },
+    {
+      "before": [
+        "Giới hạn giao diện hiện tại gồm nguồn đọc ứng viên phản hồi cho người bán và một số thông tin quyền hủy ở chi tiết nhu cầu. Báo cáo không mô tả người dùng có thể hoàn tất các bước bị thiếu hợp đồng chỉ bằng cách nhập UUID thủ công. Đây là khoảng cách giữa năng lực miền backend và hành trình sử dụng hoàn chỉnh cần được giải quyết tiếp. [N9]"
+      ],
+      "after": [
+        "Giao diện nhu cầu còn thiếu nguồn dữ liệu để lựa chọn ứng viên phản hồi cho người bán và một số thông tin về quyền hủy. Các khoảng trống hợp đồng này làm gián đoạn hành trình sử dụng dù các thành phần nghiệp vụ liên quan đã có ở backend. Việc hoàn thiện cần đồng bộ API và giao diện tương ứng. [N9]"
+      ]
+    },
+    {
+      "before": [
+        "Ma trận này liên kết yêu cầu với nơi tìm bằng chứng. Để kết luận một yêu cầu đạt nghiệm thu, còn phải đối chiếu kết quả thực thi tại phiên bản nộp cuối; không chỉ kiểm tra tên thư mục hoặc tên test."
+      ],
+      "after": [
+        "Ma trận liên kết từng nhóm yêu cầu với thành phần triển khai và nguồn kiểm tra tương ứng. Kết quả và phạm vi thực thi được phân tích tại Chương 6, trong đó phân biệt các trường hợp đã có kết quả với các kịch bản còn chờ kiểm chứng."
+      ]
+    },
+    {
+      "before": [
+        "Nguồn: sơ đồ giải thích do bản báo cáo dựng từ mã nguồn và tài liệu CoVie; đã lược giản để dễ đọc.",
+        "Hình kiến trúc thể hiện quan hệ trách nhiệm, không phải sơ đồ mạng production đã triển khai. Trong môi trường local, web mặc định chạy tại cổng 3000, API dùng 8081 và PostgreSQL được công bố tại 5433 theo hướng dẫn dự án. Redis dùng 6379, MinIO dùng 9000. Những cổng này là cấu hình tái lập cục bộ; không dùng chúng để suy ra chính sách mạng công khai khi triển khai thật."
+      ],
+      "after": [
+        "Nguồn: mô hình hóa từ mã nguồn và tài liệu thiết kế CoVie.",
+        "Hình kiến trúc thể hiện trách nhiệm và quan hệ giữa các thành phần. Trong môi trường cục bộ, web sử dụng cổng 3000, API sử dụng 8081 và PostgreSQL được công bố tại 5433. Redis sử dụng cổng 6379 và MinIO sử dụng cổng 9000. Cấu hình mạng cho môi trường triển khai thực tế được quản lý riêng."
+      ]
+    },
+    {
+      "before": [
+        "Nguồn: sơ đồ giải thích do bản báo cáo dựng từ mã nguồn và tài liệu CoVie; đã lược giản để dễ đọc."
+      ],
+      "after": [
+        "Nguồn: mô hình hóa từ mã nguồn và tài liệu thiết kế CoVie."
+      ]
+    },
+    {
+      "before": [
+        "Nguồn: sơ đồ giải thích do bản báo cáo dựng từ mã nguồn và tài liệu CoVie; đã lược giản để dễ đọc."
+      ],
+      "after": [
+        "Nguồn: mô hình hóa từ mã nguồn và tài liệu thiết kế CoVie."
+      ]
+    },
+    {
+      "before": [
+        "Ví dụ cạnh tranh: tồn thực tế bằng một và chưa giữ hàng. Hai người có thể cùng xem preview hợp lệ. Khi commit, việc khóa cùng balance làm tuần tự hóa phần quyết định giữ hàng. Người hoàn tất sau phải nhìn thấy lượng khả dụng sau giao dịch trước; hệ thống không dựa vào số lượng đã thấy lúc preview. Test CheckoutLastStockConcurrencyTest và CheckoutRollbackInvariantTest là các hiện vật kiểm tra trực tiếp loại rủi ro này, nhưng tên test không thay thế kết quả chạy tại HEAD."
+      ],
+      "after": [
+        "Ví dụ cạnh tranh: tồn thực tế bằng một và chưa giữ hàng. Hai người có thể cùng xem preview hợp lệ. Khi commit, việc khóa cùng balance làm tuần tự hóa phần quyết định giữ hàng. Người hoàn tất sau phải nhìn thấy lượng khả dụng sau giao dịch trước; hệ thống không dựa vào số lượng đã thấy lúc preview. Test CheckoutLastStockConcurrencyTest và CheckoutRollbackInvariantTest là các hiện vật kiểm tra trực tiếp loại rủi ro này, kết quả thực thi tại c477f30 còn chờ cập nhật."
+      ]
+    },
+    {
+      "before": [
+        "Ở đường đi CheckoutPreviewService đã kiểm tra, evaluator được gọi với distanceMeters bằng 0. Phương thức validateFulfillmentCapability kiểm tra cờ khả năng và yêu cầu địa chỉ, nhưng đoạn revalidate được đọc chưa thể hiện bước kiểm tra coverage địa lý đầy đủ. Vì vậy, cần tích hợp và kiểm chứng khoảng cách/coverage trước khi mô tả “chỉ cho đặt khi nằm trong vùng giao” như một bảo đảm end-to-end. Báo cáo giữ riêng phần thuật toán hiện có và phần tích hợp còn thiếu."
+      ],
+      "after": [
+        "Trong CheckoutPreviewService tại phiên bản c477f30, evaluator được gọi với distanceMeters bằng 0. Phương thức validateFulfillmentCapability kiểm tra cờ khả năng và yêu cầu địa chỉ, nhưng bước revalidate chưa thể hiện đầy đủ kiểm tra vùng phục vụ địa lý. Điều kiện giao hàng theo khoảng cách vì thế còn là giới hạn tích hợp cần khắc phục và kiểm thử."
+      ]
+    },
+    {
+      "before": [
+        "Nguồn: sơ đồ giải thích do bản báo cáo dựng từ mã nguồn và tài liệu CoVie; đã lược giản để dễ đọc."
+      ],
+      "after": [
+        "Nguồn: mô hình hóa từ mã nguồn và tài liệu thiết kế CoVie."
+      ]
+    },
+    {
+      "before": [
+        "Lưu lịch sử order_events giúp giải thích chuỗi thao tác. Bảng riêng cho cancellation và issue giúp giữ thông tin mà một status hiện tại không chứa đủ, như ngữ cảnh yêu cầu và kết quả giải quyết. Admin được thiết kế đọc đơn và lịch sử qua API quản trị; không có lý do để thêm nút ép trạng thái chỉ nhằm thuận tiện demo. [N9]"
+      ],
+      "after": [
+        "Lịch sử order_events lưu chuỗi thao tác trên đơn. Các bảng cancellation và issue bổ sung ngữ cảnh yêu cầu, thông tin sự cố và kết quả giải quyết. Giao diện quản trị hỗ trợ đọc đơn và lịch sử; việc chuyển trạng thái vẫn tuân theo các lệnh nghiệp vụ và điều kiện phân quyền. [N9]"
+      ]
+    },
+    {
+      "before": [
+        "Khóa JWT riêng, refresh token, cookie và thông tin cấu hình thật không được đưa vào báo cáo. Các hình giao diện sử dụng dữ liệu thử đã có trong workspace. Những giá trị minh họa về giá hoặc tên cửa hàng được ghi rõ là fixture hoặc ví dụ, không phải hoạt động kinh doanh thực tế."
+      ],
+      "after": [
+        "Dữ liệu xác thực được tách khỏi nội dung minh họa. Các hình giao diện sử dụng tài khoản, giá và tên cửa hàng thử nghiệm; thông tin này phục vụ mô tả chức năng, không đại diện cho giao dịch thương mại thực tế."
+      ]
+    },
+    {
+      "before": [
+        "Nguồn thiết kế Figma được ghi trong tài liệu dự án nhưng không được truy xuất lại trong phiên viết báo cáo này. Vì vậy, các mô tả độ khớp thiết kế được dẫn theo matrix và ảnh đã lưu, không được trình bày như một lần nghiệm thu Figma mới."
+      ],
+      "after": [
+        "Đánh giá mức độ đáp ứng thiết kế dựa trên ma trận bàn giao và bộ ảnh giao diện đã lưu. Phạm vi này chưa bao gồm một đợt đối chiếu trực quan mới cho toàn bộ màn hình tại phiên bản c477f30."
+      ]
+    },
+    {
+      "before": [
+        "README yêu cầu JDK 25, Node.js 24 LTS, pnpm 10 và Docker có Compose. Sau thiết lập môi trường và khóa JWT local, pnpm dev khởi động các thành phần cục bộ. API dùng cổng 8081 do cổng 8080 đã được sử dụng trong workspace; web dùng 3000. Ghi rõ khác biệt này giúp người chấm không nhầm lỗi cổng với lỗi nghiệp vụ của hệ thống. [N3]"
+      ],
+      "after": [
+        "Môi trường phát triển sử dụng JDK 25, Node.js 24 LTS, pnpm 10 và Docker Compose. Sau khi cấu hình môi trường và khóa JWT, lệnh pnpm dev khởi động hệ thống cục bộ. Web sử dụng cổng 3000; API sử dụng cổng 8081 để tránh xung đột với dịch vụ đang chiếm cổng 8080. [N3]"
+      ]
+    },
+    {
+      "before": [
+        "Địa chỉ được dùng lại giữa chọn vị trí và checkout nhưng phải giữ đúng chủ sở hữu, tọa độ và version. Handoff Buyer Mobile mới có phần create/edit được triển khai trong giao diện, còn trạng thái xác minh vẫn ghi VERIFICATION_PENDING. Báo cáo vì vậy không dùng tổng kết cũ “BUY-004 còn mở” để kết luận hoàn toàn chưa có code, cũng không dùng code mới để tuyên bố đã nghiệm thu. [N9]"
+      ],
+      "after": [
+        "Địa chỉ được sử dụng trong lựa chọn vị trí và checkout, với các thuộc tính chủ sở hữu, tọa độ và phiên bản dữ liệu. Giao diện Buyer Mobile đã có chức năng tạo và chỉnh sửa địa chỉ. Ma trận bàn giao vẫn ghi trạng thái VERIFICATION_PENDING, vì vậy phần triển khai này còn chờ xác minh đầy đủ trong môi trường chạy. [N9]"
+      ]
+    },
+    {
+      "before": [
+        "Nguồn: ảnh local lưu sẵn trong .local/dev/visual-review; không xác nhận lại thời điểm chụp hoặc commit.",
+        "Thanh điều hướng dưới màn hình giúp chuyển giữa trang chủ, khám phá, cần mua, đơn và tài khoản. Ở kích thước điện thoại, việc đưa hành động chính về vùng dưới màn hình giúp duy trì ngữ cảnh khi nội dung chi tiết dài. Bằng chứng ảnh minh họa cho cách bố trí; không tự chứng minh rằng mọi nút trong ảnh đã được thực thi ở HEAD."
+      ],
+      "after": [
+        "Nguồn: bộ ảnh giao diện thử nghiệm CoVie tại .local/dev/visual-review.",
+        "Thanh điều hướng dưới màn hình kết nối các khu vực trang chủ, khám phá, cần mua, đơn hàng và tài khoản. Ở kích thước điện thoại, vị trí này giúp các chức năng chính tiếp tục hiện diện khi nội dung chi tiết kéo dài. Các hình minh họa thể hiện bố cục của bộ dữ liệu thử nghiệm cục bộ."
+      ]
+    },
+    {
+      "before": [
+        "Nguồn: ảnh local lưu sẵn trong .local/dev/visual-review; không xác nhận lại thời điểm chụp hoặc commit."
+      ],
+      "after": [
+        "Nguồn: bộ ảnh giao diện thử nghiệm CoVie tại .local/dev/visual-review."
+      ]
+    },
+    {
+      "before": [
+        "Nguồn: ảnh local lưu sẵn trong .local/dev/visual-review; không xác nhận lại thời điểm chụp hoặc commit.",
+        "Ảnh là hiện vật local có sẵn khi lập báo cáo. Mã đơn và ngày trong hình thuộc dữ liệu thử; không dùng chúng làm chứng cứ triển khai production hay bằng chứng toàn bộ bước thanh toán. Khi chuẩn bị bản nộp cuối, nên chạy lại fixture ở commit dùng để bảo vệ và thay bộ ảnh đồng nhất nếu giao diện đã thay đổi."
+      ],
+      "after": [
+        "Nguồn: bộ ảnh giao diện thử nghiệm CoVie tại .local/dev/visual-review.",
+        "Hình minh họa thể hiện kết quả tạo đơn với dữ liệu thử nghiệm cục bộ. Mã đơn và ngày trong hình thuộc bộ dữ liệu thử. Trạng thái này xác nhận việc ghi nhận đơn hàng trong luồng minh họa; việc thanh toán và thực hiện đơn là các bước nghiệp vụ tiếp theo."
+      ]
+    },
+    {
+      "before": [
+        "Matrix Admin còn ghi rõ một số trang không có hợp đồng quản trị độc lập, gồm Shops & Locations, Listings và Needs trong phạm vi matrix. Các trang khu vực và danh mục có thể đọc nguồn công khai nhưng chưa có quyền CRUD quản trị chỉ từ sự tồn tại của route. Dashboard cũng không được tạo số liệu tổng giả khi không có API thống kê tương ứng. [N9]"
+      ],
+      "after": [
+        "Matrix Admin còn ghi rõ một số trang không có hợp đồng quản trị độc lập, gồm Shops & Locations, Listings và Needs trong phạm vi matrix. Các trang khu vực và danh mục có thể đọc nguồn công khai nhưng chưa có quyền CRUD quản trị chỉ từ sự tồn tại của route. Dashboard còn thiếu nguồn API thống kê để cung cấp đầy đủ các số liệu tổng hợp. [N9]"
+      ]
+    },
+    {
+      "before": [
+        "Khi API thay đổi, export OpenAPI và sinh client là một phần kiểm tra tích hợp. Việc compile TypeScript thành công chỉ cho biết mã đang phù hợp với kiểu đã lưu; nếu OpenAPI chưa cập nhật, frontend vẫn có thể khớp một hợp đồng cũ. Vì vậy, api-client:check và kiểm tra contract backend là các lớp bổ sung cần thiết trong quy trình nộp phiên bản cuối.",
+        "5.9. Chuẩn bị một bản demo tái lập",
+        "Một bản demo nên bắt đầu bằng việc chọn commit, kiểm tra công cụ và khởi động hạ tầng theo README. Dữ liệu fixture phải có một sản phẩm, một dịch vụ, một mặt hàng thanh lý, điểm bán và người mua thử để minh họa các nhánh chính. Lệnh pnpm ui:verify-local đã được dự án xây dựng cho hành trình Public Buyer P0; mật khẩu sinh ra chỉ lưu trong vùng ignored .local/dev/ui-fixture.json. Không chép mật khẩu đó vào báo cáo.",
+        "Kịch bản trình bày nên mở đầu từ bài toán và hành trình người mua, sau đó giải thích một điểm kỹ thuật như hai người tranh hàng cuối hoặc checkout đã thay đổi. Phần Seller/Admin chỉ demo những chức năng đã có dữ liệu và quyền hợp lệ ở môi trường đã chuẩn bị. Nếu một vùng còn thiếu hợp đồng, cần nói rõ giới hạn và trình bày thiết kế tiếp theo, không dùng dữ liệu mock để tạo ấn tượng chức năng đã hoạt động.",
+        "Các script deploy, backup, rollback và staging rehearsal được dùng để trình bày hướng vận hành. Chúng không được chạy lên production trong quá trình soạn báo cáo và không được xem là một đợt diễn tập thành công nếu chưa có log, checksum, kết quả restore và xác nhận môi trường tương ứng."
+      ],
+      "after": [
+        "Khi API thay đổi, export OpenAPI và sinh client là một phần kiểm tra tích hợp. Việc compile TypeScript thành công chỉ cho biết mã đang phù hợp với kiểu đã lưu; nếu OpenAPI chưa cập nhật, frontend vẫn có thể khớp một hợp đồng cũ. Vì vậy, api-client:check và kiểm tra contract backend là các lớp bổ sung cần thiết trong quy trình tích hợp phần mềm.",
+        "5.9. Môi trường và hành trình thử nghiệm",
+        "Môi trường minh họa sử dụng dữ liệu thử gồm người mua, điểm bán, sản phẩm, dịch vụ và mặt hàng thanh lý. Lệnh pnpm ui:verify-local tạo bộ dữ liệu và thực hiện hành trình Public Buyer P0. Thông tin đăng nhập thử được lưu cục bộ trong .local/dev/ui-fixture.json và được loại khỏi hệ thống quản lý phiên bản.",
+        "Hành trình minh họa tập trung vào tìm kiếm mặt hàng, lựa chọn nguồn cung, xem trước giá và tạo đơn. Các tình huống giá thay đổi hoặc nhiều người cùng đặt lượng hàng cuối được phân tích qua thuật toán checkout và các kịch bản kiểm thử giao dịch. Phạm vi Seller và Admin được đánh giá riêng theo chức năng và hợp đồng dữ liệu hiện có.",
+        "Các script vận hành đã có trong mã nguồn; diễn tập staging và triển khai production chưa có kết quả hoàn tất."
+      ]
+    },
+    {
+      "before": [
+        "Trong phiên biên soạn này không chạy lại toàn bộ Maven, Vitest, build và Playwright. Do đó, báo cáo không cấp một kết luận regression mới cho commit c477f30. Kiểm tra cấu trúc của file báo cáo cũng hoàn toàn khác với kiểm thử ứng dụng CoVie."
+      ],
+      "after": [
+        "Chưa có kết quả chạy lại toàn bộ Maven, Vitest, build và Playwright cho phiên bản c477f30 trong tập dữ liệu đánh giá. Vì vậy, kết quả tại mục 6.3 chỉ xác nhận phạm vi của đợt kiểm thử ngày 26/08/2026; các thay đổi sau mốc này còn cần kiểm thử hồi quy."
+      ]
+    },
+    {
+      "before": [
+        "Nguồn: AGENTS.md và docs/CoVie-project-status.md tại thời điểm lập báo cáo. Các con số phản ánh những suite và cách đếm khác nhau; không cộng chúng thành một “tỷ lệ chất lượng” chung. Test bỏ qua cần được giải thích theo điều kiện thực thi, không tính như test đã đạt. [N2]",
+        "Ảnh đã lưu có mốc file và nội dung có thể khác ngày tổng kết. Chẳng hạn ảnh tạo đơn thể hiện mã fixture với ngày khác baseline. Đây là lý do báo cáo không dùng thời gian sửa file làm bằng chứng xác định chính xác thời điểm chụp hoặc commit chạy. Để hồ sơ cuối có tính truy vết chặt chẽ hơn, cần xuất một bộ kết quả mới gắn với commit, môi trường và timestamp thực thi."
+      ],
+      "after": [
+        "Nguồn: AGENTS.md và docs/CoVie-project-status.md, mốc kiểm thử 26/08/2026. Các bộ kiểm thử có phạm vi và đơn vị thống kê khác nhau nên được trình bày riêng. Những trường hợp bỏ qua chưa được tính là kiểm thử đạt. [N2]",
+        "Bộ ảnh giao diện minh họa sử dụng dữ liệu thử có mốc thời gian riêng. Chưa có thông tin liên kết đầy đủ từng ảnh với phiên bản thực thi của đợt kiểm thử 26/08/2026. Do đó, ảnh được sử dụng để mô tả chức năng và bố cục, còn kết quả kiểm thử được đánh giá theo bản ghi thực thi tương ứng."
+      ]
+    },
+    {
+      "before": [
+        "Các test case sau được thiết kế cho lần chạy nghiệm thu tiếp theo. Cột kết quả không gán “Pass” khi chưa thực thi. Dữ liệu sử dụng phải là tài khoản và catalog thử riêng, không tác động dữ liệu người dùng thật."
+      ],
+      "after": [
+        "Bảng sau trình bày 24 kịch bản kiểm thử nghiệm thu, bao gồm dữ liệu đầu vào theo tình huống, kết quả mong đợi và trạng thái kiểm chứng. Các kịch bản còn chờ thực thi tại phiên bản c477f30; tài khoản và danh mục thử được tách khỏi dữ liệu sử dụng thực tế."
+      ]
+    },
+    {
+      "before": [
+        "Staging rehearsal bao gồm migration, luồng người dùng có xác thực bình thường, rate limit, backup/restore vào DB khác, rollback và cảnh báo. Các tài liệu hiện nói rõ chưa có đợt staging/production được chấp nhận. Không lấy sự tồn tại của Dockerfile hoặc workflow làm bằng chứng đã triển khai và khôi phục thành công. [N13]"
+      ],
+      "after": [
+        "Kế hoạch diễn tập staging bao gồm migration, luồng có xác thực, giới hạn tần suất yêu cầu, sao lưu và khôi phục vào cơ sở dữ liệu khác, quay lui phiên bản và kiểm tra cảnh báo. Chưa có kết quả hoàn tất đợt diễn tập này; Dockerfile và workflow hiện là thành phần chuẩn bị triển khai. [N13]"
+      ]
+    },
+    {
+      "before": [
+        "Ảnh hưởng là không nên demo phí khoảng cách hoặc tuyên bố chặn địa chỉ ngoài vùng giao như một tính năng đã được bảo đảm. Hướng xử lý là dùng dịch vụ địa lý/coverage có thẩm quyền, truyền khoảng cách thật, đưa dữ liệu liên quan vào bước revalidate và thêm test địa chỉ trong/ngoài vùng cũng như biến động chính sách giữa preview và commit."
+      ],
+      "after": [
+        "Hạn chế này ảnh hưởng đến độ chính xác của chính sách phí theo khoảng cách và điều kiện phục vụ theo vùng. Hướng khắc phục là truyền khoảng cách thực, tích hợp kiểm tra vùng phục vụ trong bước revalidate và bổ sung kiểm thử cho địa chỉ trong vùng, ngoài vùng cũng như chính sách thay đổi giữa preview và commit."
+      ]
+    },
+    {
+      "before": [
+        "Snapshot item trong đường code được đọc chưa mang đầy đủ tên, lựa chọn và hình ảnh như đặc tả dữ liệu đề xuất. Các contact snapshot được khởi tạo rỗng; policy snapshot từ evaluator chưa có nội dung. Vì vậy, báo cáo chỉ khẳng định có nền tảng snapshot và các trường tiền đã được lưu, không khẳng định toàn bộ đơn cũ luôn độc lập với dữ liệu hiện tại."
+      ],
+      "after": [
+        "Snapshot của mặt hàng hiện chưa chứa đầy đủ tên, lựa chọn và hình ảnh theo mô hình lịch sử dự kiến. Snapshot liên hệ được khởi tạo rỗng và snapshot chính sách từ evaluator chưa có nội dung. Các trường tiền đã được lưu, nhưng việc hiển thị toàn bộ thông tin đơn cũ vẫn có thể phụ thuộc vào dữ liệu hiện tại."
+      ]
+    },
+    {
+      "before": [
+        "Kết quả 26/08 không tự xác nhận HEAD ngày 04/09. Ảnh local không tự xác định commit chụp. Chưa có số đo tải pilot, khảo sát người dùng, xác nhận thanh toán hoặc staging rehearsal hoàn tất. Đây là giới hạn phương pháp đánh giá, cần được trình bày cùng kết quả thay vì đẩy ra một ghi chú khó thấy."
+      ],
+      "after": [
+        "Phạm vi đánh giá bị giới hạn bởi khác biệt phiên bản giữa kết quả kiểm thử ngày 26/08/2026 và mã nguồn c477f30. Bộ ảnh cục bộ chưa liên kết đầy đủ với phiên bản thực thi. Ngoài ra, chưa có số đo tải pilot, khảo sát người dùng, xác nhận thanh toán tự động hoặc kết quả diễn tập staging hoàn tất."
+      ]
+    },
+    {
+      "before": [
+        "Kết quả phù hợp để trình bày là một đồ án đã triển khai nhiều miền nghiệp vụ và có bằng chứng kiểm chứng local ở baseline lịch sử, đồng thời còn các giới hạn tích hợp và vận hành. Không phù hợp để kết luận “sẵn sàng production” hoặc “hoàn thiện 100%”."
+      ],
+      "after": [
+        "Đề tài đã triển khai các miền nghiệp vụ chính và có kết quả kiểm thử cục bộ tại mốc 26/08/2026. Mức độ hoàn thiện hiện tại còn giới hạn ở tích hợp dữ liệu địa lý, lưu lịch sử giao dịch, hợp đồng giao diện và vận hành. Hệ thống chưa được xác nhận sẵn sàng phục vụ trên môi trường production."
+      ]
+    },
+    {
+      "before": [
+        "Bộ tài liệu và bằng chứng lịch sử cho thấy dự án đã được kiểm chứng cục bộ ở một baseline. Báo cáo cũng đối chiếu mã nguồn mới hơn và nhận diện các phần chưa có bằng chứng cập nhật. Việc giữ rõ ranh giới giữa ý định, code, test và nghiệm thu giúp hội đồng đánh giá đúng mức đóng góp thực tế."
+      ],
+      "after": [
+        "Đợt kiểm thử ngày 26/08/2026 ghi nhận kết quả đạt đối với các bộ kiểm thử backend, frontend và hành trình người mua trong môi trường cục bộ. Phân tích phiên bản c477f30 bổ sung đánh giá về cấu trúc triển khai và các hạn chế tích hợp. Kết quả này cho thấy nền tảng chức năng đã được hình thành, trong khi các thay đổi mới và khả năng vận hành thực tế còn cần kiểm chứng."
+      ]
+    },
+    {
+      "before": [
+        "Các giới hạn quan trọng nhất là tích hợp khoảng cách/coverage trong checkout, độ đầy đủ của snapshot lịch sử, các khoảng trống hợp đồng phục vụ giao diện và thiếu regression mới tại HEAD. Bên cạnh đó, chưa có môi trường production, chưa có kết quả vận hành pilot, chưa kiểm chứng các mục tiêu tải và chưa có khảo sát người dùng để đánh giá tác động thực tế.",
+        "Đồ án không triển khai một cổng thanh toán có xác nhận tự động hoặc hệ thống điều phối giao hàng. Những khả năng này phải được thiết kế và đánh giá riêng nếu phát triển tiếp. Bổ sung tên chức năng vào giao diện mà thiếu hợp đồng, dữ liệu và kiểm thử không được xem là mở rộng thành công."
+      ],
+      "after": [
+        "Các giới hạn quan trọng nhất là tích hợp khoảng cách/coverage trong checkout, độ đầy đủ của snapshot lịch sử, các khoảng trống hợp đồng phục vụ giao diện và thiếu kết quả kiểm thử hồi quy tại c477f30. Bên cạnh đó, chưa có môi trường production, chưa có kết quả vận hành pilot, chưa kiểm chứng các mục tiêu tải và chưa có khảo sát người dùng để đánh giá tác động thực tế.",
+        "Phạm vi hiện tại chưa bao gồm cổng thanh toán có xác nhận tự động hoặc hệ thống điều phối giao hàng. Việc phát triển các chức năng này cần bổ sung mô hình trạng thái, hợp đồng tích hợp và kiểm thử cho các tình huống thất bại hoặc xử lý trùng."
+      ]
+    },
+    {
+      "before": [
+        "Ưu tiên thứ ba là tái lập bằng chứng ở một release candidate. Đợt này cần ghi commit, kết quả test, build, ảnh và môi trường. Chỉ sau khi các luồng local ổn định mới tiến hành staging rehearsal với tài khoản có xác thực bình thường, dữ liệu dùng một lần và các bài restore/rollback. Mọi con số hiệu năng đưa vào bản báo cáo sau phải là kết quả đo có điều kiện thí nghiệm rõ ràng."
+      ],
+      "after": [
+        "Ưu tiên thứ ba là thực hiện một đợt kiểm thử hồi quy trên phiên bản dự kiến phát hành, ghi nhận đồng bộ mã phiên bản, cấu hình môi trường, kết quả kiểm thử và ảnh giao diện. Sau đó, hệ thống được đánh giá ở môi trường staging với các bài kiểm tra sao lưu, khôi phục, quay lui phiên bản và tải đồng thời. Các số đo hiệu năng cần kèm điều kiện thí nghiệm để có thể so sánh và tái lập."
+      ]
+    },
+    {
+      "before": [
+        "[N2] CoVie. AGENTS.md và CoVie-project-status.md, mốc tổng kết 26/08/2026, đọc ngày 04/09/2026. Dùng cho kết quả lịch sử và giới hạn nghiệm thu; các ghi nhận snapshot cũ không thay thế code HEAD."
+      ],
+      "after": [
+        "[N2] CoVie. AGENTS.md và CoVie-project-status.md. Kết quả kiểm thử và trạng thái triển khai tại mốc 26/08/2026. Đối chiếu ngày 04/09/2026."
+      ]
+    },
+    {
+      "before": [
+        "[N4] CoVie. Hợp đồng OpenAPI lưu tại packages/api-client/openapi/openapi.json, snapshot được đọc ngày 04/09/2026. Dùng cho path, operation, schema và phụ lục API. Chưa xác nhận hợp đồng đã được tái sinh từ runtime HEAD trong phiên biên soạn."
+      ],
+      "after": [
+        "[N4] CoVie. Hợp đồng OpenAPI 3.1.0 tại packages/api-client/openapi/openapi.json, phiên bản c477f30. Đối chiếu ngày 04/09/2026."
+      ]
+    },
+    {
+      "before": [
+        "[N9] CoVie. buyer-mobile-remaining-coverage-matrix.md, seller-desktop-coverage-matrix.md, seller-desktop-engineering-handoff.md, seller-mobile-ci-verification.md, admin-desktop-coverage-matrix.md và CoVie-ui-handoff-matrix.md. Các file được đọc ngày 04/09/2026; một số ghi trạng thái branch hoặc gate lịch sử, cần giữ phạm vi của từng ghi nhận."
+      ],
+      "after": [
+        "[N9] CoVie. buyer-mobile-remaining-coverage-matrix.md; seller-desktop-coverage-matrix.md; seller-desktop-engineering-handoff.md; seller-mobile-ci-verification.md; admin-desktop-coverage-matrix.md; CoVie-ui-handoff-matrix.md. Tài liệu bàn giao và phạm vi xác minh giao diện, đối chiếu ngày 04/09/2026."
+      ]
+    },
+    {
+      "before": [
+        "[N12] CoVie. apps/api/src/test và các bộ kiểm thử web trong apps/web. Dùng cho kiểm kê hiện vật test và thiết kế kịch bản; không dùng tên file để tuyên bố test đã chạy đạt."
+      ],
+      "after": [
+        "[N12] CoVie. Mã nguồn kiểm thử backend tại apps/api/src/test và các bộ kiểm thử giao diện tại apps/web, phiên bản c477f30. Đối chiếu ngày 04/09/2026."
+      ]
+    },
+    {
+      "before": [
+        "PHỤ LỤC A. HƯỚNG DẪN TÁI LẬP VÀ DEMO"
+      ],
+      "after": [
+        "PHỤ LỤC A. CÀI ĐẶT VÀ KIỂM THỬ HỆ THỐNG"
+      ]
+    },
+    {
+      "before": [
+        "A.3. Lệnh kiểm tra phiên bản nộp cuối",
+        "Các lệnh dưới là hướng dẫn thực thi, không phải danh sách đã chạy trong phiên viết báo cáo. Với API, chạy Maven Wrapper từ apps/api để cấu hình wrapper được giải quyết đúng. Các test yêu cầu DB hoặc performance fixture phải được đáp ứng theo hướng dẫn tương ứng; không gộp skip thành pass."
+      ],
+      "after": [
+        "A.3. Lệnh kiểm thử hệ thống",
+        "Các lệnh dưới phục vụ tái lập kiểm tra hợp đồng, kiểu dữ liệu, mã nguồn, bản dựng và hành trình sử dụng. Maven Wrapper được chạy từ apps/api. Một số kiểm thử phụ thuộc cơ sở dữ liệu hoặc bộ dữ liệu riêng; kết quả bỏ qua được thống kê tách biệt với kết quả đạt."
+      ]
+    },
+    {
+      "before": [
+        "A.4. Kịch bản trình bày đề xuất",
+        "Mở đầu bằng một tình huống tìm mua gần nơi ở và mục tiêu của CoVie. Sau đó trình bày ba vai trò cùng mô hình điểm bán. Demo luồng người mua tạo đơn và nhấn mạnh trạng thái chờ xác nhận. Chuyển sang sơ đồ checkout để giải thích bảo vệ tồn và chấp nhận giá. Tiếp theo trình bày Seller/Admin ở phạm vi đã xác minh. Kết thúc bằng bảng kết quả có thời điểm, các giới hạn còn lại và kế hoạch hoàn thiện.",
+        "Trong phần hỏi đáp, nếu được hỏi “đã thanh toán chưa”, cần giải thích giới hạn COD/chuyển khoản thỏa thuận. Nếu được hỏi “đã chống bán vượt tồn chưa”, phân biệt cơ chế code, test concurrency và kết quả chạy tại phiên bản nào. Nếu được hỏi “đã triển khai thực tế chưa”, trả lời theo bằng chứng staging/production hiện có, không dùng địa chỉ miền trong README làm chứng cứ triển khai."
+      ],
+      "after": [
+        "A.4. Kịch bản kiểm tra chức năng",
+        "Kịch bản chức năng bắt đầu từ một người mua tìm mặt hàng gần địa chỉ nhận. Người mua mở chi tiết, chọn lựa chọn mua, thêm vào giỏ và xem trước giá. Sau khi xác nhận, hệ thống tạo đơn ở trạng thái chờ người bán xác nhận. Mã đơn được dùng để truy cập chi tiết và kiểm tra lịch sử thao tác.",
+        "Các điểm kiểm tra gồm tính nhất quán giữa giá xem trước và dữ liệu tạo đơn, lượng tồn khả dụng sau giao dịch, quyền xem đơn và trạng thái chờ xác nhận. Với COD hoặc chuyển khoản thỏa thuận, việc tạo đơn chưa xác nhận đã nhận tiền. Kiểm thử cạnh tranh lượng hàng cuối được thực hiện riêng theo các tình huống tại Chương 6."
+      ]
+    },
+    {
+      "before": [
+        "Danh mục được trích trực tiếp từ các file migration tại commit c477f30. Bảng này kiểm kê hiện vật trên đĩa, không xác nhận một cơ sở dữ liệu đang chạy đã áp dụng thành công."
+      ],
+      "after": [
+        "Danh mục gồm các tệp migration tại phiên bản c477f30, thể hiện thứ tự thay đổi cấu trúc dữ liệu. Số lượng trong bảng được thống kê từ các lệnh CREATE TABLE; đây là cấu trúc khai báo trong mã nguồn, chưa phải kết quả kiểm tra trạng thái migration của một cơ sở dữ liệu đang chạy."
+      ]
+    },
+    {
+      "before": [
+        "PHỤ LỤC C. DANH MỤC API TRONG SNAPSHOT",
+        "Hợp đồng lưu có 119 path và 144 operation HTTP, OpenAPI 3.1.0. Danh sách được sinh từ file hợp đồng, không phải kết quả gọi thử mọi endpoint. Header, body, quyền và response schema phải đọc ở operation tương ứng; không suy ra quyền chỉ từ tên path."
+      ],
+      "after": [
+        "PHỤ LỤC C. DANH MỤC API",
+        "Hợp đồng OpenAPI 3.1.0 gồm 119 đường dẫn và 144 thao tác HTTP. Danh mục dưới đây nhóm các đường dẫn theo tài nguyên. Tham số, nội dung yêu cầu, phản hồi và cơ chế xác thực được mô tả tại từng thao tác trong tệp hợp đồng; kết quả kiểm thử API được trình bày tại Chương 6."
+      ]
+    },
+    {
+      "before": [
+        "Báo cáo được tổng hợp ngày 04/09/2026 từ commit c477f308b71a512b8002fe9d26866708527f8da1. Bộ đếm schema, API và file test là kết quả đọc tĩnh. Các kết quả ứng dụng ngày 26/08/2026 được dẫn theo tài liệu nội bộ, không được chạy lại trong phiên biên soạn.",
+        "Các sơ đồ tác nhân, kiến trúc, ERD rút gọn, checkout và trạng thái đơn được tác giả bản thảo dựng lại để giải thích code; không phải hình export từ Figma. Hình Home, Product Detail và Checkout Success là ảnh fixture local có sẵn, dùng nguyên ảnh và ghi nhãn nguồn. Không dùng ngày sửa file để khẳng định thời gian chụp.",
+        "Logo HUTECH trên bìa được lấy từ website chính thức của Trường Đại học Công nghệ TP.HCM. Công cụ ChatGPT/Codex được sử dụng để hỗ trợ tổng hợp tài liệu, diễn đạt, xây dựng sơ đồ và dàn trang báo cáo. Các mốc kiểm chứng trong nội dung được giữ theo nguồn; mốc 07/2026 trên bìa không thay thế ngày của bằng chứng kỹ thuật."
+      ],
+      "after": [
+        "Phạm vi phân tích kỹ thuật sử dụng mã nguồn tại commit c477f308b71a512b8002fe9d26866708527f8da1, đối chiếu ngày 04/09/2026. Thống kê migration, hợp đồng API và tệp kiểm thử được xác định từ mã nguồn. Kết quả thực thi ngày 26/08/2026 được trình bày riêng tại Chương 6 theo đúng phạm vi phiên bản đã ghi nhận.",
+        "Các sơ đồ tác nhân, kiến trúc, dữ liệu, checkout và trạng thái đơn biểu diễn mô hình cùng luồng xử lý của CoVie. Sơ đồ ERD tập trung vào các quan hệ cốt lõi; danh mục cấu trúc dữ liệu chi tiết được bổ sung tại Phụ lục B.",
+        "Các hình trang chủ, chi tiết sản phẩm và tạo đơn sử dụng bộ dữ liệu thử trong môi trường cục bộ. Chúng minh họa giao diện của hành trình người mua, không đại diện cho dữ liệu khách hàng hoặc hoạt động thương mại thực tế. Nguồn hình được ghi dưới từng hình minh họa."
+      ]
+    }
+  ]
+}

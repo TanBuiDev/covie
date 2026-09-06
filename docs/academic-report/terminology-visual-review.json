@@ -1,0 +1,286 @@
+{
+  "1": {
+    "sha256": "aa6b45b27b8059e8fdc0aa6ba71afda182f890409d43b99980ab8b1e5e89bc58",
+    "review": "report-centered-chapters/1"
+  },
+  "2": {
+    "sha256": "6a883ad42df43cda4b679024d3e901b90d82bbdd4d1fc73c4990b9658c6d46c9",
+    "review": "report-terminology-complete/2"
+  },
+  "3": {
+    "sha256": "f975aa7fa055088f04e4fbb82c614bc41c2c90620789714cfd39499fb821e362",
+    "review": "report-terminology-complete/3"
+  },
+  "4": {
+    "sha256": "864c392d711e276143b593cf609bdda997049a76d2fa58062d12c9aad122eb26",
+    "review": "report-centered-chapters/4"
+  },
+  "5": {
+    "sha256": "748e46f173113385d7db3e321369889c83a45487c14bbca3a5d123e5c8b62edc",
+    "review": "report-terminology-complete/5"
+  },
+  "6": {
+    "sha256": "1676506b5d2f967cbfc68e52ec61ca723814b276bbcc40df52209553b9ec539a",
+    "review": "report-terminology-complete/6"
+  },
+  "7": {
+    "sha256": "f25bf1b651e788c6a316166e3f5111994e3dc9cc422cb20917174c0aa58b27de",
+    "review": "report-terminology-complete/7"
+  },
+  "8": {
+    "sha256": "fda8be9208a4af226d24bf08d315e182835531f140fe8375ed410507be7bdc85",
+    "review": "report-terminology-complete/8"
+  },
+  "9": {
+    "sha256": "834949ebc10bb23f5f2471148267e073815a85fd0d4f08ce4618f3f3094d78ae",
+    "review": "report-terminology-v2/9"
+  },
+  "10": {
+    "sha256": "d3c19a7c5c4271f5df6c3b43b3e6c302c57ec9086e20d2c8adb88d539e3963a5",
+    "review": "report-terminology-verified/10"
+  },
+  "11": {
+    "sha256": "660d3e7c96b2403988f2ca34f80d9b467cbfdc16a79a1ed4baad8e2c02ac473c",
+    "review": "report-terminology-v3/11"
+  },
+  "12": {
+    "sha256": "17ee8784ede8cb161ef22c6b26ab93f7f203cd52a0146077b37bae99e70d184d",
+    "review": "report-terminology-v3/12"
+  },
+  "13": {
+    "sha256": "c1c218eff150bb175c4665f3f74b0cfac6a5978a832b6715abc53fa135b9372c",
+    "review": "report-terminology-v3/13"
+  },
+  "14": {
+    "sha256": "3465957d0e4d76fe96b8a99fdfb56b629c4fcd824a95f31ab84c1c614c0c0f4c",
+    "review": "report-terminology-v3/14"
+  },
+  "15": {
+    "sha256": "9069923011e5852315ce96ff5f78b8ebf8718481ff225e5ba4eb828dd0e21165",
+    "review": "report-terminology-v3/15"
+  },
+  "16": {
+    "sha256": "f641e2e325055e6e97055c605481ab9631c3488b77501c4b3cb2f3fd8136bc95",
+    "review": "report-terminology-v3/16"
+  },
+  "17": {
+    "sha256": "d1ae1ebcbeb611817b9ebe946d43316e43f76cde527bfb615759ba26ecfbbb9e",
+    "review": "report-terminology-v3/17"
+  },
+  "18": {
+    "sha256": "466942521e87939ad4be16527f2e489897e50fbaa90120d897a570ee8a1a4453",
+    "review": "report-terminology-v3/18"
+  },
+  "19": {
+    "sha256": "ea079c4512d0e1f0ccdcde37106ef1db2105d9b941cfef72cfef839fb0b7343e",
+    "review": "report-terminology-complete/19"
+  },
+  "20": {
+    "sha256": "8e5f09f3ce848f956dc04d158e0a69608656db92feb3442ed560b20c8ec46a64",
+    "review": "report-terminology-verified/20"
+  },
+  "21": {
+    "sha256": "466b7ab5ce623f29609e943d8cc5799e49706e807ccd1cf906d32f685577edf2",
+    "review": "report-terminology-v3/21"
+  },
+  "22": {
+    "sha256": "54267e6a55229898bd5cbf5db2700fe57469b171f4ba08296938eb998750d34f",
+    "review": "report-terminology-v3/22"
+  },
+  "23": {
+    "sha256": "037f6951c6d9a4e826fd223082241b73ce0ccfabd2a25325fffefdf8f4a956aa",
+    "review": "report-terminology-v3/23"
+  },
+  "24": {
+    "sha256": "64b828c7ad69841c0fadb1a66f69262933075a995654ba17cf5dccff402e1682",
+    "review": "report-terminology-v3/24"
+  },
+  "25": {
+    "sha256": "41463f7bf141a7bdd9998bfc2600bbb1eb5c0515cd39ac2ad60728cb589c6534",
+    "review": "report-terminology-v3/25"
+  },
+  "26": {
+    "sha256": "58cf8f38f832f18f1ee4659f0d29008fe8d8e9ea58c933784b908de9d0b16152",
+    "review": "report-terminology-v3/26"
+  },
+  "27": {
+    "sha256": "048e56bc60567f41751944030f4cf3b8fb492e6fb0079684de34b3ca4441a4b2",
+    "review": "report-terminology-verified/27"
+  },
+  "28": {
+    "sha256": "a986883c50d1f8ef818e29c255166d1656f4d68dd625cc36de3fa5b3c42f14a7",
+    "review": "report-terminology-v3/28"
+  },
+  "29": {
+    "sha256": "9ac5e1a3909b6918aa628314cbd69ade113acbd03694458a5fbbe7c6e6f407b7",
+    "review": "report-terminology-v3/29"
+  },
+  "30": {
+    "sha256": "420b8a9c779d34762fa4957e0c21e11a0efe9d03cccf4bd90835a512a089774e",
+    "review": "report-terminology-verified/30"
+  },
+  "31": {
+    "sha256": "af1857c776bdc094c8fde1a0a0d90b8f781824e5479732977bb786b4dcc4a099",
+    "review": "report-terminology-v3/31"
+  },
+  "32": {
+    "sha256": "444a62a00f20c6faa9de758f9406bd89c43b82e417588ace01b1c1c9af1cd0a1",
+    "review": "report-terminology-v3/32"
+  },
+  "33": {
+    "sha256": "30e78c089c7b3b98ee8e4e1be101ff94ed22a6b84b2851e97a00c64bef256c65",
+    "review": "report-terminology-verified/33"
+  },
+  "34": {
+    "sha256": "8a932652e24abb3d116da9c315cc692757f4ccc6eadebfd3bee48688c7ede163",
+    "review": "report-terminology-v3/34"
+  },
+  "35": {
+    "sha256": "24d56e1675df4635d49bc8b0c9e112dc3299cd23cd122cb4e09a44f51a7eb256",
+    "review": "report-terminology-verified/35"
+  },
+  "36": {
+    "sha256": "b3addd7aa7bdc5c13497f192417e015fa6c9ef4b3cff2f5df0966e8f0033abf4",
+    "review": "report-terminology-v3/36"
+  },
+  "37": {
+    "sha256": "57f2bac02f4ea551945a322f0f538d5a5a6bc8795a0dd6d12656843fd25db3d8",
+    "review": "report-terminology-complete/37"
+  },
+  "38": {
+    "sha256": "470306736f7be0e11fc17a9826a0ab7f60a5198de56e74887f38168c9cf7494b",
+    "review": "report-terminology-v3/38"
+  },
+  "39": {
+    "sha256": "503c000afee4ccaddb979edd7bf013d949259463fd48a3130db1568e30b32c1b",
+    "review": "report-terminology-verified/39"
+  },
+  "40": {
+    "sha256": "4034d6f5a0a8fc8f8e0e29c2c06cf58bb52f81a20338faef909b3f298ab3b416",
+    "review": "report-terminology-verified/40"
+  },
+  "41": {
+    "sha256": "73878231c9d9666b82a4e27e92bc841efc78a795d3b16e18171ce2a2a2d1aa91",
+    "review": "report-terminology-verified/41"
+  },
+  "42": {
+    "sha256": "c6b5afb621ddb0a5063a4eea5ec431f9080056f717fbac00f325a6adb8bf99d2",
+    "review": "report-terminology-verified/42"
+  },
+  "43": {
+    "sha256": "d9090702bfbcfb23ece14df97df63ef8de2a55b937fe92c6e01ae9cc40d1ee22",
+    "review": "report-terminology-verified/43"
+  },
+  "44": {
+    "sha256": "0c1e37908eb4709f3b75c72dfabe4bf0cdd37ba21fb43a1a9ee75459157de62e",
+    "review": "report-terminology-verified/44"
+  },
+  "45": {
+    "sha256": "f56c18a6daa02a55f683a4f982090278b393a5a959f050972e572999bfe8f60b",
+    "review": "report-terminology-verified/45"
+  },
+  "46": {
+    "sha256": "a8bc7efb5ae437d35346fe158ba40873e782e7081119a63be474a681198b5613",
+    "review": "report-terminology-verified/46"
+  },
+  "47": {
+    "sha256": "54b046f11ffa9164ec8083b5f9ba89ebd5db4800309b7528b722272a2919536e",
+    "review": "report-terminology-verified/47"
+  },
+  "48": {
+    "sha256": "901e834f76da7fc6e368b67d3dd122a5f46964e174ad7ff002b326a2376de865",
+    "review": "report-terminology-verified/48"
+  },
+  "49": {
+    "sha256": "4e830bb831f2951761b215bc19f0f52a9a79840b3f9a0c44f8e57b0f385c1fd1",
+    "review": "report-terminology-verified/49"
+  },
+  "50": {
+    "sha256": "f4d4f753081ee56b8e50f7b5bbe3e570c27232aa99833877676f6f89cbfb70c4",
+    "review": "report-terminology-verified/50"
+  },
+  "51": {
+    "sha256": "e61d4100077f474d853ddd17d17032f18b5a1038bd7ba0537d4f0665e576ae11",
+    "review": "report-terminology-verified/51"
+  },
+  "52": {
+    "sha256": "e98eac9485b9b5b3d97cbe3f0da86ee2fc12b4243b7cbfce3dda433c376bf58f",
+    "review": "report-terminology-verified/52"
+  },
+  "53": {
+    "sha256": "0d0e2b4cbe66c68a6d548546f111ddba98983dc1ff37431650f38934f2baaf23",
+    "review": "report-terminology-complete/53"
+  },
+  "54": {
+    "sha256": "5bb4d9eacd4e66a4e2845c3f63a4c6de5b3ad4f6edc7b045911150fc70a30a26",
+    "review": "report-terminology-complete/54"
+  },
+  "55": {
+    "sha256": "fd696dc7b83c90755b1970893ad9b26e109ae12a2cf79bd47f39c21a03242cd4",
+    "review": "report-terminology-verified/55"
+  },
+  "56": {
+    "sha256": "5b93f7f0af71f0603ba6cb64b96d4a22eb87ed93e2f6ce6b973cc6aa75a97f3d",
+    "review": "report-terminology-verified/56"
+  },
+  "57": {
+    "sha256": "2d22287357a57fd8981712332af0b4e92f25f95860c4b753f1447a1eaacb964c",
+    "review": "report-terminology-verified/57"
+  },
+  "58": {
+    "sha256": "a783ce84013709d89a96d269cf170608ca92db90f3e7e75eb9720ed6785095b2",
+    "review": "report-terminology-verified/58"
+  },
+  "59": {
+    "sha256": "9c069761545484671c7b6c3eca6b15682c6803ae322299da30296ea52192869b",
+    "review": "report-terminology-verified/59"
+  },
+  "60": {
+    "sha256": "69c731927f9db595061248f00d6f4d15ab32d6892bb0bf37f1df763b6863ac31",
+    "review": "report-terminology-complete/60"
+  },
+  "61": {
+    "sha256": "66236a0af23b6d03b49d393bbf31038f23289b0682d2a33b8e9cf2d7e7865c63",
+    "review": "report-terminology-verified/61"
+  },
+  "62": {
+    "sha256": "b7b5bb619d474a899b8ba9b751df3204a2e1309db77a62d736c8089dfe8ee092",
+    "review": "report-terminology-verified/62"
+  },
+  "63": {
+    "sha256": "3c9fdf51226003be3c25a8fa35c994f36cd2f43bd97da2c18c426ffc71cee621",
+    "review": "report-terminology-complete/63"
+  },
+  "64": {
+    "sha256": "0cdd2616d804d458a56af1a240514b7b8d10d22a97374215a4c647ce80d67ee5",
+    "review": "report-terminology-verified/64"
+  },
+  "65": {
+    "sha256": "4a8154db989ea058bad7d50a6f852f74fb69b9792ddcca4395dafeddd7661d2b",
+    "review": "report-terminology-verified/65"
+  },
+  "66": {
+    "sha256": "3d89cc28bc4b15ea2b30953e6acf67ace976415ddbad0940349d800101580d59",
+    "review": "report-terminology-verified/66"
+  },
+  "67": {
+    "sha256": "006f4336c4f1b3b20048b066e782b010162fb3bcb8a8d07bd7acd5a30b04b04a",
+    "review": "report-terminology-verified/67"
+  },
+  "68": {
+    "sha256": "f16e0abed859b3d87f23f3d93597af2b83e1b7a78d11403ca084a17c7cbb9bc4",
+    "review": "report-terminology-verified/68"
+  },
+  "69": {
+    "sha256": "80cb8644f7f1cb1fc17ffd622ea250f326567296d4dc25e62572a51d3bc8cc44",
+    "review": "report-terminology-verified/69"
+  },
+  "70": {
+    "sha256": "17171e0e5cf4167ff752ce5dc232b44ae5156041bc4cd637c63bb4f9fed8adff",
+    "review": "report-terminology-verified/70"
+  },
+  "71": {
+    "sha256": "872fd239f012d90397d0bf71becd0e4d9c803f07cb266855521b0fd01e7e9c45",
+    "review": "report-terminology-verified/71"
+  }
+}

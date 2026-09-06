@@ -1,0 +1,29 @@
+{
+  "selected": "Bố cục bìa HUTECH do người dùng cung cấp, điều chỉnh cho báo cáo đồ án CoVie",
+  "primary_reference": {
+    "file": "assets/cover-reference-user.png",
+    "sha256": "9568b51451f761a552705fae386ed654cb329a1bf00d79763f00da66c86798b5",
+    "usage": "Chỉ tham khảo bố cục; không sao chép tên đề tài, ngành, sinh viên, giảng viên hoặc niên khóa trong ảnh mẫu."
+  },
+  "institutional_references": [
+    {
+      "title": "BM Trang bia DATN.doc",
+      "page": "https://www.hutech.edu.vn/khoacntt/sinh-vien/bieu-mau/14601685-bieu-mau-do-an-tot-nghiep",
+      "download": "https://www.hutech.edu.vn/download/khoacntt/63113"
+    },
+    {
+      "title": "Trang bia DACN.doc",
+      "page": "https://www.hutech.edu.vn/khoacntt/sinh-vien/bieu-mau/14576371-bieu-mau-dacn-cap-nhat-062019",
+      "download": "https://www.hutech.edu.vn/download/khoacntt/41411"
+    }
+  ],
+  "adaptations": [
+    "Logo HUTECH nhỏ ở góc trên trái; tên Bộ và trường ở phía trên phải.",
+    "Tên loại báo cáo và đề tài căn giữa với cỡ chữ tiết chế theo ảnh mẫu.",
+    "Bổ sung Ngành Công nghệ thông tin và giữ Chuyên ngành Công nghệ phần mềm.",
+    "Thông tin sinh viên trình bày thành hai cột thẳng hàng; bỏ giảng viên hướng dẫn theo yêu cầu.",
+    "Địa điểm và thời gian đặt ở cuối trang; dùng khung kép chỉ trên bìa."
+  ],
+  "render": ".local/report-cover-reference-v2",
+  "visual_review": "Trang 1 và trang 2 đã kiểm tra; trang 2–109 khớp tuyệt đối bằng SHA-256 ảnh với bản QA trước."
+}

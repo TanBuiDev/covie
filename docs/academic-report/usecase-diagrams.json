@@ -1,0 +1,240 @@
+{
+  "views": [
+    {
+      "key": "buyer",
+      "title": "Người mua và hành trình giao dịch",
+      "actor": "Người mua",
+      "cases": [
+        "Tìm kiếm và xem mặt hàng",
+        "Quản lý địa chỉ nhận hàng",
+        "Quản lý giỏ và tạo đơn",
+        "Theo dõi và phản hồi đơn",
+        "Đăng nhu cầu Cần mua",
+        "Đánh giá và xem thông báo"
+      ],
+      "before": "Người mua sử dụng CoVie để tìm nguồn cung, tạo giao dịch và theo dõi kết quả. Sơ đồ tổng hợp các mục tiêu chính của vai trò này; chức năng khám phá còn được mở cho khách chưa đăng nhập, trong khi dữ liệu địa chỉ, giỏ, đơn và nhu cầu gắn với tài khoản.",
+      "after": "UC-02 mô tả tìm kiếm và lựa chọn mặt hàng; UC-03 mô tả xem trước và tạo đơn. UC-04 và UC-05 làm rõ tương tác sau đặt hàng và hành trình Cần mua. Quyền đánh giá phụ thuộc giao dịch đủ điều kiện; thông báo và dữ liệu cá nhân chỉ được đọc trong phạm vi của người sử dụng. [N4, N8]"
+    },
+    {
+      "key": "seller",
+      "title": "Người bán và tổ chức hoạt động",
+      "actor": "Thành viên\nngười bán",
+      "cases": [
+        "Quản lý hồ sơ và điểm bán",
+        "Quản lý mặt hàng và chào bán",
+        "Cập nhật giá và tồn kho",
+        "Cấu hình điều kiện giao nhận",
+        "Tiếp nhận và xử lý đơn",
+        "Phản hồi nhu cầu Cần mua"
+      ],
+      "before": "Thành viên người bán tổ chức nguồn cung theo đơn vị bán hàng và điểm phục vụ. Sơ đồ tách việc chuẩn bị mặt hàng, điều kiện phục vụ và xử lý giao dịch thành các mục tiêu riêng. Một mặt hàng có thể được chào bán tại nhiều điểm với giá và tình trạng khác nhau.",
+      "after": "Mỗi chức năng yêu cầu quyền thành viên và phạm vi điểm bán phù hợp. Sơ đồ thể hiện phạm vi yêu cầu của vai trò, còn mức độ kết nối giao diện và hợp đồng được đánh giá tại Chương 6. Đặc tả UC-04 bao quát xử lý đơn; UC-05 bao quát phản hồi nhu cầu. Người bán không được truy cập đơn hoặc thay đổi nguồn cung của đơn vị khác. [N4, N6, N9]"
+    },
+    {
+      "key": "admin",
+      "title": "Quản trị viên và kiểm soát hệ thống",
+      "actor": "Quản trị viên",
+      "cases": [
+        "Tra cứu tài khoản người dùng",
+        "Hạn chế hoặc khôi phục tài khoản",
+        "Xem xét báo cáo vi phạm",
+        "Kiểm duyệt nội dung",
+        "Thay đổi cấu hình hệ thống",
+        "Tra cứu đơn và nhật ký"
+      ],
+      "before": "Quản trị viên có các mục tiêu kiểm soát tài khoản, nội dung và chính sách vận hành. Tra cứu đơn hỗ trợ đối chiếu thông tin giao dịch; nhật ký giúp xác định người thực hiện, thời điểm và đối tượng của thay đổi.",
+      "after": "Thao tác quản trị chịu ràng buộc quyền, trạng thái và phiên bản dữ liệu. Việc tra cứu đơn không trao quyền tùy ý chuyển trạng thái thay người mua hoặc người bán. UC-06 trình bày luồng kiểm duyệt và cập nhật cấu hình. Những trang chưa có hợp đồng quản trị chuyên biệt vẫn là giới hạn triển khai, dù thuộc phạm vi thiết kế giao diện. [N4, N9]"
+    },
+    {
+      "key": "uc01",
+      "title": "UC-01 Đăng nhập và quản lý phiên",
+      "actor": "Người dùng",
+      "secondary": "“Google”",
+      "right": [
+        0
+      ],
+      "cases": [
+        "Đăng ký qua “Google”",
+        "Thiết lập mật khẩu",
+        "Đăng nhập bằng mật khẩu",
+        "Xem các phiên đăng nhập",
+        "Thu hồi phiên truy cập",
+        "Đăng xuất"
+      ],
+      "before": "Sơ đồ phân rã UC-01 thành các mục tiêu xác lập và kiểm soát quyền truy cập. “Google” là tác nhân hệ thống bên ngoài tham gia xác minh danh tính khi đăng ký; kho phiên và cơ sở dữ liệu thuộc bên trong CoVie, không được biểu diễn như tác nhân.",
+      "after": "Đăng ký lần đầu gồm xác minh danh tính và thiết lập mật khẩu theo luồng hiện có; sơ đồ không bổ sung đăng ký độc lập bằng “email”. Sau đăng nhập, người dùng có thể xem và thu hồi phiên theo quyền. Các trường hợp sai mật khẩu, phiên hết hiệu lực và tài khoản bị hạn chế được xử lý theo đặc tả tại mục 3.5. Đường liên kết trên hình biểu thị sự tham gia, không biểu thị thứ tự các bước. [N11]"
+    },
+    {
+      "key": "uc02",
+      "title": "UC-02 Tìm và chọn mặt hàng",
+      "actor": "Khách",
+      "secondary": "Người mua",
+      "left": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "right": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "cases": [
+        "Duyệt danh mục công khai",
+        "Tìm kiếm mặt hàng",
+        "Lọc và sắp xếp kết quả",
+        "Xem chi tiết mặt hàng",
+        "Xem hồ sơ người bán",
+        "Thêm lựa chọn vào giỏ"
+      ],
+      "before": "Khách và người mua cùng tham gia khám phá nguồn cung công khai. Người mua đã xác thực có thêm mục tiêu lưu lựa chọn vào giỏ của mình. Sơ đồ giúp phân biệt chức năng có thể truy cập trước đăng nhập với chức năng phát sinh dữ liệu giao dịch cá nhân.",
+      "after": "Chi tiết mặt hàng phân biệt hàng hóa, dịch vụ và đồ thanh lý. Không tìm thấy kết quả, lỗi tải dữ liệu và mặt hàng không còn khả dụng là các tình huống thay thế trong cùng chức năng. Kết quả tìm kiếm không bảo đảm giá hoặc lượng hàng còn nguyên khi đặt mua; dữ liệu được kiểm tra tiếp ở UC-03. Các tiêu chí bộ lọc và lựa chọn được trình bày tại mục 3.6. [N4, N7]"
+    },
+    {
+      "key": "uc03",
+      "title": "UC-03 Xem trước và tạo đơn",
+      "actor": "Người mua",
+      "cases": [
+        "Chọn nguồn mua hợp lệ",
+        "Chọn hình thức giao nhận",
+        "Chọn địa chỉ nhận hàng",
+        "Chọn phương thức thanh toán",
+        "Xem trước nội dung và tiền",
+        "Xác nhận tạo đơn"
+      ],
+      "before": "UC-03 tập trung vào quyết định đặt hàng của người mua. Nguồn mua có thể đến từ giỏ hoặc phản hồi Cần mua còn hiệu lực. Chọn địa chỉ chỉ áp dụng khi hình thức giao nhận yêu cầu; phương thức thanh toán thể hiện lựa chọn theo hợp đồng hiện có.",
+      "after": "Địa chỉ và nguồn mua phải thuộc phạm vi được sử dụng. Máy chủ tính lại dữ liệu khi xem trước và kiểm tra lại trước tạo đơn. Nếu giá, giỏ, địa chỉ hoặc lượng hàng thay đổi, người mua cần xem lại bản tính; hệ thống không tự chấp nhận thay. Kết quả thành công là đơn chờ xác nhận, chưa khẳng định đã thanh toán. Trình tự và ngoại lệ được đặc tả tại mục 3.7; sơ đồ này chỉ biểu diễn phạm vi tham gia. [N7]"
+    },
+    {
+      "key": "uc04",
+      "title": "UC-04 Xử lý và hoàn tất đơn",
+      "actor": "Thành viên\nngười bán",
+      "secondary": "Người mua",
+      "left": [
+        0,
+        1,
+        2,
+        4,
+        5
+      ],
+      "right": [
+        0,
+        3,
+        4,
+        5
+      ],
+      "cases": [
+        "Xem đơn và hành động hợp lệ",
+        "Xác nhận hoặc từ chối đơn",
+        "Cập nhật giao hàng hoặc thực hiện",
+        "Xác nhận nhận hàng hoặc hoàn tất",
+        "Yêu cầu và phản hồi hủy đơn",
+        "Báo hoặc xử lý sự cố đơn"
+      ],
+      "before": "UC-04 có sự tham gia của hai phía giao dịch. Người bán tiếp nhận và cập nhật quá trình thực hiện; người mua theo dõi, xác nhận kết quả hoặc phản hồi. Các mục tiêu hủy và xử lý sự cố được đặt trong cùng phạm vi vì quyền của mỗi phía thay đổi theo tình trạng đơn.",
+      "after": "Liên kết tới nhóm chức năng không có nghĩa hai tác nhân được thực hiện mọi lệnh như nhau. Chẳng hạn, yêu cầu hủy và phản hồi yêu cầu hủy là các hành động khác nhau trong cùng mục tiêu; chỉ hành động được máy chủ cho phép mới hợp lệ. Giao hàng, đến nhận và dịch vụ có nhánh thực hiện riêng. Mục 3.8 và sơ đồ trạng thái tại Chương 4 mô tả các điều kiện chuyển tiếp. [N4, N7]"
+    },
+    {
+      "key": "uc05",
+      "title": "UC-05 Đăng nhu cầu và chọn phản hồi",
+      "actor": "Người mua",
+      "secondary": "Thành viên\nngười bán",
+      "left": [
+        0,
+        1,
+        2,
+        5
+      ],
+      "right": [
+        3,
+        4
+      ],
+      "cases": [
+        "Đăng nhu cầu Cần mua",
+        "Xem nhu cầu và các phản hồi",
+        "Hủy nhu cầu khi được phép",
+        "Xem nhu cầu phù hợp điểm bán",
+        "Gửi hoặc rút phản hồi",
+        "Chọn phản hồi để tạo đơn"
+      ],
+      "before": "Người mua công bố nhu cầu khi chưa tìm được nguồn cung phù hợp. Thành viên người bán tiếp cận nhu cầu trong phạm vi được phép và phản hồi bằng chào bán hợp lệ. Người mua lựa chọn phản hồi còn có thể sử dụng để tiếp tục sang UC-03.",
+      "after": "Hủy nhu cầu, rút phản hồi và chuyển sang đặt hàng đều phụ thuộc thời hạn, quyền và trạng thái hiện tại. Tạo đơn chưa tự động chứng minh nhu cầu đã được đáp ứng; mốc ghi nhận phải theo quy tắc liên kết nhu cầu với đơn. Nguồn dữ liệu chọn ứng viên phản hồi trên giao diện người bán còn hạn chế, được nêu tại mục 3.9 và Chương 6. [N8, N9]"
+    },
+    {
+      "key": "uc06",
+      "title": "UC-06 Kiểm duyệt và thay đổi cấu hình",
+      "actor": "Quản trị viên",
+      "cases": [
+        "Xem hồ sơ báo cáo",
+        "Xem thông tin đối tượng liên quan",
+        "Ẩn hoặc khôi phục nội dung",
+        "Đóng hồ sơ khi được phép",
+        "Cập nhật cấu hình có phiên bản",
+        "Đọc nhật ký thay đổi"
+      ],
+      "before": "UC-06 tách mục tiêu xem xét hồ sơ, thực hiện quyết định kiểm duyệt và quản lý chính sách. Quản trị viên cần đọc thông tin hiện tại trước khi thao tác; nhật ký phục vụ đối chiếu sau thay đổi. Sơ đồ không gán tác vụ kiểm duyệt cho người mua hoặc người bán.",
+      "after": "Các thao tác có tác động cần lý do, xác nhận và quyền tương ứng. Cập nhật cấu hình yêu cầu giá trị hợp lệ cùng phiên bản đang có hiệu lực; khi xảy ra xung đột, quản trị viên phải đọc lại trước khi tiếp tục. Nhật ký thuộc phạm vi tra cứu, không phải nơi sửa lịch sử. Quyền quản trị và giới hạn hợp đồng được trình bày tại mục 3.10. [N4, N9]"
+    }
+  ],
+  "assets": [
+    {
+      "key": "buyer",
+      "caption": "Hình 3.2. Sơ đồ “use case” Người mua và hành trình giao dịch",
+      "path": "assets\\usecases\\buyer.png",
+      "sha256": "1dfec49b6d265d1f6969efc0acec34a3021a52cd3dfa2bdc5f4dcd7d5fbcd24d"
+    },
+    {
+      "key": "seller",
+      "caption": "Hình 3.3. Sơ đồ “use case” Người bán và tổ chức hoạt động",
+      "path": "assets\\usecases\\seller.png",
+      "sha256": "9b85a35040dfa0db622467040bb636bec4cf058f0a141339948a0b4894372c18"
+    },
+    {
+      "key": "admin",
+      "caption": "Hình 3.4. Sơ đồ “use case” Quản trị viên và kiểm soát hệ thống",
+      "path": "assets\\usecases\\admin.png",
+      "sha256": "1b90903f636d4832e6a449a7463c7a03c1a0b6176780a9b89ab0a6060b257b16"
+    },
+    {
+      "key": "uc01",
+      "caption": "Hình 3.5. Sơ đồ “use case” UC-01 Đăng nhập và quản lý phiên",
+      "path": "assets\\usecases\\uc01.png",
+      "sha256": "b0ae1a041aa27050bf31487664a622a4a3ccffbb513c33f36d06544f68d59069"
+    },
+    {
+      "key": "uc02",
+      "caption": "Hình 3.6. Sơ đồ “use case” UC-02 Tìm và chọn mặt hàng",
+      "path": "assets\\usecases\\uc02.png",
+      "sha256": "b9680e7cb8ba361220a1458fa2ec2c5de98b240a972cbc4e7e2a7cc7a7f6bbf0"
+    },
+    {
+      "key": "uc03",
+      "caption": "Hình 3.7. Sơ đồ “use case” UC-03 Xem trước và tạo đơn",
+      "path": "assets\\usecases\\uc03.png",
+      "sha256": "91ddc63afa8d520d5c0b904b201147504ab35a0a8bc16e77d02b9e6ec5273c59"
+    },
+    {
+      "key": "uc04",
+      "caption": "Hình 3.8. Sơ đồ “use case” UC-04 Xử lý và hoàn tất đơn",
+      "path": "assets\\usecases\\uc04.png",
+      "sha256": "18767f8b4ff236754d4886405d6e0f4dbea0062f7e938c76c3fae6d9e76589a9"
+    },
+    {
+      "key": "uc05",
+      "caption": "Hình 3.9. Sơ đồ “use case” UC-05 Đăng nhu cầu và chọn phản hồi",
+      "path": "assets\\usecases\\uc05.png",
+      "sha256": "6a81b5cd00f8b7311ec0d3ae8865fe1f5b6d12e599fb3aab77f0596d2a67b121"
+    },
+    {
+      "key": "uc06",
+      "caption": "Hình 3.10. Sơ đồ “use case” UC-06 Kiểm duyệt và thay đổi cấu hình",
+      "path": "assets\\usecases\\uc06.png",
+      "sha256": "b971a1425b642662b2113a0574ab5e22573b083730a8a6683aa926f555669332"
+    }
+  ]
+}

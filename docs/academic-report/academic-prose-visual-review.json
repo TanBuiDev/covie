@@ -1,0 +1,428 @@
+[
+  {
+    "page": 1,
+    "sha256": "aa6b45b27b8059e8fdc0aa6ba71afda182f890409d43b99980ab8b1e5e89bc58",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-1.png"
+  },
+  {
+    "page": 2,
+    "sha256": "6a883ad42df43cda4b679024d3e901b90d82bbdd4d1fc73c4990b9658c6d46c9",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-2.png"
+  },
+  {
+    "page": 3,
+    "sha256": "f975aa7fa055088f04e4fbb82c614bc41c2c90620789714cfd39499fb821e362",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-3.png"
+  },
+  {
+    "page": 4,
+    "sha256": "864c392d711e276143b593cf609bdda997049a76d2fa58062d12c9aad122eb26",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-4.png"
+  },
+  {
+    "page": 5,
+    "sha256": "748e46f173113385d7db3e321369889c83a45487c14bbca3a5d123e5c8b62edc",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-5.png"
+  },
+  {
+    "page": 6,
+    "sha256": "1676506b5d2f967cbfc68e52ec61ca723814b276bbcc40df52209553b9ec539a",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-6.png"
+  },
+  {
+    "page": 7,
+    "sha256": "196c798006eacb14c4817da38d65c43c87fc47b7eace7d659dbbd954c0a98d4b",
+    "method": "Direct visual inspection",
+    "reviewed_source": ".local\\report-prose-final-v3\\page-7.png"
+  },
+  {
+    "page": 8,
+    "sha256": "fda8be9208a4af226d24bf08d315e182835531f140fe8375ed410507be7bdc85",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-8.png"
+  },
+  {
+    "page": 9,
+    "sha256": "f34799ea3d0b3f01bf96f73de5230a36f22bc7fc2e1c0f679498e1d1ee10036a",
+    "method": "Direct visual inspection",
+    "reviewed_source": ".local\\report-prose-final-v3\\page-9.png"
+  },
+  {
+    "page": 10,
+    "sha256": "d3c19a7c5c4271f5df6c3b43b3e6c302c57ec9086e20d2c8adb88d539e3963a5",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-10.png"
+  },
+  {
+    "page": 11,
+    "sha256": "660d3e7c96b2403988f2ca34f80d9b467cbfdc16a79a1ed4baad8e2c02ac473c",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-11.png"
+  },
+  {
+    "page": 12,
+    "sha256": "17ee8784ede8cb161ef22c6b26ab93f7f203cd52a0146077b37bae99e70d184d",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-12.png"
+  },
+  {
+    "page": 13,
+    "sha256": "c1c218eff150bb175c4665f3f74b0cfac6a5978a832b6715abc53fa135b9372c",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-13.png"
+  },
+  {
+    "page": 14,
+    "sha256": "3465957d0e4d76fe96b8a99fdfb56b629c4fcd824a95f31ab84c1c614c0c0f4c",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-14.png"
+  },
+  {
+    "page": 15,
+    "sha256": "9069923011e5852315ce96ff5f78b8ebf8718481ff225e5ba4eb828dd0e21165",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-15.png"
+  },
+  {
+    "page": 16,
+    "sha256": "f641e2e325055e6e97055c605481ab9631c3488b77501c4b3cb2f3fd8136bc95",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-16.png"
+  },
+  {
+    "page": 17,
+    "sha256": "739bed9ea557694cd144ffc8216203ea8640fe8532c3c40da78dcdd3aebaaec9",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-17.png"
+  },
+  {
+    "page": 18,
+    "sha256": "466942521e87939ad4be16527f2e489897e50fbaa90120d897a570ee8a1a4453",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-18.png"
+  },
+  {
+    "page": 19,
+    "sha256": "ea079c4512d0e1f0ccdcde37106ef1db2105d9b941cfef72cfef839fb0b7343e",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-19.png"
+  },
+  {
+    "page": 20,
+    "sha256": "8e5f09f3ce848f956dc04d158e0a69608656db92feb3442ed560b20c8ec46a64",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-20.png"
+  },
+  {
+    "page": 21,
+    "sha256": "466b7ab5ce623f29609e943d8cc5799e49706e807ccd1cf906d32f685577edf2",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-21.png"
+  },
+  {
+    "page": 22,
+    "sha256": "54267e6a55229898bd5cbf5db2700fe57469b171f4ba08296938eb998750d34f",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-22.png"
+  },
+  {
+    "page": 23,
+    "sha256": "037f6951c6d9a4e826fd223082241b73ce0ccfabd2a25325fffefdf8f4a956aa",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-23.png"
+  },
+  {
+    "page": 24,
+    "sha256": "64b828c7ad69841c0fadb1a66f69262933075a995654ba17cf5dccff402e1682",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-24.png"
+  },
+  {
+    "page": 25,
+    "sha256": "41463f7bf141a7bdd9998bfc2600bbb1eb5c0515cd39ac2ad60728cb589c6534",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-25.png"
+  },
+  {
+    "page": 26,
+    "sha256": "58cf8f38f832f18f1ee4659f0d29008fe8d8e9ea58c933784b908de9d0b16152",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-26.png"
+  },
+  {
+    "page": 27,
+    "sha256": "048e56bc60567f41751944030f4cf3b8fb492e6fb0079684de34b3ca4441a4b2",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-27.png"
+  },
+  {
+    "page": 28,
+    "sha256": "a986883c50d1f8ef818e29c255166d1656f4d68dd625cc36de3fa5b3c42f14a7",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-28.png"
+  },
+  {
+    "page": 29,
+    "sha256": "9ac5e1a3909b6918aa628314cbd69ade113acbd03694458a5fbbe7c6e6f407b7",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-29.png"
+  },
+  {
+    "page": 30,
+    "sha256": "420b8a9c779d34762fa4957e0c21e11a0efe9d03cccf4bd90835a512a089774e",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-30.png"
+  },
+  {
+    "page": 31,
+    "sha256": "8345ea0450b8cb43e2ca38a15c4e0840e61abc450d890d70b501359c2b3df044",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-31.png"
+  },
+  {
+    "page": 32,
+    "sha256": "444a62a00f20c6faa9de758f9406bd89c43b82e417588ace01b1c1c9af1cd0a1",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-32.png"
+  },
+  {
+    "page": 33,
+    "sha256": "30e78c089c7b3b98ee8e4e1be101ff94ed22a6b84b2851e97a00c64bef256c65",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-33.png"
+  },
+  {
+    "page": 34,
+    "sha256": "8a932652e24abb3d116da9c315cc692757f4ccc6eadebfd3bee48688c7ede163",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-34.png"
+  },
+  {
+    "page": 35,
+    "sha256": "24d56e1675df4635d49bc8b0c9e112dc3299cd23cd122cb4e09a44f51a7eb256",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-35.png"
+  },
+  {
+    "page": 36,
+    "sha256": "39a9ade9c59fcf465b82a33d71bd22ef60578810d1927024737256fd6334430c",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-36.png"
+  },
+  {
+    "page": 37,
+    "sha256": "57f2bac02f4ea551945a322f0f538d5a5a6bc8795a0dd6d12656843fd25db3d8",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-37.png"
+  },
+  {
+    "page": 38,
+    "sha256": "48ac7b8617a7b5c560d626d7eece8f502f608e3fda7b09a2b263dcd57c0e6ab3",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-38.png"
+  },
+  {
+    "page": 39,
+    "sha256": "e4c6a75110f358c35618cde702a3d262c4480283bbd8de59fabc4cdd2e551a97",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-39.png"
+  },
+  {
+    "page": 40,
+    "sha256": "47aaa17515a8bd7919f8bf341bb0e2630f0eeb287f05af7d3db70d830e3d9ea2",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-40.png"
+  },
+  {
+    "page": 41,
+    "sha256": "c0a517d28e5fa59fa791959e95b0a6e62eb4b34f0cd411c404b282be380f7056",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-41.png"
+  },
+  {
+    "page": 42,
+    "sha256": "c6b5afb621ddb0a5063a4eea5ec431f9080056f717fbac00f325a6adb8bf99d2",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-42.png"
+  },
+  {
+    "page": 43,
+    "sha256": "2627348c19f763f58d59fe5d3b0e23d622ceaf9f9e8722798bd23118e125c7f8",
+    "method": "Direct visual inspection",
+    "reviewed_source": ".local\\report-prose-final-v3\\page-43.png"
+  },
+  {
+    "page": 44,
+    "sha256": "63cba333bc86bf769ec583daca1859dda7296e3a9bc5ed2eed1a5673e467ab90",
+    "method": "Direct visual inspection",
+    "reviewed_source": ".local\\report-prose-final-v3\\page-44.png"
+  },
+  {
+    "page": 45,
+    "sha256": "981e0928caf1ad49793de536c15ae304489e299f8778b4b9bf1bf22e2b1a6ae5",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-45.png"
+  },
+  {
+    "page": 46,
+    "sha256": "1527d909d24e92da8788091e91e2e2f4da9511b12337dec6741a664a93705d28",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-46.png"
+  },
+  {
+    "page": 47,
+    "sha256": "9c1bf5f8d4ae3f769f1b45dd65c49cf559be3899b7bf413bb943dac51a682a37",
+    "method": "Direct visual inspection",
+    "reviewed_source": ".local\\report-prose-final-v3\\page-47.png"
+  },
+  {
+    "page": 48,
+    "sha256": "999b88c83adb57a31481a5cec065775240203778cd4abc9f9368835a5cb641e2",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-48.png"
+  },
+  {
+    "page": 49,
+    "sha256": "734467cbe6b4ac5479f125f60e7e2b1c6b323c8dafe3a05eeed16470a32e0248",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-49.png"
+  },
+  {
+    "page": 50,
+    "sha256": "f4d4f753081ee56b8e50f7b5bbe3e570c27232aa99833877676f6f89cbfb70c4",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-50.png"
+  },
+  {
+    "page": 51,
+    "sha256": "e61d4100077f474d853ddd17d17032f18b5a1038bd7ba0537d4f0665e576ae11",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-51.png"
+  },
+  {
+    "page": 52,
+    "sha256": "e98eac9485b9b5b3d97cbe3f0da86ee2fc12b4243b7cbfce3dda433c376bf58f",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-52.png"
+  },
+  {
+    "page": 53,
+    "sha256": "0d0e2b4cbe66c68a6d548546f111ddba98983dc1ff37431650f38934f2baaf23",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-53.png"
+  },
+  {
+    "page": 54,
+    "sha256": "5bb4d9eacd4e66a4e2845c3f63a4c6de5b3ad4f6edc7b045911150fc70a30a26",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-54.png"
+  },
+  {
+    "page": 55,
+    "sha256": "fd696dc7b83c90755b1970893ad9b26e109ae12a2cf79bd47f39c21a03242cd4",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-55.png"
+  },
+  {
+    "page": 56,
+    "sha256": "a29778e855864fb643bc5bd87317f8c802f30284af8b636890714dbe260a57d4",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-56.png"
+  },
+  {
+    "page": 57,
+    "sha256": "d112d28e6f7eaf9d17f097ab09453f018743203bab190bc8cd59c5c99a757355",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-57.png"
+  },
+  {
+    "page": 58,
+    "sha256": "8fbd1426b42b88c9a20ce214a010ad2d786e9369f6ac1b3e1c48e411306db8da",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-58.png"
+  },
+  {
+    "page": 59,
+    "sha256": "22e9634fddadffa75961fc6a854a52f4ac6d48f1fbabba04c5c4b66bddda52f5",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-59.png"
+  },
+  {
+    "page": 60,
+    "sha256": "48404b2191106d6fa63b1246f69a5868fe119448552e96734031245bcf0c6fa7",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-60.png"
+  },
+  {
+    "page": 61,
+    "sha256": "594cdd46abc3c55a205e02484eaf9b05a75cded5068026b7ce34e51728fd6830",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-61.png"
+  },
+  {
+    "page": 62,
+    "sha256": "be04fb3c88613372d370e0a7937d4f5e0b7a70146e1e719fd3655b8ce64d6280",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-62.png"
+  },
+  {
+    "page": 63,
+    "sha256": "483da8f53ed23b8d61761508f4bf68c7f9fad9cd967ce4246ea3ff94fccab7d6",
+    "method": "Full PNG SHA-256 match to directly inspected prose revision",
+    "reviewed_source": ".local\\report-prose-v2\\page-63.png"
+  },
+  {
+    "page": 64,
+    "sha256": "0cdd2616d804d458a56af1a240514b7b8d10d22a97374215a4c647ce80d67ee5",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-64.png"
+  },
+  {
+    "page": 65,
+    "sha256": "4a8154db989ea058bad7d50a6f852f74fb69b9792ddcca4395dafeddd7661d2b",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-65.png"
+  },
+  {
+    "page": 66,
+    "sha256": "3d89cc28bc4b15ea2b30953e6acf67ace976415ddbad0940349d800101580d59",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-66.png"
+  },
+  {
+    "page": 67,
+    "sha256": "006f4336c4f1b3b20048b066e782b010162fb3bcb8a8d07bd7acd5a30b04b04a",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-67.png"
+  },
+  {
+    "page": 68,
+    "sha256": "f16e0abed859b3d87f23f3d93597af2b83e1b7a78d11403ca084a17c7cbb9bc4",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-68.png"
+  },
+  {
+    "page": 69,
+    "sha256": "80cb8644f7f1cb1fc17ffd622ea250f326567296d4dc25e62572a51d3bc8cc44",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-69.png"
+  },
+  {
+    "page": 70,
+    "sha256": "17171e0e5cf4167ff752ce5dc232b44ae5156041bc4cd637c63bb4f9fed8adff",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-70.png"
+  },
+  {
+    "page": 71,
+    "sha256": "872fd239f012d90397d0bf71becd0e4d9c803f07cb266855521b0fd01e7e9c45",
+    "method": "Full PNG SHA-256 match to previously reviewed terminology report",
+    "reviewed_source": ".local\\report-terminology-complete\\page-71.png"
+  }
+]

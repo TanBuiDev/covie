@@ -1,0 +1,22 @@
+[
+  {
+    "before": "Bộ ảnh giao diện minh họa sử dụng dữ liệu thử có mốc thời gian riêng. Chưa có thông tin liên kết đầy đủ từng ảnh với phiên bản thực thi của đợt kiểm thử 26/08/2026. Do đó, ảnh được sử dụng để mô tả chức năng và bố cục, còn kết quả kiểm thử được đánh giá theo bản ghi thực thi tương ứng.",
+    "after": "Ảnh giao diện được sử dụng để minh họa chức năng và bố cục. Kết quả tại Bảng 6.2 được đánh giá theo bản ghi thực thi ngày 26/08/2026; bộ ảnh minh họa không dùng để xác nhận kết quả của đợt kiểm thử này."
+  },
+  {
+    "before": "Một “test case” cần lưu tiền điều kiện, dữ liệu, thao tác, kết quả thực tế, “log” hoặc ảnh, “commit” và người/thời điểm thực hiện. Phụ lục cung cấp lệnh tái lập; bảng trên là nội dung thử chứ chưa phải biên bản nghiệm thu có chữ ký.",
+    "after": "Các kịch bản tại Bảng 6.3 xác định đầu vào, thao tác và kết quả mong đợi cho kiểm thử bổ sung. Trạng thái chưa thực thi cho biết các kịch bản này chưa có kết quả xác nhận tại phiên bản c477f30. Phụ lục A cung cấp lệnh khởi chạy môi trường và bộ kiểm thử."
+  },
+  {
+    "before": "“Code” c477f30 và “OpenAPI”/“migration” đã đọc",
+    "after": "Mã nguồn c477f30, đặc tả “OpenAPI” và các phiên bản cấu trúc dữ liệu"
+  },
+  {
+    "before": "Ảnh “Public Buyer” có sẵn trong .local/dev",
+    "after": "Ảnh giao diện người mua với dữ liệu thử nghiệm"
+  },
+  {
+    "before": "Yêu cầu kiểm chứng tiếp, không phải kết quả đạt",
+    "after": "Phạm vi kiểm thử bổ sung chưa có kết quả thực thi"
+  }
+]

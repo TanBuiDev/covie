@@ -1,0 +1,333 @@
+[
+  {
+    "key": "admin_users",
+    "path": "docs\\academic-report\\assets\\product\\admin_users.png",
+    "kind": "figma",
+    "nodeId": "393:4746",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=393-4746",
+    "sha256": "37576d0decb3fc4b0715fe9a25e7aeff394f90664b34499f26829d2af7a09725"
+  },
+  {
+    "key": "admin_orders",
+    "path": "docs\\academic-report\\assets\\product\\admin_orders.png",
+    "kind": "figma",
+    "nodeId": "400:15568",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=400-15568",
+    "sha256": "2f95665a42f8454ff3bd86d697a11082cd9890fb26619dac20f647f9618a8f23"
+  },
+  {
+    "key": "admin_reports",
+    "path": "docs\\academic-report\\assets\\product\\admin_reports.png",
+    "kind": "figma",
+    "nodeId": "404:2473",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=404-2473",
+    "sha256": "d9d1ccbd9895399d19fce78e7c06f4b73939624346cf61ff6f3acd17938799f9"
+  },
+  {
+    "key": "admin_settings",
+    "path": "docs\\academic-report\\assets\\product\\admin_settings.png",
+    "kind": "figma",
+    "nodeId": "407:2674",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=407-2674",
+    "sha256": "b08cd9fa5978489ee78fe959217d80a72293a8f0a424eb05db3e78912213375d"
+  },
+  {
+    "key": "admin_audit",
+    "path": "docs\\academic-report\\assets\\product\\admin_audit.png",
+    "kind": "figma",
+    "nodeId": "417:3838",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=417-3838",
+    "sha256": "a4c732b74f6bd9728f7b89681b08f78772e79aaf3f0194f15f1f8f3b1725f6c9"
+  },
+  {
+    "key": "admin_mobile_users",
+    "path": "docs\\academic-report\\assets\\product\\admin_mobile_users.png",
+    "kind": "figma",
+    "nodeId": "600:97",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=600-97",
+    "sha256": "446c0629cc574e844e314d242ef3e24758766c1b562cfa4e2675f085392030fe"
+  },
+  {
+    "key": "admin_mobile_report",
+    "path": "docs\\academic-report\\assets\\product\\admin_mobile_report.png",
+    "kind": "figma",
+    "nodeId": "603:645",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=603-645",
+    "sha256": "3287c51dc541b6d362cf34eec1407ec508f1b513f9c479121f40abee71515744"
+  },
+  {
+    "key": "admin_mobile_conflict",
+    "path": "docs\\academic-report\\assets\\product\\admin_mobile_conflict.png",
+    "kind": "figma",
+    "nodeId": "603:693",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=603-693",
+    "sha256": "97f3b53fa76da0987352d27a74426a8cf7f5c220f9f3a6453855498dce1060d6"
+  },
+  {
+    "key": "desktop_search",
+    "path": "docs\\academic-report\\assets\\product\\desktop_search.png",
+    "kind": "figma",
+    "nodeId": "556:1868",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=556-1868",
+    "sha256": "eeb4bd3a18e4eb2b7909aa964c6cbdf8e6272660bb5c347f14381c11f790ef01"
+  },
+  {
+    "key": "desktop_search_empty",
+    "path": "docs\\academic-report\\assets\\product\\desktop_search_empty.png",
+    "kind": "figma",
+    "nodeId": "558:2287",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=558-2287",
+    "sha256": "553cf0ccdb8e8eec293b8506cfab442a7bed75b9f833d5ecf32c1c1e99bd7a8b"
+  },
+  {
+    "key": "desktop_search_error",
+    "path": "docs\\academic-report\\assets\\product\\desktop_search_error.png",
+    "kind": "figma",
+    "nodeId": "558:2628",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=558-2628",
+    "sha256": "dc645736da6a172b447a21271fade27010ca5c9f64205f5b2c4ae9e383c39166"
+  },
+  {
+    "key": "desktop_cart_changed",
+    "path": "docs\\academic-report\\assets\\product\\desktop_cart_changed.png",
+    "kind": "figma",
+    "nodeId": "564:4933",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=564-4933",
+    "sha256": "664bd2b73ae075bcb386b412ff4ca412c7a78fcd2958947000b706e248c3e03a"
+  },
+  {
+    "key": "desktop_checkout_changed",
+    "path": "docs\\academic-report\\assets\\product\\desktop_checkout_changed.png",
+    "kind": "figma",
+    "nodeId": "564:6350",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=564-6350",
+    "sha256": "d09abce8fe70d8a3e525a77b437a6747983af88408e09c9a4809424345443cfe"
+  },
+  {
+    "key": "desktop_need_responses",
+    "path": "docs\\academic-report\\assets\\product\\desktop_need_responses.png",
+    "kind": "figma",
+    "nodeId": "565:8284",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=565-8284",
+    "sha256": "11303bf4244b44841209357d5f12ef1f087bf916f913b9b79a3db0a71a8471eb"
+  },
+  {
+    "key": "desktop_order",
+    "path": "docs\\academic-report\\assets\\product\\desktop_order.png",
+    "kind": "figma",
+    "nodeId": "565:6685",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=565-6685",
+    "sha256": "67a9d2c90104433f9dbb9ee4dc61be6fad3fe2c85c982f3fe21e704fd7e4acbe"
+  },
+  {
+    "key": "login",
+    "path": "docs\\academic-report\\assets\\product\\login.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\auth-001-318-3579-390.png",
+    "sha256": "671776234e43055faed1a22e967bfce385b33602cfad6f99326eb9f8bf6771bd"
+  },
+  {
+    "key": "register",
+    "path": "docs\\academic-report\\assets\\product\\register.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\auth-002-318-3674-390.png",
+    "sha256": "4341fbd6d0e68a251ee6fc6090d026bf67901780bf960a26cc7ced0434bfc631"
+  },
+  {
+    "key": "home",
+    "path": "docs\\academic-report\\assets\\product\\home.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\pub-001-home-390.png",
+    "sha256": "ac5b887c45bdd40091e5c1fc6e7f479557cb003261171d02e20b92df29d011d3"
+  },
+  {
+    "key": "search",
+    "path": "docs\\academic-report\\assets\\product\\search.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\pub-004-search-results-390.png",
+    "sha256": "197aa4aba04844f862be9b1794ef5a49e45a42f7a0f839abcb1e011ed82d1fcf"
+  },
+  {
+    "key": "product",
+    "path": "docs\\academic-report\\assets\\product\\product.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\pub-006-item-detail-390.png",
+    "sha256": "54b91e09e697dd421772bb357dbdd4e7a6b1731987b2ce0e49efd9613ca8195d"
+  },
+  {
+    "key": "service",
+    "path": "docs\\academic-report\\assets\\product\\service.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\pub-007-service-detail-390.png",
+    "sha256": "8880abb31578fbcf1fafbc2043a9f775601d5075d5e9b05111d6aa6711278e9d"
+  },
+  {
+    "key": "resale",
+    "path": "docs\\academic-report\\assets\\product\\resale.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\pub-008-resale-detail-390.png",
+    "sha256": "ee3a8467f06ff66e41ddc6dbc7a7889bb7856b1b0bcf45e110c5852bb46d5dba"
+  },
+  {
+    "key": "shop",
+    "path": "docs\\academic-report\\assets\\product\\shop.png",
+    "kind": "figma",
+    "source": "https://www.figma.com/design/4LcMXFQz3BnU1EXzBk69t2/CoVie?node-id=312-3076",
+    "sha256": "6da9f2bfb2d932276e5588c910c5bcd95d2d9c0c9cde2ecaaceabec6a03f84d8",
+    "nodeId": "312:3076"
+  },
+  {
+    "key": "addresses",
+    "path": "docs\\academic-report\\assets\\product\\addresses.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\buy-003-address-list-390.png",
+    "sha256": "c7792f4d545b19ac8f82e5d6576205ef2e634556fc4851ab331cf6565bfec6b2"
+  },
+  {
+    "key": "address_edit",
+    "path": "docs\\academic-report\\assets\\product\\address_edit.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\buy-004-new-327-4086-390.png",
+    "sha256": "6237d5ea1fcb271161891cc9ba809bed84c2740514a9a3facb522a31f288504b"
+  },
+  {
+    "key": "cart_list",
+    "path": "docs\\academic-report\\assets\\product\\cart_list.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\buy-001-cart-list-390.png",
+    "sha256": "31c303a81e6f3e0584b4aff875abfa631b861ad8d2135d59f3d0894db1867297"
+  },
+  {
+    "key": "cart_detail",
+    "path": "docs\\academic-report\\assets\\product\\cart_detail.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\buy-002-cart-detail-390.png",
+    "sha256": "0e204886d6516a3ca1c6dde89575b252a612df6f0c6d023b20339e7cc3b59f7c"
+  },
+  {
+    "key": "checkout",
+    "path": "docs\\academic-report\\assets\\product\\checkout.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\buy-005-checkout-preview-390.png",
+    "sha256": "2d334297059ad44f69193ea5a692ada00d106b17826c9646fb36fd4db86dd8ee"
+  },
+  {
+    "key": "success",
+    "path": "docs\\academic-report\\assets\\product\\success.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\buy-006-checkout-success-390.png",
+    "sha256": "8b693d8b7ca75864b84e33566800d489085a29c6ee59a019d001ed14b8a4fab9"
+  },
+  {
+    "key": "need_list",
+    "path": "docs\\academic-report\\assets\\product\\need_list.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\need-001-342-5209-390.png",
+    "sha256": "f52abaea8985471bb7cfa8b8a72ffa56845564bc0ddc9734b2d8e07bb61e110b"
+  },
+  {
+    "key": "need_create",
+    "path": "docs\\academic-report\\assets\\product\\need_create.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\need-002-342-5413-390.png",
+    "sha256": "eb044952cf2c6832757560a0cebffe4d5edad28919b135f976cef87455dea83b"
+  },
+  {
+    "key": "notifications",
+    "path": "docs\\academic-report\\assets\\product\\notifications.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\notifications-348-6408-390.png",
+    "sha256": "3d5f4e5698aeed18fa31dcddf2d8090bcecdf8232f93db869afa157e1166401f"
+  },
+  {
+    "key": "sessions",
+    "path": "docs\\academic-report\\assets\\product\\sessions.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sessions-319-3917-390.png",
+    "sha256": "c35fcdc62f3bec9e6a1102109cb86a7aff999708951a35fa42d9cb9a02cff1f9"
+  },
+  {
+    "key": "seller_overview",
+    "path": "docs\\academic-report\\assets\\product\\seller_overview.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-001-357-9-1440.png",
+    "sha256": "91043f277e826ecd31d3dfc1994f0bc798634a60dc5eefde9a1921cbc11f0eee"
+  },
+  {
+    "key": "seller_locations",
+    "path": "docs\\academic-report\\assets\\product\\seller_locations.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-003-357-321-390.png",
+    "sha256": "7d443900e4903b1fa5ed2ae4734eca7a7b540d96de2f5ae244bfa5b571c2f4e2"
+  },
+  {
+    "key": "seller_location_edit",
+    "path": "docs\\academic-report\\assets\\product\\seller_location_edit.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-004-357-407-390.png",
+    "sha256": "a28a297154ba9d9dcb389938f18b7323f069a9a42db96afc5b2e087bd9a00796"
+  },
+  {
+    "key": "seller_shipping",
+    "path": "docs\\academic-report\\assets\\product\\seller_shipping.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-006-362-525-390.png",
+    "sha256": "799b9d7a69aca7318619ea38df99b4e1d40136782ded79c40b6daf4c91c216a9"
+  },
+  {
+    "key": "seller_minimum",
+    "path": "docs\\academic-report\\assets\\product\\seller_minimum.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-007-362-718-390.png",
+    "sha256": "3b54a4977a29c88e335ea43fa37f6cefa01a8512ed38d9cbdcecace9fcfb8666"
+  },
+  {
+    "key": "seller_catalog",
+    "path": "docs\\academic-report\\assets\\product\\seller_catalog.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-009-368-709-1440.png",
+    "sha256": "01b49d50bda37b36882683cb5273507da2468c49ecd4df138e764d6f67fa2ff4"
+  },
+  {
+    "key": "seller_product",
+    "path": "docs\\academic-report\\assets\\product\\seller_product.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-010-368-854-1440.png",
+    "sha256": "306da11955b062e3997f9b68bef3eaef9df29cd2a50f87327708c7ba89815715"
+  },
+  {
+    "key": "seller_orders",
+    "path": "docs\\academic-report\\assets\\product\\seller_orders.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-014-374-1340-1440.png",
+    "sha256": "d49d0df79f64b7152e18973faf963466a86340bfe9939a6bbaa513a2da003886"
+  },
+  {
+    "key": "seller_order_detail",
+    "path": "docs\\academic-report\\assets\\product\\seller_order_detail.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-015-375-1070-1440.png",
+    "sha256": "d275a6fad34b52c70f8e04cf1991b6059508e13c4025ef23476579f4a2e2e6f1"
+  },
+  {
+    "key": "seller_needs",
+    "path": "docs\\academic-report\\assets\\product\\seller_needs.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\need-005-006-387-13665-1440.png",
+    "sha256": "bac11902f2e5215de95f139e0b07b197ca5a67ed84eb86d4e033d9954c8b0df6"
+  },
+  {
+    "key": "seller_trust",
+    "path": "docs\\academic-report\\assets\\product\\seller_trust.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-018-389-13627-390.png",
+    "sha256": "31e6ef7a49a50873e59c278823d679ac1003405433e701351c52eb9bfda75145"
+  },
+  {
+    "key": "seller_notices",
+    "path": "docs\\academic-report\\assets\\product\\seller_notices.png",
+    "kind": "application",
+    "source": ".local\\dev\\visual-review\\chunk3\\sel-019-389-13692-390.png",
+    "sha256": "c663bc8c045cbeb018076c7afd7553f1492581910ba236a51e9f4e12bb39ba20"
+  }
+]

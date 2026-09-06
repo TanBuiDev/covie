@@ -1,0 +1,53 @@
+{
+  "figures": [
+    {
+      "key": "value_journey",
+      "caption": "Hình 1.1. Hành trình giá trị chính của nền tảng CoVie",
+      "source": "Nguồn: tổng hợp từ phạm vi sản phẩm và hành trình người dùng CoVie. [N1, N9]",
+      "asset": "assets\\explanatory\\value_journey.png",
+      "sha256": "3300ea29daa2bc940b9cce973d486b734b7677218bfec92288f69a3f395b5149"
+    },
+    {
+      "key": "event_flow",
+      "caption": "Hình 2.1. Luồng sự kiện từ giao dịch đến cập nhật giao diện",
+      "source": "Nguồn: mô hình hóa từ cơ chế “outbox”, thông báo và “SSE” của CoVie. [N3]",
+      "asset": "assets\\explanatory\\event_flow.png",
+      "sha256": "2799492add66fe51f42c159a899d0d11f63a9da11b5908e446cf4a5bad00fe3a"
+    },
+    {
+      "key": "technology_roles",
+      "caption": "Hình 2.2. Vai trò của các lớp công nghệ trong CoVie",
+      "source": "Nguồn: tổng hợp từ cấu trúc “workspace” và cấu hình kỹ thuật của CoVie. [N3, N5]",
+      "asset": "assets\\explanatory\\technology_roles.png",
+      "sha256": "12ce4e422dbbaef8db3929e7e27a7b5ae8fc1e548318504e3bb9ab3f454746d4"
+    },
+    {
+      "key": "request_protection",
+      "caption": "Hình 4.5. Các lớp bảo vệ một yêu cầu thay đổi dữ liệu",
+      "source": "Nguồn: mô hình hóa từ thiết kế xác thực, phân quyền và giao dịch của CoVie. [N4, N7, N11]",
+      "asset": "assets\\explanatory\\request_protection.png",
+      "sha256": "96d98220824d22a2d404188b777e8bf0cc0e460bd3e5a7adb7d8c2ee855fb520"
+    },
+    {
+      "key": "test_strategy",
+      "caption": "Hình 6.1. Chiến lược kiểm thử nhiều lớp của CoVie",
+      "source": "Nguồn: tổng hợp từ mã kiểm thử và tài liệu vận hành của CoVie. [N12, N13]",
+      "asset": "assets\\explanatory\\test_strategy.png",
+      "sha256": "8a867edba780e8025dbe98eff71e0c516939d952606bdfe0e9ba0d792dea879b"
+    },
+    {
+      "key": "evidence_levels",
+      "caption": "Hình 6.2. Phân biệt bốn nhóm bằng chứng trong báo cáo",
+      "source": "Nguồn: quy ước đánh giá được áp dụng trong báo cáo CoVie.",
+      "asset": "assets\\explanatory\\evidence_levels.png",
+      "sha256": "c40dad449f4c9e32abd24a9cba3d52647cbfc9d3ed4f6505d4ab19669c092f64"
+    },
+    {
+      "key": "roadmap",
+      "caption": "Hình 7.1. Lộ trình hoàn thiện đề xuất cho CoVie",
+      "source": "Nguồn: tổng hợp từ các giới hạn và điều kiện nghiệm thu được xác định trong báo cáo.",
+      "asset": "assets\\explanatory\\roadmap.png",
+      "sha256": "e9885d2228ec690d62eeb294ba9d86a12d75bed0f13bcd9334bfa106fb8dec8b"
+    }
+  ]
+}

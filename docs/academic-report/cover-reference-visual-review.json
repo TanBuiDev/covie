@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "reference": {
+    "file": "assets/cover-reference-user.png",
+    "sha256": "9568b51451f761a552705fae386ed654cb329a1bf00d79763f00da66c86798b5"
+  },
+  "render": ".local/report-cover-reference-v2",
+  "page_count": 109,
+  "changed_pages": [1],
+  "inspected_pages": [1, 2],
+  "unchanged_pages": "2–109",
+  "unchanged_page_count": 108,
+  "comparison": "Ảnh PNG toàn trang 2–109 khớp SHA-256 với .local/report-usecase-final/.",
+  "cover_page_sha256": "956eb9e6ac4346d84a47036af24f8b4585eecc7ac43cd28baae6adedf9da9407"
+}

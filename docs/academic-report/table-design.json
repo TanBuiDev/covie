@@ -1,0 +1,22 @@
+{
+  "reference": "https://books.libreoffice.org/en/WG71/WG7113-TablesOfData.html",
+  "selection": "Restrained banded academic tables with repeating headers and fine gray borders; custom visual adaptation, not an official university template.",
+  "tables": 40,
+  "header_fill": "414A53",
+  "header_text": "FFFFFF",
+  "alternate_row_fill": "F2F4F6",
+  "borders": "D9D9D9, 0.5 pt",
+  "width_twips": 9071,
+  "sql_columns_twips": [
+    2800,
+    2400,
+    3871
+  ],
+  "step_columns_twips": [
+    900,
+    4000,
+    4171
+  ],
+  "caption_alignment": "left",
+  "qa_directory": ".local/report-tables-verified"
+}

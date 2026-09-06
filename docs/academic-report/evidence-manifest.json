@@ -1,0 +1,105 @@
+{
+  "date": "2026-09-04",
+  "commit": "c477f308b71a512b8002fe9d26866708527f8da1",
+  "openapi_version": "3.1.0",
+  "api_path_count": 119,
+  "api_operation_count": 144,
+  "migration_count": 13,
+  "create_table_count": 66,
+  "api_test_java_file_count": 179,
+  "sources": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "618c69deca4a5000e65762fd2bfdfd14fcc6a9cf259f09f727ca168643dc632a"
+    },
+    {
+      "path": "README.md",
+      "sha256": "f33564585135a5d547515fa0afbffb60da3895e73b89735d11eebe115e80c5b5"
+    },
+    {
+      "path": "docs/CoVie-project-status.md",
+      "sha256": "721edd0ab1376d1979d2a29fd0f879f9a1de82bcf42694be174c63d8f3de96d5"
+    },
+    {
+      "path": "apps/web/package.json",
+      "sha256": "453aff2940154258d329125800431b1cc9a18012cbceb28286ce575363485be2"
+    },
+    {
+      "path": "apps/api/pom.xml",
+      "sha256": "f32ee6f9957b2cda07d808ca78a3cf906374c62b5b9decbd9d7addd1a474036a"
+    },
+    {
+      "path": "packages/api-client/openapi/openapi.json",
+      "sha256": "290cc554f6443857dfb1452449b7a954730dcc10fd11a730f1ad6b835ce58369"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V001__extensions_and_foundation.sql",
+      "sha256": "680422f4804d7f3f14194ae1f2047beef2021c28c5f15e5e7c3f54dc0c6eaee1"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V002__identity_users_and_audit.sql",
+      "sha256": "311f6eb0b06ec3452766a16c76da05877a45b7daf7c448170a8cd1db196251a3"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V003__auth_sessions_and_tickets.sql",
+      "sha256": "dcfe456670caf3c4323823cdaa669aad856ba4f855ba08c847c1ab46cb37aea4"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V004__location_merchant_media.sql",
+      "sha256": "4405dcd83e678098b97c0c82ee18f496d027021e86658927d4ecf83d925f0797"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V005__catalog_and_search.sql",
+      "sha256": "3aa0a30e7fdef7af78c92b26e7545493de7c8ee354ad28cae521cb0643a306f2"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V006__idempotency_and_outbox.sql",
+      "sha256": "2acf59c7b673a3703970766204fe417f1382bc11b527ddd6437fbd99d0223642"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V007__delivery_shipping_inventory.sql",
+      "sha256": "a6d53751eaed6eb91dfb7e90a622c403ca42f3db5c58962711928e5181ce0817"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V008__carts_and_checkout_sessions.sql",
+      "sha256": "1f8ba4e0de31ab828aa2a2844044e07a0c3b6661218eccb977d4e469b8cdd3b5"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V009__order_creation_foundation.sql",
+      "sha256": "a3e996421870fd41dbb6fc74b8f15f1a990066b8ba1394e22208cf9f92b72916"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V010__order_lifecycle.sql",
+      "sha256": "40563884725f5323a408e23e042971a6badc05d75c9a76508646bb57915d8dfb"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V011__need_matching.sql",
+      "sha256": "c8613abb0456d95c467b271011552a5d39b044e66f1400456c849131594626b2"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V012__trust_notifications_outbox.sql",
+      "sha256": "441e9dccfdaf28ac1921f4ecf4ee45761dcbb1f7472595f22da46e62a5157d3d"
+    },
+    {
+      "path": "apps/api/src/main/resources/db/migration/V013__moderation_system_settings_admin.sql",
+      "sha256": "f628c2a3ee1137d61403ca6de59b74deeda87b909328ad1cba70135e83aa4c04"
+    },
+    {
+      "path": "apps/api/src/main/java/vn/covie/checkout/application/CheckoutPreviewService.java",
+      "sha256": "38653e89e60b6a46f5607593a3049a07b8a8751adc9d82f9dc58ffbec5c9481a"
+    },
+    {
+      "path": "apps/api/src/main/java/vn/covie/checkout/application/CheckoutCommitService.java",
+      "sha256": "071a6e484111e5eb92a697999d1fe31399a22740081c26d26461ae2e63885182"
+    },
+    {
+      "path": "apps/api/src/main/java/vn/covie/shipping/application/ShippingEvaluator.java",
+      "sha256": "95fda2d56a28baf86eae21f689e81242c7f6d5ea9646e991126119d6aec69e21"
+    },
+    {
+      "path": "apps/api/src/main/java/vn/covie/orders/model/OrderStatus.java",
+      "sha256": "40135d3d319ac8693bf49d3bb605e19927c3fad916130855ec2690a4e7a10e69"
+    }
+  ],
+  "application_tests_run_in_report_session": false
+}

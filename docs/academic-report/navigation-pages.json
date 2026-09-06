@@ -1,0 +1,945 @@
+{
+  "source_pdf": "E:\\WebApp\\CoVie\\covie\\.local\\report-explanatory-v3\\CoVie_BaoCaoDoAn.pdf",
+  "entries": {
+    "section_1": {
+      "text": "CHƯƠNG 1. TỔNG QUAN ĐỀ TÀI",
+      "page": 13
+    },
+    "section_2": {
+      "text": "1.1. Bối cảnh và bài toán",
+      "page": 13
+    },
+    "section_3": {
+      "text": "1.2. Tên đề tài và mục tiêu",
+      "page": 13
+    },
+    "caption_2000": {
+      "text": "Bảng 1.1. Tên đề tài và mục tiêu",
+      "page": 14
+    },
+    "explanatory_figure_1": {
+      "text": "Hình 1.1. Hành trình giá trị chính của nền tảng CoVie",
+      "page": 15
+    },
+    "section_4": {
+      "text": "1.3. Đối tượng và phạm vi",
+      "page": 15
+    },
+    "section_5": {
+      "text": "1.4. Phương pháp thực hiện",
+      "page": 16
+    },
+    "section_6": {
+      "text": "1.5. Đóng góp và giá trị của đề tài",
+      "page": 16
+    },
+    "section_7": {
+      "text": "1.6. Bố cục báo cáo",
+      "page": 17
+    },
+    "section_8": {
+      "text": "CHƯƠNG 2. CƠ SỞ KỸ THUẬT VÀ CÔNG NGHỆ",
+      "page": 18
+    },
+    "section_9": {
+      "text": "2.1. Mô hình nền tảng mua bán địa phương",
+      "page": 18
+    },
+    "section_10": {
+      "text": "2.2. Kiến trúc “web” và tổ chức miền nghiệp vụ",
+      "page": 18
+    },
+    "section_11": {
+      "text": "2.3. “Next.js”, “React” và “TypeScript”",
+      "page": 18
+    },
+    "section_12": {
+      "text": "2.4. “Spring Boot” và lớp ứng dụng",
+      "page": 19
+    },
+    "section_13": {
+      "text": "2.5. “PostgreSQL”, “PostGIS” và quản lý “migration”",
+      "page": 19
+    },
+    "section_14": {
+      "text": "2.6. Kiểm soát đồng thời và tính lặp an toàn",
+      "page": 20
+    },
+    "section_15": {
+      "text": "2.7. “Outbox”, thông báo và “SSE”",
+      "page": 20
+    },
+    "explanatory_figure_2": {
+      "text": "Hình 2.1. Luồng sự kiện từ giao dịch đến cập nhật giao diện",
+      "page": 21
+    },
+    "section_16": {
+      "text": "2.8. “PWA” và giới hạn hoạt động ngoại tuyến",
+      "page": 21
+    },
+    "section_17": {
+      "text": "2.9. Lựa chọn công nghệ và đánh đổi",
+      "page": 21
+    },
+    "caption_2001": {
+      "text": "Bảng 2.1. Lựa chọn công nghệ và đánh đổi",
+      "page": 21
+    },
+    "explanatory_figure_3": {
+      "text": "Hình 2.2. Vai trò của các lớp công nghệ trong CoVie",
+      "page": 22
+    },
+    "section_18": {
+      "text": "CHƯƠNG 3. PHÂN TÍCH YÊU CẦU",
+      "page": 23
+    },
+    "section_19": {
+      "text": "3.1. Tác nhân và quyền sử dụng",
+      "page": 23
+    },
+    "caption_2002": {
+      "text": "Bảng 3.1. Tác nhân và quyền sử dụng",
+      "page": 23
+    },
+    "caption_2003": {
+      "text": "Hình 3.1. Tác nhân và nhóm chức năng của CoVie",
+      "page": 24
+    },
+    "section_20": {
+      "text": "3.2. Yêu cầu chức năng",
+      "page": 24
+    },
+    "section_21": {
+      "text": "3.2.1. Danh tính, tài khoản và địa chỉ",
+      "page": 24
+    },
+    "section_22": {
+      "text": "3.2.2. Người bán, điểm bán và “catalog”",
+      "page": 24
+    },
+    "section_23": {
+      "text": "3.2.3. Tìm kiếm, giỏ hàng và “checkout”",
+      "page": 25
+    },
+    "section_24": {
+      "text": "3.2.4. Vòng đời đơn và tương tác sau đặt hàng",
+      "page": 25
+    },
+    "section_25": {
+      "text": "3.2.5. Nhu cầu mua, đánh giá và quản trị",
+      "page": 25
+    },
+    "section_26": {
+      "text": "3.3. Yêu cầu phi chức năng và tiêu chí chấp nhận",
+      "page": 26
+    },
+    "caption_2004": {
+      "text": "Bảng 3.2. Yêu cầu phi chức năng và tiêu chí chấp nhận",
+      "page": 26
+    },
+    "section_27": {
+      "text": "3.4. Các quy tắc nghiệp vụ trọng yếu",
+      "page": 26
+    },
+    "section_28": {
+      "text": "3.5. Đặc tả “use case” UC-01: Đăng nhập và quản lý phiên",
+      "page": 27
+    },
+    "section_29": {
+      "text": "3.6. Đặc tả “use case” UC-02: Tìm và chọn mặt hàng",
+      "page": 27
+    },
+    "section_30": {
+      "text": "3.7. Đặc tả “use case” UC-03: Xem trước và tạo đơn",
+      "page": 28
+    },
+    "caption_2005": {
+      "text": "Bảng 3.3. Đặc tả “use case” UC-03: Xem trước và tạo đơn",
+      "page": 28
+    },
+    "section_31": {
+      "text": "3.8. Đặc tả “use case” UC-04: Xử lý và hoàn tất đơn",
+      "page": 29
+    },
+    "section_32": {
+      "text": "3.9. Đặc tả “use case” UC-05: Đăng nhu cầu và chọn phản hồi",
+      "page": 29
+    },
+    "section_33": {
+      "text": "3.10. Đặc tả “use case” UC-06: Kiểm duyệt và thay đổi cấu hình",
+      "page": 29
+    },
+    "section_34": {
+      "text": "3.11. Ma trận truy vết yêu cầu",
+      "page": 30
+    },
+    "caption_2006": {
+      "text": "Bảng 3.4. Ma trận truy vết yêu cầu",
+      "page": 30
+    },
+    "usecase_diagrams": {
+      "text": "3.12. Sơ đồ “use case” theo vai trò và nghiệp vụ",
+      "page": 31
+    },
+    "usecase_section_1": {
+      "text": "3.12.1. Người mua và hành trình giao dịch",
+      "page": 31
+    },
+    "usecase_figure_1": {
+      "text": "Hình 3.2. Sơ đồ “use case” Người mua và hành trình giao dịch",
+      "page": 31
+    },
+    "usecase_section_2": {
+      "text": "3.12.2. Người bán và tổ chức hoạt động",
+      "page": 32
+    },
+    "usecase_figure_2": {
+      "text": "Hình 3.3. Sơ đồ “use case” Người bán và tổ chức hoạt động",
+      "page": 32
+    },
+    "usecase_section_3": {
+      "text": "3.12.3. Quản trị viên và kiểm soát hệ thống",
+      "page": 33
+    },
+    "usecase_figure_3": {
+      "text": "Hình 3.4. Sơ đồ “use case” Quản trị viên và kiểm soát hệ thống",
+      "page": 33
+    },
+    "usecase_section_4": {
+      "text": "3.12.4. UC-01 Đăng nhập và quản lý phiên",
+      "page": 34
+    },
+    "usecase_figure_4": {
+      "text": "Hình 3.5. Sơ đồ “use case” UC-01 Đăng nhập và quản lý phiên",
+      "page": 34
+    },
+    "usecase_section_5": {
+      "text": "3.12.5. UC-02 Tìm và chọn mặt hàng",
+      "page": 35
+    },
+    "usecase_figure_5": {
+      "text": "Hình 3.6. Sơ đồ “use case” UC-02 Tìm và chọn mặt hàng",
+      "page": 35
+    },
+    "usecase_section_6": {
+      "text": "3.12.6. UC-03 Xem trước và tạo đơn",
+      "page": 36
+    },
+    "usecase_figure_6": {
+      "text": "Hình 3.7. Sơ đồ “use case” UC-03 Xem trước và tạo đơn",
+      "page": 36
+    },
+    "usecase_section_7": {
+      "text": "3.12.7. UC-04 Xử lý và hoàn tất đơn",
+      "page": 37
+    },
+    "usecase_figure_7": {
+      "text": "Hình 3.8. Sơ đồ “use case” UC-04 Xử lý và hoàn tất đơn",
+      "page": 37
+    },
+    "usecase_section_8": {
+      "text": "3.12.8. UC-05 Đăng nhu cầu và chọn phản hồi",
+      "page": 38
+    },
+    "usecase_figure_8": {
+      "text": "Hình 3.9. Sơ đồ “use case” UC-05 Đăng nhu cầu và chọn phản hồi",
+      "page": 38
+    },
+    "usecase_section_9": {
+      "text": "3.12.9. UC-06 Kiểm duyệt và thay đổi cấu hình",
+      "page": 39
+    },
+    "usecase_figure_9": {
+      "text": "Hình 3.10. Sơ đồ “use case” UC-06 Kiểm duyệt và thay đổi cấu hình",
+      "page": 39
+    },
+    "section_35": {
+      "text": "CHƯƠNG 4. THIẾT KẾ HỆ THỐNG",
+      "page": 40
+    },
+    "section_36": {
+      "text": "4.1. Kiến trúc tổng thể",
+      "page": 40
+    },
+    "caption_2007": {
+      "text": "Hình 4.1. Kiến trúc tổng thể và trách nhiệm các thành phần",
+      "page": 40
+    },
+    "section_37": {
+      "text": "4.2. Phân rã thành phần “backend”",
+      "page": 41
+    },
+    "caption_2008": {
+      "text": "Bảng 4.1. Phân rã thành phần “backend”",
+      "page": 41
+    },
+    "section_38": {
+      "text": "4.3. Thiết kế mô hình dữ liệu",
+      "page": 41
+    },
+    "section_39": {
+      "text": "4.3.1. Danh tính và đơn vị bán hàng",
+      "page": 41
+    },
+    "section_40": {
+      "text": "4.3.2. “Catalog” và giá tại điểm bán",
+      "page": 42
+    },
+    "section_41": {
+      "text": "4.3.3. Giỏ, “checkout”, đơn hàng và tồn kho",
+      "page": 42
+    },
+    "caption_2009": {
+      "text": "Hình 4.2. “ERD” rút gọn của các bảng giao dịch chính",
+      "page": 43
+    },
+    "section_42": {
+      "text": "4.3.4. Nhu cầu, uy tín và quản trị",
+      "page": 43
+    },
+    "section_43": {
+      "text": "4.4. Ràng buộc và nguyên tắc lưu trữ",
+      "page": 44
+    },
+    "section_44": {
+      "text": "4.5. Thiết kế “API” và hợp đồng dữ liệu",
+      "page": 44
+    },
+    "caption_2010": {
+      "text": "Bảng 4.2. Thiết kế “API” và hợp đồng dữ liệu",
+      "page": 44
+    },
+    "section_45": {
+      "text": "4.6. Thuật toán xem trước và xác nhận “checkout”",
+      "page": 45
+    },
+    "caption_2011": {
+      "text": "Hình 4.3. Trình tự “preview” và “commit” “checkout”",
+      "page": 46
+    },
+    "section_46": {
+      "text": "4.7. Thiết kế phí giao và phạm vi phục vụ",
+      "page": 47
+    },
+    "section_47": {
+      "text": "4.8. Thiết kế trạng thái đơn hàng",
+      "page": 47
+    },
+    "caption_2012": {
+      "text": "Hình 4.4. Các nhánh chính của vòng đời đơn hàng",
+      "page": 48
+    },
+    "section_48": {
+      "text": "4.9. Xác thực, phân quyền và bảo vệ dữ liệu",
+      "page": 48
+    },
+    "explanatory_figure_4": {
+      "text": "Hình 4.5. Các lớp bảo vệ một yêu cầu thay đổi dữ liệu",
+      "page": 49
+    },
+    "section_49": {
+      "text": "4.10. Thiết kế giao diện và trạng thái sử dụng",
+      "page": 49
+    },
+    "product_chapter": {
+      "text": "CHƯƠNG 5. GIỚI THIỆU SẢN PHẨM VÀ GIAO DIỆN",
+      "page": 51
+    },
+    "product_section_1": {
+      "text": "5.1. Tổng quan sản phẩm và cách sử dụng",
+      "page": 51
+    },
+    "product_table_1": {
+      "text": "Bảng 5.1. Các không gian chức năng của CoVie",
+      "page": 51
+    },
+    "product_section_2": {
+      "text": "5.2. Đăng nhập và khởi tạo tài khoản",
+      "page": 52
+    },
+    "product_figure_1": {
+      "text": "Hình 5.1. Đăng nhập và khởi tạo tài khoản trên điện thoại",
+      "page": 52
+    },
+    "product_section_3": {
+      "text": "5.3. Trang chủ và khám phá nguồn cung",
+      "page": 53
+    },
+    "product_figure_2": {
+      "text": "Hình 5.2. Trang chủ và kết quả tìm kiếm trên điện thoại",
+      "page": 53
+    },
+    "product_section_4": {
+      "text": "5.4. Tìm kiếm trên máy tính",
+      "page": 54
+    },
+    "product_figure_3": {
+      "text": "Hình 5.3. Thiết kế kết quả tìm kiếm trên máy tính",
+      "page": 54
+    },
+    "product_section_5": {
+      "text": "5.5. Chi tiết sản phẩm và dịch vụ",
+      "page": 55
+    },
+    "product_figure_4": {
+      "text": "Hình 5.4. Chi tiết sản phẩm và lựa chọn gói dịch vụ",
+      "page": 55
+    },
+    "product_section_6": {
+      "text": "5.6. Thanh lý và hồ sơ cửa hàng",
+      "page": 56
+    },
+    "product_figure_5": {
+      "text": "Hình 5.5. Chi tiết mặt hàng thanh lý",
+      "page": 56
+    },
+    "product_section_7": {
+      "text": "5.7. Quản lý địa chỉ nhận hàng",
+      "page": 57
+    },
+    "product_figure_6": {
+      "text": "Hình 5.6. Danh sách địa chỉ và biểu mẫu thêm địa chỉ",
+      "page": 57
+    },
+    "product_section_8": {
+      "text": "5.8. Giỏ hàng và lựa chọn số lượng",
+      "page": 58
+    },
+    "product_figure_7": {
+      "text": "Hình 5.7. Danh sách giỏ và chi tiết giỏ sản phẩm",
+      "page": 58
+    },
+    "product_section_9": {
+      "text": "5.9. Xác nhận giao nhận và tạo đơn",
+      "page": 59
+    },
+    "product_figure_8": {
+      "text": "Hình 5.8. Xác nhận đơn và thông báo đã tạo đơn hàng",
+      "page": 59
+    },
+    "product_section_10": {
+      "text": "5.10. Theo dõi đơn hàng của người mua",
+      "page": 60
+    },
+    "product_figure_9": {
+      "text": "Hình 5.9. Thiết kế chi tiết đơn hàng của người mua trên máy tính",
+      "page": 60
+    },
+    "product_section_11": {
+      "text": "5.11. Đăng và quản lý yêu cầu Cần mua",
+      "page": 61
+    },
+    "product_figure_10": {
+      "text": "Hình 5.10. Trạng thái chưa có nhu cầu và biểu mẫu tạo Cần mua",
+      "page": 61
+    },
+    "product_section_12": {
+      "text": "5.12. Phản hồi nhu cầu và lựa chọn nguồn cung",
+      "page": 62
+    },
+    "product_figure_11": {
+      "text": "Hình 5.11. Thiết kế danh sách phản hồi Cần mua trên máy tính",
+      "page": 62
+    },
+    "product_section_13": {
+      "text": "5.13. Thông báo và quản lý phiên đăng nhập",
+      "page": 63
+    },
+    "product_figure_12": {
+      "text": "Hình 5.12. Hộp thông báo và danh sách phiên đăng nhập",
+      "page": 63
+    },
+    "product_section_14": {
+      "text": "5.14. Không gian làm việc của người bán",
+      "page": 64
+    },
+    "product_figure_13": {
+      "text": "Hình 5.13. Tổng quan trung tâm bán hàng trên máy tính",
+      "page": 64
+    },
+    "product_section_15": {
+      "text": "5.15. Điểm bán và khả năng phục vụ",
+      "page": 65
+    },
+    "product_figure_14": {
+      "text": "Hình 5.14. Danh sách điểm bán và biểu mẫu cấu hình điểm bán",
+      "page": 65
+    },
+    "product_section_16": {
+      "text": "5.16. Phí giao hàng và giá trị đơn tối thiểu",
+      "page": 66
+    },
+    "product_figure_15": {
+      "text": "Hình 5.15. Cấu hình phí giao hàng và điều kiện đơn tối thiểu",
+      "page": 66
+    },
+    "product_section_17": {
+      "text": "5.17. Quản lý danh mục và thông tin mặt hàng",
+      "page": 67
+    },
+    "product_figure_16": {
+      "text": "Hình 5.16. Danh mục mặt hàng trong trung tâm bán hàng",
+      "page": 67
+    },
+    "product_section_18": {
+      "text": "5.18. Chỉnh sửa mặt hàng và chào bán",
+      "page": 68
+    },
+    "product_figure_17": {
+      "text": "Hình 5.17. Biểu mẫu thông tin mặt hàng và giá tại điểm bán",
+      "page": 68
+    },
+    "product_section_19": {
+      "text": "5.19. Tiếp nhận và xử lý đơn của người bán",
+      "page": 69
+    },
+    "product_figure_18": {
+      "text": "Hình 5.18. Danh sách đơn hàng đến và bộ lọc điểm bán",
+      "page": 69
+    },
+    "product_section_20": {
+      "text": "5.20. Nội dung và khoản tiền trong đơn người bán",
+      "page": 70
+    },
+    "product_figure_19": {
+      "text": "Hình 5.19. Chi tiết đơn với phí giao hàng cần thỏa thuận",
+      "page": 70
+    },
+    "product_section_21": {
+      "text": "5.21. Nhu cầu phù hợp và uy tín của người bán",
+      "page": 71
+    },
+    "product_figure_20": {
+      "text": "Hình 5.20. Danh sách nhu cầu phù hợp theo điểm bán",
+      "page": 71
+    },
+    "product_section_22": {
+      "text": "5.22. Theo dõi uy tín và thông báo kiểm duyệt",
+      "page": 72
+    },
+    "product_figure_21": {
+      "text": "Hình 5.21. Uy tín cửa hàng và trạng thái chưa có thông báo kiểm duyệt",
+      "page": 72
+    },
+    "product_section_23": {
+      "text": "5.23. Quản trị tài khoản và tra cứu giao dịch",
+      "page": 73
+    },
+    "product_figure_22": {
+      "text": "Hình 5.22. Thiết kế quản trị tài khoản người dùng",
+      "page": 73
+    },
+    "product_figure_23": {
+      "text": "Hình 5.23. Thiết kế tra cứu đơn và lịch sử dành cho quản trị viên",
+      "page": 74
+    },
+    "product_section_24": {
+      "text": "5.24. Kiểm duyệt cấu hình và nhật ký quản trị",
+      "page": 75
+    },
+    "product_figure_24": {
+      "text": "Hình 5.24. Thiết kế hàng đợi báo cáo và trạng thái hồ sơ thay đổi",
+      "page": 75
+    },
+    "product_figure_25": {
+      "text": "Hình 5.25. Thiết kế cấu hình chính sách hệ thống",
+      "page": 76
+    },
+    "product_figure_26": {
+      "text": "Hình 5.26. Thiết kế nhật ký quản trị và bộ lọc tra cứu",
+      "page": 77
+    },
+    "product_section_25": {
+      "text": "5.25. Thiết kế quản trị trên điện thoại",
+      "page": 78
+    },
+    "product_figure_27": {
+      "text": "Hình 5.27. Thiết kế quản trị người dùng và hồ sơ báo cáo trên điện thoại",
+      "page": 78
+    },
+    "product_section_26": {
+      "text": "5.26. Trạng thái trống lỗi và thay đổi dữ liệu",
+      "page": 79
+    },
+    "product_figure_28": {
+      "text": "Hình 5.28. Thiết kế tìm kiếm khi chưa có kết quả",
+      "page": 79
+    },
+    "product_figure_29": {
+      "text": "Hình 5.29. Thiết kế lỗi tải kết quả tìm kiếm và thao tác thử lại",
+      "page": 80
+    },
+    "product_figure_30": {
+      "text": "Hình 5.30. Thiết kế cảnh báo khi giỏ hàng đã thay đổi",
+      "page": 81
+    },
+    "product_figure_31": {
+      "text": "Hình 5.31. Thiết kế xác nhận đơn khi giá hoặc thông tin đã thay đổi",
+      "page": 82
+    },
+    "product_section_27": {
+      "text": "5.27. Tổ chức triển khai và phạm vi minh họa",
+      "page": 83
+    },
+    "section_60": {
+      "text": "CHƯƠNG 6. KIỂM THỬ VÀ ĐÁNH GIÁ",
+      "page": 84
+    },
+    "section_61": {
+      "text": "6.1. Mục tiêu và chiến lược kiểm thử",
+      "page": 84
+    },
+    "explanatory_figure_5": {
+      "text": "Hình 6.1. Chiến lược kiểm thử nhiều lớp của CoVie",
+      "page": 84
+    },
+    "section_62": {
+      "text": "6.2. Phân loại bằng chứng được sử dụng",
+      "page": 84
+    },
+    "caption_2017": {
+      "text": "Bảng 6.1. Phân loại bằng chứng được sử dụng",
+      "page": 85
+    },
+    "explanatory_figure_6": {
+      "text": "Hình 6.2. Phân biệt bốn nhóm bằng chứng trong báo cáo",
+      "page": 85
+    },
+    "section_63": {
+      "text": "6.3. Kết quả lịch sử đã được ghi nhận",
+      "page": 86
+    },
+    "caption_2018": {
+      "text": "Bảng 6.2. Kết quả lịch sử đã được ghi nhận",
+      "page": 86
+    },
+    "section_64": {
+      "text": "6.4. Kiểm thử “backend” và giao dịch đồng thời",
+      "page": 86
+    },
+    "section_65": {
+      "text": "6.5. Danh sách “test case” nghiệm thu đề xuất",
+      "page": 87
+    },
+    "caption_2019": {
+      "text": "Bảng 6.3. Danh sách “test case” nghiệm thu đề xuất",
+      "page": 87
+    },
+    "section_66": {
+      "text": "6.6. Kiểm thử giao diện và khả năng sử dụng",
+      "page": 89
+    },
+    "section_67": {
+      "text": "6.7. Hiệu năng và vận hành",
+      "page": 89
+    },
+    "section_68": {
+      "text": "6.8. Các giới hạn được xác định",
+      "page": 90
+    },
+    "section_69": {
+      "text": "6.8.1. Khoảng cách và “coverage” trong “checkout”",
+      "page": 90
+    },
+    "section_70": {
+      "text": "6.8.2. Độ đầy đủ của “snapshot”",
+      "page": 90
+    },
+    "section_71": {
+      "text": "6.8.3. Hợp đồng và nghiệm thu giao diện",
+      "page": 90
+    },
+    "section_72": {
+      "text": "6.8.4. Phạm vi bằng chứng",
+      "page": 90
+    },
+    "section_73": {
+      "text": "6.9. Đánh giá theo mục tiêu",
+      "page": 91
+    },
+    "caption_2020": {
+      "text": "Bảng 6.4. Đánh giá theo mục tiêu",
+      "page": 91
+    },
+    "section_74": {
+      "text": "CHƯƠNG 7. KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN",
+      "page": 92
+    },
+    "section_75": {
+      "text": "7.1. Kết quả đạt được",
+      "page": 92
+    },
+    "section_76": {
+      "text": "7.2. Những hạn chế cần tiếp tục giải quyết",
+      "page": 92
+    },
+    "section_77": {
+      "text": "7.3. Lộ trình hoàn thiện đề xuất",
+      "page": 92
+    },
+    "explanatory_figure_7": {
+      "text": "Hình 7.1. Lộ trình hoàn thiện đề xuất cho CoVie",
+      "page": 93
+    },
+    "section_78": {
+      "text": "7.4. Kết luận",
+      "page": 93
+    },
+    "section_79": {
+      "text": "TÀI LIỆU THAM KHẢO",
+      "page": 94
+    },
+    "section_80": {
+      "text": "Nguồn nội bộ dự án",
+      "page": 94
+    },
+    "section_81": {
+      "text": "Tài liệu kỹ thuật chính thức",
+      "page": 95
+    },
+    "section_82": {
+      "text": "PHỤ LỤC A. CÀI ĐẶT VÀ KIỂM THỬ HỆ THỐNG",
+      "page": 96
+    },
+    "section_83": {
+      "text": "A.1. Chuẩn bị môi trường “local”",
+      "page": 96
+    },
+    "section_84": {
+      "text": "A.2. Dữ liệu và hành trình thử",
+      "page": 96
+    },
+    "section_85": {
+      "text": "A.3. Lệnh kiểm thử hệ thống",
+      "page": 96
+    },
+    "section_86": {
+      "text": "A.4. Kịch bản kiểm tra chức năng",
+      "page": 97
+    },
+    "section_87": {
+      "text": "PHỤ LỤC B. “MIGRATION” VÀ TỪ ĐIỂN DỮ LIỆU CHỌN LỌC",
+      "page": 98
+    },
+    "section_88": {
+      "text": "B.1. Danh mục “migration”",
+      "page": 98
+    },
+    "caption_2021": {
+      "text": "Bảng B.1. Danh mục “migration”",
+      "page": 98
+    },
+    "section_89": {
+      "text": "B.2. Các bảng theo “migration”",
+      "page": 99
+    },
+    "section_90": {
+      "text": "B.3. “users” — Tài khoản người dùng",
+      "page": 100
+    },
+    "caption_2022": {
+      "text": "Bảng B.2. “users” — Tài khoản người dùng",
+      "page": 100
+    },
+    "section_91": {
+      "text": "B.4. “merchant_profiles” — Đơn vị bán hàng hoặc cung cấp dịch vụ",
+      "page": 100
+    },
+    "caption_2023": {
+      "text": "Bảng B.3. “merchant_profiles” — Đơn vị bán hàng hoặc cung cấp dịch vụ",
+      "page": 100
+    },
+    "section_92": {
+      "text": "B.5. “merchant_locations” — Điểm bán và khả năng thực hiện",
+      "page": 100
+    },
+    "caption_2024": {
+      "text": "Bảng B.4. “merchant_locations” — Điểm bán và khả năng thực hiện",
+      "page": 100
+    },
+    "section_93": {
+      "text": "B.6. “catalog_items” — Mô tả mặt hàng",
+      "page": 101
+    },
+    "caption_2025": {
+      "text": "Bảng B.5. “catalog_items” — Mô tả mặt hàng",
+      "page": 101
+    },
+    "section_94": {
+      "text": "B.7. “location_variants” — Chào bán tại một điểm bán",
+      "page": 101
+    },
+    "caption_2026": {
+      "text": "Bảng B.6. “location_variants” — Chào bán tại một điểm bán",
+      "page": 102
+    },
+    "section_95": {
+      "text": "B.8. “inventory_balances” — Tồn và lượng đã giữ",
+      "page": 102
+    },
+    "caption_2027": {
+      "text": "Bảng B.7. “inventory_balances” — Tồn và lượng đã giữ",
+      "page": 102
+    },
+    "section_96": {
+      "text": "B.9. “carts” — Giỏ theo người, điểm bán và loại hàng",
+      "page": 102
+    },
+    "caption_2028": {
+      "text": "Bảng B.8. “carts” — Giỏ theo người, điểm bán và loại hàng",
+      "page": 103
+    },
+    "section_97": {
+      "text": "B.10. “checkout_sessions” — Phiên chấp nhận “checkout”",
+      "page": 103
+    },
+    "caption_2029": {
+      "text": "Bảng B.9. “checkout_sessions” — Phiên chấp nhận “checkout”",
+      "page": 103
+    },
+    "section_98": {
+      "text": "B.11. “orders” — Đơn và tiền tại thời điểm giao dịch",
+      "page": 103
+    },
+    "caption_2030": {
+      "text": "Bảng B.10. “orders” — Đơn và tiền tại thời điểm giao dịch",
+      "page": 104
+    },
+    "section_99": {
+      "text": "B.12. “order_items” — Dòng đơn và dữ liệu lịch sử",
+      "page": 104
+    },
+    "caption_2031": {
+      "text": "Bảng B.11. “order_items” — Dòng đơn và dữ liệu lịch sử",
+      "page": 104
+    },
+    "section_100": {
+      "text": "B.13. “need_requests” — Nhu cầu phía người mua",
+      "page": 105
+    },
+    "caption_2032": {
+      "text": "Bảng B.12. “need_requests” — Nhu cầu phía người mua",
+      "page": 105
+    },
+    "section_101": {
+      "text": "B.14. “reviews” — Đánh giá theo giao dịch",
+      "page": 105
+    },
+    "caption_2033": {
+      "text": "Bảng B.13. “reviews” — Đánh giá theo giao dịch",
+      "page": 105
+    },
+    "section_102": {
+      "text": "PHỤ LỤC C. DANH MỤC “API”",
+      "page": 106
+    },
+    "section_103": {
+      "text": "C.1. Nhóm “admin”",
+      "page": 106
+    },
+    "caption_2034": {
+      "text": "Bảng C.1. Nhóm “admin”",
+      "page": 106
+    },
+    "section_104": {
+      "text": "C.2. Nhóm “auth”",
+      "page": 107
+    },
+    "caption_2035": {
+      "text": "Bảng C.2. Nhóm “auth”",
+      "page": 107
+    },
+    "section_105": {
+      "text": "C.3. Nhóm “catalog”",
+      "page": 107
+    },
+    "caption_2036": {
+      "text": "Bảng C.3. Nhóm “catalog”",
+      "page": 107
+    },
+    "section_106": {
+      "text": "C.4. Nhóm “categories”",
+      "page": 108
+    },
+    "caption_2037": {
+      "text": "Bảng C.4. Nhóm “categories”",
+      "page": 108
+    },
+    "section_107": {
+      "text": "C.5. Nhóm “checkouts”",
+      "page": 108
+    },
+    "caption_2038": {
+      "text": "Bảng C.5. Nhóm “checkouts”",
+      "page": 108
+    },
+    "section_108": {
+      "text": "C.6. Nhóm “health”",
+      "page": 108
+    },
+    "caption_2039": {
+      "text": "Bảng C.6. Nhóm “health”",
+      "page": 108
+    },
+    "section_109": {
+      "text": "C.7. Nhóm “location-areas”",
+      "page": 108
+    },
+    "caption_2040": {
+      "text": "Bảng C.7. Nhóm “location-areas”",
+      "page": 108
+    },
+    "section_110": {
+      "text": "C.8. Nhóm “me”",
+      "page": 108
+    },
+    "caption_2041": {
+      "text": "Bảng C.8. Nhóm “me”",
+      "page": 108
+    },
+    "section_111": {
+      "text": "C.9. Nhóm “media”",
+      "page": 110
+    },
+    "caption_2042": {
+      "text": "Bảng C.9. Nhóm “media”",
+      "page": 110
+    },
+    "section_112": {
+      "text": "C.10. Nhóm “merchants”",
+      "page": 110
+    },
+    "caption_2043": {
+      "text": "Bảng C.10. Nhóm “merchants”",
+      "page": 110
+    },
+    "section_113": {
+      "text": "C.11. Nhóm “need-requests”",
+      "page": 111
+    },
+    "caption_2044": {
+      "text": "Bảng C.11. Nhóm “need-requests”",
+      "page": 111
+    },
+    "section_114": {
+      "text": "C.12. Nhóm “orders”",
+      "page": 112
+    },
+    "caption_2045": {
+      "text": "Bảng C.12. Nhóm “orders”",
+      "page": 112
+    },
+    "section_115": {
+      "text": "C.13. Nhóm “reports”",
+      "page": 112
+    },
+    "caption_2046": {
+      "text": "Bảng C.13. Nhóm “reports”",
+      "page": 112
+    },
+    "section_116": {
+      "text": "PHỤ LỤC D. GHI NHẬN PHIÊN BẢN VÀ HÌNH MINH HỌA",
+      "page": 113
+    }
+  }
+}

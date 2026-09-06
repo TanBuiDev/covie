@@ -1,0 +1,63 @@
+{
+  "preset": "standard_business_brief",
+  "header_pattern": "editorial_cover",
+  "named_override": "academic_vietnamese_report",
+  "page_twips": [
+    11906,
+    16838
+  ],
+  "margins_twips": {
+    "top": 1134,
+    "bottom": 1134,
+    "left": 1701,
+    "right": 1134
+  },
+  "header_footer_twips": 708,
+  "content_width_twips": 9071,
+  "body": {
+    "font": "Times New Roman",
+    "size_pt": 13,
+    "before_pt": 0,
+    "after_pt": 6,
+    "line": 1.3,
+    "alignment": "justified"
+  },
+  "headings": {
+    "h1": [
+      16,
+      16,
+      8
+    ],
+    "h2": [
+      14,
+      12,
+      6
+    ],
+    "h3": [
+      13,
+      8,
+      4
+    ],
+    "color": "000000"
+  },
+  "tables": {
+    "font_size_pt": 10.5,
+    "line": 1.1,
+    "after_pt": 3,
+    "width_twips": 9071,
+    "indent_twips": 120,
+    "cell_margins_twips": [
+      80,
+      80,
+      120,
+      120
+    ],
+    "fill": "F2F4F7"
+  },
+  "caption": {
+    "font_size_pt": 11,
+    "before_pt": 4,
+    "after_pt": 6
+  },
+  "override_reason": "Long-form Vietnamese academic report: A4, binding margin, Times New Roman, black headings, larger body type. No institutional template supplied."
+}
