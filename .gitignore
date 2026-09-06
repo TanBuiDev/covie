@@ -38,3 +38,7 @@ Thumbs.db
 .postgres/
 .redis/
 .worktrees/
+
+# Python
+__pycache__/
+*.pyc
