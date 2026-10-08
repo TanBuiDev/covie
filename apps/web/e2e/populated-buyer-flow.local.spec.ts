@@ -9,6 +9,7 @@ type LocalFixture = {
   productItemId: string;
   serviceItemId: string;
   resaleItemId: string;
+  addressId: string;
 };
 
 const fixturePath = path.resolve(process.cwd(), "../../.local/dev/ui-fixture.json");
@@ -33,7 +34,15 @@ async function captureResponsive(page: Page, route: string) {
   await page.setViewportSize({ width: 390, height: 844 });
 }
 
+async function screenshotNamed(page: Page, filename: string, width: number, height: number) {
+  await page.setViewportSize({ width, height });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
+  await page.screenshot({ path: path.join(evidenceDirectory, filename), fullPage: false });
+}
+
 test("populated Public Buyer P0 journey reaches checkout success on the first commit", async ({ page }) => {
+  test.setTimeout(120_000);
   const fixture = JSON.parse(readFileSync(fixturePath, "utf8")) as LocalFixture;
   mkdirSync(evidenceDirectory, { recursive: true });
   const pageErrors: string[] = [];
@@ -49,10 +58,8 @@ test("populated Public Buyer P0 journey reaches checkout success on the first co
   await expect(page).toHaveURL(/\/$/);
 
   await page.getByRole("button", { name: "Chọn vị trí" }).click();
-  await page.getByLabel("Vĩ độ").fill("10.842");
-  await page.getByLabel("Kinh độ").fill("106.842");
-  await page.getByLabel("Tên khu vực").fill("Vinhomes Grand Park");
-  await page.getByRole("button", { name: "Dùng vị trí thủ công" }).click();
+  await page.getByRole("radio", { name: /Nhà — S5\.03/ }).check();
+  await page.getByRole("button", { name: "Dùng địa chỉ đã chọn" }).click();
   await expect(page.getByRole("heading", { name: "Rau củ theo mùa" })).toBeVisible();
   await captureResponsive(page, "pub-001-home");
 
@@ -111,8 +118,71 @@ test("populated Public Buyer P0 journey reaches checkout success on the first co
   await screenshotAt(page, "buy-003-address-delete", 390, 844);
   await page.getByRole("button", { name: "Giữ địa chỉ" }).click();
 
+  await page.goto("/me/addresses/new");
+  await expect(page.getByRole("heading", { name: "Thêm địa chỉ" }).first()).toBeVisible();
+  await screenshotNamed(page, "buy-004-new-327-4086-390x844.png", 390, 844);
+  await screenshotNamed(page, "buy-004-new-327-4086-360x800.png", 360, 800);
+  await screenshotNamed(page, "buy-004-new-564-5448-1024x900.png", 1024, 900);
+  await screenshotNamed(page, "buy-004-new-564-5448-1280x900.png", 1280, 900);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const createAddressForm = page.locator("form:visible");
+  await createAddressForm.getByLabel("Nhãn *").fill("Nhà E2E");
+  await createAddressForm.getByLabel("Người nhận *").fill("Nguyễn Văn Minh");
+  await createAddressForm.getByLabel("Số điện thoại *").fill("0909123456");
+  await createAddressForm.getByLabel("Địa chỉ *").fill("S5.03, Vinhomes Grand Park");
+  await createAddressForm.getByLabel("Ghi chú").fill("Giao tại sảnh chính");
+  await createAddressForm.getByRole("button", { name: "Lưu địa chỉ" }).click();
+  await expect(page).toHaveURL(/\/me\/addresses$/);
+  await expect(page.getByText("Nhà E2E · Nguyễn Văn Minh").first()).toBeVisible();
+
+  await page.goto(`/me/addresses/${fixture.addressId}`);
+  await expect(page.getByRole("heading", { name: "Chỉnh sửa địa chỉ" }).first()).toBeVisible();
+  await expect(page.getByLabel("Nhãn *").first()).toHaveValue("Nhà");
+  await screenshotNamed(page, "buy-004-edit-327-4086-390x844.png", 390, 844);
+  await screenshotNamed(page, "buy-004-edit-327-4086-360x800.png", 360, 800);
+  await screenshotNamed(page, "buy-004-edit-564-5873-1024x900.png", 1024, 900);
+  await screenshotNamed(page, "buy-004-edit-564-5448-1280x900.png", 1280, 900);
+  const editAddressForm = page.locator("form:visible");
+  await editAddressForm.getByLabel("Ghi chú").fill("Gọi trước khi giao");
+  await editAddressForm.getByRole("button", { name: "Lưu thay đổi" }).click();
+  await expect(page).toHaveURL(/\/me\/addresses$/);
+
+  await page.route("**/api/v1/me/addresses*", async (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    await route.fulfill({
+      status: 422,
+      contentType: "application/json",
+      headers: {
+        "access-control-allow-origin": "http://localhost:3000",
+        "access-control-allow-credentials": "true",
+      },
+      body: JSON.stringify({
+        error: {
+          code: "VALIDATION_FAILED",
+          message: "Dữ liệu chưa hợp lệ.",
+          fields: { phone: ["INVALID"], addressText: ["REQUIRED"] },
+        },
+      }),
+    });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/me/addresses/new");
+  const invalidAddressForm = page.locator("form:visible");
+  await invalidAddressForm.getByLabel("Nhãn *").fill("Nhà lỗi");
+  await invalidAddressForm.getByLabel("Người nhận *").fill("Nguyễn Văn Minh");
+  await invalidAddressForm.getByLabel("Số điện thoại *").fill("090");
+  await invalidAddressForm.getByLabel("Địa chỉ *").fill("Địa chỉ sẽ bị từ chối");
+  await invalidAddressForm.getByRole("button", { name: "Lưu địa chỉ" }).click();
+  await expect(page.getByText("Giá trị không hợp lệ.")).toBeVisible();
+  await expect(page.getByText("Trường này là bắt buộc.")).toBeVisible();
+  await expect(invalidAddressForm.getByLabel("Nhãn *")).toHaveValue("Nhà lỗi");
+  await screenshotNamed(page, "buy-004-new-error-327-4316-390x844.png", 390, 844);
+  await screenshotNamed(page, "buy-004-new-error-564-5613-1280x900.png", 1280, 900);
+  await page.unroute("**/api/v1/me/addresses*");
+
   await page.goto("/cart");
-  await expect(page.getByRole("heading", { name: "Giỏ hàng", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Giỏ hàng của bạn", exact: true })).toBeVisible();
   await captureResponsive(page, "buy-001-cart-list");
   await page.getByRole("link", { name: "Xem và thanh toán giỏ này" }).click();
   await expect(page).toHaveURL(/\/cart\/[0-9a-f-]+$/);
