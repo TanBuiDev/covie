@@ -61,6 +61,13 @@ public class NeedMatchingService {
         }
         return false;
     }
+    /** Direct-ID visibility must be scoped to the requested location's current discovery predicate. */
+    public boolean canViewNeedAtLocation(UUID merchantId, UUID needId, UUID locationId) {
+        Set<UUID> allowed = access.allowedLocationIds(merchantId, MerchantCapability.VIEW_NEEDS);
+        if (!allowed.contains(locationId)) return false;
+        return discovery.findCandidateForNeed(merchantId, locationId, needId, clock.now())
+                .stream().anyMatch(this::eligible);
+    }
     private boolean eligible(NeedMatchRow row) {
         if(row.type()==NeedType.PRODUCT && row.pickupEnabled()) return true;
         var need=needs.findById(row.needId()).orElse(null); if(need==null) return false;

@@ -20,16 +20,27 @@ public interface NeedResponseRepository extends JpaRepository<NeedResponseEntity
 
     long countByNeedRequestIdAndResponseStatus(UUID needRequestId, NeedResponseStatus responseStatus);
 
+    List<NeedResponseEntity> findByNeedRequestIdAndResponseStatusOrderByCreatedAtDescIdDesc(
+            UUID needRequestId, NeedResponseStatus responseStatus, Pageable pageable);
+
+    default List<NeedResponseEntity> findPage(UUID needId, NeedResponseStatus status,
+            Instant afterCreatedAt, UUID afterId, Pageable pageable) {
+        if (afterCreatedAt == null) {
+            return findByNeedRequestIdAndResponseStatusOrderByCreatedAtDescIdDesc(needId, status, pageable);
+        }
+        if (afterId == null) throw new IllegalArgumentException("Cursor requires both timestamp and id.");
+        return findPageAfter(needId, status, afterCreatedAt, afterId, pageable);
+    }
+
     @Query("""
             select r from NeedResponseEntity r
             where r.needRequestId = :needId
               and r.responseStatus = :status
-              and (:afterCreatedAt is null
-                   or r.createdAt < :afterCreatedAt
+              and (r.createdAt < :afterCreatedAt
                    or (r.createdAt = :afterCreatedAt and r.id < :afterId))
             order by r.createdAt desc, r.id desc
             """)
-    List<NeedResponseEntity> findPage(@Param("needId") UUID needId,
+    List<NeedResponseEntity> findPageAfter(@Param("needId") UUID needId,
             @Param("status") NeedResponseStatus status,
             @Param("afterCreatedAt") Instant afterCreatedAt,
             @Param("afterId") UUID afterId,

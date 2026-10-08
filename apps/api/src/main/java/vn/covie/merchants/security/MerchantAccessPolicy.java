@@ -78,7 +78,7 @@ public final class MerchantAccessPolicy {
                 .map(MerchantMemberLocationEntity::getMerchantLocationId).collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
-    static boolean allows(MerchantRole role, MerchantCapability capability) {
+    public static boolean allows(MerchantRole role, MerchantCapability capability) {
         return switch (role) {
             case OWNER -> true;
             case MANAGER -> capability != MerchantCapability.GRANT_OWNER;

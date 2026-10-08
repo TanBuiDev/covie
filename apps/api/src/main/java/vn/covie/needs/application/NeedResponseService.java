@@ -196,7 +196,7 @@ public class NeedResponseService {
         return new NeedResponseResponse(response.getId(), response.getNeedRequestId(), response.getMerchantProfileId(),
                 null, response.getMerchantLocationId(), null, null, response.getResponseStatus(), response.getNote(),
                 response.getVersion(), response.getCreatedAt(), items.stream().map(item -> new NeedResponseItemResponse(
-                        item.getId(), item.getLocationVariantId(), item.getCatalogItemId(), item.getVariantId(),
+                        item.getId(), item.getLocationVariantId(), item.getCatalogItemId(), null, item.getVariantId(),
                         new NeedResponseItemResponse.MoneyResponse(item.getPriceSnapshot(), item.getCurrencyCode()),
                         null, item.getItemStatus() == NeedResponseItemStatus.ACTIVE,
                         item.getItemStatus() == NeedResponseItemStatus.ACTIVE)).toList());

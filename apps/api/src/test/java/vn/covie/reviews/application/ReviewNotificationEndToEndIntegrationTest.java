@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.node.NullNode;
 import java.time.Instant;
+import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.locks.LockSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -43,9 +45,13 @@ class ReviewNotificationEndToEndIntegrationTest extends PostgresIntegrationTest 
     void committedReviewOutboxCreatesMerchantNotificationAndPublishesEvent() {
         Fixture fixture=transactions.execute(status -> createReviewFixture());
 
+        Instant deadline=Instant.now().plus(Duration.ofSeconds(5));
         while (outbox.findById(fixture.eventId()).orElseThrow().getStatus() != OutboxEventStatus.PUBLISHED
-                && processor.processOne()) {
-            // Drain previously committed outbox work. The processor claims the oldest due event globally.
+                && Instant.now().isBefore(deadline)) {
+            // Drain previously committed work. A scheduled poll may temporarily hold the target row,
+            // so an empty manual poll is not proof that the target event is still unprocessable.
+            processor.processOne();
+            LockSupport.parkNanos(Duration.ofMillis(10).toNanos());
         }
 
         assertThat(outbox.findById(fixture.eventId()).orElseThrow().getStatus()).isEqualTo(OutboxEventStatus.PUBLISHED);

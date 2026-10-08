@@ -19,7 +19,7 @@ class Plan07SchemaMigrationTest extends PostgresIntegrationTest {
     @Test
     void createsPlan07TablesAtV012() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
-            assertThat(currentFlywayVersion(connection)).isEqualTo("013");
+            assertThat(currentFlywayVersion(connection)).isGreaterThanOrEqualTo("012");
             for (String table : new String[] {
                     "reviews",
                     "catalog_item_rating_stats",

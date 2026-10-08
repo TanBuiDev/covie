@@ -19,6 +19,8 @@ import vn.covie.inventory.persistence.InventoryBalanceRepository;
 import vn.covie.merchants.model.MerchantLocationEntity;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
+import vn.covie.merchants.security.MerchantAccessPolicy;
+import vn.covie.merchants.security.MerchantCapability;
 import vn.covie.needs.api.dto.NeedResponseCursorPage;
 import vn.covie.needs.api.dto.NeedResponseItemResponse;
 import vn.covie.needs.api.dto.NeedResponseResponse;
@@ -44,6 +46,7 @@ public class NeedResponseReadService {
     private final NeedResponseItemRepository responseItems;
     private final MerchantProfileRepository merchants;
     private final MerchantLocationRepository locations;
+    private final MerchantAccessPolicy merchantAccess;
     private final LocationVariantRepository locationVariants;
     private final VariantRepository variants;
     private final CatalogItemRepository catalogItems;
@@ -54,11 +57,13 @@ public class NeedResponseReadService {
     public NeedResponseReadService(CurrentActorProvider actors, NeedRequestRepository needs,
             NeedResponseRepository responses, NeedResponseItemRepository responseItems,
             MerchantProfileRepository merchants, MerchantLocationRepository locations,
+            MerchantAccessPolicy merchantAccess,
             LocationVariantRepository locationVariants, VariantRepository variants,
             CatalogItemRepository catalogItems, InventoryBalanceRepository inventory,
             AppClock clock, ObjectMapper mapper) {
         this.actors = actors; this.needs = needs; this.responses = responses; this.responseItems = responseItems;
-        this.merchants = merchants; this.locations = locations; this.locationVariants = locationVariants;
+        this.merchants = merchants; this.locations = locations; this.merchantAccess = merchantAccess;
+        this.locationVariants = locationVariants;
         this.variants = variants; this.catalogItems = catalogItems; this.inventory = inventory;
         this.clock = clock; this.cursors = new NeedTimestampCursorCodec(mapper);
     }
@@ -80,6 +85,19 @@ public class NeedResponseReadService {
         return new NeedResponseCursorPage(values, hasMore, next);
     }
 
+    public NeedResponseResponse merchantResponse(UUID merchantId, UUID needId, UUID locationId) {
+        if (!merchantAccess.allowedLocationIds(merchantId, MerchantCapability.VIEW_NEEDS).contains(locationId)) {
+            throw notFound();
+        }
+        NeedRequestEntity need = needs.findById(needId).orElseThrow(NeedResponseReadService::notFound);
+        NeedResponseEntity response = responses
+                .findByNeedRequestIdAndMerchantLocationIdAndResponseStatus(
+                        needId, locationId, NeedResponseStatus.ACTIVE)
+                .filter(value -> value.getMerchantProfileId().equals(merchantId))
+                .orElseThrow(NeedResponseReadService::notFound);
+        return toDto(need, response, clock.now());
+    }
+
     private NeedResponseResponse toDto(NeedRequestEntity need, NeedResponseEntity response, Instant now) {
         var merchant = merchants.findByIdAndDeletedAtIsNull(response.getMerchantProfileId()).orElse(null);
         MerchantLocationEntity location = locations.findById(response.getMerchantLocationId()).orElse(null);
@@ -90,6 +108,7 @@ public class NeedResponseReadService {
         List<NeedResponseItemResponse> items = responseItems
                 .findByNeedResponseIdAndItemStatusOrderByCreatedAtAsc(response.getId(), NeedResponseItemStatus.ACTIVE)
                 .stream().map(item -> {
+                    var displayCatalog = catalogItems.findById(item.getCatalogItemId()).orElse(null);
                     var offer = locationVariants.findUsableById(item.getLocationVariantId()).orElse(null);
                     boolean available = false;
                     NeedResponseItemResponse.MoneyResponse current = null;
@@ -109,7 +128,8 @@ public class NeedResponseReadService {
                         current = new NeedResponseItemResponse.MoneyResponse(offer.getPrice(), offer.getCurrencyCode());
                     }
                     return new NeedResponseItemResponse(item.getId(), item.getLocationVariantId(), item.getCatalogItemId(),
-                            item.getVariantId(), new NeedResponseItemResponse.MoneyResponse(item.getPriceSnapshot(), item.getCurrencyCode()),
+                            displayCatalog == null ? null : displayCatalog.getName(), item.getVariantId(),
+                            new NeedResponseItemResponse.MoneyResponse(item.getPriceSnapshot(), item.getCurrencyCode()),
                             current, available, needActionable && response.getResponseStatus() == NeedResponseStatus.ACTIVE && available);
                 }).toList();
         return new NeedResponseResponse(response.getId(), response.getNeedRequestId(), response.getMerchantProfileId(),

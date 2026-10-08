@@ -23,7 +23,7 @@ public class JdbcCoverageEvaluationRepository {
             )
             select dc.id, dc.radius_enabled, dc.radius_meters, dc.area_enabled,
                    round(st_distance(ml.geo_point, st_setsrid(st_makepoint(:lng, :lat), 4326)::geography))::bigint as distance_meters,
-                   case when dc.area_enabled and :areaId is not null then exists (
+                   case when dc.area_enabled and cast(:areaId as uuid) is not null then exists (
                        select 1 from delivery_coverage_areas dca join ancestors a on a.id = dca.location_area_id
                        where dca.delivery_coverage_id = dc.id
                    ) else false end as area_match

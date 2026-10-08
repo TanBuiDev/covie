@@ -47,7 +47,7 @@ class NeedConcurrencyIntegrationTest extends PostgresIntegrationTest {
 
     @BeforeEach
     void seed() {
-        Instant now = Instant.parse("2026-08-24T12:00:00Z");
+        Instant now = Instant.parse("2099-08-24T12:00:00Z");
         Timestamp timestamp = Timestamp.from(now);
         jdbc.update("insert into users(id,display_name,account_status,created_at,updated_at) values (?,?, 'ACTIVE',?,?)",
                 buyerId, "Buyer", timestamp, timestamp);
@@ -93,7 +93,7 @@ class NeedConcurrencyIntegrationTest extends PostgresIntegrationTest {
         when(response.getNeedRequestId()).thenReturn(needId);
         OutboxEventWriter outbox = mock(OutboxEventWriter.class);
         NeedFulfillmentOnOrderConfirm participant = new NeedFulfillmentOnOrderConfirm(
-                needs, responses, items, outbox, () -> Instant.parse("2026-08-24T12:00:10Z"));
+                needs, responses, items, outbox, () -> Instant.parse("2099-08-24T12:00:10Z"));
 
         OrderEntity orderOne = sourceOrder(orderOneId, itemId);
         OrderEntity orderTwo = sourceOrder(orderTwoId, itemId);

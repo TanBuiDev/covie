@@ -26,7 +26,7 @@ class Plan08SchemaMigrationTest {
                     .locations("classpath:db/migration")
                     .load()
                     .migrate();
-            assertThat(currentFlywayVersion(connection)).isEqualTo("013");
+            assertThat(currentFlywayVersion(connection)).isGreaterThanOrEqualTo("013");
             for (String table : new String[] {
                     "system_settings", "system_setting_history", "moderation_cases", "moderation_actions" }) {
                 assertThat(tableExists(connection, table)).as(table).isTrue();

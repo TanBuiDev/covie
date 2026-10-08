@@ -53,6 +53,7 @@ public class ProductFulfillmentEntity {
     public Integer getDistanceMeters() { return distanceMeters; } public JsonNode getPickupLocationSnapshot() { return pickupLocationSnapshot; }
     public JsonNode getDeliveryAddressSnapshot() { return deliveryAddressSnapshot; } public JsonNode getBuyerContactSnapshot() { return buyerContactSnapshot; }
     public JsonNode getMerchantContactSnapshot() { return merchantContactSnapshot; }
+    public JsonNode getShippingPolicySnapshot() { return shippingPolicySnapshot; }
     public java.time.Instant getSellerMarkedReadyAt() { return sellerMarkedReadyAt; }
     public java.time.Instant getOutForDeliveryAt() { return outForDeliveryAt; }
     public java.time.Instant getSellerMarkedDeliveredAt() { return sellerMarkedDeliveredAt; }

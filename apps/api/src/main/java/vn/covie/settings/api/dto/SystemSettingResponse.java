@@ -1,6 +1,5 @@
 package vn.covie.settings.api.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Instant;
 import java.util.UUID;
 import vn.covie.settings.model.SettingScopeType;
@@ -11,7 +10,7 @@ public record SystemSettingResponse(
         UUID id,
         String key,
         SettingValueType valueType,
-        JsonNode value,
+        Object value,
         SettingScopeType scopeType,
         UUID scopeId,
         long version,

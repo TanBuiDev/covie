@@ -24,10 +24,15 @@ import vn.covie.shared.web.ErrorCode;
 public class ReviewService {
     private final CurrentActorProvider actors; private final OrderItemRepository orderItems; private final OrderRepository orders;
     private final ReviewRepository reviews; private final ReviewPolicyProvider policy; private final RatingProjectionService projections;
+    private final ReviewEligibilityEvaluator eligibility;
     private final OutboxEventWriter outbox; private final IdempotencyExecutor idempotency; private final UuidV7Generator ids; private final AppClock clock;
     public ReviewService(CurrentActorProvider actors, OrderItemRepository orderItems, OrderRepository orders, ReviewRepository reviews,
-            ReviewPolicyProvider policy, RatingProjectionService projections, OutboxEventWriter outbox, IdempotencyExecutor idempotency,
-            UuidV7Generator ids, AppClock clock) { this.actors=actors; this.orderItems=orderItems; this.orders=orders; this.reviews=reviews; this.policy=policy; this.projections=projections; this.outbox=outbox; this.idempotency=idempotency; this.ids=ids; this.clock=clock; }
+            ReviewPolicyProvider policy, ReviewEligibilityEvaluator eligibility, RatingProjectionService projections,
+            OutboxEventWriter outbox, IdempotencyExecutor idempotency, UuidV7Generator ids, AppClock clock) {
+        this.actors=actors; this.orderItems=orderItems; this.orders=orders; this.reviews=reviews; this.policy=policy;
+        this.eligibility=eligibility; this.projections=projections; this.outbox=outbox; this.idempotency=idempotency;
+        this.ids=ids; this.clock=clock;
+    }
     public ReviewResponse create(CreateReviewRequest request, String key) {
         UUID actorId = actors.currentActor().userId();
         return idempotency.execute(actorId, "review.create:" + request.orderItemId(), key, request, 201, ReviewResponse.class,
@@ -35,13 +40,20 @@ public class ReviewService {
     }
     @Transactional
     ReviewResponse createInsideTransaction(UUID actorId, CreateReviewRequest request) {
-        if (!policy.creationEnabled()) throw error(ErrorCode.REVIEW_CREATION_DISABLED, HttpStatus.UNPROCESSABLE_ENTITY, "Review creation is disabled.");
         var item = orderItems.findById(request.orderItemId()).orElseThrow(ReviewService::notFound);
         var order = orders.lockById(item.getOrderId()).orElseThrow(ReviewService::notFound);
         if (!order.getBuyerUserId().equals(actorId)) throw notFound();
-        if (order.getStatus() != OrderStatus.COMPLETED) throw error(ErrorCode.REVIEW_ORDER_NOT_COMPLETED, HttpStatus.CONFLICT, "Order is not completed.");
-        if (item.getCatalogItemId() == null) throw notFound();
-        if (reviews.existsByOrderItemId(item.getId())) throw error(ErrorCode.REVIEW_ALREADY_EXISTS, HttpStatus.CONFLICT, "Review already exists.");
+        boolean creationEnabled = policy.creationEnabled();
+        boolean reviewable = item.getCatalogItemId() != null;
+        boolean alreadyReviewed = creationEnabled && order.getStatus() == OrderStatus.COMPLETED && reviewable
+                && reviews.existsByOrderItemId(item.getId());
+        switch (eligibility.evaluate(creationEnabled, order.getStatus(), reviewable, alreadyReviewed)) {
+            case CREATION_DISABLED -> throw error(ErrorCode.REVIEW_CREATION_DISABLED, HttpStatus.UNPROCESSABLE_ENTITY, "Review creation is disabled.");
+            case ORDER_NOT_COMPLETED -> throw error(ErrorCode.REVIEW_ORDER_NOT_COMPLETED, HttpStatus.CONFLICT, "Order is not completed.");
+            case ITEM_NOT_REVIEWABLE -> throw notFound();
+            case ALREADY_REVIEWED -> throw error(ErrorCode.REVIEW_ALREADY_EXISTS, HttpStatus.CONFLICT, "Review already exists.");
+            case ELIGIBLE -> { }
+        }
         ReviewEntity review = ReviewEntity.active(ids.generate(), item.getId(), order.getId(), actorId, item.getCatalogItemId(), item.getVariantId(), order.getMerchantProfileId(), (short) request.rating(), request.comment(), clock.now());
         try { reviews.saveAndFlush(review); } catch (DataIntegrityViolationException exception) { throw error(ErrorCode.REVIEW_ALREADY_EXISTS, HttpStatus.CONFLICT, "Review already exists."); }
         projections.add(review);
