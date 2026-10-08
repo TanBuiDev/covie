@@ -24,6 +24,13 @@ export async function listSavedAddressesClient() {
   return dataOrThrow(response, data, error);
 }
 
+export async function reverseGeocodeAddress(latitude: number, longitude: number) {
+  const { data, error, response } = await createApiClient().GET("/api/v1/me/addresses/reverse-geocode", {
+    params: { query: { latitude, longitude } },
+  });
+  return dataOrThrow(response, data, error);
+}
+
 export async function createSavedAddress(input: components["schemas"]["CreateUserAddressRequest"]) {
   const { data, error, response } = await createApiClient().POST("/api/v1/me/addresses", { body: input });
   return dataOrThrow(response, data, error);

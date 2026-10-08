@@ -19,7 +19,7 @@ it("sends the onboarding password in the backend onboarding payload", async () =
   await expect(request.clone().json()).resolves.toEqual({ password: "a secure onboarding password" });
 });
 
-it("sends only newPassword to the Google reset endpoint", async () => {
+it("sends the password field required by the Google reset API contract", async () => {
   const fetchMock = successfulPostFetch();
   vi.stubGlobal("fetch", fetchMock);
 
@@ -27,7 +27,7 @@ it("sends only newPassword to the Google reset endpoint", async () => {
 
   const request = fetchMock.mock.calls[1]![0] as Request;
   expect(request.url).toContain("/api/v1/auth/password/reset-with-google");
-  await expect(request.clone().json()).resolves.toEqual({ newPassword: "a secure reset password" });
+  await expect(request.clone().json()).resolves.toEqual({ password: "a secure reset password" });
 });
 
 function successfulPostFetch() {

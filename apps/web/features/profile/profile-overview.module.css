@@ -1,1 +1,463 @@
-.screen{display:flex;flex-direction:column;gap:16px;min-height:calc(100dvh - 80px);padding:16px 16px 96px;background:var(--semantic-bg-surface,#fff);color:var(--semantic-text-primary,#0f172a)}.header{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--semantic-border-default,#e2e8f0);border-radius:14px}.avatar{display:flex;width:56px;height:56px;flex:0 0 56px;align-items:center;justify-content:center;border-radius:999px;background:var(--semantic-selection-subtle,#ecfdf5);color:var(--semantic-text-action,#334155);font-size:18px;font-weight:600}.identity{min-width:0}.eyebrow{margin:0 0 2px;color:var(--semantic-text-secondary,#475569);font-size:12px;font-weight:600;line-height:16px}.identity h1{margin:0;font-size:18px;font-weight:600;line-height:26px}.email{overflow:hidden;margin:2px 0 0;color:var(--semantic-text-secondary,#475569);font-size:13px;line-height:18px;text-overflow:ellipsis;white-space:nowrap}.links{display:flex;flex-direction:column;gap:10px}.card{display:flex;min-height:76px;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid var(--semantic-border-default,#e2e8f0);border-radius:12px;background:var(--semantic-bg-surface,#fff);color:inherit;text-decoration:none}.card>span:first-child{display:flex;min-width:0;flex-direction:column;gap:4px}.card strong{font-size:14px;line-height:20px}.card small{color:var(--semantic-text-secondary,#475569);font-size:12px;line-height:16px}.chevron{color:var(--semantic-text-secondary,#475569);font-size:24px;line-height:24px}.seller{background:var(--semantic-bg-brand-subtle,#ecfdf5)}.logout{margin-top:auto}.logout button{width:100%;min-height:48px;border:1px solid var(--semantic-status-error-border,#fecaca);border-radius:12px;background:var(--semantic-bg-surface,#fff);color:var(--semantic-status-error-text,#b91c1c);font-size:14px;font-weight:600}.logout p{margin:8px 0 0;color:var(--semantic-status-error-text,#b91c1c);font-size:12px;line-height:16px}.card:focus-visible,.logout button:focus-visible{outline:3px solid color-mix(in srgb,var(--semantic-action-primary,#047857) 35%,transparent);outline-offset:2px}@media(min-width:768px){.screen{max-width:760px;margin:0 auto;padding:32px 24px 64px}.header{padding:20px}.links{display:grid;grid-template-columns:1fr 1fr}.seller{grid-column:1/-1}.logout{max-width:360px}}
+.screen {
+  background: var(--covie-surface, #ffffff);
+  color: var(--covie-text, #0f172a);
+  min-height: calc(100dvh - 80px);
+  padding: 16px 16px 96px;
+  width: 100%;
+}
+
+.avatarImage { border-radius: 50%; height: 100%; object-fit: cover; width: 100%; }
+.editButton { min-height: 44px; width: 100%; }
+.saved { color: var(--covie-accent); font-size: 13px; line-height: 20px; margin: 0; }
+
+.dashboardLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1140px;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .screen {
+    padding: 32px 32px 64px;
+  }
+
+  .dashboardLayout {
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+}
+
+/* CỘT TRÁI: Resident Sidebar */
+.residentSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profileCard {
+  background: #ffffff;
+  border: 1px solid var(--covie-border, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.profileHeader {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.avatarWrap {
+  align-items: center;
+  background: #ecfdf5;
+  border: 2px solid #a7f3d0;
+  border-radius: 999px;
+  color: #047857;
+  display: flex;
+  font-size: 22px;
+  font-weight: 700;
+  height: 64px;
+  justify-content: center;
+  position: relative;
+  width: 64px;
+  flex-shrink: 0;
+}
+
+.avatarText {
+  line-height: 1;
+}
+
+.avatarOnlineDot {
+  background: #10b981;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  bottom: 2px;
+  height: 12px;
+  position: absolute;
+  right: 2px;
+  width: 12px;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.eyebrow {
+  color: var(--covie-muted, #64748b);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.userName {
+  color: var(--covie-text, #0f172a);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.email {
+  color: var(--covie-muted, #64748b);
+  font-size: 13px;
+  line-height: 18px;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.residentMeta {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  gap: 8px;
+}
+
+.metaBadge {
+  align-items: center;
+  color: #047857;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 5px;
+}
+
+.verifiedIcon {
+  color: #047857;
+}
+
+.metaCommunity {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.reputationShortcut {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 14px;
+}
+
+.reputationCard {
+  align-items: center;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 12px;
+  color: inherit;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.reputationCard:hover {
+  background: #fef3c7;
+  border-color: #fde68a;
+}
+
+.reputationCardLeft {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.reputationIconWrap {
+  align-items: center;
+  background: #fef3c7;
+  border-radius: 8px;
+  color: #d97706;
+  display: flex;
+  height: 32px;
+  justify-content: center;
+  width: 32px;
+}
+
+.reputationText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reputationText strong {
+  color: #92400e;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.reputationText small {
+  color: #b45309;
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.chevron {
+  color: #d97706;
+}
+
+.sidebarLogout {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 14px;
+}
+
+.sidebarLogout button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--covie-border, #e2e8f0);
+  border-radius: 12px;
+  color: #dc2626;
+  cursor: pointer;
+  display: flex;
+  font-size: 13px;
+  font-weight: 600;
+  height: 44px;
+  justify-content: center;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.sidebarLogout button:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+/* CỘT PHẢI: Control Center */
+.controlCenter {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Seller Center Banner */
+.sellerBanner {
+  align-items: center;
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+  border: 1px solid #a7f3d0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(4, 120, 87, 0.05);
+  color: inherit;
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 20px;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sellerBanner:hover {
+  border-color: #6ee7b7;
+  box-shadow: 0 4px 12px rgba(4, 120, 87, 0.1);
+  transform: translateY(-1px);
+}
+
+.sellerBannerLeft {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.sellerIconBox {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  color: #047857;
+  display: flex;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.sellerBannerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sellerEyebrow {
+  color: #047857;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.sellerTitle {
+  color: #064e3b;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.sellerDesc {
+  color: #047857;
+  font-size: 12px;
+  line-height: 16px;
+  margin: 0;
+}
+
+.sellerBannerCta {
+  align-items: center;
+  background: #047857;
+  border-radius: 10px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.sellerBanner:hover .sellerBannerCta {
+  background: #065f46;
+}
+
+/* Menu Section */
+.menuSectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menuSectionHeader h2 {
+  color: var(--covie-text, #0f172a);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  margin: 0;
+}
+
+.menuSectionHeader p {
+  color: var(--covie-muted, #64748b);
+  font-size: 13px;
+  line-height: 18px;
+  margin: 0;
+}
+
+.menuGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .menuGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+.menuCard {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--covie-border, #e2e8f0);
+  border-radius: 14px;
+  color: inherit;
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.menuCard:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  transform: translateY(-1px);
+}
+
+.menuIconBox {
+  align-items: center;
+  border-radius: 12px;
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.menuCard--emerald .menuIconBox {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.menuCard--amber .menuIconBox {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.menuCard--blue .menuIconBox {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.menuCard--purple .menuIconBox {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.menuCard--teal .menuIconBox {
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.menuContent {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.menuContent strong {
+  color: var(--covie-text, #0f172a);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.menuContent small {
+  color: var(--covie-muted, #64748b);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.menuChevron {
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.menuCard:hover .menuChevron {
+  color: var(--covie-accent, #047857);
+  transform: translateX(2px);
+}
+
+.menuCard:focus-visible,
+.reputationCard:focus-visible,
+.sellerBanner:focus-visible,
+.sidebarLogout button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--covie-accent, #047857) 35%, transparent);
+  outline-offset: 2px;
+}

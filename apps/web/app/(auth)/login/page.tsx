@@ -1,54 +1,50 @@
-import Image from "next/image";
-import Link from "next/link";
+import { AuthShell } from "../../../features/auth/auth-shell";
 import { GoogleAuthLink, GoogleLoginButton } from "../../../features/auth/google-login-button";
 import { LoginForm } from "../../../features/auth/login-form";
 
-export default async function LoginPage({ searchParams }: { searchParams?: Promise<{ returnTo?: string | string[] }> }) {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ returnTo?: string | string[] }>;
+}) {
   const query = await searchParams;
+  const returnTo = typeof query?.returnTo === "string" ? query.returnTo : undefined;
+
   return (
-    <main className="auth-surface">
-      <header className="auth-top-bar">
-        <Link className="auth-top-brand" href="/" aria-label="CoVie Trang chủ">
-          <Image
-            src="/figma/covie-market-pin.svg"
-            width={44}
-            height={44}
-            alt=""
-            aria-hidden="true"
-            priority
-            unoptimized
-          />
-          <span className="auth-top-brand__text">
-            <strong>CoVie</strong>
-            <small>Chợ Việt</small>
-          </span>
-        </Link>
-      </header>
-
-      <div className="auth-main-wrap">
-        <section className="auth-card" aria-labelledby="login-title">
-          <header className="auth-card__header">
-            <p className="auth-eyebrow">ĐĂNG NHẬP</p>
-            <h1 id="login-title">Chào mừng bạn trở lại</h1>
-            <p>Đăng nhập bằng email/mật khẩu CoVie đã tạo sau lần xác minh Google, hoặc tiếp tục bằng Google.</p>
-          </header>
-
-          <LoginForm returnTo={typeof query?.returnTo === "string" ? query.returnTo : undefined} />
-
-          <GoogleAuthLink className="auth-forgot" intent="PASSWORD_RESET">
-            Quên mật khẩu?
-          </GoogleAuthLink>
-
-          <div className="auth-divider"><span>hoặc</span></div>
-
-          <GoogleLoginButton />
-
-          <p className="auth-card__footer">
-            Chưa có tài khoản?{" "}
-            <GoogleAuthLink>Tạo tài khoản bằng Google</GoogleAuthLink>
+    <AuthShell
+      heroHeadline="Mua sắm & trao đổi tiện lợi cùng hàng xóm CoVie"
+      heroSubtitle="Đăng nhập để xem danh mục thực phẩm tươi sạch hôm nay, theo dõi đơn hàng và trao đổi trong cộng đồng nội khu."
+      returnTo={returnTo}
+    >
+      <section className="auth-card" aria-labelledby="login-title">
+        <header className="auth-card__header">
+          <p className="auth-eyebrow">ĐĂNG NHẬP</p>
+          <h1 id="login-title">Chào mừng bạn trở lại</h1>
+          <p>
+            Đăng nhập bằng email &amp; mật khẩu CoVie đã tạo, hoặc tiếp tục nhanh bằng tài khoản Google đã xác minh.
           </p>
-        </section>
-      </div>
-    </main>
+        </header>
+
+        <LoginForm
+          returnTo={returnTo}
+          forgotPasswordSlot={
+            <GoogleAuthLink className="auth-forgot-inline" intent="PASSWORD_RESET">
+              Quên mật khẩu?
+            </GoogleAuthLink>
+          }
+        />
+
+        <div className="auth-divider">
+          <span>hoặc</span>
+        </div>
+
+        <GoogleLoginButton />
+
+        <p className="auth-card__footer">
+          Chưa có tài khoản?{" "}
+          <GoogleAuthLink>Tạo tài khoản bằng Google</GoogleAuthLink>
+        </p>
+      </section>
+    </AuthShell>
   );
 }

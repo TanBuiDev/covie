@@ -1,0 +1,40 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, expect, it, vi } from "vitest";
+import { ProfileOverview } from "@/features/profile/profile-overview";
+const api = vi.hoisted(() => ({ updateProfile: vi.fn() }));
+vi.mock("@/features/profile/profile-client-api", () => api);
+vi.mock("@/features/media/direct-image-upload", () => ({ uploadImage: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
+const user = { id: "buyer", displayName: "Tên cũ", email: "buyer@covie.test", phone: "0901234567" };
+beforeEach(() => vi.clearAllMocks());
+it("updates overview from saved server response and restores edit focus", async () => {
+  api.updateProfile.mockResolvedValue({ ...user, displayName: "Tên mới", phone: "0907777777", avatarUrl: "https://cdn.test/new.png", avatarMediaId: "media-new" });
+  render(<ProfileOverview user={user} />);
+  const edit = screen.getByRole("button", { name: "Chỉnh sửa hồ sơ" });
+  fireEvent.click(edit);
+  expect(screen.getByLabelText("Tên hiển thị")).toHaveFocus();
+  fireEvent.change(screen.getByLabelText("Tên hiển thị"), { target: { value: "Tên mới" } });
+  fireEvent.submit(screen.getByRole("form", { name: "Chỉnh sửa hồ sơ" }));
+  expect(await screen.findByRole("heading", { name: "Tên mới" })).toBeVisible();
+  expect(screen.getByText("0907777777")).toBeVisible();
+  expect(screen.getByRole("img", { name: "Ảnh đại diện của bạn" })).toHaveAttribute("src", "https://cdn.test/new.png");
+  expect(screen.queryByRole("form")).toBeNull();
+  expect(screen.getByRole("status")).toHaveTextContent("Hồ sơ đã được cập nhật.");
+  await waitFor(() => expect(edit).toHaveFocus());
+});
+it("cancel leaves persisted overview unchanged", () => {
+  render(<ProfileOverview user={user} />);
+  fireEvent.click(screen.getByRole("button", { name: "Chỉnh sửa hồ sơ" }));
+  fireEvent.change(screen.getByLabelText("Tên hiển thị"), { target: { value: "Chưa lưu" } });
+  fireEvent.click(screen.getByRole("button", { name: "Hủy" }));
+  expect(screen.getByRole("heading", { name: "Tên cũ" })).toBeVisible();
+  expect(api.updateProfile).not.toHaveBeenCalled();
+});
+it("does not retain another account's private profile when server identity changes", () => {
+  const view = render(<ProfileOverview user={user} />);
+  fireEvent.click(screen.getByRole("button", { name: "Chỉnh sửa hồ sơ" }));
+  view.rerender(<ProfileOverview user={{ id: "other-buyer", displayName: "Tài khoản khác", email: "other@covie.test" }} />);
+  expect(screen.getByRole("heading", { name: "Tài khoản khác" })).toBeVisible();
+  expect(screen.queryByRole("form")).toBeNull();
+  expect(screen.queryByText(user.phone)).toBeNull();
+});

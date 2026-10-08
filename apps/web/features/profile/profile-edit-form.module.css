@@ -1,0 +1,13 @@
+.form { background: var(--covie-surface); border: 1px solid var(--covie-border); border-radius: var(--covie-radius); display: grid; gap: 16px; min-width: 0; padding: 20px; }
+.form h2 { font-size: 18px; line-height: 26px; margin: 0; }
+.description, .form small { color: var(--covie-muted); font-size: 12px; line-height: 18px; margin: 0; }
+.form fieldset { border: 0; display: grid; gap: 16px; margin: 0; min-width: 0; padding: 0; }
+.form label { display: grid; font-size: 14px; font-weight: 600; gap: 8px; }
+.form input { background: var(--covie-surface); border: 1px solid var(--covie-border); border-radius: var(--covie-radius); color: var(--covie-text); min-height: 48px; min-width: 0; padding: 10px 12px; width: 100%; }
+.form input[type=file] { font-size: 12px; }
+.form input:disabled { background: var(--covie-subtle); }
+.preview { align-items: center; background: var(--covie-brand-subtle); border-radius: 50%; color: var(--covie-accent); display: flex; font-size: 30px; font-weight: 700; height: 80px; justify-content: center; overflow: hidden; width: 80px; }
+.preview img { height: 80px; object-fit: cover; width: 80px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.actions button { min-height: 44px; }
+.error { background: var(--covie-warning-bg); border: 1px solid var(--covie-border); border-radius: var(--covie-radius); color: var(--covie-danger); font-size: 14px; line-height: 20px; margin: 0; padding: 12px; }

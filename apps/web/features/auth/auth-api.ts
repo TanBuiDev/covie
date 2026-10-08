@@ -1,4 +1,5 @@
 import { requestBrowserApi } from "../../lib/api/api-client";
+import type { components } from "@covie/api-client";
 import { readApiError } from "../../lib/api/api-error";
 import { invalidateCsrfToken, getCsrfToken } from "./csrf";
 
@@ -20,7 +21,8 @@ export function setOnboardingPassword(password: string) {
 }
 
 export function resetPasswordWithGoogle(password: string) {
-  return post("/api/v1/auth/password/reset-with-google", { newPassword: password });
+  const body: components["schemas"]["ResetPasswordWithGoogleRequest"] = { password };
+  return post("/api/v1/auth/password/reset-with-google", body);
 }
 
 export async function logout(navigate: (path: string) => void): Promise<void> {
