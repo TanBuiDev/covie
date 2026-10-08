@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+root="$(cd "$(dirname "$0")/../.." && pwd)"
+
 [[ "${COVIE_REHEARSAL_CONFIRM:-}" == "STAGING_ONLY" ]] || {
   echo "Set COVIE_REHEARSAL_CONFIRM=STAGING_ONLY after confirming every target is disposable/staging" >&2; exit 2;
 }
 : "${COVIE_STAGING_BASE_URL:?COVIE_STAGING_BASE_URL is required}"
 : "${PGDATABASE:?Source staging PGDATABASE is required}"
 : "${COVIE_RESTORE_DATABASE:?COVIE_RESTORE_DATABASE must name a separate empty restore DB}"
-: "${COVIE_STAGING_P0_CMD:?Set COVIE_STAGING_P0_CMD to the normal-auth P0 browser/API smoke command}"
 : "${COVIE_RATE_LIMIT_REHEARSAL_CMD:?Set COVIE_RATE_LIMIT_REHEARSAL_CMD for controlled Redis/rate-limit failure checks}"
 : "${COVIE_RESTORED_API_SMOKE_CMD:?Set COVIE_RESTORED_API_SMOKE_CMD for temporary API validation against restored DB}"
 : "${COVIE_ROLLBACK_DRILL_CMD:?Set COVIE_ROLLBACK_DRILL_CMD for B -> A -> B digest drill}"
@@ -20,7 +21,7 @@ esac
 [[ "$COVIE_RESTORE_DATABASE" != "$PGDATABASE" ]] || { echo "Restore DB must differ from source DB" >&2; exit 1; }
 [[ "$COVIE_RESTORE_DATABASE" != "${COVIE_PRODUCTION_DB_NAME:-covie}" ]] || { echo "Refusing production-named restore DB" >&2; exit 1; }
 
-root="$(cd "$(dirname "$0")/../.." && pwd)"
+: "${COVIE_STAGING_P0_CMD:=pnpm --dir \"$root/apps/web\" test:e2e:staging}"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 evidence="${COVIE_REHEARSAL_EVIDENCE_DIR:-$root/build/staging-evidence/$stamp}"
 mkdir -p "$evidence"

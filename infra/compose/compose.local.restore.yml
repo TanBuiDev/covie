@@ -1,0 +1,7 @@
+volumes:
+  covie_postgres:
+    external: true
+    name: covie_restore_20261006_postgres
+  covie_minio:
+    external: true
+    name: covie_restore_20261006_minio
