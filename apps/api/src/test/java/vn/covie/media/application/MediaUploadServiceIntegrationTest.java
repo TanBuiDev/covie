@@ -60,6 +60,25 @@ class MediaUploadServiceIntegrationTest extends PostgresIntegrationTest {
     }
 
     @Test
+    void completesVerifiedAdVideoButRejectsContainerMismatch() {
+        byte[] mp4 = new byte[] {0,0,0,20,102,116,121,112,105,115,111,109,0,0,0,0,109,112,52,50};
+        var upload = uploads.createUpload(new CreateMediaUploadRequest(MediaPurpose.AD_BANNER, "video/mp4", mp4.length));
+        var pending = media.findById(upload.mediaId()).orElseThrow();
+        when(storage.head(pending.getStorageKey())).thenReturn(new StoredObjectMetadata("video/mp4", mp4.length));
+        when(storage.readPrefix(pending.getStorageKey(), 4096)).thenReturn(mp4);
+        assertThat(uploads.complete(upload.mediaId(), "ad-mp4").purpose()).isEqualTo(MediaPurpose.AD_BANNER);
+        assertThat(media.findById(upload.mediaId()).orElseThrow().getMediaStatus()).isEqualTo(MediaStatus.READY);
+
+        var wrong = uploads.createUpload(new CreateMediaUploadRequest(MediaPurpose.AD_BANNER, "video/webm", mp4.length));
+        var wrongAsset = media.findById(wrong.mediaId()).orElseThrow();
+        when(storage.head(wrongAsset.getStorageKey())).thenReturn(new StoredObjectMetadata("video/webm", mp4.length));
+        when(storage.readPrefix(wrongAsset.getStorageKey(), 4096)).thenReturn(mp4);
+        assertThatThrownBy(() -> uploads.complete(wrong.mediaId(), "ad-wrong-container")).isInstanceOf(ApiException.class);
+        assertThat(media.findById(wrong.mediaId()).orElseThrow().getMediaStatus()).isEqualTo(MediaStatus.FAILED);
+        org.mockito.Mockito.verify(storage).deleteIfExists(wrongAsset.getStorageKey());
+    }
+
+    @Test
     void createsDeterministicDirectUploadWithoutFilenameAndCompletesVerifiedPngIdempotently() {
         var request = new CreateMediaUploadRequest(MediaPurpose.USER_AVATAR, "image/png", PNG.length);
         var upload = uploads.createUpload(request);

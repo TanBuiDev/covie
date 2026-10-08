@@ -11,6 +11,7 @@ export function ConfirmDialog({
   dangerous = false,
   confirmDisabled = false,
   cancelDisabled = false,
+  presentation = "modal",
   onConfirm,
   onCancel,
   children,
@@ -23,6 +24,7 @@ export function ConfirmDialog({
   dangerous?: boolean;
   confirmDisabled?: boolean;
   cancelDisabled?: boolean;
+  presentation?: "modal" | "seller-page";
   onConfirm: () => void;
   onCancel: () => void;
   children?: ReactNode;
@@ -73,7 +75,7 @@ export function ConfirmDialog({
   if (!open) return null;
   return (
     <div
-      className="dialog-backdrop"
+      className={`dialog-backdrop${presentation === "seller-page" ? " dialog-backdrop--seller-page" : ""}`}
       role="presentation"
       onMouseDown={(event) => {
         if (!cancelDisabled && event.currentTarget === event.target) onCancel();
@@ -81,7 +83,7 @@ export function ConfirmDialog({
     >
       <section
         ref={dialogRef}
-        className="confirm-dialog"
+        className={`confirm-dialog${presentation === "seller-page" ? " confirm-dialog--seller-page seller-order-action" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
@@ -90,7 +92,7 @@ export function ConfirmDialog({
         <h2 id="confirm-dialog-title">{title}</h2>
         {description && <p id="confirm-dialog-description">{description}</p>}
         {children}
-        <div className="dialog-actions">
+        <div className={`dialog-actions${presentation === "seller-page" ? " seller-order-action__footer" : ""}`}>
           <button ref={cancelRef} type="button" disabled={cancelDisabled} onClick={onCancel}>{cancelLabel}</button>
           <button
             type="button"

@@ -92,6 +92,10 @@
   padding: 14px;
 }
 
+.seller-merchant-form > .seller-media-settings {
+  order: -1;
+}
+
 .seller-media-settings > strong {
   font-size: 14px;
   line-height: 20px;

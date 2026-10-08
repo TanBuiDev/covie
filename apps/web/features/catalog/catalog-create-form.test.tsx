@@ -11,6 +11,7 @@ type CreateCatalogItemRequest = components["schemas"]["CreateCatalogItemRequest"
 const mocks = vi.hoisted(() => ({
   createCatalogItem: vi.fn<(merchantId: string, idempotencyKey: string, input: CreateCatalogItemRequest) => Promise<unknown>>(),
   getCategoryDetail: vi.fn<(categoryId: string) => Promise<CategoryDetail>>(),
+  uploadImage: vi.fn<(file: File, purpose: "CATALOG_IMAGE") => Promise<{ mediaId?: string }>>(),
   push: vi.fn<(href: string) => void>(),
   refresh: vi.fn<() => void>(),
 }));
@@ -25,7 +26,7 @@ vi.mock("./catalog-api", () => ({
 }));
 
 vi.mock("@/features/media/direct-image-upload", () => ({
-  uploadImage: vi.fn(),
+  uploadImage: mocks.uploadImage,
 }));
 
 const serviceCategories: Category[] = [{
@@ -69,9 +70,11 @@ function firstCreateCall() {
 beforeEach(() => {
   mocks.createCatalogItem.mockReset();
   mocks.getCategoryDetail.mockReset();
+  mocks.uploadImage.mockReset();
   mocks.push.mockReset();
   mocks.refresh.mockReset();
   mocks.createCatalogItem.mockResolvedValue({});
+  mocks.uploadImage.mockResolvedValue({ mediaId: "media-1" });
 });
 
 describe("CatalogCreateForm Seller Mobile contracts", () => {
@@ -233,5 +236,29 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
 
     expect(await screen.findByText("Danh mục này chưa có tùy chọn tình trạng để chọn.")).toBeInTheDocument();
     expect(screen.queryByLabelText(/^Tình trạng/)).not.toBeInTheDocument();
+  });
+
+  it("keeps entered data and shows retryable copy when image upload fails", async () => {
+    mocks.getCategoryDetail.mockResolvedValue({
+      id: "cat-resale",
+      name: "Đồ gia dụng",
+      catalogType: "PRODUCT",
+      attributes: [],
+    } satisfies CategoryDetail);
+    mocks.uploadImage.mockRejectedValueOnce(new Error("OBJECT_UPLOAD_FAILED"));
+
+    render(<CatalogCreateForm merchantId="merchant-1" categories={productCategories} locations={locations} />);
+    fillBaseFields({ categoryId: "cat-resale", name: "Nồi chiên giữ nguyên" });
+    await waitFor(() => expect(mocks.getCategoryDetail).toHaveBeenCalledWith("cat-resale"));
+    fireEvent.change(screen.getByLabelText("Giá chính xác (VND)"), { target: { value: "500000" } });
+    const file = new File(["image"], "catalog.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText("Ảnh catalog"), { target: { files: [file] } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Tạo nội dung" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Không thể tải ảnh lên. Thông tin đã nhập được giữ lại; hãy thử lại.");
+    expect(screen.getByLabelText("Tên")).toHaveValue("Nồi chiên giữ nguyên");
+    expect(screen.getByText("Đã chọn 1 ảnh.")).toBeInTheDocument();
+    expect(mocks.createCatalogItem).not.toHaveBeenCalled();
   });
 });

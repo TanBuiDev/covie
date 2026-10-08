@@ -92,7 +92,7 @@
 }
 
 .seller-shell .merchant-switcher select:disabled {
-  background: var(--seller-bg);
+  background-color: var(--seller-bg);
   color: var(--seller-text-secondary);
   opacity: 1;
 }

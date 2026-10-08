@@ -2,9 +2,11 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CoVieIcon } from "@/components/ui/covie-icon";
+import { CovieApiError } from "@/lib/api/api-error";
+import { ErrorState } from "@/components/ui/error-state";
 import { inbox, markAllRead, markRead, type Notification } from "./notification-api";
 import { notificationDeepLink } from "./notification-deep-link";
 import { notificationLabel } from "./notification-types";
@@ -17,17 +19,35 @@ export function NotificationInbox() {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<string | null>(null);
+  const [failedCursor, setFailedCursor] = useState<string>();
+  const loadPending = useRef(false);
+  const mutationPending = useRef(false);
+  const [authRequired, setAuthRequired] = useState(false);
+  const authExpired = useRef(false);
 
   async function load(next?: string) {
+    if (loadPending.current || mutationPending.current || authExpired.current) return;
+    loadPending.current = true;
     setLoading(true);
     setError(undefined);
     try {
       const page = await inbox(next);
-      setItems((old) => next ? [...old, ...(page.items ?? [])] : page.items ?? []);
+      setItems((old) => {
+        const candidates = next ? [...old, ...(page.items ?? [])] : page.items ?? [];
+        const ids = new Set<string>();
+        return candidates.filter(item => {
+          if (!item.id || ids.has(item.id)) return false;
+          ids.add(item.id);
+          return true;
+        });
+      });
       setCursor(page.nextCursor);
-    } catch {
+    } catch (cause) {
+      if (cause instanceof CovieApiError && cause.status === 401) { authExpired.current = true; setAuthRequired(true); }
+      setFailedCursor(next);
       setError("Không thể tải thông báo.");
     } finally {
+      loadPending.current = false;
       setLoading(false);
     }
   }
@@ -35,7 +55,8 @@ export function NotificationInbox() {
   useEffect(() => { void load(); }, []);
 
   async function openNotification(notification: Notification) {
-    if (!notification.id || pending) return;
+    if (!notification.id || mutationPending.current || loadPending.current || authRequired) return;
+    mutationPending.current = true;
     setPending(notification.id);
     try {
       if (!notification.read) {
@@ -44,27 +65,37 @@ export function NotificationInbox() {
       }
       const href = notificationDeepLink(notification.data);
       if (href) router.push(href);
-    } catch {
+    } catch (cause) {
+      if (cause instanceof CovieApiError && cause.status === 401) { authExpired.current = true; setAuthRequired(true); }
       setError("Không thể cập nhật thông báo.");
     } finally {
+      mutationPending.current = false;
       setPending(null);
     }
   }
 
   async function all() {
-    if (pending) return;
+    if (mutationPending.current || loadPending.current || authRequired) return;
+    mutationPending.current = true;
     setPending("all");
     try {
       await markAllRead();
       setItems((old) => old.map((item) => ({ ...item, read: true })));
-    } catch {
+    } catch (cause) {
+      if (cause instanceof CovieApiError && cause.status === 401) { authExpired.current = true; setAuthRequired(true); }
       setError("Không thể cập nhật thông báo.");
     } finally {
+      mutationPending.current = false;
       setPending(null);
     }
   }
 
   const unreadCount = items.filter((item) => !item.read).length;
+
+  if (authRequired) return <ErrorState title="Vui lòng đăng nhập lại"
+    description="Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập."
+    action={<Link className="button-primary" href="/login?returnTo=%2Fme%2Fnotifications">Đăng nhập lại</Link>}
+  />;
 
   return (
     <section className={styles.screen} aria-labelledby="notification-title">
@@ -75,17 +106,17 @@ export function NotificationInbox() {
       <header className={styles.header}>
         <div className={styles.headerText}>
           <h2>Thông báo gần đây</h2>
-          <p>{unreadCount ? `${unreadCount} thông báo chưa đọc` : "Bạn đã đọc tất cả thông báo hiện có."}</p>
+          <p>{loading && !items.length ? "Đang tải thông báo…" : error && !items.length ? "Chưa thể đọc thông báo của bạn." : unreadCount ? `${unreadCount} thông báo chưa đọc${cursor ? " đang hiển thị" : ""}` : items.length ? cursor ? "Các thông báo đang hiển thị đều đã đọc." : "Bạn đã đọc tất cả thông báo hiện có." : "Các cập nhật sẽ xuất hiện tại đây."}</p>
         </div>
-        <button className={styles.markAll} type="button" onClick={() => void all()} disabled={!unreadCount || Boolean(pending)}>
+        <button className={styles.markAll} type="button" onClick={() => void all()} disabled={loading || !unreadCount || Boolean(pending)}>
           {pending === "all" ? "Đang cập nhật…" : "Đánh dấu đã đọc"}
         </button>
       </header>
 
-      {error ? <p className={styles.error} role="alert">{error}</p> : null}
+      {error ? <div className={styles.error} role="alert"><p>{error}</p><button type="button" disabled={loading} onClick={() => void load(failedCursor)}>Thử lại tải thông báo</button></div> : null}
       {loading && !items.length ? <p className={styles.loading}>Đang tải thông báo…</p> : null}
 
-      {!loading && !items.length ? (
+      {!loading && !error && !items.length ? (
         <div className={styles.empty}>
           <h2>Chưa có thông báo</h2>
           <p>Các cập nhật từ đơn hàng, nhu cầu và tài khoản sẽ xuất hiện tại đây.</p>
@@ -101,7 +132,7 @@ export function NotificationInbox() {
               <li key={notification.id}>
                 <button
                   className={`${styles.item}${unread ? ` ${styles.itemUnread}` : ""}`}
-                  disabled={pending === notification.id}
+                  disabled={loading || Boolean(pending)}
                   type="button"
                   onClick={() => void openNotification(notification)}
                   aria-label={`${notificationLabel(notification.type ?? "")}. ${href ? "Mở chi tiết" : unread ? "Đánh dấu đã đọc" : "Đã đọc"}`}
@@ -120,7 +151,7 @@ export function NotificationInbox() {
       ) : null}
 
       {cursor ? (
-        <button className={styles.more} disabled={loading} type="button" onClick={() => void load(cursor)}>
+        <button className={styles.more} disabled={loading || Boolean(pending)} type="button" onClick={() => void load(cursor)}>
           {loading ? "Đang tải…" : "Tải thêm"}
         </button>
       ) : null}

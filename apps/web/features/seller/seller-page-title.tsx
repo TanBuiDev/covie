@@ -8,6 +8,7 @@ function resolveSellerTitle(pathname: string, merchantId: string) {
   const relative = pathname.slice(base.length);
   if (!relative || relative === "/") return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Tổng quan" };
   if (relative.startsWith("/settings")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Cài đặt shop" };
+  if (relative.startsWith("/ads")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Quảng cáo" };
   if (relative.includes("/delivery")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Phạm vi phục vụ" };
   if (relative.includes("/shipping")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Phí giao hàng" };
   if (relative.includes("/minimum-order")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Đơn tối thiểu" };
@@ -16,6 +17,7 @@ function resolveSellerTitle(pathname: string, merchantId: string) {
   if (relative.startsWith("/locations/") && relative.split("/").filter(Boolean).length >= 2) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Sửa điểm bán" };
   if (relative.startsWith("/locations")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Điểm bán" };
   if (relative.startsWith("/catalog/new")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Thêm sản phẩm / dịch vụ" };
+  if (relative.startsWith("/catalog/") && relative.split("/").filter(Boolean).length >= 2) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Chỉnh sửa catalog" };
   if (relative.startsWith("/catalog")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Danh mục" };
   if (relative.startsWith("/inventory")) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Tồn kho" };
   if (relative.startsWith("/orders/") && relative.split("/").filter(Boolean).length >= 2) return { eyebrow: "TRUNG TÂM BÁN HÀNG", title: "Chi tiết đơn" };

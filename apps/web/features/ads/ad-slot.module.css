@@ -1,0 +1,7 @@
+.slot { min-width: 0; max-width: 100%; margin-block: 16px; }
+.railSlot { width: 160px; margin: 0; }
+.controls { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; color: var(--covie-text-secondary, #475569); font-size: 12px; }
+.controls button { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--covie-border, #e2e8f0); border-radius: 12px; background: var(--covie-surface, #fff); color: inherit; cursor: pointer; }
+.controls button:focus-visible { outline: 2px solid var(--covie-primary, #047857); outline-offset: 3px; }
+.railSlot .controls { gap: 2px; }
+.railSlot .controls button { width: 36px; min-height: 44px; }

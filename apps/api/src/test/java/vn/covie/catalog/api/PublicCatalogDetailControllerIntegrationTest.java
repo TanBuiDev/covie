@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -94,6 +95,91 @@ class PublicCatalogDetailControllerIntegrationTest extends PostgresIntegrationTe
     }
 
     @Test
+    void exposesPublicMerchantReviewsWithoutAuthentication() throws Exception {
+        Fixture fixture = fixture();
+
+        mockMvc.perform(get("/api/v1/merchants/{merchantId}/reviews", fixture.merchantId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(0));
+    }
+
+    @Test
+    void derivesProductServiceAndMixedCapabilitiesFromPublicAvailableCatalog() throws Exception {
+        Fixture product = fixture();
+
+        mockMvc.perform(get("/api/v1/catalog/merchants/{merchantId}", product.merchantId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.capabilities.catalogTypes.length()").value(1))
+                .andExpect(jsonPath("$.capabilities.catalogTypes[0]").value("PRODUCT"));
+
+        createVisibleItem(product.merchantId(), product.locationId(), CatalogItemType.SERVICE, "Repair", NOW.plusSeconds(1));
+        mockMvc.perform(get("/api/v1/catalog/merchants/{merchantId}", product.merchantId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.capabilities.catalogTypes.length()").value(2))
+                .andExpect(jsonPath("$.capabilities.catalogTypes[0]").value("PRODUCT"))
+                .andExpect(jsonPath("$.capabilities.catalogTypes[1]").value("SERVICE"));
+
+        Fixture serviceOnly = merchantFixture();
+        createVisibleItem(serviceOnly.merchantId(), serviceOnly.locationId(), CatalogItemType.SERVICE, "Cleaning", NOW);
+        mockMvc.perform(get("/api/v1/catalog/merchants/{merchantId}", serviceOnly.merchantId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.capabilities.catalogTypes.length()").value(1))
+                .andExpect(jsonPath("$.capabilities.catalogTypes[0]").value("SERVICE"));
+    }
+
+    @Test
+    void excludesEveryNonPublicCatalogLayerFromCapabilities() throws Exception {
+        Fixture fixture = fixture();
+
+        for (String listingStatus : new String[] {"DRAFT", "PAUSED", "DELETED"}) {
+            jdbc.update("update catalog_items set listing_status = ? where id = ?", listingStatus, fixture.itemId());
+            assertEmptyCapabilities(fixture.merchantId());
+            jdbc.update("update catalog_items set listing_status = 'ACTIVE' where id = ?", fixture.itemId());
+        }
+        for (String moderationStatus : new String[] {"PENDING", "REJECTED", "HIDDEN"}) {
+            jdbc.update("update catalog_items set moderation_status = ? where id = ?", moderationStatus, fixture.itemId());
+            assertEmptyCapabilities(fixture.merchantId());
+            jdbc.update("update catalog_items set moderation_status = 'APPROVED' where id = ?", fixture.itemId());
+        }
+        jdbc.update("update variants set variant_status = 'PAUSED' where catalog_item_id = ?", fixture.itemId());
+        assertEmptyCapabilities(fixture.merchantId());
+        jdbc.update("update variants set variant_status = 'ACTIVE' where catalog_item_id = ?", fixture.itemId());
+        jdbc.update("update location_variants set is_available = false where id = ?", fixture.offerId());
+        assertEmptyCapabilities(fixture.merchantId());
+        jdbc.update("update location_variants set is_available = true where id = ?", fixture.offerId());
+        jdbc.update("update merchant_locations set location_status = 'PAUSED' where id = ?", fixture.locationId());
+        assertEmptyCapabilities(fixture.merchantId());
+        jdbc.update("update merchant_locations set location_status = 'ACTIVE' where id = ?", fixture.locationId());
+
+        jdbc.update("update catalog_items set deleted_at = ? where id = ?", Timestamp.from(NOW), fixture.itemId());
+        assertEmptyCapabilities(fixture.merchantId());
+        jdbc.update("update catalog_items set deleted_at = null where id = ?", fixture.itemId());
+        jdbc.update("update variants set deleted_at = ? where catalog_item_id = ?", Timestamp.from(NOW), fixture.itemId());
+        assertEmptyCapabilities(fixture.merchantId());
+        jdbc.update("update variants set deleted_at = null where catalog_item_id = ?", fixture.itemId());
+        jdbc.update("update location_variants set deleted_at = ? where id = ?", Timestamp.from(NOW), fixture.offerId());
+        assertEmptyCapabilities(fixture.merchantId());
+        jdbc.update("update location_variants set deleted_at = null where id = ?", fixture.offerId());
+        jdbc.update("update merchant_locations set deleted_at = ? where id = ?", Timestamp.from(NOW), fixture.locationId());
+        assertEmptyCapabilities(fixture.merchantId());
+        jdbc.update("update merchant_locations set deleted_at = null where id = ?", fixture.locationId());
+
+        Fixture other = merchantFixture();
+        jdbc.update("update location_variants set merchant_location_id = ? where id = ?", other.locationId(), fixture.offerId());
+        assertEmptyCapabilities(fixture.merchantId());
+    }
+
+    @Test
+    void visibleMerchantWithoutQualifyingItemsHasEmptyCapabilities() throws Exception {
+        Fixture fixture = merchantFixture();
+
+        mockMvc.perform(get("/api/v1/catalog/merchants/{merchantId}", fixture.merchantId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.capabilities.catalogTypes").isArray())
+                .andExpect(jsonPath("$.capabilities.catalogTypes").isEmpty());
+    }
+
+    @Test
     void returnsNotFoundWhenCatalogIsNotPublic() throws Exception {
         Fixture fixture = fixture();
         jdbc.update("update merchant_profiles set merchant_status = 'PAUSED' where id = ?", fixture.merchantId());
@@ -130,22 +216,41 @@ class PublicCatalogDetailControllerIntegrationTest extends PostgresIntegrationTe
     }
 
     private Fixture fixture() {
+        Fixture fixture = merchantFixture();
+        ItemFixture item = createVisibleItem(fixture.merchantId(), fixture.locationId(), CatalogItemType.PRODUCT,
+                "Coffee", NOW);
+        return new Fixture(fixture.merchantId(), item.itemId(), fixture.locationId(), item.offerId());
+    }
+
+    private Fixture merchantFixture() {
         UUID merchantId = UUID.randomUUID();
         merchants.saveAndFlush(MerchantProfileEntity.create(merchantId, "Merchant", "merchant-" + merchantId, NOW));
         UUID locationId = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), merchantId,
                 "Main", "1 CoVie", 10.8, 106.7, NOW)).getId();
+        return new Fixture(merchantId, null, locationId, null);
+    }
+
+    private ItemFixture createVisibleItem(UUID merchantId, UUID locationId, CatalogItemType type, String name, Instant createdAt) {
         UUID categoryId = categories.saveAndFlush(CategoryEntity.create(UUID.randomUUID(), null, "Food",
-                "food-" + UUID.randomUUID(), CategoryCatalogType.PRODUCT, CategoryStatus.ACTIVE, 0)).getId();
+                "category-" + UUID.randomUUID(), type == CatalogItemType.PRODUCT
+                        ? CategoryCatalogType.PRODUCT : CategoryCatalogType.SERVICE, CategoryStatus.ACTIVE, 0)).getId();
         UUID itemId = UUID.randomUUID();
-        CatalogItemEntity item = CatalogItemEntity.create(itemId, merchantId, CatalogItemType.PRODUCT,
-                ListingKind.STANDARD, categoryId, "Coffee", "coffee-" + itemId, null, NOW);
-        item.publish(NOW);
+        CatalogItemEntity item = CatalogItemEntity.create(itemId, merchantId, type,
+                ListingKind.STANDARD, categoryId, name, "item-" + itemId, null, createdAt);
+        item.publish(createdAt);
         items.saveAndFlush(item);
-        UUID variantId = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), itemId, "Default", NOW)).getId();
+        UUID variantId = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), itemId, "Default", createdAt)).getId();
         UUID offerId = offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), locationId, variantId,
-                25000, "VND", true, InventoryMode.UNTRACKED, null, NOW)).getId();
-        return new Fixture(merchantId, itemId, locationId, offerId);
+                25000, "VND", true, type == CatalogItemType.PRODUCT ? InventoryMode.UNTRACKED : null, null, createdAt)).getId();
+        return new ItemFixture(itemId, offerId);
+    }
+
+    private void assertEmptyCapabilities(UUID merchantId) throws Exception {
+        mockMvc.perform(get("/api/v1/catalog/merchants/{merchantId}", merchantId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.capabilities.catalogTypes").isEmpty());
     }
 
     private record Fixture(UUID merchantId, UUID itemId, UUID locationId, UUID offerId) {}
+    private record ItemFixture(UUID itemId, UUID offerId) {}
 }

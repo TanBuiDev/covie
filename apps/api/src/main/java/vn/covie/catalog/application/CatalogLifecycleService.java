@@ -7,8 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.catalog.model.CatalogItemEntity;
-import vn.covie.catalog.model.CatalogModerationStatus;
-import vn.covie.catalog.model.ListingStatus;
 import vn.covie.catalog.persistence.CatalogItemRepository;
 import vn.covie.catalog.policy.CatalogPublishDecision;
 import vn.covie.catalog.policy.CatalogPublishPolicy;
@@ -28,23 +26,22 @@ import vn.covie.shared.web.ErrorCode;
 public class CatalogLifecycleService {
     private final MerchantAccessPolicy access;
     private final CatalogItemRepository items;
-    private final CatalogPublishValidator validator;
+    private final CatalogManagementActionPolicy actions;
     private final CatalogPublishPolicy policy;
     private final OutboxEventWriter outbox;
     private final ModerationCaseWriter moderationCases;
     private final AppClock clock;
 
-    public CatalogLifecycleService(MerchantAccessPolicy access, CatalogItemRepository items, CatalogPublishValidator validator,
+    public CatalogLifecycleService(MerchantAccessPolicy access, CatalogItemRepository items, CatalogManagementActionPolicy actions,
             CatalogPublishPolicy policy, OutboxEventWriter outbox, ModerationCaseWriter moderationCases, AppClock clock) {
-        this.access = access; this.items = items; this.validator = validator; this.policy = policy; this.outbox = outbox; this.moderationCases = moderationCases; this.clock = clock;
+        this.access = access; this.items = items; this.actions = actions; this.policy = policy; this.outbox = outbox; this.moderationCases = moderationCases; this.clock = clock;
     }
 
     @Transactional
     public LifecycleResult publish(UUID merchantId, UUID itemId, String ifMatch) {
         access.require(merchantId, MerchantCapability.PUBLISH_CATALOG);
         CatalogItemEntity item = locked(merchantId, itemId, ifMatch);
-        requireState(item, ListingStatus.DRAFT, "Only draft catalog items can be published.");
-        validator.requirePublishable(item);
+        actions.requirePublish(item);
         Instant now = clock.now();
         if (policy.decide(item) == CatalogPublishDecision.REQUIRE_MODERATION) {
             item.requireModeration(now);
@@ -62,7 +59,7 @@ public class CatalogLifecycleService {
     public LifecycleResult pause(UUID merchantId, UUID itemId, String ifMatch) {
         access.require(merchantId, MerchantCapability.PUBLISH_CATALOG);
         CatalogItemEntity item = locked(merchantId, itemId, ifMatch);
-        requireState(item, ListingStatus.ACTIVE, "Only active catalog items can be paused.");
+        actions.requirePause(item);
         item.pause(clock.now());
         LifecycleResult result = saved(item);
         append("CATALOG_ITEM_PAUSED", item);
@@ -73,10 +70,7 @@ public class CatalogLifecycleService {
     public LifecycleResult activate(UUID merchantId, UUID itemId, String ifMatch) {
         access.require(merchantId, MerchantCapability.PUBLISH_CATALOG);
         CatalogItemEntity item = locked(merchantId, itemId, ifMatch);
-        requireState(item, ListingStatus.PAUSED, "Only paused catalog items can be activated.");
-        if (!isVisible(item.getModerationStatus()))
-            throw lifecycleInvalid("Catalog item is not visible after moderation.");
-        validator.requirePublishable(item);
+        actions.requireActivate(item);
         item.activate(clock.now());
         LifecycleResult result = saved(item);
         append("CATALOG_ITEM_ACTIVATED", item);
@@ -87,7 +81,7 @@ public class CatalogLifecycleService {
     public LifecycleResult archive(UUID merchantId, UUID itemId, String ifMatch) {
         access.require(merchantId, MerchantCapability.PUBLISH_CATALOG);
         CatalogItemEntity item = locked(merchantId, itemId, ifMatch);
-        if (item.getListingStatus() == ListingStatus.DELETED) throw lifecycleInvalid("Deleted catalog items are terminal.");
+        actions.requireArchive(item);
         item.delete(clock.now());
         LifecycleResult result = saved(item);
         append("CATALOG_ITEM_ARCHIVED", item);
@@ -106,15 +100,6 @@ public class CatalogLifecycleService {
     }
     private void append(String type, CatalogItemEntity item) {
         outbox.append(new OutboxEventIntent(type, "CATALOG_ITEM", item.getId(), Map.of("merchantId", item.getMerchantProfileId().toString())));
-    }
-    private static void requireState(CatalogItemEntity item, ListingStatus expected, String message) {
-        if (item.getListingStatus() != expected) throw lifecycleInvalid(message);
-    }
-    private static boolean isVisible(CatalogModerationStatus status) {
-        return status == CatalogModerationStatus.NOT_REQUIRED || status == CatalogModerationStatus.APPROVED;
-    }
-    private static ApiException lifecycleInvalid(String message) {
-        return new ApiException(ErrorCode.CATALOG_LIFECYCLE_INVALID, HttpStatus.UNPROCESSABLE_ENTITY, message);
     }
     public record LifecycleResult(UUID id, long version) {}
 }

@@ -1,4 +1,4 @@
-import type { components } from "@covie/api-client";
+import type { components, paths } from "@covie/api-client";
 import { readApiError } from "@/lib/api/api-error";
 import { requestBrowserApi } from "@/lib/api/api-client";
 
@@ -18,6 +18,10 @@ export type MerchantNeedMatch = components["schemas"]["MerchantNeedMatchResponse
 export type NeedCategory = components["schemas"]["CategorySummary"];
 export type NeedAddress = components["schemas"]["UserAddressResponse"];
 export type MerchantNeedPage = components["schemas"]["MerchantNeedCursorPage"];
+export type NeedEligibleItem = components["schemas"]["NeedEligibleItemResponse"];
+export type NeedEligibleItemPage = components["schemas"]["NeedEligibleItemCursorPage"];
+type EligibleNeedQuery = paths["/api/v1/merchants/{merchantId}/need-requests/{needRequestId}/eligible-items"]["get"]["parameters"]["query"];
+type MerchantResponseQuery = paths["/api/v1/merchants/{merchantId}/need-requests/{needRequestId}/response"]["get"]["parameters"]["query"];
 type CursorPage<T> = { items: T[]; hasMore: boolean; nextCursor?: string | null };
 export type CreateNeedInput = components["schemas"]["CreateNeedRequest"];
 
@@ -82,6 +86,30 @@ export async function discoverMerchantNeeds(
     "GET",
     `/api/v1/merchants/${encodeURIComponent(merchantId)}/need-requests${params.size ? `?${params}` : ""}`,
   ));
+}
+
+export async function listEligibleNeedItems(
+  merchantId: string,
+  needId: string,
+  locationId: string,
+  cursor?: string,
+): Promise<NeedEligibleItemPage> {
+  const query: EligibleNeedQuery = { locationId, cursor, limit: 20 };
+  const params = new URLSearchParams({ locationId: query.locationId, limit: String(query.limit) });
+  if (query.cursor) params.set("cursor", query.cursor);
+  const path = `/api/v1/merchants/${encodeURIComponent(merchantId)}/need-requests/${encodeURIComponent(needId)}/eligible-items?${params}`;
+  return jsonOrThrow(await requestBrowserApi("GET", path));
+}
+
+export async function getMerchantNeedResponse(
+  merchantId: string,
+  needId: string,
+  locationId: string,
+): Promise<NeedResponse> {
+  const query: MerchantResponseQuery = { locationId };
+  const params = new URLSearchParams({ locationId: query.locationId });
+  const path = `/api/v1/merchants/${encodeURIComponent(merchantId)}/need-requests/${encodeURIComponent(needId)}/response?${params}`;
+  return jsonOrThrow(await requestBrowserApi("GET", path));
 }
 
 export async function respondToNeed(

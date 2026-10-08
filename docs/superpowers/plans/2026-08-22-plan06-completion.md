@@ -8,6 +8,8 @@
 
 **Tech Stack:** Spring Boot, JPA/JdbcTemplate/PostGIS, Flyway, JUnit/Testcontainers, Next.js, TypeScript, generated OpenAPI client.
 
+**Completion audit — 2026-09-20:** All Plan 06 product capabilities below are implemented and included in the 538-test backend gate, generated client, web tests and Buyer/Seller runtime acceptance. Only the historical Git integration action remains open: this work is still on `codex/issue-completion`, with no authorized commit, rebase, remote merge or push.
+
 ---
 
 ## Chunk 1: Seller response lifecycle
@@ -16,9 +18,9 @@
 
 **Files:** `apps/api/src/main/java/vn/covie/needs/{api,application,model,persistence}` and focused tests.
 
-- [ ] Add replace and withdraw contracts with lock/order/authorization checks.
-- [ ] Preserve retired response-item history and assert `If-Match` behavior.
-- [ ] Verify focused Need response tests and commit.
+- [x] Add replace and withdraw contracts with lock/order/authorization checks.
+- [x] Preserve retired response-item history and assert `If-Match` behavior.
+- [ ] Verify focused Need response tests and commit. Tests are verified; the commit remains intentionally pending user authorization.
 
 ## Chunk 2: Buyer checkout and lifecycle completion
 
@@ -26,14 +28,14 @@
 
 **Files:** Need read services, checkout candidate resolver/commit attribution, Order confirm participant, and tests.
 
-- [ ] Add private buyer response read model and source-chain validation.
-- [ ] Add Need-origin checkout preview/commit attribution and confirmation fulfillment.
-- [ ] Add expiration scheduler and concurrency/end-to-end coverage.
+- [x] Add private buyer response read model and source-chain validation.
+- [x] Add Need-origin checkout preview/commit attribution and confirmation fulfillment.
+- [x] Add expiration scheduler and concurrency/end-to-end coverage.
 
 ### Task 3: Publish and integrate
 
 **Files:** OpenAPI/client, `apps/web/features/needs`, buyer/seller pages, acceptance tests.
 
-- [ ] Regenerate API contracts and implement minimal need UI.
-- [ ] Run full backend/frontend verification and inspect generated drift.
+- [x] Regenerate API contracts and implement minimal need UI.
+- [x] Run full backend/frontend verification and inspect generated drift.
 - [ ] Rebase Plan 06 on merged Plan 05, merge Plan 05 then Plan 06 into `main`, and push `origin/main`.

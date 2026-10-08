@@ -86,6 +86,15 @@ public class CatalogPublishValidator {
             throw invalid(ErrorCode.MEDIA_NOT_ATTACHABLE, HttpStatus.UNPROCESSABLE_ENTITY, "All attached media must be ready.");
     }
 
+    public boolean isPublishable(CatalogItemEntity item) {
+        try {
+            requirePublishable(item);
+            return true;
+        } catch (ApiException exception) {
+            return false;
+        }
+    }
+
     private static ApiException invalid(ErrorCode code, HttpStatus status, String message) {
         return new ApiException(code, status, message);
     }

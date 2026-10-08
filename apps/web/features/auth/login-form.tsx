@@ -3,10 +3,11 @@
 import { FormEvent, useState, useSyncExternalStore } from "react";
 import { CovieApiError } from "../../lib/api/api-error";
 import { login } from "./auth-api";
+import { safeReturnTo } from "../../lib/auth/return-to";
 
-type LoginFormProps = { onNavigate?: (path: string) => void };
+type LoginFormProps = { onNavigate?: (path: string) => void; returnTo?: string };
 
-export function LoginForm({ onNavigate = (path) => window.location.assign(path) }: LoginFormProps) {
+export function LoginForm({ onNavigate = (path) => window.location.assign(path), returnTo }: LoginFormProps) {
   const hydrated = useSyncExternalStore(
     () => () => undefined,
     () => true,
@@ -25,7 +26,7 @@ export function LoginForm({ onNavigate = (path) => window.location.assign(path) 
     setSubmitting(true);
     try {
       await login({ email, password });
-      onNavigate("/");
+      onNavigate(safeReturnTo(returnTo));
     } catch (error) {
       if (!(error instanceof CovieApiError)) {
         setMessage("Không thể đăng nhập. Vui lòng thử lại.");

@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { Megaphone } from "@phosphor-icons/react";
 
 type NavItem = {
   href: string;
   label: string;
-  icon: "home" | "user" | "store" | "pin" | "grid" | "package" | "plus" | "list" | "settings";
+  icon: "home" | "user" | "store" | "pin" | "grid" | "package" | "plus" | "list" | "settings" | "ads";
   separatorBefore?: boolean;
 };
 
@@ -20,6 +21,7 @@ const navItems: NavItem[] = [
   { href: "/admin/orders", label: "Đơn hàng", icon: "package", separatorBefore: true },
   { href: "/admin/needs", label: "Cần mua", icon: "plus" },
   { href: "/admin/reports", label: "Báo cáo", icon: "list" },
+  { href: "/admin/ads", label: "Quảng cáo", icon: "ads" },
   { href: "/admin/zones", label: "Khu vực", icon: "pin", separatorBefore: true },
   { href: "/admin/categories", label: "Danh mục", icon: "grid" },
   { href: "/admin/settings", label: "Cài đặt", icon: "settings", separatorBefore: true },
@@ -32,6 +34,7 @@ function isActive(pathname: string, href: string) {
 }
 
 function NavIcon({ kind }: { kind: NavItem["icon"] }) {
+  if (kind === "ads") return <Megaphone className="admin-nav__icon" size={20} aria-hidden="true" />;
   const common = { fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   return (
     <svg aria-hidden="true" className="admin-nav__icon" viewBox="0 0 20 20" {...common}>

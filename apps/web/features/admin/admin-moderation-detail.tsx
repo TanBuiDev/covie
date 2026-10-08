@@ -41,27 +41,33 @@ export function AdminModerationDetail({ caseId }: { caseId: string }) {
   const [error, setError] = useState<string>();
   const [conflict, setConflict] = useState<string>();
 
-  const load = useCallback(async () => {
-    setLoading(true); setError(undefined);
+  const load = useCallback(async (isActive: () => boolean = () => true) => {
     try {
       const response = await requestBrowserApi("GET", `/api/v1/admin/moderation-cases/${encodeURIComponent(caseId)}`);
       if (!response.ok) throw await readApiError(response);
-      setDetail(await response.json() as CaseDetail);
+      const payload = await response.json() as CaseDetail;
+      if (!isActive()) return;
+      setDetail(payload);
       setConflict(undefined);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Không thể tải hồ sơ kiểm duyệt"); }
-    finally { setLoading(false); }
+    } catch (cause) { if (isActive()) setError(cause instanceof Error ? cause.message : "Không thể tải hồ sơ kiểm duyệt"); }
+    finally { if (isActive()) setLoading(false); }
   }, [caseId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => { if (active) void load(() => active); });
+    return () => { active = false; };
+  }, [load]);
+  function reload() { setLoading(true); setError(undefined); void load(); }
   const actions = useMemo(() => availableActions(detail), [detail]);
   const status = presentModerationStatus(detail?.moderationCase.status);
 
   return <div className="admin-page-stack">
     <AdminPageHeader title={`Hồ sơ báo cáo ${detail ? `#${detail.moderationCase.id.slice(0, 8)}` : ""}`} subtitle="Quản trị vận hành · thao tác theo trạng thái case" action={detail ? <AdminStatusChip label={status.label} tone={status.tone} /> : undefined} />
     <Link className="admin-inline-link" href="/admin/reports">← Quay lại hàng đợi báo cáo</Link>
-    {conflict ? <AdminSurface className="admin-warning-alert"><strong>Hồ sơ đã thay đổi</strong><p>{conflict}</p><button className="admin-inline-link admin-link-button" type="button" onClick={() => void load()}>Tải lại hồ sơ</button></AdminSurface> : null}
+    {conflict ? <AdminSurface className="admin-warning-alert"><strong>Hồ sơ đã thay đổi</strong><p>{conflict}</p><button className="admin-inline-link admin-link-button" type="button" onClick={reload}>Tải lại hồ sơ</button></AdminSurface> : null}
     {loading ? <AdminSurface><p className="admin-muted">Đang tải hồ sơ…</p></AdminSurface> : null}
-    {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={() => void load()}>Thử lại</button></AdminSurface> : null}
+    {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={reload}>Thử lại</button></AdminSurface> : null}
     {!loading && !error && detail ? <>
       <div className="admin-moderation-grid">
         <AdminSurface className="admin-entity-summary"><div className="admin-entity-summary__top"><strong>{caseTypeLabel(detail.moderationCase.caseType)}</strong><AdminStatusChip label={status.label} tone={status.tone} /></div><dl><div><dt>Đối tượng</dt><dd>{String(detail.moderationCase.targetType ?? "—")}</dd></div><div><dt>ID đối tượng</dt><dd>{detail.moderationCase.targetId ?? "—"}</dd></div><div><dt>Lý do</dt><dd>{detail.moderationCase.reasonCode ?? "—"}</dd></div><div><dt>Mở lúc</dt><dd>{formatAdminDate(detail.moderationCase.openedAt)}</dd></div></dl><p className="admin-caption">Chỉ hiển thị dữ liệu case do Admin API trả về; không dựng thông tin người báo cáo hoặc độ ưu tiên nội bộ.</p></AdminSurface>

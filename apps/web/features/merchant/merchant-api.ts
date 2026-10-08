@@ -61,3 +61,11 @@ export async function updateLocation(merchantId: string, locationId: string, eta
   });
   return { data: await requireData(response, data, error), etag: response.headers.get("etag") ?? "" };
 }
+
+export async function listPublicMerchantCatalog(merchantId: string, cursor?: string) {
+  const client = createApiClient();
+  const { data, error, response } = await client.GET("/api/v1/catalog/merchants/{merchantId}/items", {
+    params: { path: { merchantId }, query: { limit: 3, ...(cursor ? { cursor } : {}) } },
+  });
+  return requireData(response, data, error);
+}

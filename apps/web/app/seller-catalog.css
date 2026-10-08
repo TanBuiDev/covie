@@ -123,6 +123,78 @@
   display: flex;
   gap: 10px;
   min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.seller-catalog-editor {
+  display: grid;
+  gap: 16px;
+  max-width: 1128px;
+}
+
+.seller-catalog-editor__summary,
+.seller-catalog-editor__panel {
+  background: var(--seller-surface);
+  border: 1px solid var(--seller-border);
+  border-radius: var(--seller-radius-md);
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.seller-catalog-editor__summary h1,
+.seller-catalog-editor__panel h2,
+.seller-catalog-editor__resource h3 { margin: 0; }
+
+.seller-catalog-editor__states,
+.seller-catalog-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.seller-catalog-editor__states span {
+  background: var(--seller-bg-subtle);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+.seller-catalog-editor__attributes,
+.seller-catalog-editor__media { display: grid; gap: 10px; }
+.seller-catalog-editor__attributes div { display: grid; gap: 2px; }
+.seller-catalog-editor__attributes dt { color: var(--seller-text-secondary); font-size: 12px; }
+.seller-catalog-editor__attributes dd { margin: 0; }
+.seller-catalog-editor__media { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.seller-catalog-editor__media figure { margin: 0; }
+.seller-catalog-editor__media img { border-radius: 10px; height: 120px; object-fit: cover; width: 100%; }
+.seller-catalog-editor__media figcaption { color: var(--seller-text-secondary); font-size: 12px; margin-top: 4px; }
+
+.seller-catalog-editor__resource {
+  background: var(--seller-bg-subtle);
+  border: 1px solid var(--seller-border-subtle);
+  border-radius: var(--seller-radius-md);
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.seller-catalog-editor__actions {
+  background: var(--seller-surface);
+  border-top: 1px solid var(--seller-border);
+  bottom: 0;
+  padding: 12px;
+  position: sticky;
+  z-index: 2;
+}
+
+@media (min-width: 1024px) {
+  .seller-catalog-editor { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .seller-catalog-editor__summary,
+  .seller-catalog-editor > .warning-banner,
+  .seller-catalog-editor__actions { grid-column: 1 / -1; }
 }
 
 .seller-catalog-placeholder {

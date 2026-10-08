@@ -107,6 +107,7 @@ export function OrderActions({
       <OrderActionDialog
         action={selectedAction}
         actorView={actorView}
+        order={order}
         pending={pending}
         onCancel={() => {
           if (pending) return;

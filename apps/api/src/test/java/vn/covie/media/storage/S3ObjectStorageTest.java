@@ -33,7 +33,8 @@ class S3ObjectStorageTest {
 
     @Container
     private static final GenericContainer<?> MINIO = new GenericContainer<>(
-                    DockerImageName.parse("quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z"))
+                    DockerImageName.parse(System.getProperty("covie.test.minio-image",
+                            "quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z")))
             .withEnv("MINIO_ROOT_USER", "test-access-key")
             .withEnv("MINIO_ROOT_PASSWORD", "test-secret-key")
             .withCommand("server", "/data")

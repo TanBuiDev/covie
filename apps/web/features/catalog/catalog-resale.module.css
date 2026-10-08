@@ -1,19 +1,21 @@
 .resaleDetail {
-  padding-bottom: 76px;
+  padding-bottom: 84px;
 }
 
 .resaleMedia {
   background: #ecfdf5;
   box-sizing: border-box;
-  height: 240px;
-  padding: 24px 32px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 250px;
+  padding: 20px 24px 16px;
   position: relative;
 }
 
 .resalePhoto {
   background: #f1f5f9;
   border-radius: 16px;
-  height: 176px;
+  height: 180px;
   overflow: hidden;
   position: relative;
   width: 100%;
@@ -24,33 +26,73 @@
 }
 
 .resaleMedia > small {
-  color: #475569;
+  color: #065f46;
   display: block;
   font-size: 12px;
+  font-weight: 600;
   line-height: 16px;
-  margin-left: -16px;
-  margin-top: 8px;
+  margin-top: 10px;
+}
+
+.thumbnailStrip {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.thumbnailStrip::-webkit-scrollbar {
+  display: none;
+}
+
+.thumbnailBtn {
+  background: #ffffff;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 52px;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+  transition: all 0.15s ease;
+  width: 52px;
+}
+
+.thumbnailBtn:hover {
+  border-color: #a7f3d0;
+}
+
+.activeThumbnail {
+  border-color: #059669;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.25);
 }
 
 .resaleListing {
   box-sizing: border-box;
-  min-height: 190px;
+  min-height: 180px;
   padding: 16px;
 }
 
 .conditionCard {
-  background: #f1f5f9;
-  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px;
+  padding: 14px 16px;
 }
 
 .conditionCard strong,
 .conditionCard p {
   font-size: 14px;
   line-height: 20px;
+}
+
+.conditionCard strong {
+  color: #0f172a;
 }
 
 .conditionCard p {
@@ -66,8 +108,9 @@
 
 .transactionCard,
 .resaleFulfillment {
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -75,9 +118,15 @@
 }
 
 .transactionCard strong,
+.resaleFulfillment strong {
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 20px;
+}
+
 .transactionCard b,
-.resaleFulfillment strong,
 .resaleFulfillment b {
+  color: #047857;
   font-size: 14px;
   line-height: 20px;
 }
@@ -89,11 +138,37 @@
   line-height: 16px;
 }
 
-@media(min-width:1024px){
-  .resaleDetail{padding-bottom:0}
-  .resaleMedia{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:16px;height:480px;padding:20px}
-  .resalePhoto{height:404px}
-  .resaleMedia>small{margin:12px 0 0}
-  .resaleListing{min-height:0;padding:0}
-  .conditionCard,.transactionCard,.resaleFulfillment{border:1px solid #e2e8f0;border-radius:16px;padding:20px}
+@media (min-width: 1024px) {
+  .resaleDetail {
+    padding-bottom: 0;
+  }
+
+  .resaleMedia {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    min-height: 440px;
+    padding: 24px;
+  }
+
+  .resalePhoto {
+    height: 350px;
+  }
+
+  .resaleMedia > small {
+    margin: 14px 0 0;
+  }
+
+  .resaleListing {
+    min-height: 0;
+    padding: 0;
+  }
+
+  .conditionCard,
+  .transactionCard,
+  .resaleFulfillment {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+  }
 }

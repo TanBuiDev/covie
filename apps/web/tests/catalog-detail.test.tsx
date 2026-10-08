@@ -44,7 +44,7 @@ describe("PUB-006 Catalog detail", () => {
   it("renders contract-backed listing, trust and product quantity state", async () => {
     mocks.listCatalogReviews.mockResolvedValue({ rating: { averageRating: 4.8, reviewCount: 96 }, items: [] });
     render(<CatalogDetail item={product} />);
-    expect(screen.getByRole("heading", { name: "Chi tiết sản phẩm" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Chi tiết sản phẩm" })).toHaveLength(2);
     expect(screen.getByRole("heading", { name: "Coca-Cola 1.5L" })).toBeInTheDocument();
     expect(screen.getByText("85.000 ₫")).toBeInTheDocument();
     expect(screen.getByText("Hoàn thành 98% đơn")).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe("PUB-006 Catalog detail", () => {
     mocks.listCatalogReviews.mockResolvedValue({ rating: {}, items: [] });
     render(<CatalogDetail item={service} />);
 
-    expect(screen.getByRole("heading", { name: "Chi tiết dịch vụ" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Chi tiết dịch vụ" })).toHaveLength(2);
     expect(screen.getByRole("radiogroup", { name: "Phân loại" })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /2 máy/ })).toBeChecked();
     expect(screen.getByText("Phối hợp dịch vụ")).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe("PUB-006 Catalog detail", () => {
     expect(screen.getByRole("button", { name: "Đặt dịch vụ" })).toBeEnabled();
   });
 
-  it("adds the selected service offer with quantity one", async () => {
+  it("reviews the selected service directly with quantity one", async () => {
     mocks.listCatalogReviews.mockResolvedValue({ rating: {}, items: [] });
     mocks.addCartItem.mockResolvedValue({ id: "service-cart", items: [] });
     render(<CatalogDetail item={service} />);
@@ -102,15 +102,15 @@ describe("PUB-006 Catalog detail", () => {
     fireEvent.click(screen.getByRole("radio", { name: /1 máy/ }));
     fireEvent.click(screen.getByRole("button", { name: "Đặt dịch vụ" }));
 
-    await waitFor(() => expect(mocks.addCartItem).toHaveBeenCalledWith({ locationVariantId: "service-lv-1", quantity: 1 }));
-    expect(mocks.push).toHaveBeenCalledWith("/cart/service-cart");
+    expect(mocks.addCartItem).not.toHaveBeenCalled();
+    expect(mocks.push).toHaveBeenCalledWith("/checkout?source=DIRECT&itemId=service-1&locationId=location-1&locationVariantId=service-lv-1&quantity=1");
   });
 
   it("renders PUB-008 resale information without inventing fulfillment eligibility", () => {
     mocks.listCatalogReviews.mockResolvedValue({ rating: {}, items: [] });
     render(<CatalogDetail item={resale} />);
 
-    expect(screen.getByRole("heading", { name: "Chi tiết thanh lý" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Chi tiết thanh lý" })).toHaveLength(2);
     expect(screen.getByText("Ảnh thực tế · 1/1")).toBeInTheDocument();
     expect(screen.getByText("Tình trạng")).toBeInTheDocument();
     expect(screen.getByText(resale.description!)).toBeInTheDocument();
@@ -121,14 +121,14 @@ describe("PUB-006 Catalog detail", () => {
     expect(screen.queryByText("Nhận tại điểm bán")).not.toBeInTheDocument();
   });
 
-  it("always adds one unit for a resale listing", async () => {
+  it("reviews one unit directly for a resale listing", async () => {
     mocks.listCatalogReviews.mockResolvedValue({ rating: {}, items: [] });
     mocks.addCartItem.mockResolvedValue({ id: "resale-cart", items: [] });
     render(<CatalogDetail item={resale} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Mua ngay" }));
 
-    await waitFor(() => expect(mocks.addCartItem).toHaveBeenCalledWith({ locationVariantId: "resale-lv", quantity: 1 }));
-    expect(mocks.push).toHaveBeenCalledWith("/cart/resale-cart");
+    expect(mocks.addCartItem).not.toHaveBeenCalled();
+    expect(mocks.push).toHaveBeenCalledWith("/checkout?source=DIRECT&itemId=resale-1&locationId=location-1&locationVariantId=resale-lv&quantity=1");
   });
 });

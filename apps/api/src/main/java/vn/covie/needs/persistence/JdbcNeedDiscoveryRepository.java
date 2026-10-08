@@ -19,6 +19,16 @@ public class JdbcNeedDiscoveryRepository implements NeedDiscoveryRepository {
     @Override
     public List<NeedMatchRow> findCandidates(UUID merchantId, Set<UUID> allowedLocationIds, UUID requestedLocationId,
             Instant now, NeedDiscoveryCursor after, int candidateLimit) {
+        return query(merchantId, allowedLocationIds, requestedLocationId, null, now, after, candidateLimit);
+    }
+
+    @Override
+    public List<NeedMatchRow> findCandidateForNeed(UUID merchantId, UUID locationId, UUID needId, Instant now) {
+        return query(merchantId, Set.of(locationId), locationId, needId, now, null, 1);
+    }
+
+    private List<NeedMatchRow> query(UUID merchantId, Set<UUID> allowedLocationIds, UUID requestedLocationId,
+            UUID requestedNeedId, Instant now, NeedDiscoveryCursor after, int candidateLimit) {
         if (allowedLocationIds.isEmpty()) return List.of();
         Set<UUID> locationIds = requestedLocationId == null ? allowedLocationIds : Set.of(requestedLocationId);
         String sql = """
@@ -46,6 +56,7 @@ public class JdbcNeedDiscoveryRepository implements NeedDiscoveryRepository {
                     left join location_areas area on area.id=n.location_area_id
                     left join inventory_balances ib on ib.location_variant_id=lv.id
                     where n.request_status='ACTIVE' and n.moderation_status in ('NOT_REQUIRED','APPROVED') and n.expires_at>:now and st_dwithin(n.geo_point,ml.geo_point,n.search_radius_meters)
+                      and (:needFilterAbsent=true or n.id=:requestedNeedId)
                       and (n.need_type='SERVICE' or lv.inventory_mode='UNTRACKED' or (lv.inventory_mode='TRACKED' and coalesce(ib.stock_on_hand,0)>coalesce(ib.reserved_quantity,0)))
                     group by n.id,n.need_type,n.category_id,n.title,n.description,n.expires_at,ml.id,ml.name,area.name,ml.pickup_enabled
                 ) select * from candidate
@@ -55,6 +66,8 @@ public class JdbcNeedDiscoveryRepository implements NeedDiscoveryRepository {
                 order by text_rank desc,distance_meters asc,need_id asc,merchant_location_id asc limit :limit
                 """;
         MapSqlParameterSource p = new MapSqlParameterSource().addValue("merchantId", merchantId).addValue("locationIds", locationIds)
+                .addValue("needFilterAbsent", requestedNeedId == null)
+                .addValue("requestedNeedId", requestedNeedId == null ? new UUID(0, 0) : requestedNeedId)
                 .addValue("now", Timestamp.from(now)).addValue("cursorAbsent", after == null).addValue("rank", after == null ? 0d : after.textRank())
                 .addValue("distance", after == null ? 0L : after.distanceMeters()).addValue("needId", after == null ? new UUID(0, 0) : after.needId())
                 .addValue("locationId", after == null ? new UUID(0, 0) : after.merchantLocationId()).addValue("limit", candidateLimit);

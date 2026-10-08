@@ -2,7 +2,7 @@
 set -euo pipefail
 
 : "${PGDATABASE:?PGDATABASE is required}"
-expected="${COVIE_EXPECTED_FLYWAY_VERSION:-13}"
+expected="${COVIE_EXPECTED_FLYWAY_VERSION:-15}"
 [[ "$expected" =~ ^[0-9]+$ ]] || { echo "COVIE_EXPECTED_FLYWAY_VERSION must be numeric" >&2; exit 2; }
 
 failed="$(psql -XAtq -v ON_ERROR_STOP=1 -d "$PGDATABASE" -c "select count(*) from flyway_schema_history where not success")"

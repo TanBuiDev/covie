@@ -2,15 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CoVieIcon, type CoVieIconName } from "@/components/ui/covie-icon";
+import {
+  Compass,
+  Handshake,
+  House,
+  Package,
+  User,
+} from "@phosphor-icons/react";
 
-const items: ReadonlyArray<{ href: string; label: string; icon: CoVieIconName }> = [
-  { href: "/", label: "Trang chủ", icon: "home" },
-  { href: "/search", label: "Khám phá", icon: "explore" },
-  { href: "/needs", label: "Cần mua", icon: "need" },
-  { href: "/orders", label: "Đơn", icon: "orders" },
-  { href: "/me", label: "Tôi", icon: "profile" },
-];
+const items = [
+  { href: "/", label: "Trang chủ", icon: House },
+  { href: "/search", label: "Khám phá", icon: Compass },
+  { href: "/needs", label: "Cần mua", icon: Handshake },
+  { href: "/orders", label: "Đơn", icon: Package },
+  { href: "/me", label: "Tôi", icon: User },
+] as const;
 
 export function ConsumerBottomNav() {
   const pathname = usePathname() ?? "/";
@@ -20,7 +26,13 @@ export function ConsumerBottomNav() {
     <nav className="consumer-bottom-nav" aria-label="Điều hướng chính">
       {items.map((item) => {
         const active = activeHref ? item.href === activeHref : item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-        return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}><CoVieIcon name={item.icon} active={active} /><span>{item.label}</span></Link>;
+        const Icon = item.icon;
+        return (
+          <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}>
+            <Icon size={22} weight={active ? "fill" : "duotone"} aria-hidden="true" />
+            <span>{item.label}</span>
+          </Link>
+        );
       })}
     </nav>
   );

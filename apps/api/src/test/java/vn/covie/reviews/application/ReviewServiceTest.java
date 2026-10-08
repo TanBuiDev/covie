@@ -34,10 +34,11 @@ class ReviewServiceTest {
     private final OrderRepository orders = mock(OrderRepository.class);
     private final ReviewRepository reviews = mock(ReviewRepository.class);
     private final ReviewPolicyProvider policy = mock(ReviewPolicyProvider.class);
+    private final ReviewEligibilityEvaluator eligibility = new ReviewEligibilityEvaluator();
     private final RatingProjectionService projections = mock(RatingProjectionService.class);
     private final OutboxEventWriter outbox = mock(OutboxEventWriter.class);
     private final ReviewService service = new ReviewService(mock(vn.covie.auth.security.CurrentActorProvider.class), items, orders, reviews,
-            policy, projections, outbox, mock(IdempotencyExecutor.class), new UuidV7Generator(), () -> NOW);
+            policy, eligibility, projections, outbox, mock(IdempotencyExecutor.class), new UuidV7Generator(), () -> NOW);
     private static final Instant NOW = Instant.parse("2026-08-22T00:00:00Z");
 
     @Test
@@ -69,12 +70,46 @@ class ReviewServiceTest {
                 ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
+    @Test
+    void sharedEligibilityReasonsMapToTheExistingCreationErrors() {
+        Fixture fixture = completedFixture();
+        when(items.findById(fixture.item.getId())).thenReturn(Optional.of(fixture.item));
+        when(orders.lockById(fixture.order.getId())).thenReturn(Optional.of(fixture.order));
+
+        when(policy.creationEnabled()).thenReturn(false);
+        assertApiError(() -> service.createInsideTransaction(fixture.buyerId,
+                        new CreateReviewRequest(fixture.item.getId(), 5, null)),
+                ErrorCode.REVIEW_CREATION_DISABLED, HttpStatus.UNPROCESSABLE_ENTITY);
+
+        when(policy.creationEnabled()).thenReturn(true);
+        when(reviews.existsByOrderItemId(fixture.item.getId())).thenReturn(true);
+        assertApiError(() -> service.createInsideTransaction(fixture.buyerId,
+                        new CreateReviewRequest(fixture.item.getId(), 5, null)),
+                ErrorCode.REVIEW_ALREADY_EXISTS, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void itemWithoutACatalogTargetRemainsHiddenAsNotFound() {
+        Fixture fixture = completedFixture(null);
+        when(policy.creationEnabled()).thenReturn(true);
+        when(items.findById(fixture.item.getId())).thenReturn(Optional.of(fixture.item));
+        when(orders.lockById(fixture.order.getId())).thenReturn(Optional.of(fixture.order));
+
+        assertApiError(() -> service.createInsideTransaction(fixture.buyerId,
+                        new CreateReviewRequest(fixture.item.getId(), 5, null)),
+                ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
     private void assertApiError(org.assertj.core.api.ThrowableAssert.ThrowingCallable callable, ErrorCode code, HttpStatus status) {
         assertThatThrownBy(callable).isInstanceOfSatisfying(ApiException.class, error -> { assertThat(error.code()).isEqualTo(code); assertThat(error.status()).isEqualTo(status); });
     }
 
     private Fixture completedFixture() {
-        UUID buyer = UUID.randomUUID(), merchant = UUID.randomUUID(), orderId = UUID.randomUUID(), catalog = UUID.randomUUID();
+        return completedFixture(UUID.randomUUID());
+    }
+
+    private Fixture completedFixture(UUID catalog) {
+        UUID buyer = UUID.randomUUID(), merchant = UUID.randomUUID(), orderId = UUID.randomUUID();
         OrderEntity order = OrderEntity.pending(orderId, "review-test", OrderType.PRODUCT, buyer, merchant, UUID.randomUUID(), PaymentMethod.COD, 100, OrderShippingFeeType.FREE, 0L, 100, 100L, "VND", NOW.plusSeconds(60), NOW);
         order.complete(NOW);
         OrderItemEntity item = OrderItemEntity.create(UUID.randomUUID(), orderId, catalog, UUID.randomUUID(), UUID.randomUUID(), CatalogItemType.PRODUCT, 1, 100, "VND", NullNode.getInstance(), NOW);

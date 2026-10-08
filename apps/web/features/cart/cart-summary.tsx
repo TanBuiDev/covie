@@ -17,6 +17,7 @@ export function CartSummary({ cart }: { cart: Cart }) {
 
   return (
     <aside className={styles.summary} aria-label="Tóm tắt giỏ hàng">
+      <p className={styles.serviceRule}>Giá và khả dụng sẽ được kiểm tra lại trước khi đặt hàng.</p>
       {isService ? (
         <>
           <p className={styles.serviceRule}>Số lượng: 1 (cố định). Quy mô dịch vụ đến từ lựa chọn dịch vụ, không dùng +/- trong giỏ.</p>

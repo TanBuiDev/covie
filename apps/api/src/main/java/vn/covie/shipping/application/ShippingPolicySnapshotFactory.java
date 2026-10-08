@@ -1,8 +1,42 @@
 package vn.covie.shipping.application;
-import com.fasterxml.jackson.databind.JsonNode; import com.fasterxml.jackson.databind.ObjectMapper; import java.util.*; import org.springframework.stereotype.Component; import vn.covie.shipping.model.*;
-@Component public class ShippingPolicySnapshotFactory {
- private final ObjectMapper mapper; public ShippingPolicySnapshotFactory(ObjectMapper mapper){this.mapper=mapper;}
- public JsonNode snapshot(ShippingPolicyEntity policy,List<ShippingRuleEntity> rules,ShippingEvaluation evaluation){
-  Map<String,Object> value=new LinkedHashMap<>(); value.put("mode",policy.getMode().name()); value.put("baseFee",policy.getBaseFee()); value.put("currency",policy.getCurrencyCode()); value.put("ruleMatchMode",policy.getRuleMatchMode()==null?null:policy.getRuleMatchMode().name()); value.put("rules",rules.stream().map(r->Map.of("id",r.getId(),"conditionType",r.getConditionType().name(),"operator",r.getOperator().name(),"thresholdValue",r.getThresholdValue(),"actionType",r.getActionType().name(),"priority",r.getPriority(),"enabled",r.isEnabled())).toList()); value.put("subtotalUsed",evaluation.subtotalMinor()); value.put("distanceMetersUsed",evaluation.distanceMeters()); value.put("matchedRuleIds",evaluation.matchedRuleIds()); value.put("effectiveShippingFee",evaluation.shippingFeeMinor()); return mapper.valueToTree(value);
- }
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.stereotype.Component;
+import vn.covie.shipping.model.ShippingActionType;
+import vn.covie.shipping.model.ShippingConditionOperator;
+import vn.covie.shipping.model.ShippingConditionType;
+import vn.covie.shipping.model.ShippingMode;
+import vn.covie.shipping.model.ShippingPolicyEntity;
+import vn.covie.shipping.model.ShippingPolicyStatus;
+import vn.covie.shipping.model.ShippingRuleEntity;
+import vn.covie.shipping.model.ShippingRuleMatchMode;
+
+@Component
+public class ShippingPolicySnapshotFactory {
+    private static final int SCHEMA_VERSION = 1;
+    private final ObjectMapper mapper;
+
+    public ShippingPolicySnapshotFactory(ObjectMapper mapper) { this.mapper = mapper; }
+
+    public JsonNode snapshot(ShippingPolicyEntity policy, List<ShippingRuleEntity> rules,
+            ShippingEvaluation evaluation) {
+        List<RuleSnapshot> ruleSnapshots = rules.stream().map(rule -> new RuleSnapshot(rule.getId(),
+                rule.getConditionType(), rule.getOperator(), rule.getThresholdValue(), rule.getActionType(),
+                rule.getPriority(), rule.isEnabled())).toList();
+        return mapper.valueToTree(new PolicySnapshot(SCHEMA_VERSION, policy.getId(), policy.getVersion(),
+                policy.getPolicyStatus(), policy.getMode(), policy.getBaseFee(), policy.getCurrencyCode(),
+                policy.getRuleMatchMode(), ruleSnapshots, evaluation.subtotalMinor(), evaluation.distanceMeters(),
+                evaluation.matchedRuleIds(), evaluation.shippingFeeMinor()));
+    }
+
+    record PolicySnapshot(int schemaVersion, UUID policyId, long sourceVersion, ShippingPolicyStatus policyStatus,
+            ShippingMode mode, Long baseFee, String currency, ShippingRuleMatchMode ruleMatchMode,
+            List<RuleSnapshot> rules, long subtotalUsed, long distanceMetersUsed, List<UUID> matchedRuleIds,
+            Long effectiveShippingFee) {}
+
+    record RuleSnapshot(UUID id, ShippingConditionType conditionType, ShippingConditionOperator operator,
+            long thresholdValue, ShippingActionType actionType, int priority, boolean enabled) {}
 }

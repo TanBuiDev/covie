@@ -6,6 +6,7 @@ public record NeedResponseItemResponse(
         UUID id,
         UUID locationVariantId,
         UUID catalogItemId,
+        String catalogItemName,
         UUID variantId,
         MoneyResponse priceAtResponse,
         MoneyResponse currentPrice,

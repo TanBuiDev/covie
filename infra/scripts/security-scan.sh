@@ -36,7 +36,8 @@ git ls-files --cached --others --exclude-standard -z \
 # below.  Scanning source POM files makes Trivy resolve remote Maven metadata,
 # turning the release gate into a Maven Central availability check.
 run_trivy fs --offline-scan --timeout 15m --scanners misconfig,secret --severity HIGH,CRITICAL --exit-code 1 \
-  --skip-dirs '**/target' --skip-dirs '**/.next' --skip-dirs '**/node_modules' "build/$(basename "$release_source")"
+  --skip-dirs '**/target' --skip-dirs '**/.next' --skip-dirs '**/node_modules' \
+  --skip-files '**/Dockerfile.dockerignore' "build/$(basename "$release_source")"
 
 if command -v pnpm >/dev/null 2>&1; then
   case "$(uname -s)" in

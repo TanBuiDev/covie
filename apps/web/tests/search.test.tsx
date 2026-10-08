@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SearchResults } from "@/features/discovery/search-results";
 import { BrowseLocationContext, type BrowseLocationContextValue } from "@/features/location/browse-location-provider";
 import type { BrowseLocation } from "@/features/location/location-context";
@@ -50,17 +50,107 @@ function renderSearch(initial: Parameters<typeof SearchResults>[0]["initial"], s
   );
 }
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {vi.clearAllMocks(); mocks.discoverCatalogItems.mockReset(); mocks.listPublicCategories.mockReset();});
+beforeEach(() => mocks.listPublicCategories.mockResolvedValue([]));
 
 describe("PUB-003/004 Search", () => {
-  it("renders the focused Search frame without querying until the user provides search intent", () => {
+  it("keeps keyboard focus inside the filter dialog and restores it on Escape", async () => {
+    mocks.discoverCatalogItems.mockResolvedValue(pageWith("Kết quả"));
+    renderSearch({q:"cơm"});
+    await screen.findByText("Kết quả");
+    const trigger = screen.getByRole("button",{name:"Mở bộ lọc"});
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = screen.getByRole("dialog");
+    const first = within(dialog).getByRole("button",{name:"Đặt lại"});
+    const last = within(dialog).getByRole("button",{name:"Áp dụng"});
+    expect(first).toHaveFocus();
+    fireEvent.keyDown(first,{key:"Tab",shiftKey:true});
+    expect(last).toHaveFocus();
+    fireEvent.keyDown(last,{key:"Tab"});
+    expect(first).toHaveFocus();
+    fireEvent.keyDown(first,{key:"Escape"});
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+  it("applies price and fulfillment controls, rejects an inverted range and resets filters", async () => {
+    mocks.discoverCatalogItems.mockResolvedValue(pageWith("Kết quả lọc"));
+    renderSearch({q:"cơm"});
+    await screen.findByText("Kết quả lọc");
+    fireEvent.click(screen.getByRole("button",{name:"Mở bộ lọc"}));
+    fireEvent.change(screen.getByLabelText("Giá từ (₫)"),{target:{value:"50000"}});
+    fireEvent.change(screen.getByLabelText("Giá đến (₫)"),{target:{value:"10000"}});
+    expect(screen.getByRole("button",{name:"Áp dụng"})).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Giá từ (₫)"),{target:{value:"0"}});
+    fireEvent.click(screen.getByLabelText("Giao tận nơi"));
+    fireEvent.click(screen.getByLabelText("Nhận tại điểm bán"));
+    fireEvent.click(screen.getByRole("button",{name:"Áp dụng"}));
+    await waitFor(()=>expect(mocks.discoverCatalogItems).toHaveBeenLastCalledWith(expect.objectContaining({q:"cơm",minPrice:0,maxPrice:10000,canServe:true,pickup:true})));
+    expect(mocks.replace).toHaveBeenLastCalledWith(expect.stringContaining("minPrice=0"),{scroll:false});
+    fireEvent.click(screen.getByRole("button",{name:"Mở bộ lọc"}));
+    expect(screen.getByLabelText("Giá đến (₫)")).toHaveValue(10000);
+    expect(screen.getByLabelText("Giao tận nơi")).toBeChecked();
+    fireEvent.click(screen.getByRole("button",{name:"Đặt lại"}));
+    fireEvent.click(screen.getByRole("button",{name:"Áp dụng"}));
+    await waitFor(()=>expect(mocks.discoverCatalogItems).toHaveBeenLastCalledWith(expect.objectContaining({q:"cơm",minPrice:undefined,maxPrice:undefined,canServe:undefined,pickup:undefined})));
+  });
+  it("synchronizes results and the search field when URL-derived filters change", async () => {
+    mocks.discoverCatalogItems.mockResolvedValueOnce(pageWith("Cơm cũ"))
+      .mockResolvedValueOnce(pageWith("Trà mới"));
+    const value: BrowseLocationContextValue = {location, hydrated:true, setLocation:vi.fn(), clearLocation:vi.fn()};
+    const view = render(<BrowseLocationContext.Provider value={value}><SearchResults initial={{q:"cơm"}} /></BrowseLocationContext.Provider>);
+    await screen.findByText("Cơm cũ");
+    view.rerender(<BrowseLocationContext.Provider value={value}><SearchResults initial={{q:"trà",type:"SERVICE"}} /></BrowseLocationContext.Provider>);
+    expect(await screen.findByText("Trà mới")).toBeInTheDocument();
+    expect(screen.queryByText("Cơm cũ")).not.toBeInTheDocument();
+    expect(screen.getByRole("searchbox", {name:"Tìm món đồ, dịch vụ"})).toHaveValue("trà");
+    expect(mocks.discoverCatalogItems).toHaveBeenLastCalledWith(expect.objectContaining({q:"trà",type:"SERVICE"}));
+  });
+  it("offers a real category selector and opens filters with the current applied values", async () => {
+    mocks.listPublicCategories.mockResolvedValue([{id:"food",name:"Ăn uống"}]);
+    mocks.discoverCatalogItems.mockResolvedValue(pageWith("Món ăn"));
+    renderSearch({q:"cơm"});
+    await screen.findByText("Món ăn");
+    fireEvent.click(screen.getByRole("button", {name:"Danh mục⌄"}));
+    const dialog=screen.getByRole("dialog");
+    fireEvent.change(within(dialog).getByRole("combobox", {name:"Danh mục"}), {target:{value:"food"}});
+    fireEvent.click(within(dialog).getByRole("button", {name:"Áp dụng"}));
+    await waitFor(() => expect(mocks.discoverCatalogItems).toHaveBeenLastCalledWith(expect.objectContaining({categoryId:"food",q:"cơm"})));
+    fireEvent.click(screen.getByRole("button", {name:"Danh mục đã chọn"}));
+    expect(within(screen.getByRole("dialog")).getByRole("combobox", {name:"Danh mục"})).toHaveValue("food");
+  });
+  it("loads the next cursor page without losing results and retries a failed next page", async () => {
+    mocks.discoverCatalogItems.mockResolvedValueOnce({page:{...pageWith("Trang đầu").page, hasMore:true, nextCursor:"cursor-1"}})
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce({page:{items:[{...pageWith("Trang hai").page.items[0],id:"item-2"}],hasMore:false}});
+    const initial = {q:"hàng",minPrice:0,maxPrice:100000,pickup:true,canServe:true,shipping:"FREE"};
+    renderSearch(initial);
+    expect(await screen.findByText("Trang đầu")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", {name:"Tải thêm kết quả"}));
+    expect(await screen.findByText("Không thể tải thêm kết quả.")).toBeInTheDocument();
+    expect(screen.getByText("Trang đầu")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", {name:"Thử lại tải thêm"}));
+    expect(await screen.findByText("Trang hai")).toBeInTheDocument();
+    expect(screen.getByText("Trang đầu")).toBeInTheDocument();
+    expect(mocks.discoverCatalogItems).toHaveBeenLastCalledWith(expect.objectContaining({...initial,cursor:"cursor-1"}));
+    expect(screen.queryByRole("button", {name:"Tải thêm kết quả"})).not.toBeInTheDocument();
+  });
+  it("does not show an endless results loader when a query has no selected location", () => {
+    renderSearch({q:"cơm"}, null);
+    expect(screen.getByText("Chọn khu vực để xem kết quả gần bạn")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Đang tải kết quả")).not.toBeInTheDocument();
+    expect(mocks.discoverCatalogItems).not.toHaveBeenCalled();
+  });
+  it("loads nearby listings on Explore when a location is selected without requiring a keyword", async () => {
+    mocks.discoverCatalogItems.mockResolvedValue(pageWith("Hàng gần bạn"));
     renderSearch({ sort: "RELEVANCE" });
 
     expect(screen.getByRole("heading", { name: "Khám phá" })).toBeInTheDocument();
     expect(screen.getByText("Tìm quanh vị trí bạn đã chọn")).toBeInTheDocument();
     expect(screen.getByText("Vinhomes Grand Park")).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Tìm món đồ, dịch vụ" })).toBeInTheDocument();
-    expect(mocks.discoverCatalogItems).not.toHaveBeenCalled();
+    expect(await screen.findByText("Hàng gần bạn")).toBeInTheDocument();
+    expect(mocks.discoverCatalogItems).toHaveBeenCalledWith(expect.objectContaining({sort:"DISTANCE", q:undefined}));
   });
 
   it("renders the Results frame and sends generated-contract filters for an initial query", async () => {

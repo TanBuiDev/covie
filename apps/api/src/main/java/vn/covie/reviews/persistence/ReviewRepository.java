@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Collection;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,9 @@ import vn.covie.reviews.model.ReviewEntity;
 public interface ReviewRepository extends JpaRepository<ReviewEntity, UUID> {
     Optional<ReviewEntity> findByOrderItemId(UUID orderItemId);
     boolean existsByOrderItemId(UUID orderItemId);
+
+    @Query("select r.orderItemId from ReviewEntity r where r.orderItemId in :orderItemIds")
+    List<UUID> findReviewedOrderItemIds(@Param("orderItemIds") Collection<UUID> orderItemIds);
 
     @Query("select count(r), coalesce(sum(r.rating), 0) from ReviewEntity r where r.catalogItemId = :catalogItemId and r.reviewStatus = 'ACTIVE' and r.deletedAt is null")
     List<Object[]> aggregateActiveCatalogReviews(@Param("catalogItemId") UUID catalogItemId);

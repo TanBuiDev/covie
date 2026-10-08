@@ -13,4 +13,8 @@ describe("checkout source", () => {
     expect(parseCheckoutSource(new URLSearchParams("source=DIRECT&locationVariantId=lv-1&quantity=0"))).toBeNull();
     expect(parseCheckoutSource(new URLSearchParams("source=UNKNOWN"))).toBeNull();
   });
+
+  it("rejects quantities beyond exact JavaScript integer precision", () => {
+    expect(parseCheckoutSource(new URLSearchParams("source=DIRECT&locationVariantId=lv-1&quantity=9007199254740993"))).toBeNull();
+  });
 });

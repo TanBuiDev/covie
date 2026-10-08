@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { GoogleLoginButton } from "../../../features/auth/google-login-button";
+import { GoogleAuthLink, GoogleLoginButton } from "../../../features/auth/google-login-button";
 import { LoginForm } from "../../../features/auth/login-form";
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams?: Promise<{ returnTo?: string | string[] }> }) {
+  const query = await searchParams;
   return (
     <main className="auth-surface">
       <header className="auth-top-bar">
@@ -32,11 +33,11 @@ export default function LoginPage() {
             <p>Đăng nhập bằng email/mật khẩu CoVie đã tạo sau lần xác minh Google, hoặc tiếp tục bằng Google.</p>
           </header>
 
-          <LoginForm />
+          <LoginForm returnTo={typeof query?.returnTo === "string" ? query.returnTo : undefined} />
 
-          <a className="auth-forgot" href="/api/v1/auth/google/start?intent=PASSWORD_RESET">
+          <GoogleAuthLink className="auth-forgot" intent="PASSWORD_RESET">
             Quên mật khẩu?
-          </a>
+          </GoogleAuthLink>
 
           <div className="auth-divider"><span>hoặc</span></div>
 
@@ -44,7 +45,7 @@ export default function LoginPage() {
 
           <p className="auth-card__footer">
             Chưa có tài khoản?{" "}
-            <a href="/api/v1/auth/google/start?intent=LOGIN">Tạo tài khoản bằng Google</a>
+            <GoogleAuthLink>Tạo tài khoản bằng Google</GoogleAuthLink>
           </p>
         </section>
       </div>

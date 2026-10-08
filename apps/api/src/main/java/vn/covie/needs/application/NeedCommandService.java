@@ -2,6 +2,7 @@ package vn.covie.needs.application;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import vn.covie.moderation.application.ModerationDecisionService;
 import vn.covie.moderation.application.ModerationSubject;
 import vn.covie.moderation.model.ModerationTargetType;
 import vn.covie.needs.api.dto.CreateNeedRequest;
+import vn.covie.needs.api.dto.NeedAllowedAction;
 import vn.covie.needs.api.dto.NeedDetailResponse;
 import vn.covie.needs.api.dto.NeedLocationSummaryResponse;
 import vn.covie.needs.model.NeedRequestEntity;
@@ -113,11 +115,16 @@ public class NeedCommandService {
     }
 
     static NeedDetailResponse detail(NeedRequestEntity need, Instant now, long responseCount) {
-        return new NeedDetailResponse(need.getId(), need.getNeedType(), effectiveStatus(need, now), need.getCategoryId(),
+        NeedStatus status = effectiveStatus(need, now);
+        Set<NeedAllowedAction> allowedActions = status == NeedStatus.ACTIVE
+                ? Set.of(NeedAllowedAction.CANCEL)
+                : Set.of();
+        return new NeedDetailResponse(need.getId(), need.getNeedType(), status, need.getCategoryId(),
                 need.getTitle(), need.getQueryText(), need.getDescription(), need.getRequestedQuantity(),
                 new NeedLocationSummaryResponse(parseUuid(need, "addressId"), need.getLocationAreaId(),
                         need.getLocationSnapshot().path("timezone").asText("UTC")),
-                need.getSearchRadiusMeters(), need.getExpiresAt(), responseCount, need.getFulfilledOrderId(), need.getCreatedAt(), need.getClosedAt());
+                need.getSearchRadiusMeters(), need.getExpiresAt(), responseCount, need.getFulfilledOrderId(),
+                allowedActions, need.getCreatedAt(), need.getClosedAt());
     }
 
     static NeedStatus effectiveStatus(NeedRequestEntity need, Instant now) {

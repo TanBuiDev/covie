@@ -78,12 +78,13 @@ class CatalogDiscoveryRepositoryIntegrationTest extends PostgresIntegrationTest 
         UUID merchantId = merchants.saveAndFlush(MerchantProfileEntity.create(UUID.randomUUID(), "Outside", "outside-" + UUID.randomUUID(), NOW)).getId();
         UUID locationId = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), merchantId,
                 "Outside", "Outside", 10.82, 106.72, NOW)).getId();
-        UUID itemId = activeItem(merchantId, "Outside coffee");
+        UUID itemId = activeItem(merchantId, CatalogItemType.PRODUCT, ListingKind.STANDARD,
+                fixture.categoryId(), "Outside coffee");
         UUID variantId = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(), itemId, "Default", NOW)).getId();
         offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), locationId, variantId, 20_000,
                 "VND", true, InventoryMode.UNTRACKED, null, NOW));
 
-        assertThat(discovery.find(query(CatalogSort.DISTANCE, 500), context(), null, NOW))
+        assertThat(discovery.find(query(CatalogSort.DISTANCE, 500, fixture.categoryId()), context(), null, NOW))
                 .extracting(Row::itemId)
                 .contains(fixture.itemId())
                 .doesNotContain(itemId);
@@ -137,6 +138,25 @@ class CatalogDiscoveryRepositoryIntegrationTest extends PostgresIntegrationTest 
 
         assertThat(discovery.find(query(CatalogSort.DISTANCE, 5_000, fixture.categoryId()), context(), null, NOW))
                 .extracting(Row::itemId).containsExactly(fixture.itemId());
+    }
+
+    @Test
+    void parentCategoryIncludesNestedChildrenButNotSiblingBranchesOrHiddenChildren() {
+        Fixture fixture = fixture();
+        UUID parent = category(), grandparent = category(), unrelated = category();
+        jdbc.update("update categories set parent_id=? where id=?", parent, fixture.categoryId());
+        jdbc.update("update categories set parent_id=? where id=?", grandparent, parent);
+        UUID siblingItem = activeItem(fixture.merchantId(), CatalogItemType.PRODUCT, ListingKind.STANDARD,
+                unrelated, "Unrelated coffee");
+        UUID variant = variants.saveAndFlush(VariantEntity.createDefault(UUID.randomUUID(),siblingItem,"Default",NOW)).getId();
+        offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(),fixture.nearLocationId(),variant,
+                25_000,"VND",true,InventoryMode.UNTRACKED,null,NOW));
+        assertThat(discovery.find(query(CatalogSort.DISTANCE,5_000,parent),context(),null,NOW))
+                .extracting(Row::itemId).containsExactly(fixture.itemId());
+        assertThat(discovery.find(query(CatalogSort.DISTANCE,5_000,grandparent),context(),null,NOW))
+                .extracting(Row::itemId).containsExactly(fixture.itemId());
+        jdbc.update("update categories set deleted_at=? where id=?",java.sql.Timestamp.from(NOW),fixture.categoryId());
+        assertThat(discovery.find(query(CatalogSort.DISTANCE,5_000,grandparent),context(),null,NOW)).isEmpty();
     }
 
     @Test

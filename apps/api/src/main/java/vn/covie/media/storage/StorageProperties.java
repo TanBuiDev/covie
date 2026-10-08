@@ -13,4 +13,6 @@ public record StorageProperties(
         boolean forcePathStyle,
         Duration uploadUrlTtl,
         long maxImageBytes,
-        int maxPendingUploadsPerUser) {}
+        int maxPendingUploadsPerUser) {
+    public long maxVideoBytes() { return 50L * 1024 * 1024; }
+}

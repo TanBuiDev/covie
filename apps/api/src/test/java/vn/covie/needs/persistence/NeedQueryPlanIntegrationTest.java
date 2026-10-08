@@ -41,4 +41,24 @@ class NeedQueryPlanIntegrationTest extends PostgresIntegrationTest {
             jdbc.execute("reset enable_seqscan");
         }
     }
+
+    @Test
+    void eligibleCandidateScanUsesASelectedLocationOfferIndex() {
+        jdbc.execute("set enable_seqscan = off");
+        try {
+            List<String> plan = jdbc.queryForList("""
+                    explain select lv.id from location_variants lv
+                    where lv.merchant_location_id = '00000000-0000-0000-0000-000000000001'::uuid
+                      and lv.deleted_at is null and lv.is_available = true
+                    order by lv.id limit 30
+                    """, String.class);
+            String explanation = String.join("\n", plan);
+            assertThat(explanation).doesNotContain("Seq Scan on location_variants");
+            assertThat(explanation).containsAnyOf(
+                    "ix_location_variant_location_available",
+                    "ux_location_variant_active");
+        } finally {
+            jdbc.execute("reset enable_seqscan");
+        }
+    }
 }

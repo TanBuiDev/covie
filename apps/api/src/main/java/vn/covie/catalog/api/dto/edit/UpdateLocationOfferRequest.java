@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.PositiveOrZero;
+import io.swagger.v3.oas.annotations.media.Schema;
 import vn.covie.catalog.model.InventoryMode;
 
 /** Uses setter presence for nullable preparation time: omitted retains it; explicit JSON null clears it. */
@@ -24,7 +25,8 @@ public final class UpdateLocationOfferRequest {
     @JsonSetter public void setPrice(Long price) { this.price = price; }
     @JsonSetter public void setAvailable(Boolean available) { this.available = available; }
     @JsonSetter public void setInventoryMode(InventoryMode inventoryMode) { this.inventoryMode = inventoryMode; }
-    @JsonSetter public void setPreparationTimeMinutes(Integer preparationTimeMinutes) {
+    @JsonSetter @Schema(nullable = true, description = "Omitted retains the current value; explicit null clears it.")
+    public void setPreparationTimeMinutes(Integer preparationTimeMinutes) {
         this.preparationTimeMinutes = preparationTimeMinutes;
         this.preparationTimeMinutesPresent = true;
     }

@@ -19,6 +19,10 @@ import vn.covie.users.model.UserEntity;
 
 /** Browser cookie and CSRF behavior against the installed security filter chain. */
 @AutoConfigureMockMvc
+@org.springframework.test.context.TestPropertySource(properties = {
+        "spring.security.oauth2.client.registration.google.client-id=123.apps.googleusercontent.com",
+        "spring.security.oauth2.client.registration.google.client-secret=test-configured-secret"
+})
 class AuthCookieCsrfAcceptanceTest extends AuthAcceptanceSupport {
     @Autowired MockMvc mvc;
     @Autowired AuthProperties authProperties;

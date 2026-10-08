@@ -29,6 +29,18 @@ class ShippingPolicyServiceIntegrationTest extends PostgresIntegrationTest {
     @MockitoBean MerchantAccessPolicy access;
 
     @Test
+    void listsPoliciesInsideReadOnlyTransactionWithoutTakingLocationLock() {
+        UUID merchantId = UUID.randomUUID(), locationId = UUID.randomUUID();
+        Instant now = Instant.now();
+        merchants.saveAndFlush(MerchantProfileEntity.create(merchantId, "Store", "store-" + merchantId, now));
+        locations.saveAndFlush(MerchantLocationEntity.create(locationId, merchantId, "Main", "Address", 10.8, 106.7, now));
+        when(access.requireLocation(merchantId, locationId,
+                vn.covie.merchants.security.MerchantCapability.MANAGE_LOCATION_OFFER)).thenReturn(null);
+
+        assertThat(service.list(merchantId, locationId)).isEmpty();
+    }
+
+    @Test
     void replacesConditionalRulesAtomicallyAndReturnsTheNewOrderedSet() {
         UUID merchantId = UUID.randomUUID(), locationId = UUID.randomUUID(); Instant now = Instant.now();
         merchants.saveAndFlush(MerchantProfileEntity.create(merchantId, "Store", "store-" + merchantId, now));

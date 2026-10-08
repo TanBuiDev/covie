@@ -15,7 +15,9 @@ describe("OrderActions", () => {
 
     expect(screen.queryByRole("button", { name: "Xác nhận đơn" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Đã giao" }));
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    const buyerDialog = screen.getByRole("dialog");
+    expect(buyerDialog).toBeInTheDocument();
+    expect(buyerDialog.parentElement).not.toHaveClass("dialog-backdrop--seller-page");
     expect(screen.getByRole("heading", { name: "Đã giao hàng" })).toBeInTheDocument();
   });
 
@@ -34,13 +36,16 @@ describe("OrderActions", () => {
     render(
       <OrderActions
         actorView="SELLER"
-        order={{ id: "order-3", type: "PRODUCT", status: "CONFIRMED", allowedActions: ["CANCEL"] }}
+        order={{ id: "order-3", orderCode: "CV-ORDER-3", type: "PRODUCT", status: "CONFIRMED", allowedActions: ["CANCEL"] }}
         onChanged={vi.fn()}
       />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Hủy đơn" }));
     const dialog = screen.getByRole("dialog");
+    expect(dialog.parentElement).toHaveClass("dialog-backdrop--seller-page");
+    expect(within(dialog).getByText("CV-ORDER-3")).toBeInTheDocument();
+    expect(within(dialog).getByText("Đơn sẽ bị hủy")).toBeInTheDocument();
     const confirm = within(dialog).getByRole("button", { name: "Hủy đơn" });
     expect(confirm).toBeDisabled();
     fireEvent.change(within(dialog).getByRole("textbox"), { target: { value: "Không thể tiếp tục thực hiện đơn" } });

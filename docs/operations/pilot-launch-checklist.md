@@ -89,12 +89,12 @@ Pilot internal objectives (not a public SLA): monthly API availability objective
 Normal Plan 10 case:
 
 ```text
-highest migration = V013
+highest migration = V014
 Plan 10 migration = none
-next available migration = V014
+next available migration = V015
 ```
 
-Do not consume V014 for production hardening alone. If a performance gate proves a schema/index change is required, review it separately, capture before/after evidence and update the release manifest/migration handoff.
+V014 is reserved for the reviewed service-fulfillment distance correction. Do not consume V015 for production hardening alone. If a performance gate proves a schema/index change is required, review it separately, capture before/after evidence and update the release manifest/migration handoff.
 
 ## Final approval
 

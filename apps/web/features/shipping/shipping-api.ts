@@ -1,9 +1,9 @@
 import type { components } from "@covie/api-client";
 import { createApiClient } from "@/lib/api/api-client";
-import { readApiError } from "@/lib/api/api-error";
+import { parsedApiError } from "@/lib/api/api-error";
 
-async function dataOrThrow<T>(response: Response, data: T | undefined): Promise<T> {
-  if (!response.ok || !data) throw await readApiError(response);
+async function dataOrThrow<T>(response: Response, data: T | undefined, error?: unknown): Promise<T> {
+  if (!response.ok || !data) throw await parsedApiError(response, error);
   return data;
 }
 
@@ -13,8 +13,8 @@ function versionEtag(version: number | undefined): string {
 }
 
 export async function listLocationAreas() {
-  const { data, response } = await createApiClient().GET("/api/v1/location-areas");
-  return dataOrThrow(response, data);
+  const { data, error, response } = await createApiClient().GET("/api/v1/location-areas");
+  return dataOrThrow(response, data, error);
 }
 
 export async function createShippingPolicy(
@@ -22,11 +22,11 @@ export async function createShippingPolicy(
   locationId: string,
   input: components["schemas"]["ShippingPolicyUpsertRequest"],
 ) {
-  const { data, response } = await createApiClient().POST(
+  const { data, error, response } = await createApiClient().POST(
     "/api/v1/merchants/{merchantId}/locations/{locationId}/shipping-policies",
     { params: { path: { merchantId, locationId } }, body: input },
   );
-  return dataOrThrow(response, data);
+  return dataOrThrow(response, data, error);
 }
 
 export async function updateShippingPolicy(
@@ -36,14 +36,14 @@ export async function updateShippingPolicy(
   version: number,
   input: components["schemas"]["ShippingPolicyUpsertRequest"],
 ) {
-  const { data, response } = await createApiClient().PATCH(
+  const { data, error, response } = await createApiClient().PATCH(
     "/api/v1/merchants/{merchantId}/locations/{locationId}/shipping-policies/{policyId}",
     {
       params: { path: { merchantId, locationId, policyId }, header: { "If-Match": versionEtag(version) } },
       body: input,
     },
   );
-  return dataOrThrow(response, data);
+  return dataOrThrow(response, data, error);
 }
 
 export async function deleteShippingPolicy(
@@ -52,11 +52,11 @@ export async function deleteShippingPolicy(
   policyId: string,
   version: number,
 ) {
-  const { response } = await createApiClient().DELETE(
+  const { error, response } = await createApiClient().DELETE(
     "/api/v1/merchants/{merchantId}/locations/{locationId}/shipping-policies/{policyId}",
     { params: { path: { merchantId, locationId, policyId }, header: { "If-Match": versionEtag(version) } } },
   );
-  if (!response.ok) throw await readApiError(response);
+  if (!response.ok) throw await parsedApiError(response, error);
 }
 
 export async function createDeliveryCoverage(
@@ -64,11 +64,11 @@ export async function createDeliveryCoverage(
   locationId: string,
   input: components["schemas"]["DeliveryCoverageUpsertRequest"],
 ) {
-  const { data, response } = await createApiClient().POST(
+  const { data, error, response } = await createApiClient().POST(
     "/api/v1/merchants/{merchantId}/locations/{locationId}/delivery-coverages",
     { params: { path: { merchantId, locationId } }, body: input },
   );
-  return dataOrThrow(response, data);
+  return dataOrThrow(response, data, error);
 }
 
 export async function updateDeliveryCoverage(
@@ -78,14 +78,14 @@ export async function updateDeliveryCoverage(
   version: number,
   input: components["schemas"]["DeliveryCoverageUpsertRequest"],
 ) {
-  const { data, response } = await createApiClient().PATCH(
+  const { data, error, response } = await createApiClient().PATCH(
     "/api/v1/merchants/{merchantId}/locations/{locationId}/delivery-coverages/{coverageId}",
     {
       params: { path: { merchantId, locationId, coverageId }, header: { "If-Match": versionEtag(version) } },
       body: input,
     },
   );
-  return dataOrThrow(response, data);
+  return dataOrThrow(response, data, error);
 }
 
 export async function deleteDeliveryCoverage(
@@ -94,9 +94,9 @@ export async function deleteDeliveryCoverage(
   coverageId: string,
   version: number,
 ) {
-  const { response } = await createApiClient().DELETE(
+  const { error, response } = await createApiClient().DELETE(
     "/api/v1/merchants/{merchantId}/locations/{locationId}/delivery-coverages/{coverageId}",
     { params: { path: { merchantId, locationId, coverageId }, header: { "If-Match": versionEtag(version) } } },
   );
-  if (!response.ok) throw await readApiError(response);
+  if (!response.ok) throw await parsedApiError(response, error);
 }

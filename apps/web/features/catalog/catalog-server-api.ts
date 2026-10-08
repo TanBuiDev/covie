@@ -29,3 +29,12 @@ export async function getCatalogItemForServer(itemId: string, location?: Discove
   if (!response.ok || !data) throw await readApiError(response);
   return data;
 }
+
+export async function getCatalogManagementDetailForServer(merchantId: string, itemId: string) {
+  const client = await createServerReadClient();
+  const { data, response } = await client.GET("/api/v1/merchants/{merchantId}/catalog-items/{itemId}", {
+    params: { path: { merchantId, itemId } },
+  });
+  if (!response.ok || !data) throw await readApiError(response);
+  return { item: data, etag: response.headers.get("ETag") };
+}

@@ -1848,3 +1848,6 @@ Sau khi Foundation plan được review, mới tạo worktree/branch và bắt �
 
 Mỗi plan phải tạo một system state deployable/testable hơn plan trước. Không có “big bang integration” ở cuối.
 
+## Advertising MVP extension — 2026-10-08
+
+Implemented both approved phases: Admin/Seller campaign ownership and approval/reapproval, verified image/MP4/WebM creatives and four CSS templates, scheduled device-aware delivery, carousel controls, impression/click deduplication, CTR and daily analytics. Wide desktop rail is limited to home/search with measured spare gutter; responsive horizontal slots cover home, search feed and item details. API and generated client are synchronized. Implementation and operations evidence: `docs/CoVie-ad-engine.md`; execution plan: `docs/superpowers/plans/2026-10-08-ad-engine.md`. Local recovered demo API has V015 applied; staging/production deployment is outside current verified evidence.

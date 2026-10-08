@@ -27,6 +27,14 @@ export async function getPublicMerchantForServer(merchantId: string) {
   return data;
 }
 
+export async function listPublicMerchantCatalogForServer(merchantId: string, cursor?: string) {
+  const client = await createServerReadClient();
+  const { data, response } = await client.GET("/api/v1/catalog/merchants/{merchantId}/items", {
+    params: { path: { merchantId }, query: { limit: 3, ...(cursor ? { cursor } : {}) } },
+  });
+  return requireData(response, data);
+}
+
 export async function listPublicMerchantReviewsForServer(merchantId: string) {
   const client = await createServerReadClient();
   const { data, response } = await client.GET("/api/v1/merchants/{merchantId}/reviews", { params: { path: { merchantId }, query: {} } });

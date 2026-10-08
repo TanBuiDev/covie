@@ -1,13 +1,14 @@
 "use client";
 
 import type { components } from "@covie/api-client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { StatusChip } from "@/components/ui/status-chip";
 import { countdownPresentation } from "@/lib/format/time";
-import { discoverMerchantNeeds, type MerchantNeedMatch } from "./need-api";
+import { discoverMerchantNeeds, getMerchantNeedResponse, listEligibleNeedItems, type MerchantNeedMatch, type NeedEligibleItemPage, type NeedResponse } from "./need-api";
+import { MerchantNeedResponseForm } from "./merchant-need-response-form";
 
 type Location = components["schemas"]["MerchantLocationResponse"];
 
@@ -25,6 +26,18 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
   const [error, setError] = useState<string>();
   const [reloadKey, setReloadKey] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedNeedId, setSelectedNeedId] = useState<string>();
+  const [selectionMode, setSelectionMode] = useState<"create" | "existing">();
+  const [candidatePage, setCandidatePage] = useState<NeedEligibleItemPage>();
+  const [candidateError, setCandidateError] = useState<string>();
+  const [candidateReloadKey, setCandidateReloadKey] = useState(0);
+  const [loadingMoreCandidates, setLoadingMoreCandidates] = useState(false);
+  const [existingResponse, setExistingResponse] = useState<NeedResponse>();
+  const [responseError, setResponseError] = useState<string>();
+  const [responseReloadKey, setResponseReloadKey] = useState(0);
+  const candidateContextRef = useRef(0);
+  const candidateLoadMoreRef = useRef(false);
+  const feedContextRef = useRef(0);
 
   useEffect(() => {
     if (!locationId) return;
@@ -43,14 +56,86 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
     };
   }, [merchantId, locationId, reloadKey]);
 
+  useEffect(() => {
+    if (!locationId || !selectedNeedId || selectionMode !== "create") return;
+    let active = true;
+    void listEligibleNeedItems(merchantId, selectedNeedId, locationId, undefined)
+      .then((page) => {
+        if (!active) return;
+        setCandidatePage(page);
+        setCandidateError(undefined);
+      })
+      .catch((cause) => {
+        if (active) setCandidateError(cause instanceof Error ? cause.message : "Không thể tải nội dung phù hợp.");
+      });
+    return () => { active = false; };
+  }, [merchantId, locationId, selectedNeedId, selectionMode, candidateReloadKey]);
+
+  useEffect(() => {
+    if (!locationId || !selectedNeedId || selectionMode !== "existing") return;
+    let active = true;
+    void getMerchantNeedResponse(merchantId, selectedNeedId, locationId)
+      .then((response) => {
+        if (!active) return;
+        setExistingResponse(response);
+        setResponseError(undefined);
+      })
+      .catch((cause) => {
+        if (!active) return;
+        setResponseError(cause instanceof Error ? cause.message : "Không thể tải phản hồi đã gửi.");
+      });
+    return () => { active = false; };
+  }, [merchantId, locationId, selectedNeedId, selectionMode, responseReloadKey]);
+
+  function clearCandidateSelection() {
+    candidateContextRef.current += 1;
+    candidateLoadMoreRef.current = false;
+    setSelectedNeedId(undefined);
+    setSelectionMode(undefined);
+    setCandidatePage(undefined);
+    setCandidateError(undefined);
+    setLoadingMoreCandidates(false);
+    setExistingResponse(undefined);
+    setResponseError(undefined);
+  }
+
+  function selectNeed(needId: string) {
+    candidateContextRef.current += 1;
+    candidateLoadMoreRef.current = false;
+    const closing = selectionMode === "create" && selectedNeedId === needId;
+    setSelectedNeedId(closing ? undefined : needId);
+    setSelectionMode(closing ? undefined : "create");
+    setCandidatePage(undefined);
+    setCandidateError(undefined);
+    setLoadingMoreCandidates(false);
+    setExistingResponse(undefined);
+    setResponseError(undefined);
+  }
+
+  function selectExistingResponse(needId: string) {
+    candidateContextRef.current += 1;
+    const closing = selectionMode === "existing" && selectedNeedId === needId;
+    setSelectedNeedId(closing ? undefined : needId);
+    setSelectionMode(closing ? undefined : "existing");
+    setCandidatePage(undefined);
+    setCandidateError(undefined);
+    setExistingResponse(undefined);
+    setResponseError(undefined);
+  }
+
   function selectLocation(nextLocationId: string) {
+    feedContextRef.current += 1;
+    clearCandidateSelection();
     setLocationId(nextLocationId);
     setItems(nextLocationId ? undefined : []);
     setNextCursor(undefined);
     setError(undefined);
+    setLoadingMore(false);
   }
 
   function reload() {
+    feedContextRef.current += 1;
+    clearCandidateSelection();
     setItems(undefined);
     setNextCursor(undefined);
     setError(undefined);
@@ -61,20 +146,60 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
     if (!locationId || !nextCursor || loadingMore) return;
     setLoadingMore(true);
     setError(undefined);
+    const context = feedContextRef.current;
     try {
       const page = await discoverMerchantNeeds(merchantId, locationId, nextCursor);
+      if (context !== feedContextRef.current) return;
       setItems((current) => [...(current ?? []), ...(page.items ?? [])]);
       setNextCursor(page.nextCursor);
     } catch (cause) {
+      if (context !== feedContextRef.current) return;
       setError(cause instanceof Error ? cause.message : "Không thể tải thêm nhu cầu.");
     } finally {
-      setLoadingMore(false);
+      if (context === feedContextRef.current) setLoadingMore(false);
+    }
+  }
+
+  function retryCandidates() {
+    candidateContextRef.current += 1;
+    candidateLoadMoreRef.current = false;
+    setCandidatePage(undefined);
+    setCandidateError(undefined);
+    setLoadingMoreCandidates(false);
+    setCandidateReloadKey((current) => current + 1);
+  }
+
+  async function loadMoreCandidates() {
+    if (!selectedNeedId || !locationId || !candidatePage?.nextCursor || candidateLoadMoreRef.current) return;
+    candidateLoadMoreRef.current = true;
+    setLoadingMoreCandidates(true);
+    setCandidateError(undefined);
+    const context = candidateContextRef.current;
+    try {
+      const page = await listEligibleNeedItems(merchantId, selectedNeedId, locationId, candidatePage.nextCursor);
+      if (context !== candidateContextRef.current) return;
+      setCandidatePage((current) => {
+        if (!current) return page;
+        const existing = new Set((current.items ?? []).map((offer) => offer.locationVariantId));
+        return { ...page, items: [...(current.items ?? []), ...(page.items ?? []).filter((offer) => !existing.has(offer.locationVariantId))] };
+      });
+    } catch (cause) {
+      if (context === candidateContextRef.current) {
+        setCandidateError(cause instanceof Error ? cause.message : "Không thể tải thêm nội dung phù hợp.");
+      }
+    } finally {
+      candidateLoadMoreRef.current = false;
+      if (context === candidateContextRef.current) setLoadingMoreCandidates(false);
     }
   }
 
   if (!locations.length) {
     return <EmptyState title="Chưa có điểm bán để phản hồi" description="Tạo điểm bán và cấu hình phạm vi trước khi xem nhu cầu phù hợp." />;
   }
+
+  const selectedMatch = items?.find((match) => match.need?.id === selectedNeedId && !match.alreadyResponded
+    && (!match.need?.expiresAt || !countdownPresentation(match.need.expiresAt).expired));
+  const selectedExistingMatch = items?.find((match) => match.need?.id === selectedNeedId && match.alreadyResponded);
 
   return (
     <section className="seller-stack" aria-label="Nhu cầu phù hợp">
@@ -97,6 +222,7 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
       {items?.length === 0 ? <EmptyState title="Chưa có nhu cầu phù hợp" description="Danh sách sẽ xuất hiện khi có nhu cầu phù hợp với phạm vi của điểm bán đang chọn." /> : null}
 
       {items?.length ? (
+        <div className={`seller-need-workspace${selectionMode === "existing" ? " seller-need-workspace--existing" : ""}`}>
         <div className="seller-need-list">
           {items.map((match, index) => {
             const need = match.need;
@@ -125,14 +251,119 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
                   tone={match.alreadyResponded ? "success" : "neutral"}
                 />
 
-                {!match.alreadyResponded ? (
+                {!match.alreadyResponded && expiry?.expired ? (
                   <p className="seller-contract-note" role="status">
-                    Hiện chưa thể chọn nội dung để phản hồi nhu cầu này. Hệ thống chưa cung cấp danh sách mục phù hợp cho điểm bán đã chọn.
+                    Thời gian hiển thị đã hết. Hãy tải lại danh sách để kiểm tra trạng thái nhu cầu từ hệ thống.
+                    <button type="button" onClick={reload}>Tải lại nhu cầu</button>
                   </p>
+                ) : null}
+                {!match.alreadyResponded && !expiry?.expired && need?.id ? (
+                  <button className="seller-order-open" type="button" aria-expanded={selectedNeedId === need.id}
+                    aria-controls="seller-need-candidates" onClick={() => selectNeed(need.id!)}>
+                    {selectedNeedId === need.id ? "Đóng phản hồi" : "Phản hồi"}
+                    <span className="sr-only"> {need.id}</span>
+                  </button>
+                ) : null}
+                {match.alreadyResponded && need?.id ? (
+                  <button className="seller-order-open" type="button"
+                    aria-expanded={selectionMode === "existing" && selectedNeedId === need.id}
+                    aria-controls="seller-need-existing-response"
+                    onClick={() => selectExistingResponse(need.id!)}>
+                    {selectionMode === "existing" && selectedNeedId === need.id ? "Đóng phản hồi" : "Xem phản hồi"}
+                    <span className="sr-only"> {need.id}</span>
+                  </button>
                 ) : null}
               </article>
             );
           })}
+        </div>
+        {selectedMatch && selectedNeedId ? (
+          <section className="seller-need-candidates" id="seller-need-candidates" aria-label="Chọn nội dung phản hồi" aria-busy={!candidatePage && !candidateError}>
+            <div className="seller-need-candidates__summary">
+              <h2>{selectedMatch.need?.title ?? "Nhu cầu"}</h2>
+              <p>{[selectedMatch.buyerArea?.label, distanceCopy(selectedMatch.distanceMeters)
+                ? `cách điểm bán ${distanceCopy(selectedMatch.distanceMeters)}` : null].filter(Boolean).join(" · ")}</p>
+              <small>Khu vực được chia sẻ ở mức cần thiết để đánh giá khả năng phục vụ.</small>
+            </div>
+            {!candidatePage && !candidateError ? <LoadingState label="Đang tải nội dung phù hợp…" /> : null}
+            {candidateError && !candidatePage ? (
+              <ErrorState title="Không thể tải nội dung phù hợp" description={candidateError}
+                action={<button type="button" onClick={retryCandidates}>Thử tải lại nội dung</button>} />
+            ) : null}
+            {candidatePage?.items?.length === 0 ? (
+              <EmptyState title="Chưa có nội dung phù hợp để chọn."
+                description="Kiểm tra nội dung đang bán tại điểm bán này hoặc tải tiếp nếu còn kết quả." />
+            ) : null}
+            {candidatePage?.items?.length && candidatePage.maxResponseItems != null ? (
+              <MerchantNeedResponseForm key={`${merchantId}:${selectedNeedId}:${locationId}`}
+                needId={selectedNeedId} merchantLocationId={locationId}
+                maxItems={candidatePage.maxResponseItems} offers={candidatePage.items}
+                onCreated={reload} />
+            ) : null}
+            {candidatePage?.items?.length && candidatePage.maxResponseItems == null ? (
+              <p role="alert">Không thể xác định giới hạn phản hồi. Hãy tải lại nội dung.</p>
+            ) : null}
+            {candidateError && candidatePage ? (
+              <p role="alert">{candidateError} <button type="button" onClick={() => void loadMoreCandidates()}>Thử tải tiếp</button></p>
+            ) : null}
+            {candidatePage?.hasMore && candidatePage.nextCursor ? (
+              <button className="seller-load-more" type="button" disabled={loadingMoreCandidates}
+                onClick={() => void loadMoreCandidates()}>
+                {loadingMoreCandidates ? "Đang tải nội dung…" : "Tải thêm nội dung"}
+              </button>
+            ) : null}
+          </section>
+        ) : null}
+        {selectedExistingMatch && selectedNeedId ? (
+          <section className="seller-need-existing" id="seller-need-existing-response"
+            aria-label="Phản hồi đã gửi" aria-busy={!existingResponse && !responseError}>
+            <div className="seller-need-existing__heading">
+              <div>
+                <p className="eyebrow">PHẢN HỒI ĐÃ GỬI</p>
+                <h2>{selectedExistingMatch.need?.title ?? "Phản hồi đã gửi"}</h2>
+              </div>
+              <button type="button" onClick={() => selectExistingResponse(selectedNeedId)}>Đóng</button>
+            </div>
+            {!existingResponse && !responseError ? <LoadingState label="Đang tải phản hồi đã gửi…" /> : null}
+            {responseError && !existingResponse ? (
+              <ErrorState title="Không thể tải phản hồi đã gửi" description={responseError}
+                action={<button type="button" onClick={() => {
+                  setResponseError(undefined);
+                  setResponseReloadKey((current) => current + 1);
+                }}>Thử lại</button>} />
+            ) : null}
+            {existingResponse ? (
+              <div className="seller-need-existing__content">
+                <div className="seller-need-existing__status" role="status">
+                  <span aria-hidden="true">✓</span>
+                  <div>
+                    <strong>{existingResponse.status === "ACTIVE" ? "Phản hồi đang hoạt động" : "Phản hồi đã rút"}</strong>
+                    <p>{existingResponse.items.length} nội dung đang được gửi cho yêu cầu này.</p>
+                  </div>
+                </div>
+                <div className="seller-need-existing__items" aria-label="Nội dung đã gửi">
+                  {existingResponse.items.map((item) => (
+                    <article className="seller-need-existing__item" key={item.id}>
+                      <div className="seller-need-existing__thumb" aria-hidden="true" />
+                      <div>
+                        <strong>{item.catalogItemName || "Nội dung catalog"}</strong>
+                        <small>{selectedExistingMatch.need?.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"} · {existingResponse.merchantLocationName || "Điểm bán"}</small>
+                      </div>
+                      <strong>{item.priceAtResponse.amount.toLocaleString("vi-VN")} đ</strong>
+                      <span className="seller-need-existing__sent">✓ Đã gửi</span>
+                    </article>
+                  ))}
+                </div>
+                {existingResponse.note ? (
+                  <div className="seller-need-existing__note">
+                    <strong>Ghi chú</strong>
+                    <p>{existingResponse.note}</p>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
         </div>
       ) : null}
 

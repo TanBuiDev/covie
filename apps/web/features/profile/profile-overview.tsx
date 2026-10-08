@@ -7,6 +7,7 @@ type Me = components["schemas"]["MeResponse"];
 
 const accountItems = [
   { href: "/orders", title: "Đơn hàng của tôi", copy: "Xem lịch sử và theo dõi trạng thái các đơn hàng." },
+  { href: "/me/reputation", title: "Uy tín của tôi", copy: "Xem tỷ lệ hoàn thành giao dịch do hệ thống ghi nhận." },
   { href: "/me/addresses", title: "Địa chỉ đã lưu", copy: "Quản lý địa chỉ giao hàng và khu vực sử dụng dịch vụ." },
   { href: "/me/security/sessions", title: "Bảo mật & phiên đăng nhập", copy: "Kiểm tra và thu hồi các thiết bị đang đăng nhập." },
 ] as const;

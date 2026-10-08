@@ -54,8 +54,7 @@ export function AdminOrderHistory({ orderId }: { orderId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
 
-  const load = useCallback(async () => {
-    setLoading(true); setError(undefined);
+  const load = useCallback(async (isActive: () => boolean = () => true) => {
     try {
       const [eventsResponse, orderResponse] = await Promise.all([
         requestBrowserApi("GET", `/api/v1/admin/orders/${encodeURIComponent(orderId)}/events`),
@@ -63,27 +62,37 @@ export function AdminOrderHistory({ orderId }: { orderId: string }) {
       ]);
       if (!eventsResponse.ok) throw await readApiError(eventsResponse);
       if (!orderResponse.ok) throw await readApiError(orderResponse);
-      setEvents(await eventsResponse.json() as EventRow[]);
-      setOrder(await orderResponse.json() as OrderDetail);
+      const [nextEvents, nextOrder] = await Promise.all([
+        eventsResponse.json() as Promise<EventRow[]>,
+        orderResponse.json() as Promise<OrderDetail>,
+      ]);
+      if (!isActive()) return;
+      setEvents(nextEvents);
+      setOrder(nextOrder);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể tải lịch sử đơn hàng");
-    } finally { setLoading(false); }
+      if (isActive()) setError(cause instanceof Error ? cause.message : "Không thể tải lịch sử đơn hàng");
+    } finally { if (isActive()) setLoading(false); }
   }, [orderId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => { if (active) void load(() => active); });
+    return () => { active = false; };
+  }, [load]);
+  function reload() { setLoading(true); setError(undefined); void load(); }
   const status = presentOrderStatus(order?.status);
 
   return <div className="admin-page-stack">
     <AdminPageHeader title={`Lịch sử đơn ${order?.orderCode ?? orderId}`} subtitle="CoVie Admin · Tra cứu đơn hàng" action={<AdminStatusChip label="Chỉ đọc" tone="neutral" />} />
     <Link className="admin-inline-link" href="/admin/orders">← Quay lại tra cứu đơn hàng</Link>
     {loading ? <AdminSurface><p className="admin-muted">Đang tải lịch sử…</p></AdminSurface> : null}
-    {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={() => void load()}>Tải lại</button></AdminSurface> : null}
+    {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={reload}>Tải lại</button></AdminSurface> : null}
     {!loading && !error ? <>
       <div className="admin-history-grid">
         <div className="admin-order-timeline">{events.length ? events.map((event, index) => { const copy = presentEvent(event.type); return <article className="admin-order-timeline__event" key={event.id ?? index}><span className="admin-order-timeline__marker" aria-hidden="true" /><div><strong>{copy[0]}</strong><small>{formatAdminDate(event.createdAt)}</small><p>{copy[1]}</p><p className="admin-caption">{actorLabel(event.actorContext)}{event.actorUserId ? ` · ${event.actorUserId}` : ""}{event.reasonCode ? ` · Lý do: ${event.reasonCode}` : ""}</p></div></article>; }) : <AdminSurface><p className="admin-muted">Chưa có sự kiện lịch sử được API trả về.</p></AdminSurface>}</div>
         <AdminSurface className="admin-history-meta"><h2>Thông tin tham chiếu</h2><dl><div><dt>Người mua</dt><dd>{order?.buyer?.userId ?? "—"}</dd></div><div><dt>Người bán</dt><dd>{order?.merchant?.merchantId ?? "—"}</dd></div><div><dt>Điểm bán</dt><dd>{order?.merchant?.locationId ?? "—"}</dd></div><div><dt>Trạng thái</dt><dd><AdminStatusChip label={status.label} tone={status.tone} /></dd></div><div><dt>Tổng theo đơn</dt><dd>{formatAdminMoney(order?.pricing?.totalAmount ?? order?.pricing?.knownTotal, order?.pricing?.currency)}</dd></div></dl><strong>Dòng thời gian ghi lại các sự kiện đã xảy ra và chỉ dùng để tra cứu.</strong></AdminSurface>
       </div>
-      <AdminSurface className="admin-contract-note"><strong>Không có điều khiển trạng thái</strong><p>Nếu trạng thái vừa thay đổi, hãy tải lại đơn hàng và dòng thời gian để xem dữ liệu mới nhất.</p><button className="admin-button admin-button--secondary" onClick={() => void load()}>Tải lại dữ liệu</button></AdminSurface>
+      <AdminSurface className="admin-contract-note"><strong>Không có điều khiển trạng thái</strong><p>Nếu trạng thái vừa thay đổi, hãy tải lại đơn hàng và dòng thời gian để xem dữ liệu mới nhất.</p><button className="admin-button admin-button--secondary" onClick={reload}>Tải lại dữ liệu</button></AdminSurface>
     </> : null}
   </div>;
 }

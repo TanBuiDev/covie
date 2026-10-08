@@ -66,3 +66,23 @@ it("shows a reload action instead of resubmitting a stale merchant edit", async 
   fireEvent.click(screen.getByRole("button", { name: "Tải dữ liệu mới" }));
   expect(reload).toHaveBeenCalledTimes(1);
 });
+
+it("labels the editable merchant form as the public shop profile", () => {
+  render(<MerchantForm merchant={{
+    data: { id: "00000000-0000-0000-0000-000000000001", name: "Cửa hàng Chợ Xanh", description: "Rau củ", status: "ACTIVE", version: 2 },
+    etag: '"v2"',
+  }} />);
+
+  expect(screen.getByRole("heading", { name: "Hồ sơ shop công khai" })).toBeInTheDocument();
+});
+
+it("keeps profile fields before desktop media settings in document order", () => {
+  render(<MerchantForm merchant={{
+    data: { id: "00000000-0000-0000-0000-000000000001", name: "Cửa hàng Chợ Xanh", description: "Rau củ", status: "ACTIVE", version: 2 },
+    etag: '"v2"',
+  }} />);
+
+  const description = screen.getByRole("textbox", { name: /^Giới thiệu shop/ });
+  const media = screen.getByRole("region", { name: "Logo và ảnh bìa" });
+  expect(description.compareDocumentPosition(media) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});

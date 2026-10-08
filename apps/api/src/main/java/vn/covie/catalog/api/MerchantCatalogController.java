@@ -1,10 +1,14 @@
 package vn.covie.catalog.api;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -14,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.covie.catalog.api.dto.CatalogItemManagementResponse;
+import vn.covie.catalog.api.dto.CatalogItemManagementDetailResponse;
 import vn.covie.catalog.api.dto.CatalogItemManagementSummaryResponse;
 import vn.covie.catalog.api.dto.create.CreateCatalogItemRequest;
 import vn.covie.catalog.application.CatalogManagementQueryService;
@@ -39,6 +44,14 @@ public class MerchantCatalogController {
     @org.springframework.web.bind.annotation.GetMapping
     public List<CatalogItemManagementSummaryResponse> list(@PathVariable UUID merchantId) {
         return queries.list(merchantId);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/{itemId}")
+    @Operation(responses = @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.ETAG)))
+    public ResponseEntity<CatalogItemManagementDetailResponse> get(@PathVariable UUID merchantId,
+            @PathVariable UUID itemId) {
+        CatalogItemManagementDetailResponse body = queries.get(merchantId, itemId);
+        return ResponseEntity.ok().eTag(VersionPrecondition.format(body.version())).body(body);
     }
     @PostMapping
     public ResponseEntity<CatalogItemManagementResponse> create(@PathVariable UUID merchantId,

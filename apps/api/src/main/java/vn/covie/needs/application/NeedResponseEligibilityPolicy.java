@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -25,9 +26,11 @@ import vn.covie.delivery.application.DeliveryCoverageEvaluator;
 import vn.covie.delivery.model.CoverageType;
 import vn.covie.inventory.persistence.InventoryBalanceRepository;
 import vn.covie.merchants.model.MerchantLocationEntity;
+import vn.covie.merchants.model.MerchantLocationStatus;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.security.MerchantAccessPolicy;
 import vn.covie.merchants.security.MerchantCapability;
+import vn.covie.moderation.model.ContentModerationStatus;
 import vn.covie.needs.model.NeedRequestEntity;
 import vn.covie.needs.model.NeedType;
 import vn.covie.needs.persistence.CategoryHierarchyRepository;
@@ -70,13 +73,15 @@ public class NeedResponseEligibilityPolicy {
         this.coverage = coverage;
     }
 
-    /** Caller must hold the NeedRequest row lock before invoking this method. */
+    /** Command callers hold the NeedRequest row lock; a read can reuse these predicates only as advisory state. */
     public List<EligibleNeedResponseItem> validate(
             NeedRequestEntity need, UUID merchantId, UUID merchantLocationId,
             List<UUID> requestedLocationVariantIds, Instant now) {
         if (!need.isActiveAt(now)) {
             throw conflict(ErrorCode.NEED_NOT_ACTIVE, "Need is not active.");
         }
+        if (need.getModerationStatus() != ContentModerationStatus.NOT_REQUIRED
+                && need.getModerationStatus() != ContentModerationStatus.APPROVED) throw notFound();
         if (requestedLocationVariantIds == null || requestedLocationVariantIds.isEmpty()) {
             throw invalid(ErrorCode.NEED_RESPONSE_ITEM_INVALID, "At least one response item is required.");
         }
@@ -85,6 +90,7 @@ public class NeedResponseEligibilityPolicy {
         MerchantLocationEntity location = locations
                 .findByIdAndMerchantProfileIdAndDeletedAtIsNull(merchantLocationId, merchantId)
                 .orElseThrow(NeedResponseEligibilityPolicy::notFound);
+        if (location.getLocationStatus() != MerchantLocationStatus.ACTIVE) throw notFound();
 
         NeedPolicySnapshot policy = policies.resolve(merchantId, need.getCategoryId(), need.getLocationAreaId());
         if (requestedLocationVariantIds.size() > policy.maxResponseItems()) {
@@ -102,6 +108,19 @@ public class NeedResponseEligibilityPolicy {
             result.add(validateItem(need, merchantId, merchantLocationId, locationVariantId));
         }
         return List.copyOf(result);
+    }
+
+    /** Candidate reads use the same predicates, filtering only item-level invalidity. */
+    public Optional<EligibleNeedResponseItem> evaluateForRead(
+            NeedRequestEntity need, UUID merchantId, UUID merchantLocationId,
+            UUID locationVariantId, Instant now) {
+        try {
+            return Optional.of(validate(need, merchantId, merchantLocationId,
+                    List.of(locationVariantId), now).getFirst());
+        } catch (ApiException exception) {
+            if (exception.code() == ErrorCode.NEED_RESPONSE_ITEM_INVALID) return Optional.empty();
+            throw exception;
+        }
     }
 
     private EligibleNeedResponseItem validateItem(

@@ -1,17 +1,90 @@
-.selectedChip { background: #ecfdf5 !important; border-color: #6ee7b7 !important; }
-.categorySort { align-items: stretch !important; color: #0f172a !important; flex-direction: column; font-weight: 600; gap: 6px; }
-.categorySort select { font-weight: 400; width: 100%; }
-.filterBar { display: flex; gap: 8px; margin: 16px 0 12px; }
-.filterBar > div { margin: 0; min-width: 0; }
-.filterBar > div::-webkit-scrollbar { display: none; }
-.filterBar > div { scrollbar-width: none; }
-.filterAction { align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; color: #0f172a; display: flex; flex: 0 0 auto; font-size: 14px; font-weight: 600; gap: 8px; height: 48px; justify-content: center; padding: 0 16px; }
-.filterAction img { height: 20px; width: 20px; }
+.selectedChip {
+  background: #ecfdf5 !important;
+  border-color: #059669 !important;
+  color: #047857 !important;
+  font-weight: 700 !important;
+}
 
-@media(min-width:1024px){
-  .filterBar{display:inline-flex;margin:16px 0 12px;vertical-align:top;width:calc(100% - 284px)}
-  .filterBar>div{align-items:center;display:flex;flex:1;gap:8px;overflow:hidden}
-  .filterAction{height:40px}
-  .categorySort{align-items:center!important;display:inline-flex!important;flex-direction:row;gap:8px;width:260px}
-  .categorySort select{width:auto}
+.categorySort {
+  align-items: stretch !important;
+  color: #0f172a !important;
+  flex-direction: column;
+  font-weight: 600;
+  gap: 6px;
+}
+
+.categorySort select {
+  font-weight: 500;
+  width: 100%;
+}
+
+.filterBar {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.filterBar > div {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filterBar > div::-webkit-scrollbar {
+  display: none;
+}
+
+.filterAction {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #0f172a;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 13.5px;
+  font-weight: 700;
+  gap: 6px;
+  height: 40px;
+  justify-content: center;
+  padding: 0 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filterAction:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #059669;
+}
+
+.filterAction svg {
+  color: #059669;
+}
+
+@media (min-width: 1024px) {
+  /* On desktop, the Left Sticky Sidebar handles deep filtering */
+  .filterBar {
+    display: none;
+  }
+
+  .categorySort {
+    align-items: center !important;
+    display: inline-flex !important;
+    flex-direction: row;
+    gap: 8px;
+    width: auto;
+  }
+
+  .categorySort select {
+    width: auto;
+  }
 }

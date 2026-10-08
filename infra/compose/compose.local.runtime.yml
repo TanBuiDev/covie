@@ -1,0 +1,5 @@
+services:
+  minio:
+    image: cgr.dev/chainguard/minio@sha256:a05a4497e8dce3cb7a7a1bf1872ba5d30ea988f1e8c22c9e0920503761c4b5f1
+  minio-init:
+    image: cgr.dev/chainguard/minio-client@sha256:32d838b5b8abca6f0baddec1827a76a3efcf99fd257a99576614013e918e5160

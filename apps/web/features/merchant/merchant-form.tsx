@@ -118,7 +118,25 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
   return (
     <form className={editing ? "seller-merchant-form" : undefined} onSubmit={submit} aria-busy={pending}>
       {!editing ? <h2>Tạo cửa hàng</h2> : null}
+      {editing ? <h2 className="seller-settings-card-title seller-desktop-only">Hồ sơ shop công khai</h2> : null}
 
+      <label>
+        {editing ? "Tên shop" : "Tên cửa hàng"}
+        <input
+          aria-label={editing ? "Tên shop" : "Tên cửa hàng"}
+          name="name"
+          required
+          disabled={pending}
+          defaultValue={merchant?.data.name ?? ""}
+          autoComplete="organization"
+        />
+        {editing ? <small>Tên hiển thị công khai</small> : null}
+      </label>
+      <label>
+        {editing ? "Giới thiệu shop" : "Mô tả"}
+        <textarea name="description" maxLength={4000} disabled={pending} defaultValue={merchant?.data.description ?? ""} />
+        {editing ? <small>Hiển thị trên trang shop công khai</small> : null}
+      </label>
       {editing ? (
         <section className="seller-media-settings" aria-label="Logo và ảnh bìa">
           <strong>Logo & ảnh bìa</strong>
@@ -141,24 +159,6 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
           ) : null}
         </section>
       ) : null}
-
-      <label>
-        {editing ? "Tên shop" : "Tên cửa hàng"}
-        <input
-          aria-label={editing ? "Tên shop" : "Tên cửa hàng"}
-          name="name"
-          required
-          disabled={pending}
-          defaultValue={merchant?.data.name ?? ""}
-          autoComplete="organization"
-        />
-        {editing ? <small>Tên hiển thị công khai</small> : null}
-      </label>
-      <label>
-        {editing ? "Giới thiệu shop" : "Mô tả"}
-        <textarea name="description" maxLength={4000} disabled={pending} defaultValue={merchant?.data.description ?? ""} />
-        {editing ? <small>Hiển thị trên trang shop công khai</small> : null}
-      </label>
       {message ? <p role={message.startsWith("Đã") ? "status" : "alert"}>{message}</p> : null}
       {message?.startsWith("Dữ liệu") ? (
         <button type="button" disabled={pending} onClick={reload}>Tải dữ liệu mới</button>

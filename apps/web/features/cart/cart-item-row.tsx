@@ -48,7 +48,6 @@ export function CartItemRow({ item, cartType, disabled = false, onQuantityChange
           )}
           <button type="button" className={styles.remove} disabled={disabled} onClick={onRemove}>Xóa</button>
         </div>
-        <span className={styles.availability}>Có sẵn</span>
       </div>
     </li>
   );

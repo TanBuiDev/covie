@@ -40,3 +40,17 @@ export async function readApiError(response: Response): Promise<CovieApiError> {
   }
   return new CovieApiError(response.status, "HTTP_ERROR", `HTTP ${response.status}`);
 }
+
+/** Uses the error body already parsed by openapi-fetch before falling back to the raw response. */
+export async function parsedApiError(response: Response, value?: unknown): Promise<CovieApiError> {
+  if (isApiErrorShape(value)) {
+    return new CovieApiError(
+      response.status,
+      value.error.code,
+      value.error.message ?? value.error.code,
+      value.error.requestId,
+      value.error.fields,
+    );
+  }
+  return readApiError(response);
+}

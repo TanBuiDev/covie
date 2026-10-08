@@ -324,6 +324,7 @@
 }
 
 .seller-shell .order-detail > section,
+.seller-shell .order-detail > .seller-order-detail__timeline,
 .seller-shell .order-detail > ol,
 .seller-shell .order-detail > ul {
   background: var(--seller-surface);
@@ -348,6 +349,23 @@
   border-color: var(--seller-border);
   border-radius: var(--seller-radius-lg);
   box-shadow: var(--seller-shadow);
+}
+
+.seller-shell .dialog-backdrop--seller-page {
+  align-items: stretch;
+  background: transparent;
+  display: block;
+  inset: auto;
+  padding: 0;
+  position: static;
+  z-index: auto;
+}
+
+.seller-shell .confirm-dialog--seller-page {
+  box-shadow: none;
+  max-height: none;
+  max-width: 52rem;
+  overflow: visible;
 }
 
 .seller-shell a:focus-visible,

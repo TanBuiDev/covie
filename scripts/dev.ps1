@@ -56,6 +56,10 @@ function Initialize-JavaHome {
 
   $javaCommand = Get-Command java -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
   if ($null -eq $javaCommand) {
+    if (Test-Path 'E:\Tools\Java\jdk-25\bin\java.exe') {
+      $env:JAVA_HOME = 'E:\Tools\Java\jdk-25'
+      return
+    }
     throw 'Java is required to start the CoVie API. Install JDK 25 or set JAVA_HOME.'
   }
 
@@ -83,7 +87,7 @@ $env:API_INTERNAL_BASE_URL = 'http://localhost:8081'
 $env:NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
 
 Write-Host 'Starting PostgreSQL, Redis and MinIO...'
-& pnpm infra:up
+& docker compose -f infra/compose/compose.local.yml -f infra/compose/compose.local.runtime.yml -f infra/compose/compose.local.restore.yml up -d
 if ($LASTEXITCODE -ne 0) { throw 'Local infrastructure failed to start.' }
 
 $apiHealth = 'http://localhost:8081/actuator/health'
@@ -112,7 +116,7 @@ if (-not (Test-HttpOk $webUrl)) {
   }
 
   Write-Host 'Starting CoVie web on http://localhost:3000...'
-  $web = Start-Process -FilePath 'pnpm.cmd' -ArgumentList @('web:dev') `
+  $web = Start-Process -FilePath 'pnpm.cmd' -ArgumentList @('--dir', $repositoryRoot, 'web:dev') `
     -WorkingDirectory $repositoryRoot -WindowStyle Hidden -PassThru `
     -RedirectStandardOutput (Join-Path $stateDirectory 'web.log') `
     -RedirectStandardError (Join-Path $stateDirectory 'web.error.log')
