@@ -247,9 +247,14 @@ export function CatalogCreateForm({
       const mediaIds: string[] = [];
       for (const [index, file] of files.entries()) {
         setProgress(`Đang tải ảnh ${index + 1}/${files.length}…`);
-        const uploaded = await uploadImage(file, "CATALOG_IMAGE");
-        if (!uploaded.mediaId) throw new Error("MEDIA_UPLOAD_CONTRACT_INVALID");
-        mediaIds.push(uploaded.mediaId);
+        try {
+          const uploaded = await uploadImage(file, "CATALOG_IMAGE");
+          if (!uploaded.mediaId) throw new Error("MEDIA_UPLOAD_CONTRACT_INVALID");
+          mediaIds.push(uploaded.mediaId);
+        } catch (error) {
+          if (error instanceof Error && ["MEDIA_TYPE_NOT_SUPPORTED", "MEDIA_FILE_TOO_LARGE"].includes(error.message)) throw error;
+          throw new Error("MEDIA_UPLOAD_FAILED", { cause: error });
+        }
       }
 
       const optionGroupKey = clientKey(optionName, "option");
@@ -303,6 +308,8 @@ export function CatalogCreateForm({
         setMessage("Ảnh phải là JPEG, PNG hoặc WebP.");
       } else if (error instanceof Error && error.message === "MEDIA_FILE_TOO_LARGE") {
         setMessage("Mỗi ảnh phải nhỏ hơn hoặc bằng 10 MB.");
+      } else if (error instanceof Error && error.message === "MEDIA_UPLOAD_FAILED") {
+        setMessage("Không thể tải ảnh lên. Thông tin đã nhập được giữ lại; hãy thử lại.");
       } else if (error instanceof Error && ["ATTRIBUTE_REQUIRED", "ATTRIBUTE_INVALID"].includes(error.message)) {
         setMessage("Vui lòng kiểm tra các thuộc tính bắt buộc của danh mục.");
       } else if (error instanceof Error && ["CATEGORY_REQUIRED", "CATEGORY_DETAIL_REQUIRED", "LOCATION_REQUIRED", "OPTIONS_REQUIRED", "INVALID_INTEGER"].includes(error.message)) {

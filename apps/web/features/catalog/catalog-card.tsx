@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { components } from "@covie/api-client";
 import { locationToSearchParams, type DiscoveryLocation } from "@/features/location/location-context";
 
@@ -13,7 +14,7 @@ export function CatalogCard({ item, location }: { item: CatalogItem; location?: 
   const query = locationToSearchParams(location).toString();
   const href = `/items/${item.id}${query ? `?${query}` : ""}`;
   return <article>
-    {item.primaryMedia?.url && <img src={item.primaryMedia.url} alt={item.name ?? "Hình ảnh sản phẩm"} width={240} height={180} />}
+    {item.primaryMedia?.url && <Image src={item.primaryMedia.url} alt={item.name ?? "Hình ảnh sản phẩm"} width={240} height={180} unoptimized />}
     <h2><Link href={href}>{item.name ?? "Sản phẩm"}</Link></h2>
     <p>{item.merchant?.name ?? "Người bán"}</p>
     <p>{item.resolvedLocation?.name ?? "Chưa xác định địa điểm"}</p>

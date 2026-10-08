@@ -40,7 +40,7 @@ export function homeDiscoveryFilters(section: HomeSectionDefinition, location: B
   return {
     ...section.filters,
     sort: "DISTANCE",
-    limit: 2,
+    limit: 4,
     location: toDiscoveryLocation(location),
   };
 }

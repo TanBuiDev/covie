@@ -67,15 +67,16 @@ export function CatalogManagementList({ merchantId, items }: { merchantId: strin
           {filtered.map((item) => {
             if (!item.id) return null;
             const presentation = listingStatus(item.listingStatus);
+            const detailHref = `/seller/${encodeURIComponent(merchantId)}/catalog/${encodeURIComponent(item.id)}`;
             return (
               <li className="seller-catalog-card" key={item.id}>
-                <div className="seller-catalog-card__head">
+                <Link className="seller-catalog-card__head" href={detailHref}>
                   <div className="seller-catalog-placeholder" aria-hidden="true" />
                   <div>
                     <strong>{item.name ?? "Nội dung catalog"}</strong>
                     <small>{listingTypeLabel(item)}</small>
                   </div>
-                </div>
+                </Link>
                 <div className="seller-catalog-card__status">
                   <StatusChip label={presentation.label} tone={presentation.tone} />
                 </div>
