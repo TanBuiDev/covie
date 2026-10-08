@@ -59,7 +59,7 @@ jobs:
       - name: Generate typed API client
         run: pnpm api-client:generate
       - name: Check generated contract drift
-        run: git diff --exit-code -- packages/api-client/openapi/openapi.json packages/api-client/src/generated/schema.ts
+        run: node packages/api-client/scripts/check-generated-contract.mjs
       - name: Typecheck API client
         run: pnpm api-client:check
       - name: Typecheck web
