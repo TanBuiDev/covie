@@ -86,6 +86,36 @@ $env:SERVER_PORT = '8081'
 $env:API_INTERNAL_BASE_URL = 'http://localhost:8081'
 $env:NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
 
+function Save-DevSession {
+  $temporaryPath = "$sessionPath.$($session.id).tmp"
+  [IO.File]::WriteAllText($temporaryPath, ($session | ConvertTo-Json -Depth 5))
+  Move-Item -LiteralPath $temporaryPath -Destination $sessionPath -Force
+}
+
+$sessionPath = Join-Path $stateDirectory 'session.json'
+if (Test-Path -LiteralPath $sessionPath) {
+  $priorSession = Get-Content -LiteralPath $sessionPath -Raw | ConvertFrom-Json
+  $priorOwner = Get-Process -Id $priorSession.ownerPid -ErrorAction SilentlyContinue
+  if ($priorOwner -and $priorOwner.StartTime.ToUniversalTime().ToString('o') -eq $priorSession.ownerStartedAt) {
+    throw 'A CoVie dev session is already running. Stop it with Ctrl+C or pnpm dev:stop.'
+  }
+  & (Join-Path $PSScriptRoot 'stop-dev.ps1') -SessionId $priorSession.id
+}
+foreach ($port in @(8081, 3000)) {
+  if (Test-PortInUse $port) {
+    throw "Port $port is already in use. Stop the old API/web session first (Ctrl+C or pnpm dev:stop), then run pnpm dev again."
+  }
+}
+Initialize-JavaHome
+$ownerStartedAt = (Get-Process -Id $PID).StartTime.ToUniversalTime().ToString('o')
+$session = @{ id = [guid]::NewGuid().ToString(); ownerPid = $PID; ownerStartedAt = $ownerStartedAt; api = $null; web = $null }
+Save-DevSession
+try {
+  $watchdogPath = Join-Path $PSScriptRoot 'dev-watchdog.ps1'
+  $watchdog = Start-Process powershell.exe -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$watchdogPath`"", '-OwnerProcessId', $PID, '-OwnerStartedAt', $ownerStartedAt, '-SessionId', $session.id) `
+    -WindowStyle Hidden -PassThru `
+    -RedirectStandardOutput (Join-Path $stateDirectory 'watchdog.log') `
+    -RedirectStandardError (Join-Path $stateDirectory 'watchdog.error.log')
 Write-Host 'Starting PostgreSQL, Redis and MinIO...'
 & docker compose -f infra/compose/compose.local.yml -f infra/compose/compose.local.runtime.yml -f infra/compose/compose.local.restore.yml up -d
 if ($LASTEXITCODE -ne 0) { throw 'Local infrastructure failed to start.' }
@@ -104,9 +134,11 @@ if (-not (Test-HttpOk $apiHealth)) {
     -RedirectStandardOutput (Join-Path $stateDirectory 'api.log') `
     -RedirectStandardError (Join-Path $stateDirectory 'api.error.log')
   Set-Content -LiteralPath (Join-Path $stateDirectory 'api.pid') -Value $api.Id
+  $session.api = @{ pid = $api.Id; startedAt = $api.StartTime.ToUniversalTime().ToString('o') }
+  Save-DevSession
   Wait-ForHealthyService 'API' $apiHealth 8081
 } else {
-  Write-Host 'CoVie API is already healthy on port 8081.'
+  throw 'An API appeared during startup. Stop it before starting this managed session.'
 }
 
 $webUrl = 'http://localhost:3000/'
@@ -121,12 +153,28 @@ if (-not (Test-HttpOk $webUrl)) {
     -RedirectStandardOutput (Join-Path $stateDirectory 'web.log') `
     -RedirectStandardError (Join-Path $stateDirectory 'web.error.log')
   Set-Content -LiteralPath (Join-Path $stateDirectory 'web.pid') -Value $web.Id
+  $session.web = @{ pid = $web.Id; startedAt = $web.StartTime.ToUniversalTime().ToString('o') }
+  Save-DevSession
   Wait-ForHealthyService 'Web app' $webUrl 3000
 } else {
-  Write-Host 'CoVie web app is already healthy on port 3000.'
+  throw 'A web server appeared during startup. Stop it before starting this managed session.'
 }
 
 Write-Host ''
 Write-Host 'CoVie is ready: http://localhost:3000'
 Write-Host "Logs: $stateDirectory"
-Write-Host 'Stop it with: pnpm dev:stop'
+Write-Host 'Keep this terminal open. Ctrl+C stops API, web and CoVie Docker services.'
+Write-Host 'You can also stop this session with: pnpm dev:stop'
+while (Test-Path -LiteralPath $sessionPath) {
+  Start-Sleep -Seconds 2
+  if (-not (Test-Path -LiteralPath $sessionPath)) { break }
+  foreach ($child in @($session.api, $session.web)) {
+    $running = Get-Process -Id $child.pid -ErrorAction SilentlyContinue
+    if (-not $running -or $running.StartTime.ToUniversalTime().ToString('o') -ne $child.startedAt) {
+      throw 'A CoVie child process stopped unexpectedly. Shutting down the dev session.'
+    }
+  }
+}
+} finally {
+  & (Join-Path $PSScriptRoot 'stop-dev.ps1') -SessionId $session.id
+}

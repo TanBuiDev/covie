@@ -12,6 +12,11 @@ if (-not (Test-Path $stopScriptPath)) {
 }
 
 $script = Get-Content $scriptPath -Raw
+foreach ($requiredFragment in @('finally', 'dev-watchdog.ps1', 'session.json', 'while', 'stop-dev.ps1')) {
+  if ($script -notmatch [regex]::Escape($requiredFragment)) {
+    throw "Expected managed lifecycle to contain '$requiredFragment'."
+  }
+}
 foreach ($requiredFragment in @('docker compose', 'infra/compose/compose.local.yml', 'infra/compose/compose.local.runtime.yml', 'infra/compose/compose.local.restore.yml', 'SERVER_PORT', '8081', 'API_INTERNAL_BASE_URL', 'Start-Process', 'actuator/health')) {
   if ($script -notmatch [regex]::Escape($requiredFragment)) {
     throw "Expected dev launcher to contain '$requiredFragment'."
