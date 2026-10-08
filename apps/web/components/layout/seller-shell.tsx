@@ -32,6 +32,7 @@ export function SellerShell({
     <div className="seller-shell">
       <header className="seller-mobile-header">
         <SellerPageTitle merchantId={merchantId} />
+        <Link className="button-link" href={`${base}/ads`}>Quảng cáo</Link>
         {switcher ? <div className="seller-mobile-switcher">{switcher}</div> : null}
       </header>
 
@@ -42,7 +43,7 @@ export function SellerShell({
       <aside className="seller-desktop-navigation">
         <Link className="seller-desktop-brand" href={base}>TRUNG TÂM BÁN HÀNG</Link>
         {switcher ? <div className="seller-desktop-switcher">{switcher}</div> : null}
-        <SellerNavLinks merchantId={merchantId} />
+        <SellerNavLinks merchantId={merchantId} includeAds />
         <p className="seller-desktop-role">Người bán / Nhà cung cấp</p>
       </aside>
 

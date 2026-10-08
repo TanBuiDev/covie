@@ -1,0 +1,4 @@
+.layout { position: relative; min-width: 0; }
+.rail { position: absolute; inset-block: 0; left: -184px; width: 160px; }
+.sticky { position: sticky; top: 96px; }
+@media (max-width: 1439px), (max-height: 779px) { .rail { display: none; } }

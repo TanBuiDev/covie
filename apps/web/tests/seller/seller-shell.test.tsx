@@ -24,5 +24,8 @@ describe("SellerShell", () => {
     for (const link of screen.getAllByRole("link", { name: "Cài đặt" })) {
       expect(link).toHaveAttribute("href", "/seller/merchant-1/settings");
     }
+    for (const link of screen.getAllByRole("link", { name: "Quảng cáo" })) {
+      expect(link).toHaveAttribute("href", "/seller/merchant-1/ads");
+    }
   });
 });
