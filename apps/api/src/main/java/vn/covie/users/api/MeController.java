@@ -22,5 +22,5 @@ public class MeController {
     private final UserProfileService profiles;
     public MeController(UserProfileService profiles) { this.profiles = profiles; }
     @GetMapping @Operation(summary = "Get the authenticated profile") public MeResponse me() { return profiles.me(); }
-    @PatchMapping @Operation(summary = "Update the authenticated profile", description = "Browser mutations use X-CSRF-Token.") public ResponseEntity<MeResponse> update(@Valid @RequestBody UpdateMeRequest request) { return ResponseEntity.ok(profiles.update(request.displayName())); }
+    @PatchMapping @Operation(summary = "Update the authenticated profile", description = "Browser mutations use X-CSRF-Token. Omitted phone/avatarMediaId preserve current values; explicit null clears them. Avatar must be owned READY USER_AVATAR media.") public ResponseEntity<MeResponse> update(@Valid @RequestBody UpdateMeRequest request) { return ResponseEntity.ok(profiles.update(request)); }
 }

@@ -28,6 +28,21 @@ class UserAddressServiceTest {
     private static final Instant NOW = Instant.parse("2026-08-09T00:00:00Z");
 
     @Test
+    void appliesDefaultToTheManagedCopyReturnedBySave() {
+        UUID userId=UUID.randomUUID();var repository=mock(UserAddressRepository.class);
+        var managed=address(UUID.randomUUID(),userId,false);
+        when(repository.save(any())).thenReturn(managed);
+        when(repository.findAllByUserIdAndStatusOrderByUpdatedAtDesc(userId,"ACTIVE")).thenReturn(List.of(managed));
+        var result=serviceFor(userId,repository).create(request(true));
+        assertThat(result).isSameAs(managed);assertThat(managed.isDefaultAddress()).isTrue();
+    }
+    @Test
+    void explicitFalseClearsAnExistingDefault() {
+        UUID userId=UUID.randomUUID();var repository=mock(UserAddressRepository.class);var target=address(UUID.randomUUID(),userId,true);
+        when(repository.findByIdAndUserIdAndStatus(target.getId(),userId,"ACTIVE")).thenReturn(Optional.of(target));
+        assertThat(serviceFor(userId,repository).update(target.getId(),updateRequest(false)).isDefaultAddress()).isFalse();
+    }
+    @Test
     void makesTheFirstAddressDefaultWhenTheRequestDoesNot() {
         UUID userId = UUID.randomUUID();
         UserAddressRepository addresses = mock(UserAddressRepository.class);

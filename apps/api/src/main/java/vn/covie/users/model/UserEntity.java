@@ -16,6 +16,7 @@ public class UserEntity {
     @Id private UUID id;
     @Column(name = "display_name", nullable = false, length = 120) private String displayName;
     @Column(name = "avatar_media_id") private UUID avatarMediaId;
+    @Column(name = "phone", length = 30) private String phone;
     @Enumerated(EnumType.STRING) @Column(name = "account_status", nullable = false, length = 30) private AccountStatus accountStatus;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
@@ -43,6 +44,8 @@ public class UserEntity {
     public UUID getId() { return id; }
     public String getDisplayName() { return displayName; }
     public UUID getAvatarMediaId() { return avatarMediaId; }
+    public String getPhone() { return phone; }
+    public void updatePhone(String value, Instant now) {phone=value;updatedAt=now;}
     public AccountStatus getAccountStatus() { return accountStatus; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }

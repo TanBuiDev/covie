@@ -1378,7 +1378,7 @@ export interface paths {
         head?: never;
         /**
          * Update the authenticated profile
-         * @description Browser mutations use X-CSRF-Token.
+         * @description Browser mutations use X-CSRF-Token. Omitted phone/avatarMediaId preserve current values; explicit null clears them. Avatar must be owned READY USER_AVATAR media.
          */
         patch: operations["update_7"];
         trace?: never;
@@ -1744,6 +1744,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_6"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/addresses/reverse-geocode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reverse"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3109,6 +3125,13 @@ export interface components {
         };
         UpdateMeRequest: {
             displayName: string;
+            /** @description Omit to preserve; null or blank clears the phone. */
+            phone?: string | null;
+            /**
+             * Format: uuid
+             * @description Owned READY USER_AVATAR media; omit to preserve, null clears.
+             */
+            avatarMediaId?: string | null;
         };
         MeResponse: {
             /** Format: uuid */
@@ -3119,6 +3142,10 @@ export interface components {
             /** Format: int64 */
             version?: number;
             globalRoles?: string[];
+            phone?: string | null;
+            /** Format: uuid */
+            avatarMediaId?: string | null;
+            avatarUrl?: string | null;
         };
         UpdateContactMethodRequest: {
             value: string;
@@ -3680,6 +3707,11 @@ export interface components {
             /** Format: int64 */
             timeout?: number;
         };
+        ReverseGeocodingResponse: {
+            addressText?: string;
+            attribution?: string;
+            attributionUrl?: string;
+        };
         LocationAreaResponse: {
             /** Format: uuid */
             id?: string;
@@ -3962,38 +3994,38 @@ export interface components {
             updatedAt?: string;
         };
         PageSystemSettingHistoryResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["SystemSettingHistoryResponse"][];
             /** Format: int32 */
             number?: number;
-            first?: boolean;
-            last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            sort?: components["schemas"]["SortObject"];
+            first?: boolean;
+            last?: boolean;
             pageable?: components["schemas"]["PageableObject"];
+            sort?: components["schemas"]["SortObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
             unpaged?: boolean;
-            paged?: boolean;
-            sort?: components["schemas"]["SortObject"];
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            sort?: components["schemas"]["SortObject"];
+            paged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
             unsorted?: boolean;
+            sorted?: boolean;
         };
         SystemSettingHistoryResponse: {
             /** Format: uuid */
@@ -4070,21 +4102,21 @@ export interface components {
             resolvedAt?: string;
         };
         PageModerationCaseSummaryResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["ModerationCaseSummaryResponse"][];
             /** Format: int32 */
             number?: number;
-            first?: boolean;
-            last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            sort?: components["schemas"]["SortObject"];
+            first?: boolean;
+            last?: boolean;
             pageable?: components["schemas"]["PageableObject"];
+            sort?: components["schemas"]["SortObject"];
             empty?: boolean;
         };
         ModerationActionResponse: {
@@ -4143,21 +4175,21 @@ export interface components {
             createdAt?: string;
         };
         PageAdminAuditLogResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["AdminAuditLogResponse"][];
             /** Format: int32 */
             number?: number;
-            first?: boolean;
-            last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
-            sort?: components["schemas"]["SortObject"];
+            first?: boolean;
+            last?: boolean;
             pageable?: components["schemas"]["PageableObject"];
+            sort?: components["schemas"]["SortObject"];
             empty?: boolean;
         };
     };
@@ -7545,6 +7577,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CartResponse"];
+                };
+            };
+        };
+    };
+    reverse: {
+        parameters: {
+            query: {
+                latitude: number;
+                longitude: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReverseGeocodingResponse"];
                 };
             };
         };

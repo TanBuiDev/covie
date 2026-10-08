@@ -35,7 +35,7 @@ public class UserAddressService {
         UserAddressEntity address = UserAddressEntity.create(UUID.randomUUID(), userId, request.label().trim(),
                 request.recipientName(), request.phone(), request.addressText().trim(), request.latitude(), request.longitude(),
                 request.pinSource(), request.note(), false, clock.now());
-        addresses.save(address);
+        address = addresses.save(address);
         if (request.defaultAddress() || addresses.countByUserIdAndStatus(userId, ACTIVE) == 1) makeDefault(userId, address);
         return address;
     }
@@ -47,6 +47,7 @@ public class UserAddressService {
         address.update(request.label().trim(), request.recipientName(), request.phone(), request.addressText().trim(),
                 request.latitude(), request.longitude(), request.pinSource(), request.note(), clock.now());
         if (request.defaultAddress()) makeDefault(userId, address);
+        else address.setDefaultAddress(false);
         return address;
     }
 

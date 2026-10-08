@@ -18,11 +18,12 @@ class MeControllerTest {
         UserProfileService profiles = mock(UserProfileService.class);
         MeResponse expected = new MeResponse(UUID.randomUUID(), "Minh", "minh@example.com", "ACTIVE", 0, List.of("USER"));
         when(profiles.me()).thenReturn(expected);
-        when(profiles.update("Minh Nguyen")).thenReturn(expected);
+        var request=new UpdateMeRequest("Minh Nguyen");
+        when(profiles.update(request)).thenReturn(expected);
         MeController controller = new MeController(profiles);
 
         assertThat(controller.me()).isEqualTo(expected);
-        assertThat(controller.update(new UpdateMeRequest("Minh Nguyen")).getBody()).isEqualTo(expected);
-        verify(profiles).update("Minh Nguyen");
+        assertThat(controller.update(request).getBody()).isEqualTo(expected);
+        verify(profiles).update(request);
     }
 }
