@@ -16,16 +16,18 @@ Plan 10's automation deliberately refuses `https://covie.vn` and requires `COVIE
 
 ## Preconditions
 
-The clean database must migrate successfully through V013 (or an explicitly reviewed later migration). `verify-clean-migration.sh` requires a complete successful 1..13 sequence by default. Enable the committed Grand Park reference bootstrap once, verify idempotency, then disable it. Bootstrap the first staging Admin only after normal Google + local email/password onboarding and remove the bootstrap email immediately after the grant.
+The clean database must migrate successfully through V014 (or an explicitly reviewed later migration). `verify-clean-migration.sh` requires a complete successful 1..14 sequence by default. V014 adds the nullable, non-negative measured distance for service fulfillment reads. Enable the committed Grand Park reference bootstrap once, verify idempotency, then disable it. Bootstrap the first staging Admin only after normal Google + local email/password onboarding and remove the bootstrap email immediately after the grant.
 
-The repository contains guest Playwright coverage, but it is not evidence for a normal authenticated staging journey. `run-staging-rehearsal.sh` therefore requires `COVIE_STAGING_P0_CMD` to be supplied with a real Buyer/Seller/Admin staging flow; the rehearsal is not allowed to substitute a test-support login, fake browser test, or guest-only suite.
+The repository contains guest Playwright coverage, but it is not evidence for a normal authenticated staging journey. `apps/web/e2e/staging-p0.spec.ts` is the canonical Buyer/Seller/Admin staging flow and authenticates through CSRF plus `/api/v1/auth/login`; it never calls test-support login. `COVIE_STAGING_P0_CMD` may override the command hook, but the rehearsal must not substitute a fake browser test or guest-only suite.
+
+The disposable staging data must give the Buyer at least one saved address and give the Seller's first merchant one public ACTIVE Product plus one public ACTIVE Service. Their selected offers must be available at an ACTIVE location with Product delivery coverage and enough stock for the Product, Service and Need-sourced orders. The Need discovery location must cover the Buyer's saved address.
 
 ## Full gate
 
 Set staging-only connection variables plus the following command hooks:
 
 ```text
-COVIE_STAGING_P0_CMD
+COVIE_STAGING_P0_CMD # optional override; defaults to the canonical Playwright staging spec
 COVIE_RATE_LIMIT_REHEARSAL_CMD
 COVIE_RESTORED_API_SMOKE_CMD
 COVIE_ROLLBACK_DRILL_CMD
@@ -46,6 +48,14 @@ The script verifies Flyway, captures source invariants, runs public smoke/securi
 ## P0 business evidence
 
 The supplied P0 command must prove normal authenticated flows, not `/api/v1/test-support/login`: guest discovery, Buyer Product Order, Seller progress/delivery, Buyer completion, Service flow, Need -> response -> confirmed source Order -> FULFILLED, Review, Admin settings/report read, Outbox drain and notification visibility.
+
+The canonical command is:
+
+```bash
+pnpm --dir apps/web test:e2e:staging
+```
+
+It requires `STAGING_BUYER_EMAIL`, `STAGING_BUYER_PASSWORD`, `STAGING_SELLER_EMAIL`, `STAGING_SELLER_PASSWORD`, `STAGING_ADMIN_EMAIL`, and `STAGING_ADMIN_PASSWORD`. These values stay in staging CI/environment secrets and are never written to evidence.
 
 ## Rate-limit evidence
 
