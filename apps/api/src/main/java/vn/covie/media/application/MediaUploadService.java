@@ -52,9 +52,10 @@ public class MediaUploadService {
 
     public MediaUploadResponse createUpload(CreateMediaUploadRequest request) {
         CurrentActor actor = actors.currentActor();
-        String contentType = normalizeSupportedType(request.contentType());
-        if (request.fileSize() > properties.maxImageBytes()) throw new ApiException(ErrorCode.MEDIA_UPLOAD_VERIFICATION_FAILED,
-                HttpStatus.UNPROCESSABLE_ENTITY, "Media exceeds the configured image size limit.");
+        String contentType = normalizeSupportedType(request.contentType(), request.purpose());
+        long maxBytes = contentType.startsWith("video/") ? properties.maxVideoBytes() : properties.maxImageBytes();
+        if (request.fileSize() <= 0 || request.fileSize() > maxBytes) throw new ApiException(ErrorCode.MEDIA_UPLOAD_VERIFICATION_FAILED,
+                HttpStatus.UNPROCESSABLE_ENTITY, "Media exceeds the configured size limit.");
         if (repository.countByOwnerUserIdAndMediaStatus(actor.userId(), MediaStatus.PENDING_UPLOAD)
                 >= properties.maxPendingUploadsPerUser()) throw new ApiException(ErrorCode.MEDIA_UPLOAD_LIMIT_REACHED,
                 HttpStatus.TOO_MANY_REQUESTS, "Media upload limit reached.");
@@ -102,7 +103,7 @@ public class MediaUploadService {
             StoredObjectMetadata metadata = storage.head(asset.getStorageKey());
             return metadata.contentLength() == asset.getSizeBytes()
                     && normalizeStoredType(metadata.contentType()).equals(asset.getMimeType())
-                    && magic.matches(asset.getMimeType(), storage.readPrefix(asset.getStorageKey(), 32));
+                    && magic.matches(asset.getMimeType(), storage.readPrefix(asset.getStorageKey(), asset.getMimeType().startsWith("video/") ? 4096 : 32));
         } catch (RuntimeException exception) { return false; }
     }
 
@@ -124,15 +125,18 @@ public class MediaUploadService {
         if (key == null || key.isBlank()) throw new ApiException(ErrorCode.IDEMPOTENCY_KEY_REQUIRED,
                 HttpStatus.BAD_REQUEST, "Idempotency-Key is required.");
     }
-    private static String normalizeSupportedType(String type) {
+    private static String normalizeSupportedType(String type, vn.covie.media.model.MediaPurpose purpose) {
         String normalized = normalizeStoredType(type);
-        if (!normalized.equals("image/jpeg") && !normalized.equals("image/png") && !normalized.equals("image/webp"))
+        boolean video = purpose == vn.covie.media.model.MediaPurpose.AD_BANNER
+                && (normalized.equals("video/mp4") || normalized.equals("video/webm"));
+        if (!video && !normalized.equals("image/jpeg") && !normalized.equals("image/png") && !normalized.equals("image/webp"))
             throw new ApiException(ErrorCode.MEDIA_TYPE_NOT_SUPPORTED, HttpStatus.UNPROCESSABLE_ENTITY, "Media type is not supported.");
         return normalized;
     }
     private static String normalizeStoredType(String type) { return type == null ? "" : type.split(";", 2)[0].strip().toLowerCase(java.util.Locale.ROOT); }
     private static String extension(String contentType) { return switch (contentType) {
-        case "image/jpeg" -> "jpg"; case "image/png" -> "png"; case "image/webp" -> "webp"; default -> throw new IllegalArgumentException();
+        case "image/jpeg" -> "jpg"; case "image/png" -> "png"; case "image/webp" -> "webp";
+        case "video/mp4" -> "mp4"; case "video/webm" -> "webm"; default -> throw new IllegalArgumentException();
     }; }
     public record CompletionOutcome(MediaResponse response, String failedStorageKey) {
         static CompletionOutcome ready(MediaResponse response) { return new CompletionOutcome(response, null); }
