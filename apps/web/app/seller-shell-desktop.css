@@ -118,13 +118,8 @@
 
   .seller-nav-icon svg {
     display: block;
-    fill: none;
-    height: 24px;
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 1.8;
-    width: 24px;
+    height: 22px;
+    width: 22px;
   }
 
   .seller-nav-label {

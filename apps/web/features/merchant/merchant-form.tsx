@@ -3,10 +3,11 @@
 import type { components } from "@covie/api-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { StatusChip, type StatusTone } from "@/components/ui/status-chip";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { CovieApiError } from "@/lib/api/api-error";
+import { ArrowRight, MagnifyingGlass, Sparkle, Storefront } from "@phosphor-icons/react";
 import type { Etagged } from "./merchant-api";
 import { createMerchant, updateMerchant } from "./merchant-api";
 
@@ -32,21 +33,71 @@ function merchantStatusPresentation(status?: MerchantSummary["status"]): { label
 }
 
 export function MerchantList({ merchants }: { merchants: MerchantSummary[] }) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredMerchants = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return merchants;
+    return merchants.filter((m) => (m.name ?? "").toLowerCase().includes(q));
+  }, [merchants, searchQuery]);
+
   return (
-    <div className="seller-row-list">
-      {merchants.map((merchant) => {
-        if (!merchant.id) return null;
-        const status = merchantStatusPresentation(merchant.status);
-        return (
-          <Link className="seller-row" key={merchant.id} href={`/seller/${encodeURIComponent(merchant.id)}`}>
-            <div>
-              <strong>{merchant.name ?? "Cửa hàng"}</strong>
-              <small>{merchantRoleCopy(merchant.currentUserRole)}</small>
-            </div>
-            <StatusChip label={status.label} tone={status.tone} />
-          </Link>
-        );
-      })}
+    <div className="seller-merchant-container">
+      {merchants.length > 2 ? (
+        <div className="seller-merchant-search">
+          <MagnifyingGlass size={18} className="seller-merchant-search__icon" aria-hidden="true" />
+          <input
+            type="search"
+            placeholder="Tìm kiếm cửa hàng theo tên…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="seller-merchant-search__input"
+            aria-label="Tìm kiếm cửa hàng"
+          />
+        </div>
+      ) : null}
+
+      {filteredMerchants.length === 0 ? (
+        <div className="seller-merchant-empty-search">
+          <p>Không tìm thấy cửa hàng nào khớp với từ khóa tìm kiếm.</p>
+        </div>
+      ) : (
+        <div className="seller-row-list seller-merchant-grid">
+          {filteredMerchants.map((merchant) => {
+            if (!merchant.id) return null;
+            const status = merchantStatusPresentation(merchant.status);
+            return (
+              <Link
+                className="seller-row seller-merchant-card"
+                key={merchant.id}
+                href={`/seller/${encodeURIComponent(merchant.id)}`}
+              >
+                <div className="seller-merchant-card__main">
+                  <div className="seller-merchant-card__icon" aria-hidden="true">
+                    <Storefront size={24} weight="duotone" />
+                  </div>
+                  <div className="seller-merchant-card__content">
+                    <strong>{merchant.name ?? "Cửa hàng"}</strong>
+                    <div className="seller-merchant-card__subinfo">
+                      <small className="seller-merchant-card__role">{merchantRoleCopy(merchant.currentUserRole)}</small>
+                      {merchant.slug ? (
+                        <span className="seller-merchant-card__slug">@{merchant.slug}</span>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+                <div className="seller-merchant-card__meta">
+                  <StatusChip label={status.label} tone={status.tone} />
+                  <span className="seller-merchant-card__action">
+                    <span>Vào quản lý</span>
+                    <ArrowRight size={14} weight="bold" />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -61,6 +112,8 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
   const [pending, setPending] = useState(false);
   const [showMedia, setShowMedia] = useState(false);
   const editing = Boolean(merchant?.data.id);
+  const [previewName, setPreviewName] = useState(merchant?.data.name ?? "");
+  const [previewDesc, setPreviewDesc] = useState(merchant?.data.description ?? "");
   const reload = onReload ?? (() => router.refresh());
   const saved = onCreated ?? (() => router.refresh());
 
@@ -128,15 +181,49 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
           required
           disabled={pending}
           defaultValue={merchant?.data.name ?? ""}
+          onChange={(e) => setPreviewName(e.target.value)}
           autoComplete="organization"
         />
         {editing ? <small>Tên hiển thị công khai</small> : null}
       </label>
       <label>
         {editing ? "Giới thiệu shop" : "Mô tả"}
-        <textarea name="description" maxLength={4000} disabled={pending} defaultValue={merchant?.data.description ?? ""} />
+        <textarea
+          name="description"
+          maxLength={4000}
+          disabled={pending}
+          defaultValue={merchant?.data.description ?? ""}
+          onChange={(e) => setPreviewDesc(e.target.value)}
+        />
         {editing ? <small>Hiển thị trên trang shop công khai</small> : null}
       </label>
+
+      {!editing ? (
+        <div className="seller-live-preview" aria-hidden="true">
+          <div className="seller-live-preview__header">
+            <Sparkle size={15} weight="fill" className="seller-live-preview__sparkle" />
+            <span>Xem trước thẻ hiển thị cho cư dân</span>
+          </div>
+          <div className="seller-live-preview__card">
+            <div className="seller-live-preview__icon">
+              <Storefront size={26} weight="duotone" />
+            </div>
+            <div className="seller-live-preview__info">
+              <strong className="seller-live-preview__title">
+                {previewName.trim() || "Tên cửa hàng của bạn"}
+              </strong>
+              <p className="seller-live-preview__desc">
+                {previewDesc.trim() || "Mô tả món ăn, sản phẩm hoặc dịch vụ nội khu của bạn…"}
+              </p>
+              <div className="seller-live-preview__tags">
+                <span className="seller-live-preview__tag">Cửa hàng mới</span>
+                <span className="seller-live-preview__tag">Nội khu CoVie</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {editing ? (
         <section className="seller-media-settings" aria-label="Logo và ảnh bìa">
           <strong>Logo & ảnh bìa</strong>

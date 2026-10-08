@@ -6,8 +6,8 @@
   --seller-text-inverse: #ffffff;
   --seller-border: #e2e8f0;
   --seller-border-subtle: #f1f5f9;
-  --seller-bg: #f8fafc;
-  --seller-bg-subtle: #f1f5f9;
+  --seller-bg: #ffffff;
+  --seller-bg-subtle: #f8fafc;
   --seller-surface: #ffffff;
   --seller-action: #334155;
   --seller-brand: #047857;
@@ -256,8 +256,9 @@
   }
 
   .seller-shell__main {
-    margin: 0 auto;
-    max-width: 1184px;
-    padding: 32px clamp(24px, 3vw, 48px) 64px;
+    margin: 0;
+    max-width: 1400px;
+    padding: 28px clamp(20px, 2.5vw, 40px) 64px;
+    width: 100%;
   }
 }
