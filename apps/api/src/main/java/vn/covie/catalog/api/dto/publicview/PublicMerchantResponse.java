@@ -13,4 +13,5 @@ public record PublicMerchantResponse(
         PublicMediaResponse cover,
         List<ResolvedMerchantLocationResponse> locations,
         List<PublicMerchantContactResponse> contacts,
-        MerchantReputationSummary reputation) {}
+        MerchantReputationSummary reputation,
+        PublicMerchantCapabilitiesResponse capabilities) {}

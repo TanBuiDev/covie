@@ -68,6 +68,7 @@ public class CatalogEditService {
     private final LocationVariantRepository locationVariants; private final MerchantLocationRepository locations;
     private final MediaAttachmentPolicy media; private final CatalogSearchDocumentService search;
     private final UuidV7Generator ids; private final AppClock clock; private final InventoryModeCoordinator inventory;
+    private final CatalogManagementActionPolicy actions;
 
     public CatalogEditService(CurrentActorProvider actors, MerchantAccessPolicy access, CatalogItemRepository items,
             CatalogItemAttributeValueRepository attributes, CatalogItemTagRepository itemTags, TagRepository tags,
@@ -75,11 +76,12 @@ public class CatalogEditService {
             CatalogAggregateValidator validator, VariantRepository variants, VariantOptionValueRepository variantOptions,
             OptionGroupRepository optionGroups, OptionValueRepository optionValues, LocationVariantRepository locationVariants,
             MerchantLocationRepository locations, MediaAttachmentPolicy media, CatalogSearchDocumentService search,
-            UuidV7Generator ids, AppClock clock, InventoryModeCoordinator inventory) {
+            UuidV7Generator ids, AppClock clock, InventoryModeCoordinator inventory,
+            CatalogManagementActionPolicy actions) {
         this.actors=actors; this.access=access; this.items=items; this.attributes=attributes; this.itemTags=itemTags; this.tags=tags;
         this.itemMedia=itemMedia; this.categoryAttributes=categoryAttributes; this.validator=validator; this.variants=variants;
         this.variantOptions=variantOptions; this.optionGroups=optionGroups; this.optionValues=optionValues;
-        this.locationVariants=locationVariants; this.locations=locations; this.media=media; this.search=search; this.ids=ids; this.clock=clock; this.inventory=inventory;
+        this.locationVariants=locationVariants; this.locations=locations; this.media=media; this.search=search; this.ids=ids; this.clock=clock; this.inventory=inventory; this.actions=actions;
     }
 
     @Transactional
@@ -148,7 +150,9 @@ public class CatalogEditService {
         lockedItem(merchantId, itemId);
         VariantEntity variant = variant(itemId, variantId);
         VersionPrecondition.require(VersionPrecondition.parseRequired(ifMatch), variant.getVersion());
-        if (variants.countByCatalogItemIdAndDeletedAtIsNull(itemId) <= 1) throw variantReject("The final non-deleted variant cannot be deleted.");
+        CatalogItemEntity item = items.findByIdAndMerchantProfileIdAndDeletedAtIsNull(itemId, merchantId)
+                .orElseThrow(CatalogEditService::notFound);
+        actions.requireVariantDelete(item);
         variant.delete(clock.now());
         VariantEntity saved = variants.saveAndFlush(variant);
         return new EditResult(saved.getId(), saved.getVersion());
@@ -202,8 +206,24 @@ public class CatalogEditService {
         for (String raw : requested) { String name = required(raw); if (name.length() > 100) throw reject(ErrorCode.VALIDATION_FAILED, "Tag must not exceed 100 characters."); String normalized = name.toLowerCase(Locale.ROOT); if (!names.add(normalized)) continue; TagEntity tag = tags.findByNormalizedName(normalized).orElseGet(() -> tags.save(TagEntity.create(ids.generate(), name, normalized, now))); itemTags.save(CatalogItemTagEntity.associate(item, tag)); }
     }
     private void replaceMedia(CatalogItemEntity item, List<UUID> requested, UUID actorId) {
-        itemMedia.deleteByIdCatalogItemId(item.getId()); itemMedia.flush(); Set<UUID> ids = new HashSet<>(); int order = 0;
-        for (UUID mediaId : requested) if (ids.add(mediaId)) { MediaAssetEntity asset = media.requireReadyOwned(mediaId, actorId, Set.of(MediaPurpose.CATALOG_IMAGE)); itemMedia.save(CatalogItemMediaEntity.image(item, asset, order, order++ == 0)); }
+        Map<UUID, CatalogItemMediaEntity> existing = new HashMap<>();
+        for (CatalogItemMediaEntity association : itemMedia.findAllAssociationsByCatalogItemId(item.getId())) {
+            existing.put(association.getId().getMediaAssetId(), association);
+        }
+        Set<UUID> ids = new HashSet<>(); int order = 0;
+        for (UUID mediaId : requested) {
+            if (!ids.add(mediaId)) continue;
+            CatalogItemMediaEntity association = existing.remove(mediaId);
+            if (association == null) {
+                MediaAssetEntity asset = media.requireReadyOwned(mediaId, actorId, Set.of(MediaPurpose.CATALOG_IMAGE));
+                association = CatalogItemMediaEntity.image(item, asset, order, order == 0);
+            } else {
+                association.reorder(order, order == 0);
+            }
+            itemMedia.save(association);
+            order++;
+        }
+        itemMedia.deleteAll(existing.values());
     }
     private Map<UUID, OptionValueEntity> valuesFor(List<OptionGroupEntity> groups) {
         if (groups.isEmpty()) return Map.of(); List<OptionValueEntity> values = optionValues.findAllByOptionGroupIdInOrderBySortOrderAscIdAsc(groups.stream().map(OptionGroupEntity::getId).toList()); Map<UUID, OptionValueEntity> byId = new HashMap<>(); for (OptionValueEntity value : values) byId.put(value.getId(), value); return byId;

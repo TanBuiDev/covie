@@ -50,7 +50,19 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
             parameters.addValue("listingKind", query.listingKind().name());
         }
         if (query.categoryId() != null) {
-            filters.append(" and ci.primary_category_id = :categoryId");
+            filters.append(' ');
+            filters.append("""
+                and ci.primary_category_id in (
+                    with recursive selected_categories(id) as (
+                        select id from categories
+                        where id = :categoryId and status = 'ACTIVE' and deleted_at is null
+                        union
+                        select child.id from categories child
+                        join selected_categories parent on child.parent_id = parent.id
+                        where child.status = 'ACTIVE' and child.deleted_at is null
+                    ) select id from selected_categories
+                )
+                """);
             parameters.addValue("categoryId", query.categoryId());
         }
         if (query.minPrice() != null) {

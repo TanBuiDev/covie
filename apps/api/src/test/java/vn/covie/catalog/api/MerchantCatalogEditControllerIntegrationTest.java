@@ -30,6 +30,7 @@ import vn.covie.catalog.model.CategoryAttributeType;
 import vn.covie.catalog.model.CategoryEntity;
 import vn.covie.catalog.model.CategoryStatus;
 import vn.covie.catalog.model.CatalogItemEntity;
+import vn.covie.catalog.model.CatalogItemMediaEntity;
 import vn.covie.catalog.model.CatalogItemType;
 import vn.covie.catalog.model.InventoryMode;
 import vn.covie.catalog.model.ListingKind;
@@ -39,6 +40,7 @@ import vn.covie.catalog.model.OptionValueEntity;
 import vn.covie.catalog.model.VariantEntity;
 import vn.covie.catalog.model.VariantOptionValueEntity;
 import vn.covie.catalog.persistence.CatalogItemRepository;
+import vn.covie.catalog.persistence.CatalogItemMediaRepository;
 import vn.covie.catalog.persistence.CategoryRepository;
 import vn.covie.catalog.persistence.CategoryAttributeRepository;
 import vn.covie.catalog.persistence.LocationVariantRepository;
@@ -55,6 +57,9 @@ import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.persistence.MerchantMemberLocationRepository;
 import vn.covie.merchants.persistence.MerchantMembershipRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
+import vn.covie.media.model.MediaAssetEntity;
+import vn.covie.media.model.MediaPurpose;
+import vn.covie.media.persistence.MediaAssetRepository;
 import vn.covie.support.PostgresIntegrationTest;
 import vn.covie.users.model.UserEntity;
 import vn.covie.users.persistence.UserRepository;
@@ -69,6 +74,7 @@ class MerchantCatalogEditControllerIntegrationTest extends PostgresIntegrationTe
     @Autowired LocationVariantRepository offers;
     @Autowired OptionGroupRepository optionGroups; @Autowired OptionValueRepository optionValues;
     @Autowired VariantOptionValueRepository variantOptions;
+    @Autowired MediaAssetRepository mediaAssets; @Autowired CatalogItemMediaRepository itemMedia;
     private MockMvc mockMvc;
 
     @BeforeEach void setUp() { mockMvc = MockMvcBuilders.webAppContextSetup(web).apply(springSecurity()).build(); }
@@ -88,6 +94,26 @@ class MerchantCatalogEditControllerIntegrationTest extends PostgresIntegrationTe
         assertThat(items.findById(fixture.itemId()).orElseThrow().getName()).isEqualTo("Edited coffee");
         assertThat(variants.findById(fixture.variantId()).orElseThrow().getVariantStatus().name()).isEqualTo("PAUSED");
         assertThat(offers.findById(fixture.offerId()).orElseThrow().getPrice()).isEqualTo(30000);
+    }
+
+    @Test
+    void managerCanAppendOwnMediaWithoutReowningTheOwnersExistingMedia() throws Exception {
+        Actor owner = actor(); Fixture fixture = fixture(owner, MerchantRole.OWNER);
+        Actor manager = actor();
+        memberships.saveAndFlush(MerchantMembershipEntity.active(UUID.randomUUID(), fixture.merchantId(),
+                manager.userId(), MerchantRole.MANAGER, NOW));
+        MediaAssetEntity original = readyMedia(owner.userId());
+        MediaAssetEntity addition = readyMedia(manager.userId());
+        itemMedia.saveAndFlush(CatalogItemMediaEntity.image(items.findById(fixture.itemId()).orElseThrow(), original, 0, true));
+
+        mockMvc.perform(patch(itemPath(fixture)).with(manager.jwt()).header("If-Match", "\"v0\"")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mediaIds\":[\"" + original.getId() + "\",\"" + addition.getId() + "\"]}"))
+                .andExpect(status().isNoContent());
+
+        assertThat(itemMedia.findAllAssociationsByCatalogItemId(fixture.itemId()))
+                .extracting(association -> association.getId().getMediaAssetId())
+                .containsExactly(original.getId(), addition.getId());
     }
 
     @Test
@@ -195,6 +221,12 @@ class MerchantCatalogEditControllerIntegrationTest extends PostgresIntegrationTe
     private static String variantPath(Fixture fixture) { return itemPath(fixture) + "/variants/" + fixture.variantId(); }
     private static String offerPath(Fixture fixture) { return itemPath(fixture) + "/location-offers/" + fixture.offerId(); }
     private Actor actor() { UUID userId = UUID.randomUUID(); UUID sessionId = UUID.randomUUID(); Instant now = Instant.now(); users.saveAndFlush(UserEntity.active(userId, "User", now)); sessions.saveAndFlush(AuthSessionEntity.create(sessionId, userId, UUID.randomUUID(), now, now.plus(30, ChronoUnit.DAYS))); return new Actor(userId, sessionId); }
+    private MediaAssetEntity readyMedia(UUID ownerId) {
+        MediaAssetEntity asset = MediaAssetEntity.pending(UUID.randomUUID(), ownerId, "catalog/" + UUID.randomUUID(),
+                MediaPurpose.CATALOG_IMAGE, "image/png", 10, NOW.plusSeconds(600), NOW);
+        asset.markReady(NOW.plusSeconds(1));
+        return mediaAssets.saveAndFlush(asset);
+    }
     private record Fixture(UUID merchantId, UUID itemId, UUID variantId, UUID offerId, UUID replacementOptionId) {}
     private record Actor(UUID userId, UUID sessionId) { SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor jwt() { return SecurityMockMvcRequestPostProcessors.jwt().jwt(token -> token.subject(userId.toString()).claim("sessionId", sessionId.toString()).claim("roles", List.of("USER"))).authorities(new SimpleGrantedAuthority("ROLE_USER")); } }
 }
