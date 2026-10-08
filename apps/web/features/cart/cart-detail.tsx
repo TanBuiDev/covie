@@ -3,6 +3,7 @@
 import type { components } from "@covie/api-client";
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { Storefront } from "@phosphor-icons/react";
 import { CoVieIcon } from "@/components/ui/covie-icon";
 import { CovieApiError } from "@/lib/api/api-error";
 import { ErrorState } from "@/components/ui/error-state";
@@ -62,7 +63,9 @@ function CartDetailContent({ initialCart }: { initialCart: Cart }) {
       try {
         if (quantity == null) await removeCartItem(cart.id, itemId, cart.version);
         else await updateCartItem(cart.id, itemId, cart.version, { quantity });
-      } catch (error) { commandError = error; }
+      } catch (error) {
+        commandError = error;
+      }
       if (commandError instanceof CovieApiError && commandError.status === 401) {
         setAuthRequired(true);
         return;
@@ -85,42 +88,89 @@ function CartDetailContent({ initialCart }: { initialCart: Cart }) {
   const items = cart.items ?? [];
   const title = cart.cartType === "SERVICE" ? "Giỏ dịch vụ" : "Giỏ sản phẩm";
 
-  if (authRequired) return <ErrorState
-    title="Vui lòng đăng nhập lại"
-    description="Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập."
-    action={<Link className="button-primary" href={`/login?returnTo=${encodeURIComponent(`/cart/${encodeURIComponent(cart.id ?? "")}`)}`}>Đăng nhập lại</Link>}
-  />;
+  if (authRequired) {
+    return (
+      <ErrorState
+        title="Vui lòng đăng nhập lại"
+        description="Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập."
+        action={
+          <Link
+            className="button-primary"
+            href={`/login?returnTo=${encodeURIComponent(`/cart/${encodeURIComponent(cart.id ?? "")}`)}`}
+          >
+            Đăng nhập lại
+          </Link>
+        }
+      />
+    );
+  }
 
   return (
     <div className={`cart-detail-surface ${styles.screen}`}>
       <header className={styles.appBar}>
-        <Link href="/cart" aria-label="Quay lại danh sách giỏ hàng"><CoVieIcon name="back" /></Link>
+        <Link href="/cart" aria-label="Quay lại danh sách giỏ hàng">
+          <CoVieIcon name="back" />
+        </Link>
         <h1 id="cart-detail-title">{stale ? "Giỏ hàng" : title}</h1>
       </header>
+
       <section className={styles.content} aria-labelledby="cart-detail-title">
+        {/* Merchant Trust Header Card */}
+        <div className={styles.merchantHeaderCard}>
+          <div className={styles.merchantInfo}>
+            <Storefront size={22} weight="duotone" className={styles.merchantIcon} />
+            <div>
+              <strong>Gian hàng cư dân CoVie</strong>
+              <span>Giao dịch an toàn &amp; trao đổi trực tiếp trong khu đô thị</span>
+            </div>
+          </div>
+          <span className={styles.residentBadge}>100% Cư dân xác thực</span>
+        </div>
+
         {stale ? (
           <div className={styles.warning} role="status">
             <CoVieIcon name="feedback-warning" />
-            <div><strong>Giỏ hàng vừa thay đổi</strong><span>CoVie đã tải lại dữ liệu mới nhất. Hãy kiểm tra số lượng và giá trước khi tiếp tục.</span></div>
+            <div>
+              <strong>Giỏ hàng vừa thay đổi</strong>
+              <span>CoVie đã tải lại dữ liệu mới nhất. Hãy kiểm tra số lượng và giá trước khi tiếp tục.</span>
+            </div>
           </div>
         ) : null}
-        {message ? <p className={styles.errorMessage} role="status">{message}</p> : null}
-        {refreshFailed ? <div className={styles.errorMessage} role="alert">
-          <p>Không thể tải dữ liệu giỏ hàng mới nhất. Vui lòng tải lại trước khi tiếp tục.</p>
-          <button className="button-secondary" type="button" disabled={refreshing} onClick={() => void retryRefresh()}>Thử lại tải giỏ hàng</button>
-        </div> : null}
+
+        {message ? (
+          <p className={styles.errorMessage} role="status">
+            {message}
+          </p>
+        ) : null}
+
+        {refreshFailed ? (
+          <div className={styles.errorMessage} role="alert">
+            <p>Không thể tải dữ liệu giỏ hàng mới nhất. Vui lòng tải lại trước khi tiếp tục.</p>
+            <button
+              className="button-secondary"
+              type="button"
+              disabled={refreshing}
+              onClick={() => void retryRefresh()}
+            >
+              Thử lại tải giỏ hàng
+            </button>
+          </div>
+        ) : null}
+
         {items.length ? (
           <ul className={styles.items}>
-            {items.map((item) => item.id ? (
-              <CartItemRow
-                key={item.id}
-                item={item}
-                cartType={cart.cartType}
-                disabled={Boolean(busyItemId) || refreshFailed || refreshing}
-                onQuantityChange={(quantity) => mutate(item.id!, quantity)}
-                onRemove={() => mutate(item.id!)}
-              />
-            ) : null)}
+            {items.map((item) =>
+              item.id ? (
+                <CartItemRow
+                  key={item.id}
+                  item={item}
+                  cartType={cart.cartType}
+                  disabled={Boolean(busyItemId) || refreshFailed || refreshing}
+                  onQuantityChange={(quantity) => mutate(item.id!, quantity)}
+                  onRemove={() => mutate(item.id!)}
+                />
+              ) : null,
+            )}
           </ul>
         ) : (
           <div className={styles.empty}>
@@ -129,8 +179,16 @@ function CartDetailContent({ initialCart }: { initialCart: Cart }) {
             <Link href="/search">Khám phá gần bạn</Link>
           </div>
         )}
-        {items.length && !stale && !busyItemId && !refreshFailed && !refreshing ? <CartSummary cart={cart} /> : null}
-        {stale ? <p className={styles.staleNote}>Dữ liệu mới nhất đã được tải lại. Hãy kiểm tra trước khi tiếp tục.</p> : null}
+
+        {items.length && !stale && !busyItemId && !refreshFailed && !refreshing ? (
+          <CartSummary cart={cart} />
+        ) : null}
+
+        {stale ? (
+          <p className={styles.staleNote}>
+            Dữ liệu mới nhất đã được tải lại. Hãy kiểm tra trước khi tiếp tục.
+          </p>
+        ) : null}
       </section>
     </div>
   );

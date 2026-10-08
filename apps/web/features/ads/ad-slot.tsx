@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CaretLeft, CaretRight, Pause, Play } from "@phosphor-icons/react";
+import { Eye, X } from "@phosphor-icons/react";
 import { AdCreative } from "@/components/ads/ad-creative";
 import { listActiveAds, trackAdEvent, type AdPlacement, type PublicAd } from "./ad-api";
 import styles from "./ad-slot.module.css";
@@ -65,12 +65,23 @@ export function AdSlot({ placement, className = "", device: requestedDevice }: {
   const [device, setDevice] = useState<"DESKTOP" | "MOBILE">();
   const [ads, setAds] = useState<PublicAd[]>([]);
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [paused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
   const [interacting, setInteracting] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (placement === "SIDEBAR_LEFT" && typeof window !== "undefined") {
+      try {
+        return window.sessionStorage?.getItem("covie_ad_rail_dismissed") === "true";
+      } catch {
+        // Safe fallback for restricted environments
+      }
+    }
+    return false;
+  });
   const generation = useRef(0);
   const [countedDeliveries] = useState(() => new Set<string>());
+
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
     const screen = window.matchMedia("(min-width: 1024px)");
@@ -113,14 +124,80 @@ export function AdSlot({ placement, className = "", device: requestedDevice }: {
   }, [ads]);
   const unavailable = useCallback((failed: PublicAd) => setAds(previous => previous.filter(ad => ad.deliveryToken !== failed.deliveryToken)), []);
   const ad = ads[index] ?? ads[0];
+
+  if (dismissed && placement === "SIDEBAR_LEFT") {
+    return (
+      <div className={styles.railDismissed}>
+        <button
+          type="button"
+          className={styles.restoreBtn}
+          aria-label="Mở lại quảng cáo bên trái"
+          title="Mở lại quảng cáo"
+          onClick={() => {
+            setDismissed(false);
+            try { window.sessionStorage?.removeItem("covie_ad_rail_dismissed"); } catch {}
+          }}
+        >
+          <Eye size={14} weight="bold" />
+          <span>Quảng cáo</span>
+        </button>
+      </div>
+    );
+  }
+
   if (!ad || !usable(ad)) return null;
-  return <aside className={`${styles.slot} ${placement === "SIDEBAR_LEFT" ? styles.railSlot : ""} ${className}`} aria-label="Quảng cáo" data-ad-placement={placement} onMouseEnter={() => setInteracting(true)} onMouseLeave={() => setInteracting(false)} onFocus={() => setInteracting(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setInteracting(false); }}>
-    <AdDelivery key={`${ad.id}:${ad.deliveryToken}`} ad={ad} paused={paused || reducedMotion} countedDeliveries={countedDeliveries} onUnavailable={unavailable} />
-    {ads.length > 1 && <div className={styles.controls}>
-      <button type="button" aria-label="Quảng cáo trước" onClick={() => step(-1)}><CaretLeft size={16} /></button>
-      <span>{index + 1} / {ads.length}</span>
-      <button type="button" aria-label={paused ? "Tiếp tục xoay quảng cáo" : "Tạm dừng xoay quảng cáo"} aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? <Play size={16} /> : <Pause size={16} />}</button>
-      <button type="button" aria-label="Quảng cáo tiếp theo" onClick={() => step(1)}><CaretRight size={16} /></button>
-    </div>}
-  </aside>;
+  return (
+    <aside
+      className={`${styles.slot} ${placement === "SIDEBAR_LEFT" ? styles.railSlot : ""} ${className}`}
+      aria-label="Quảng cáo"
+      data-ad-placement={placement}
+      onMouseEnter={() => setInteracting(true)}
+      onMouseLeave={() => setInteracting(false)}
+      onFocus={() => setInteracting(true)}
+      onBlur={event => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setInteracting(false);
+      }}
+      onKeyDown={event => {
+        if (ads.length > 1) {
+          if (event.key === "ArrowLeft") { event.preventDefault(); step(-1); }
+          if (event.key === "ArrowRight") { event.preventDefault(); step(1); }
+        }
+      }}
+    >
+      {placement === "SIDEBAR_LEFT" && (
+        <button
+          type="button"
+          className={styles.dismissBtn}
+          aria-label="Tạm ẩn quảng cáo"
+          title="Tạm ẩn quảng cáo"
+          onClick={() => {
+            setDismissed(true);
+            try { window.sessionStorage?.setItem("covie_ad_rail_dismissed", "true"); } catch {}
+          }}
+        >
+          <X size={12} weight="bold" />
+        </button>
+      )}
+      <AdDelivery key={`${ad.id}:${ad.deliveryToken}`} ad={ad} paused={paused || reducedMotion} countedDeliveries={countedDeliveries} onUnavailable={unavailable} />
+      {ads.length > 1 && (
+        <div className={styles.bannerDots} role="tablist" aria-label="Chuyển quảng cáo">
+          {ads.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              role="tab"
+              aria-selected={i === index}
+              aria-label={`Chuyển đến quảng cáo ${i + 1}`}
+              className={`${styles.dotBtn} ${i === index ? styles.activeDotBtn : ""}`}
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIndex(i);
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </aside>
+  );
 }

@@ -15,6 +15,13 @@ export function AdCampaignForm({ campaign, busy, onSave, onCancel, onAuth }: { c
   const submitLock = useRef(false);
   const disabled = busy || uploading;
   useEffect(() => () => { if (preview.startsWith("blob:")) URL.revokeObjectURL(preview); }, [preview]);
+  function applyDuration(days: number) {
+    const base = new Date(input.startsAt);
+    const validBase = Number.isFinite(base.getTime()) ? base : new Date();
+    const target = new Date(validBase.getTime() + days * 86400000);
+    change("endsAt", target.toISOString());
+  }
+
   function change<K extends keyof AdCampaignInput>(key: K, value: AdCampaignInput[K]) { setInput(current => ({ ...current, [key]: value })); }
   async function upload(file?: File) {
     if (!file || uploadLock.current || busy || input.creativeType === "CSS") return;
@@ -47,7 +54,15 @@ export function AdCampaignForm({ campaign, busy, onSave, onCancel, onAuth }: { c
       <label>Vị trí<select value={input.placement} onChange={e => change("placement", e.target.value as AdCampaignInput["placement"])}><option value="SIDEBAR_LEFT">Banner trái · trang chủ / tìm kiếm</option><option value="HOME_HERO">Banner trang chủ</option><option value="IN_FEED">Trong danh sách</option><option value="ITEM_DETAIL">Dưới chi tiết sản phẩm</option></select></label>
       <label>Thiết bị<select value={input.device} onChange={e => change("device", e.target.value as AdCampaignInput["device"])}><option value="ALL">Mọi thiết bị</option><option value="DESKTOP">Máy tính</option><option value="MOBILE">Di động</option></select></label>
       <label>Bắt đầu<input required type="datetime-local" value={localTime(input.startsAt)} onChange={e => { if (e.target.value) change("startsAt", new Date(e.target.value).toISOString()); }} /></label>
-      <label>Kết thúc<input required type="datetime-local" value={localTime(input.endsAt)} onChange={e => { if (e.target.value) change("endsAt", new Date(e.target.value).toISOString()); }} /></label>
+      <div className={styles.dateFieldWrapper}>
+        <label>Kết thúc<input required type="datetime-local" value={localTime(input.endsAt)} onChange={e => { if (e.target.value) change("endsAt", new Date(e.target.value).toISOString()); }} /></label>
+        <div className={styles.durationPresets} aria-label="Chọn nhanh thời hạn">
+          <button type="button" className={styles.presetBtn} onClick={() => applyDuration(7)}>+7 ngày</button>
+          <button type="button" className={styles.presetBtn} onClick={() => applyDuration(14)}>+14 ngày</button>
+          <button type="button" className={styles.presetBtn} onClick={() => applyDuration(30)}>+1 tháng</button>
+          <button type="button" className={styles.presetBtn} onClick={() => applyDuration(90)}>+3 tháng</button>
+        </div>
+      </div>
       <label>Độ ưu tiên<input required type="number" min={0} max={1000} value={input.priority} onChange={e => change("priority", Number(e.target.value))} /></label>
       <label>Hiển thị<select value={input.enabled ? "yes" : "no"} onChange={e => change("enabled", e.target.value === "yes")}><option value="no">Tắt</option><option value="yes">Bật khi đủ điều kiện</option></select></label>
     </div></fieldset>

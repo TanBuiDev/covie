@@ -11,7 +11,7 @@ export function AdDiscoveryLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     const measure = () => {
       const box = content.current?.getBoundingClientRect();
-      setFits(window.innerWidth >= 1440 && window.innerHeight >= 780 && !!box && box.left >= 200);
+      setFits(window.innerWidth >= 1440 && window.innerHeight >= 620 && !!box && box.left >= 240);
     };
     measure();
     window.addEventListener("resize", measure);

@@ -4,6 +4,7 @@ import type { components } from "@covie/api-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Package, SealCheck } from "@phosphor-icons/react";
 import { CoVieIcon } from "@/components/ui/covie-icon";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -98,14 +99,23 @@ function OrderReviewContent({ orderId }: { orderId: string }) {
         {item ? (
           <article className={styles.reviewCard}>
             <div className={styles.itemSummary}>
-              <strong>{itemName(item)}</strong>
-              <span>Đơn {order.orderCode ?? order.id ?? ""} · {merchantName(order)} · {orderStatus}</span>
+              <div className={styles.itemSummaryIcon}>
+                <Package size={22} weight="duotone" />
+              </div>
+              <div className={styles.itemSummaryDetails}>
+                <strong>{itemName(item)}</strong>
+                <span>Đơn {order.orderCode ?? order.id ?? ""} · {merchantName(order)} · {orderStatus}</span>
+              </div>
             </div>
             {submitted ? (
               <section className={styles.submitted} aria-label="Đánh giá đã gửi">
+                <SealCheck size={48} weight="fill" className={styles.submittedIcon} />
                 <h2>Đã gửi đánh giá</h2>
                 <p>Cảm ơn bạn đã chia sẻ trải nghiệm. Đánh giá đã được ghi nhận.</p>
-                <Link href={`/orders/${encodeURIComponent(orderId)}`}>Xem chi tiết đơn</Link>
+                <div className={styles.submittedActions}>
+                  <Link href={`/orders/${encodeURIComponent(orderId)}`} className="button-primary">Xem chi tiết đơn</Link>
+                  <Link href="/orders" className="button-secondary">Danh sách đơn mua</Link>
+                </div>
               </section>
             ) : (
               <OrderReviewSection item={item} onChanged={async () => { setSubmitted(true); }} onStale={refresh} />

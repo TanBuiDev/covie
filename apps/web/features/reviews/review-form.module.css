@@ -1,1 +1,246 @@
-@media(max-width:1023px){.form{display:flex;flex-direction:column;gap:14px;padding:16px;border:1px solid var(--semantic-border-default,#e2e8f0);border-radius:12px;background:var(--semantic-bg-surface,#fff)}.fieldset{display:flex;flex-direction:column;gap:14px;padding:0;margin:0;border:0}.fieldset legend{padding:0;margin:0;font-size:16px;font-weight:600;line-height:22px}.hint{margin:0;color:var(--semantic-text-secondary,#475569);font-size:12px;line-height:16px}.stars{display:flex;width:250px;height:44px;gap:6px}.star{display:inline-flex;width:44px;height:44px;align-items:center;justify-content:center;padding:0;border:0;border-radius:10px;background:transparent}.star img{width:24px;height:24px}.starInactive img{opacity:.18;filter:grayscale(1)}.comment{display:flex;flex-direction:column;gap:6px}.comment>span{font-size:13px;font-weight:600;line-height:18px}.comment textarea{width:100%;min-height:120px;padding:16px;border:1px solid var(--semantic-border-default,#e2e8f0);border-radius:12px;background:var(--semantic-bg-surface,#fff);color:var(--semantic-text-primary,#0f172a);font-size:14px;line-height:20px;resize:vertical}.comment small{color:var(--semantic-text-secondary,#475569);font-size:12px;line-height:16px}.submit{width:100%;min-height:48px;border-radius:12px}.success{display:flex;min-height:150px;align-items:center;justify-content:center;padding:20px;border:1px solid var(--semantic-status-success-border,#a7f3d0);border-radius:12px;background:var(--semantic-status-success-bg,#ecfdf5);color:var(--semantic-status-success-text,#047857);font-size:14px;line-height:20px;text-align:center}.star:focus-visible,.comment textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--semantic-action-primary,#047857) 35%,transparent);outline-offset:2px}}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--semantic-border-default, #e2e8f0);
+  border-radius: 16px;
+  background: var(--semantic-bg-surface, #fff);
+}
+
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.fieldset legend {
+  padding: 0;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px;
+  color: #0f172a;
+}
+
+.hint {
+  margin: 0;
+  color: var(--semantic-text-secondary, #475569);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.stars {
+  display: flex;
+  width: fit-content;
+  height: 44px;
+  gap: 6px;
+  align-items: center;
+}
+
+.star {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  transition: transform .12s ease;
+}
+
+.star:hover {
+  transform: scale(1.15);
+}
+
+.star :global(.review-star-icon) {
+  color: #f59e0b;
+}
+
+.starInactive {
+  opacity: .22;
+  filter: grayscale(1);
+}
+
+.starInactive:hover {
+  opacity: .6;
+  filter: grayscale(0.5);
+}
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comment textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 14px 16px;
+  border: 1px solid var(--semantic-border-default, #cbd5e1);
+  border-radius: 12px;
+  background: var(--semantic-bg-surface, #fff);
+  color: var(--semantic-text-primary, #0f172a);
+  font-size: 14px;
+  line-height: 20px;
+  resize: vertical;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.comment textarea:focus {
+  border-color: #047857;
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.12);
+  outline: none;
+}
+
+.submit {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.success {
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 24px;
+  border: 1px solid var(--semantic-status-success-border, #a7f3d0);
+  border-radius: 16px;
+  background: var(--semantic-status-success-bg, #ecfdf5);
+  color: var(--semantic-status-success-text, #047857);
+  text-align: center;
+}
+
+.successCopy {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.form :global(.review-rating-selector) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form :global(.review-emotion-label) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.form :global(.review-emotion-score) {
+  font-weight: 700;
+  color: #d97706;
+}
+
+.form :global(.review-emotion-text) {
+  color: #475569;
+  font-weight: 500;
+}
+
+.form :global(.review-quick-tags) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.form :global(.review-quick-tags-title) {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.form :global(.review-quick-tags-list) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.form :global(.review-tag-pill) {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.form :global(.review-tag-pill:hover) {
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.form :global(.review-tag-pill--active) {
+  background: #ecfdf5;
+  border-color: #047857;
+  color: #047857;
+  font-weight: 600;
+}
+
+.form :global(.review-comment-header) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.form :global(.review-char-count) {
+  font-size: 12px;
+  font-weight: normal;
+  color: #64748b;
+}
+
+.form :global(.review-trust-hint) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  margin-top: 4px;
+}
+
+.form :global(.review-trust-icon) {
+  color: #047857;
+  flex-shrink: 0;
+}
+
+.form :global(.review-trust-hint small) {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 16px;
+  margin: 0;
+}
+
+.star:focus-visible,
+.comment textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--semantic-action-primary, #047857) 35%, transparent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1023px) {
+  .form {
+    padding: 16px;
+    border-radius: 12px;
+  }
+}

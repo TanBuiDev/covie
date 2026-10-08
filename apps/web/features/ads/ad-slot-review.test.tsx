@@ -66,8 +66,8 @@ it("does not replay a counted delivery after rotating away and back", async () =
   render(<AdSlot placement="IN_FEED" />); await screen.findByRole("link"); vi.useFakeTimers();
   act(() => observe([{ isIntersecting: true, intersectionRatio: 1 }]));
   await act(async () => { vi.advanceTimersByTime(1000); });
-  fireEvent.click(screen.getByRole("button", { name: "Quảng cáo tiếp theo" }));
-  fireEvent.click(screen.getByRole("button", { name: "Quảng cáo trước" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Chuyển đến quảng cáo 2" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Chuyển đến quảng cáo 1" }));
   act(() => observe([{ isIntersecting: true, intersectionRatio: 1 }]));
   await act(async () => { vi.advanceTimersByTime(1000); });
   expect(trackAdEvent).toHaveBeenCalledTimes(1);

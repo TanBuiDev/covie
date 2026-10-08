@@ -34,3 +34,13 @@ it("positions daily chart data on the selected calendar rather than equally spac
   const secondX = Number(chart.querySelector("polyline")?.getAttribute("points")?.split(" ")[1]?.split(",")[0]);
   expect(secondX).toBeCloseTo(30 + 540 / 29, 2);
 });
+
+it("applies duration presets when clicking quick duration buttons", () => {
+  const campaign = { id: "ad-1", title: "Campaign", ctaLabel: "View", targetUrl: "/search", creativeType: "CSS", template: "HERO", placement: "IN_FEED", device: "ALL", startsAt: "2026-10-01T00:00:00.000Z", endsAt: "2026-10-08T00:00:00.000Z", priority: 1, enabled: true };
+  render(<AdCampaignForm campaign={campaign as never} busy={false} onSave={vi.fn()} onCancel={vi.fn()} onAuth={vi.fn()} />);
+  const plus30 = screen.getByRole("button", { name: "+1 tháng" });
+  fireEvent.click(plus30);
+  const endsAtInput = screen.getByLabelText("Kết thúc") as HTMLInputElement;
+  expect(endsAtInput.value).toContain("2026-10-31");
+});
+

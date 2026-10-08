@@ -73,7 +73,14 @@ export function OrderDetailMobile({ order, error, onChanged }: { order: OrderDet
         <section className={styles.merchant} aria-label="Thông tin người bán và nhận hàng">
           <strong>{merchantIdentity}</strong>
           {address ? <p>{address}</p> : pickup ? <p>{pickup}</p> : <p>Thông tin địa điểm chưa có trong phản hồi hiện tại.</p>}
-          {contact ? <small>Liên hệ: {contact}</small> : null}
+          {contact ? (
+            <div className={styles.merchantContactRow}>
+              <small>Liên hệ: {contact}</small>
+              <a href={`tel:${contact.replace(/\D/g, "")}`} className={styles.merchantCallBtn}>
+                Gọi ngay
+              </a>
+            </div>
+          ) : null}
         </section>
 
         <div className={styles.timeline}>

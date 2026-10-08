@@ -10,6 +10,7 @@ import {
   type NeedAddress,
   type NeedResponse,
 } from "./need-api";
+import { Broadcast, ChatText, MapPin, Trophy } from "@phosphor-icons/react";
 import styles from "./buyer-needs-mobile.module.css";
 
 function money(amount?: number, currency?: string): string {
@@ -119,12 +120,27 @@ function NeedResponseListState({ needId }: { needId: string }) {
     action={<Link className="button-primary" href={`/login?returnTo=${encodeURIComponent(`/needs/${encodeURIComponent(needId)}`)}`}>Đăng nhập lại</Link>}
   />;
 
+  const activeResponses = responses.filter((r) => r.status === "ACTIVE");
+  const minDistance = activeResponses.reduce<number | null>((min, r) => {
+    if (r.distanceMeters == null) return min;
+    return min === null || r.distanceMeters < min ? r.distanceMeters : min;
+  }, null);
+
+  const minPrice = activeResponses.flatMap((r) => r.items).reduce<number | null>((min, item) => {
+    const price = (item.currentPrice || item.priceAtResponse)?.amount;
+    if (price == null) return min;
+    return min === null || price < min ? price : min;
+  }, null);
+
   return (
     <section className={`need-responses ${styles.responses}`} aria-labelledby="need-responses-title">
       <div className={`need-responses__header ${styles.responsesHeader}`}>
-        <div>
-          <h2 id="need-responses-title">Phản hồi Cần mua</h2>
-          <p>Giá và khả dụng được lấy trực tiếp từ phản hồi hiện tại của hệ thống.</p>
+        <div className="need-responses__header-info">
+          <div className="need-responses__title-line">
+            <h2 id="need-responses-title">Phản hồi Cần mua</h2>
+            <span className="need-responses__count-badge">{responses.length} báo giá</span>
+          </div>
+          <p>Giá và khả dụng được lấy trực tiếp từ phản hồi hiện tại của người bán.</p>
         </div>
         {addresses.length ? (
           <label className={`need-responses__address ${styles.address}`}>
@@ -146,40 +162,115 @@ function NeedResponseListState({ needId }: { needId: string }) {
         }}>Thử lại tải địa chỉ</button>
       </div> : null}
       {loadError ? <div className="form-alert" role="alert"><p>Không thể tải phản hồi. Vui lòng thử lại.</p><button type="button" disabled={loading} onClick={() => {setLoadError(false); setLoading(true); setAttempt(value => value + 1);}}>Thử lại tải phản hồi</button></div> : null}
-      {!loading && !loadError && !responses.length ? <div className={`need-empty ${styles.state}`}><h3>Chưa có phản hồi phù hợp</h3><p>Phản hồi mới sẽ xuất hiện ở đây khi người bán gửi.</p></div> : null}
+      {!loading && !loadError && !responses.length ? (
+        <div className={`need-empty ${styles.state}`}>
+          <div className="need-empty__radar-wrap" aria-hidden="true">
+            <span className="need-empty__radar-ring"></span>
+            <span className="need-empty__radar-icon">
+              <Broadcast size={28} weight="duotone" />
+            </span>
+          </div>
+          <h3>Chưa có phản hồi phù hợp</h3>
+          <p>Phản hồi mới sẽ xuất hiện ở đây khi người bán gửi.</p>
+          <small className="need-empty__radar-hint">
+            Hệ thống đang quét các cửa hàng và cư dân xung quanh bạn. Hãy giữ liên lạc để nhận báo giá sớm nhất.
+          </small>
+        </div>
+      ) : null}
 
       <div className={`need-response-cards ${styles.responseCards}`}>
-        {responses.map((response) => (
-          <article className={`need-response-card ${styles.responseCard}`} key={response.id}>
-            <div className={`need-response-card__merchant ${styles.merchant}`}>
-              <div>
-                <h3>{response.merchantName || "Người bán"}</h3>
-                <p>{response.merchantLocationName || "Điểm bán"}{response.distanceMeters != null ? ` · ${(response.distanceMeters / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km` : ""}</p>
-              </div>
-              <span className={`need-status need-status--${response.status.toLowerCase()} ${styles.merchantStatus}`}>{response.status === "ACTIVE" ? "Đang hoạt động" : "Đã rút"}</span>
-            </div>
-            {response.note ? <p className={`need-response-card__note ${styles.note}`}>{response.note}</p> : null}
-            <div className={`need-response-card__items ${styles.responseItems}`}>
-              {response.items.map((item) => {
-                const price = item.currentPrice || item.priceAtResponse;
-                return (
-                  <div className={`need-response-item ${styles.responseItem}`} key={item.id}>
-                    <div>
-                      {item.catalogItemId && item.catalogItemName ? <Link href={`/items/${encodeURIComponent(item.catalogItemId)}`}>{item.catalogItemName}</Link> : <span>{item.catalogItemName || "Mục phản hồi"}</span>}
-                      <strong>{money(price?.amount, price?.currency)}</strong>
-                      <small>{item.available ? "Đang có sẵn" : "Hiện không có sẵn"}</small>
-                    </div>
-                    {item.actionable ? (
-                      <div className={`need-response-item__actions ${styles.responseActions}`}>
-                        <Link className="button-primary" href={`/checkout?${new URLSearchParams({source:"NEED_REQUEST",needRequestId:needId,needResponseItemId:item.id,quantity:"1",...(addressId ? {addressId} : {})})}`}>Xem lại và đặt hàng</Link>
-                      </div>
-                    ) : <span className={`need-response-item__unavailable ${styles.unavailable}`}>Không còn khả dụng</span>}
+        {responses.map((response) => {
+          const isNearest = response.status === "ACTIVE" && response.distanceMeters != null && response.distanceMeters === minDistance;
+          const initialLetter = (response.merchantName || "N").charAt(0).toUpperCase();
+
+          return (
+            <article className={`need-response-card ${styles.responseCard}`} key={response.id}>
+              <div className={`need-response-card__merchant ${styles.merchant}`}>
+                <div className="need-response-card__merchant-profile">
+                  <div className="need-response-card__avatar" aria-hidden="true">
+                    <span>{initialLetter}</span>
                   </div>
-                );
-              })}
-            </div>
-          </article>
-        ))}
+                  <div>
+                    <div className="need-response-card__name-row">
+                      <h3>{response.merchantName || "Người bán"}</h3>
+                      {isNearest ? (
+                        <span className="need-badge need-badge--nearest" title="Khoảng cách ngắn nhất">
+                          <MapPin size={11} weight="bold" /> Gần nhất
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="need-response-card__location">
+                      <span>{response.merchantLocationName || "Điểm bán"}</span>
+                      {response.distanceMeters != null ? (
+                        <span> · {(response.distanceMeters / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km</span>
+                      ) : null}
+                    </p>
+                  </div>
+                </div>
+                <span className={`need-status need-status--${response.status.toLowerCase()} ${styles.merchantStatus}`}>
+                  {response.status === "ACTIVE" ? "Đang hoạt động" : "Đã rút"}
+                </span>
+              </div>
+
+              {response.note ? (
+                <div className={`need-response-card__note ${styles.note}`}>
+                  <ChatText size={15} weight="duotone" className="need-response-card__note-quote" aria-hidden="true" />
+                  <p>{response.note}</p>
+                </div>
+              ) : null}
+
+              <div className={`need-response-card__items ${styles.responseItems}`}>
+                {response.items.map((item) => {
+                  const price = item.currentPrice || item.priceAtResponse;
+                  const isBestPrice = response.status === "ACTIVE" && price?.amount != null && price.amount === minPrice;
+
+                  return (
+                    <div className={`need-response-item ${styles.responseItem}`} key={item.id}>
+                      <div className="need-response-item__info">
+                        <div className="need-response-item__title-row">
+                          {item.catalogItemId && item.catalogItemName ? (
+                            <Link href={`/items/${encodeURIComponent(item.catalogItemId)}`}>{item.catalogItemName}</Link>
+                          ) : (
+                            <span>{item.catalogItemName || "Mục phản hồi"}</span>
+                          )}
+                          {isBestPrice ? (
+                            <span className="need-badge need-badge--best-price" title="Mức giá thấp nhất trong các báo giá">
+                              <Trophy size={11} weight="bold" /> Giá tốt nhất
+                            </span>
+                          ) : null}
+                        </div>
+                        <strong className="need-response-item__price">{money(price?.amount, price?.currency)}</strong>
+                        <small className="need-response-item__availability">
+                          {item.available ? "✓ Đang có sẵn" : "✕ Hiện không có sẵn"}
+                        </small>
+                      </div>
+
+                      {item.actionable ? (
+                        <div className={`need-response-item__actions ${styles.responseActions}`}>
+                          <Link
+                            className="button-primary need-response-item__checkout-cta"
+                            aria-label="Xem lại và đặt hàng"
+                            href={`/checkout?${new URLSearchParams({
+                              source: "NEED_REQUEST",
+                              needRequestId: needId,
+                              needResponseItemId: item.id,
+                              quantity: "1",
+                              ...(addressId ? { addressId } : {}),
+                            })}`}
+                          >
+                            <span>Xem lại và đặt hàng</span>
+                          </Link>
+                        </div>
+                      ) : (
+                        <span className={`need-response-item__unavailable ${styles.unavailable}`}>Không còn khả dụng</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          );
+        })}
       </div>
       {moreError ? <p className="form-alert" role="alert">Không thể tải thêm phản hồi. Vui lòng thử lại.</p> : null}
       {nextCursor ? <button className="button-secondary" type="button" disabled={loadingMore}

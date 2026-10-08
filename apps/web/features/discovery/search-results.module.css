@@ -1,6 +1,6 @@
 .screen {
   min-height: calc(100dvh - var(--consumer-nav-height, 64px));
-  background: #f8fafc;
+  background: #ffffff;
   color: #0f172a;
 }
 

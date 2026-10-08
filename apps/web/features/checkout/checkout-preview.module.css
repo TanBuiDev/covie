@@ -1,29 +1,741 @@
-.screen{background:#fff;min-height:100dvh}.appBar{align-items:center;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;gap:8px;height:64px;padding:0 16px;position:sticky;top:0;z-index:10}.appBar a{align-items:center;border-radius:12px;display:flex;height:44px;justify-content:center;width:44px}.appBar h1{color:#0f172a;font-size:18px;font-weight:600;line-height:26px;margin:0}.content{display:flex;flex-direction:column;gap:12px;margin:0 auto;max-width:720px;padding:12px 16px 120px}.desktopTitle{display:none}.selectField{display:flex;flex-direction:column;font-size:14px;font-weight:600;gap:6px}.selectField select,.addressSection select{border:1px solid #e2e8f0;border-radius:12px;font:inherit;height:44px;padding:0 12px;width:100%}.addressSection,.shipping,.payment,.summary{border:1px solid #e2e8f0;border-radius:12px;padding:16px}.addressSection>div,.shipping>div{align-items:center;display:flex;justify-content:space-between}.addressSection h2,.payment h2,.summary h2{color:#0f172a;font-size:16px;line-height:24px;margin:0}.addressSection a{color:#334155;font-size:14px;font-weight:600;text-decoration:none}.addressSection>p{background:#f1f5f9;border-radius:10px;color:#475569;font-size:12px;line-height:16px;margin:12px 0 0;min-height:92px;padding:12px}.addressSection label{color:#475569;display:flex;flex-direction:column;font-size:12px;gap:6px;margin-top:12px}.fulfillment{border:0;display:flex;flex-direction:column;gap:12px;margin:0;padding:0}.fulfillment legend{height:0;overflow:hidden;position:absolute;width:0}.option,.optionSelected{align-items:flex-start;border:1px solid #e2e8f0;border-radius:12px;display:flex;gap:12px;min-height:76px;padding:12px}.optionSelected{background:#ecfdf5;border-color:#047857}.option input,.optionSelected input{accent-color:#047857;height:20px;margin:0;width:20px}.option span,.optionSelected span{display:flex;flex-direction:column;gap:4px}.option strong,.optionSelected strong{color:#0f172a;font-size:14px;line-height:20px}.option small,.optionSelected small{color:#475569;font-size:12px;line-height:16px}.shipping{min-height:108px;padding:14px 16px}.shipping div{gap:12px}.shipping strong{font-size:14px;line-height:20px}.shipping p{color:#475569;font-size:12px;line-height:16px;margin:6px 0 0}.payment{border-radius:14px;display:flex;flex-direction:column;gap:8px;padding:14px}.payment h2{font-size:14px;line-height:20px}.payment label{align-items:center;display:flex;font-size:14px;gap:8px;min-height:44px}.payment input{accent-color:#047857;height:20px;width:20px}.summary{display:flex;flex-direction:column;gap:10px}.summary h2{font-size:18px;line-height:26px}.summary dl{display:flex;flex-direction:column;gap:10px;margin:0}.summary dl div{align-items:center;display:flex;font-size:14px;justify-content:space-between;line-height:20px}.summary dt{color:#475569}.summary dd{color:#0f172a;font-weight:600;margin:0}.summary p{color:#475569;font-size:12px;line-height:16px;margin:0}.summary .negotiatedNote{color:#b45309}.previewButton,.commitBar button,.changed button,.desktopCommit{background:#047857;border:0;border-radius:12px;color:#fff;font-size:14px;font-weight:600;height:48px;padding:0 20px}.desktopCommit{display:none}.error{color:#b91c1c;font-size:14px;line-height:20px;margin:0}.commitBar{align-items:center;background:#fff;border-top:1px solid #e2e8f0;bottom:0;display:flex;height:88px;justify-content:space-between;left:0;padding:12px 16px;position:fixed;right:0;z-index:20}.commitBar div{display:flex;flex-direction:column;gap:2px}.commitBar span{color:#475569;font-size:12px;line-height:16px}.commitBar strong{color:#0f172a;font-size:18px;line-height:26px}.commitBar button{width:180px}.changed{display:flex;flex-direction:column;gap:14px}.warning{align-items:flex-start;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;display:flex;gap:12px;min-height:100px;padding:16px 12px 16px 16px}.warning div{display:flex;flex-direction:column;gap:4px}.warning h2{color:#b45309;font-size:14px;line-height:20px;margin:0}.warning p{color:#0f172a;font-size:14px;line-height:20px;margin:0}.changed>p{color:#475569;font-size:12px;line-height:16px;margin:0}@media(min-width:768px){.screen{border-left:1px solid #f1f5f9;border-right:1px solid #f1f5f9;margin:0 auto;max-width:752px}.commitBar{left:50%;max-width:752px;transform:translateX(-50%);width:100%}}.safeError{display:flex;flex-direction:column;gap:16px;padding:48px 16px}.safeError h2{color:#0f172a;font-size:18px;line-height:26px;margin:0}.safeError p{color:#475569;font-size:14px;line-height:20px;margin:0;max-width:358px}.safeError a{align-items:center;border:1px solid #e2e8f0;border-radius:12px;color:#0f172a;display:flex;font-size:14px;font-weight:600;height:48px;justify-content:center;text-decoration:none;width:220px}
-
-.addressAction{background:transparent;border:0;border-radius:8px;color:#334155;cursor:pointer;font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 8px}
-.quantityRow{flex-wrap:wrap;gap:8px;margin-top:12px}.quantityRow>strong{color:#0f172a;font-size:14px;line-height:20px}
-.safeError .previewButton{align-self:flex-start;height:48px;width:220px}
-
-@media(min-width:1024px){
-  .screen{border:0;margin:0;max-width:none;min-height:calc(100dvh - 112px)}
-  .appBar{display:none}
-  .content{display:grid;gap:16px;grid-auto-rows:min-content;grid-template-columns:minmax(0,600px) minmax(280px,320px);margin:0 auto;max-width:1024px;padding:24px 32px 64px;width:100%}
-  .desktopTitle{display:block;font-size:28px;grid-column:1/-1;line-height:36px;margin:0 0 4px}
-  .selectField,.addressSection,.fulfillment,.shipping,.payment,.error,.previewButton,.changed{grid-column:1}
-  .addressSection,.fulfillment,.shipping,.payment,.summary{border-radius:16px;padding:20px}
-  .fulfillment{border:1px solid #e2e8f0}
-  .option,.optionSelected{border:0;min-height:36px;padding:0}
-  .summary{align-self:start;grid-column:2;grid-row:2 / span 7;position:sticky;top:136px}
-  .summary h2{font-size:20px;line-height:28px}
-  .desktopCommit{align-self:flex-start;display:block;height:40px}
-  .previewButton{height:40px;justify-self:start}
-  .commitBar{display:none}
-  .safeError{margin:0 auto;max-width:1024px;padding:72px 32px}
+.screen {
+  background: #ffffff;
+  min-height: 100dvh;
 }
 
-@media(min-width:1280px){
-  .screen{min-height:calc(100dvh - 72px)}
-  .content{grid-template-columns:760px 420px;max-width:1280px;padding:32px 32px 64px}
-  .summary{top:96px}
-  .safeError{max-width:1280px;padding:72px 32px}
+.appBar {
+  align-items: center;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  gap: 8px;
+  height: 64px;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.appBar a {
+  align-items: center;
+  border-radius: 12px;
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.appBar h1 {
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 26px;
+  margin: 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 auto;
+  max-width: 720px;
+  padding: 16px 16px 120px;
+}
+
+.desktopTitle {
+  display: none;
+}
+
+/* 3-Step Checkout Stepper */
+.stepperContainer {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.stepperWrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 10px 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.stepperStep {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.stepperStepActive {
+  color: #047857;
+  font-weight: 600;
+}
+
+.stepperStepCompleted {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.stepperNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.stepperStepActive .stepperNum {
+  background: #047857;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.15);
+}
+
+.stepperStepCompleted .stepperNum {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.stepperLine {
+  flex: 1;
+  min-width: 24px;
+  max-width: 80px;
+  height: 2px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.stepperLineCompleted {
+  background: #10b981;
+}
+
+.stepperText {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .stepperText {
+    display: inline;
+    font-size: 12px;
+  }
+}
+
+.selectField {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 6px;
+}
+
+.selectField select,
+.addressSection select {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  color: #0f172a;
+  font: inherit;
+  font-size: 14px;
+  height: 44px;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.addressSection,
+.shipping,
+.payment,
+.summary {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+  padding: 18px;
+}
+
+.addressSection > div,
+.shipping > div {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.selectionTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.itemBadge {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.addressSection h2,
+.payment h2,
+.summary h2 {
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  margin: 0;
+}
+
+.addressAction {
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: #047857;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 4px 8px;
+  transition: background-color 0.15s ease;
+}
+
+.addressAction:hover {
+  background: #ecfdf5;
+}
+
+.addressCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-top: 10px;
+  padding: 12px 14px;
+}
+
+.addressCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.addressLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #0f172a;
+  font-size: 13.5px;
+}
+
+.defaultBadge {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.addressCard p,
+.addressSection > p {
+  color: #475569;
+  font-size: 13px;
+  line-height: 18px;
+  margin: 6px 0 0;
+}
+
+.addressSection label {
+  color: #475569;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.addAddressLink {
+  color: #047857;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.backProductLink {
+  color: #64748b;
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 10px;
+  text-decoration: none;
+}
+
+.backProductLink:hover {
+  color: #047857;
+}
+
+.quantityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.quantityRow > strong {
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.fulfillment {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 18px;
+}
+
+.fulfillment legend {
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.option,
+.optionSelected {
+  align-items: flex-start;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  min-height: 68px;
+  padding: 12px 14px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.option:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.optionSelected {
+  background: #ecfdf5;
+  border-color: #047857;
+}
+
+.option input,
+.optionSelected input {
+  accent-color: #047857;
+  height: 20px;
+  margin: 2px 0 0;
+  width: 20px;
+}
+
+.option span,
+.optionSelected span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.option strong,
+.optionSelected strong {
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.option small,
+.optionSelected small {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* Order Note to Neighbor */
+.orderNoteWrap {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.orderNoteLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.orderNoteInput {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #0f172a;
+  font-size: 13.5px;
+  height: 42px;
+  padding: 0 14px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.orderNoteInput:focus {
+  background: #ffffff;
+  border-color: #047857;
+  outline: none;
+}
+
+.shipping {
+  min-height: 80px;
+  padding: 16px 18px;
+}
+
+.shipping div {
+  gap: 12px;
+}
+
+.shipping strong {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.shipping p {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 16px;
+  margin: 6px 0 0;
+}
+
+.payment {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.paymentOption {
+  align-items: center;
+  display: flex;
+  font-size: 13.5px;
+  gap: 10px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+.paymentOption input {
+  accent-color: #047857;
+  height: 18px;
+  width: 18px;
+}
+
+.paymentDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary dl {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.summary dl div {
+  align-items: center;
+  display: flex;
+  font-size: 14px;
+  justify-content: space-between;
+  line-height: 20px;
+}
+
+.summary dt {
+  color: #64748b;
+}
+
+.summary dd {
+  color: #0f172a;
+  font-weight: 600;
+  margin: 0;
+}
+
+.summary p {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 16px;
+  margin: 0;
+}
+
+.summary .negotiatedNote {
+  color: #b45309;
+}
+
+.guaranteeCard {
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  color: #047857;
+  display: flex;
+  font-size: 12px;
+  gap: 6px;
+  line-height: 16px;
+  margin-top: 4px;
+  padding-top: 10px;
+}
+
+.guaranteeIcon {
+  flex-shrink: 0;
+}
+
+.previewButton,
+.commitBar button,
+.changed button,
+.desktopCommit {
+  align-items: center;
+  background: #047857;
+  border: 0;
+  border-radius: 12px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 14.5px;
+  font-weight: 600;
+  height: 48px;
+  justify-content: center;
+  padding: 0 24px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.previewButton:hover:not(:disabled),
+.commitBar button:hover:not(:disabled),
+.desktopCommit:hover:not(:disabled) {
+  background: #065f46;
+}
+
+.previewButton:disabled,
+.commitBar button:disabled,
+.desktopCommit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.desktopCommit {
+  display: none;
+}
+
+.error {
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 18px;
+  margin: 0;
+}
+
+.commitBar {
+  align-items: center;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  bottom: 0;
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+  display: flex;
+  height: 80px;
+  justify-content: space-between;
+  left: 0;
+  padding: 12px 16px;
+  position: fixed;
+  right: 0;
+  z-index: 20;
+}
+
+.commitBar div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.commitBar span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.commitBar strong {
+  color: #047857;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 26px;
+}
+
+.commitBar button {
+  width: 170px;
+}
+
+.changed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.safeError {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 40px auto;
+  max-width: 480px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.safeError h2 {
+  color: #0f172a;
+  font-size: 20px;
+  line-height: 28px;
+  margin: 0;
+}
+
+.safeError p {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+}
+
+.safeError a {
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  color: #0f172a;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 600;
+  height: 44px;
+  justify-content: center;
+  text-decoration: none;
+  width: 200px;
+}
+
+@media (min-width: 768px) {
+  .screen {
+    border-left: 1px solid #f1f5f9;
+    border-right: 1px solid #f1f5f9;
+    margin: 0 auto;
+    max-width: 752px;
+  }
+  .commitBar {
+    left: 50%;
+    max-width: 752px;
+    transform: translateX(-50%);
+    width: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .screen {
+    border: 0;
+    margin: 0;
+    max-width: none;
+    min-height: calc(100dvh - 112px);
+  }
+  .appBar {
+    display: none;
+  }
+  .content {
+    box-sizing: border-box;
+    display: grid;
+    gap: 24px;
+    grid-auto-rows: min-content;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    margin: 0 auto;
+    max-width: 1040px;
+    padding: 24px 20px 64px;
+    width: 100%;
+  }
+  .desktopTitle {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    grid-column: 1 / -1;
+    letter-spacing: -0.015em;
+    line-height: 36px;
+    margin: 0 0 4px;
+  }
+  .stepperContainer {
+    grid-column: 1 / -1;
+    margin-bottom: 8px;
+  }
+  .stepperWrap {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .selectField,
+  .addressSection,
+  .fulfillment,
+  .orderNoteWrap,
+  .shipping,
+  .payment,
+  .error,
+  .previewButton,
+  .changed {
+    grid-column: 1;
+  }
+  .summary {
+    align-self: start;
+    box-sizing: border-box;
+    grid-column: 2;
+    grid-row: 3 / span 8;
+    position: sticky;
+    top: 96px;
+    width: 100%;
+    max-width: 340px;
+  }
+  .desktopCommit {
+    display: flex;
+    height: 44px;
+    width: 100%;
+  }
+  .previewButton {
+    height: 44px;
+    justify-self: start;
+  }
+  .commitBar {
+    display: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .screen {
+    min-height: calc(100dvh - 72px);
+  }
 }

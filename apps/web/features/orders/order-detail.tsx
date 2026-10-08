@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowLeft, ForkKnife, Package, Phone, ShoppingBag, Storefront, Wrench } from "@phosphor-icons/react";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { CovieApiError } from "@/lib/api/api-error";
+import { formatDateTime } from "@/lib/format/time";
 import { formatMoney, negotiatedShippingCopy } from "@/lib/format/money";
 import { statusCopy } from "@/lib/format/status-copy";
 import { getOrder, type OrderDetail } from "./order-api";
@@ -14,6 +16,41 @@ import mobileStyles from "./order-detail-mobile.module.css";
 import { OrderStatusLabel } from "./order-status";
 import { OrderTimeline } from "./order-timeline";
 import { OrderReviewSection } from "@/features/reviews/order-review-section";
+
+function getItemVisual(name?: string | null, orderType?: string | null) {
+  const lower = (name ?? "").toLowerCase();
+  if (orderType === "SERVICE" || lower.includes("sửa") || lower.includes("dịch vụ") || lower.includes("bảo dưỡng")) {
+    return {
+      icon: <Wrench size={18} weight="duotone" />,
+      bg: "#ecfdf5",
+      color: "#059669",
+    };
+  }
+  if (
+    lower.includes("bánh") ||
+    lower.includes("chè") ||
+    lower.includes("trà") ||
+    lower.includes("cà phê") ||
+    lower.includes("cơm") ||
+    lower.includes("phở") ||
+    lower.includes("ăn") ||
+    lower.includes("kem") ||
+    lower.includes("nước") ||
+    lower.includes("món") ||
+    lower.includes("thực phẩm")
+  ) {
+    return {
+      icon: <ForkKnife size={18} weight="duotone" />,
+      bg: "#fffbeb",
+      color: "#d97706",
+    };
+  }
+  return {
+    icon: <Package size={18} weight="duotone" />,
+    bg: "#f1f5f9",
+    color: "#475569",
+  };
+}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -55,26 +92,163 @@ function BuyerOrderDetail({ order, error, refresh }: { order: OrderDetail; error
     <>
       <OrderDetailMobile order={order} error={error} onChanged={refresh} />
       <article className={`order-detail ${mobileStyles.desktopOnly}`}>
-        <header className="order-detail__page-header"><h1>Đơn {order.orderCode ?? order.id ?? ""}</h1></header>
+        <div className="order-detail__top-nav">
+          <Link href="/orders" className="order-detail__back-link">
+            <ArrowLeft size={16} weight="bold" />
+            <span>Quay lại danh sách đơn</span>
+          </Link>
+        </div>
+        <header className="order-detail__page-header">
+          <div className="order-detail__title-wrap">
+            <h1>Đơn {order.orderCode ?? order.id ?? ""}</h1>
+            <OrderStatusLabel status={order.status} />
+          </div>
+          {order.createdAt ? (
+            <p className="order-detail__created-date">Đặt lúc {formatDateTime(order.createdAt)}</p>
+          ) : null}
+        </header>
         {error ? <p className="order-detail__alert" role="status">{error}</p> : null}
         <div className="order-detail__columns">
           <section className="order-detail__summary" aria-labelledby="order-summary-title">
-            <div className="order-detail__identity"><h2 id="order-summary-title">{order.orderCode ?? "Đơn hàng"}</h2><OrderStatusLabel status={order.status} /></div>
-            <p className="order-detail__merchant">{order.merchant?.merchantId ? `Người bán · ${order.merchant.merchantId}` : "Người bán"}</p>
-            {address ? <p>{address}</p> : pickup ? <p>{pickup}</p> : null}
-            {contact ? <p>Liên hệ: {contact}</p> : null}
-            <OrderTimeline events={order.timeline} status={order.status} createdAt={order.createdAt} confirmedAt={order.confirmedAt} completedAt={order.completedAt} closedAt={order.closedAt} />
-            {order.cancellation ? <div className="order-detail__context-card" aria-label="Yêu cầu hủy"><strong>Yêu cầu hủy</strong><p>Trạng thái: {order.cancellation.status ?? "—"}</p>{order.cancellation.reasonText || order.cancellation.reasonCode ? <p>{order.cancellation.reasonText ?? order.cancellation.reasonCode}</p> : null}{order.cancellation.responseNote ? <p>{order.cancellation.responseNote}</p> : null}</div> : null}
-            {order.issue ? <div className="order-detail__context-card order-detail__context-card--issue" aria-label="Vấn đề đơn hàng"><strong>Vấn đề đang được ghi nhận</strong><p>{order.issue.reasonText ?? order.issue.type ?? "CoVie đang lưu trạng thái do hệ thống trả về."}</p>{order.issue.status ? <small>{order.issue.status}</small> : null}</div> : null}
+            <div className="order-detail__identity">
+              <h2 id="order-summary-title">{order.orderCode ?? "Đơn hàng"}</h2>
+              <OrderStatusLabel status={order.status} />
+            </div>
+
+            <OrderTimeline
+              events={order.timeline}
+              status={order.status}
+              createdAt={order.createdAt}
+              confirmedAt={order.confirmedAt}
+              completedAt={order.completedAt}
+              closedAt={order.closedAt}
+            />
+
+            <div className="order-detail__card-block">
+              <h3>{order.type === "SERVICE" ? "Chi tiết dịch vụ" : "Sản phẩm trong đơn"}</h3>
+              <div className="order-detail__items">
+                {(order.items ?? []).map((item, index) => {
+                  const name = itemName(item.snapshot);
+                  const visual = getItemVisual(name, item.type ?? order.type);
+                  return (
+                    <div className="order-detail__item" key={item.id ?? `${item.locationVariantId ?? "item"}-${index}`}>
+                      <div className="order-detail__item-info">
+                        <span
+                          className="order-detail__item-icon"
+                          style={{ backgroundColor: visual.bg, color: visual.color, borderColor: visual.bg }}
+                          aria-hidden="true"
+                        >
+                          {visual.icon}
+                        </span>
+                        <div className="order-detail__item-text">
+                          <strong>{name}</strong>
+                          <span className="order-detail__item-qty">
+                            {item.quantity ?? 1} × {name} ({money(item.unitPrice, item.currency ?? currency)})
+                          </span>
+                        </div>
+                      </div>
+                      <strong className="order-detail__item-total">
+                        {money(item.lineTotal ?? (item.unitPrice != null && item.quantity != null ? item.unitPrice * item.quantity : item.unitPrice), item.currency ?? currency)}
+                      </strong>
+                    </div>
+                  );
+                })}
+                {!order.items?.length ? <p>Chi tiết sản phẩm chưa có trong phản hồi hiện tại.</p> : null}
+              </div>
+            </div>
+
+            <div className="order-detail__card-block">
+              <h3>Thông tin nhận hàng & giao nhận</h3>
+              <div className="order-detail__fulfillment-info">
+                <p className="order-detail__fulfillment">
+                  <strong>Hình thức: </strong>
+                  {fulfillmentCopy(order)}
+                  {order.pricing?.shippingFee != null && currency ? ` · Phí giao ${money(order.pricing.shippingFee, currency)}` : ""}
+                </p>
+                {address ? <p><strong>Địa chỉ nhận:</strong> {address}</p> : pickup ? <p><strong>Điểm nhận:</strong> {pickup}</p> : null}
+              </div>
+            </div>
+
+            {order.cancellation ? (
+              <div className="order-detail__context-card" aria-label="Yêu cầu hủy">
+                <strong>Yêu cầu hủy đơn</strong>
+                <p>Trạng thái: {order.cancellation.status ?? "—"}</p>
+                {order.cancellation.reasonText || order.cancellation.reasonCode ? (
+                  <p>{order.cancellation.reasonText ?? order.cancellation.reasonCode}</p>
+                ) : null}
+                {order.cancellation.responseNote ? <p>{order.cancellation.responseNote}</p> : null}
+              </div>
+            ) : null}
+            {order.issue ? (
+              <div className="order-detail__context-card order-detail__context-card--issue" aria-label="Vấn đề đơn hàng">
+                <strong>Vấn đề đang được ghi nhận</strong>
+                <p>{order.issue.reasonText ?? order.issue.type ?? "CoVie đang lưu trạng thái do hệ thống trả về."}</p>
+                {order.issue.status ? <small>{order.issue.status}</small> : null}
+              </div>
+            ) : null}
           </section>
+
           <aside className="order-detail__aside" aria-label="Sản phẩm và thao tác">
-            <h2>{order.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"}</h2>
-            <div className="order-detail__items">{(order.items ?? []).map((item, index) => <div className="order-detail__item" key={item.id ?? `${item.locationVariantId ?? "item"}-${index}`}><span>{item.quantity ?? 1} × {itemName(item.snapshot)}</span><strong>{money(item.lineTotal ?? (item.unitPrice != null && item.quantity != null ? item.unitPrice * item.quantity : item.unitPrice), item.currency ?? currency)}</strong></div>)}{!order.items?.length ? <p>Chi tiết sản phẩm chưa có trong phản hồi hiện tại.</p> : null}</div>
-            <p className="order-detail__fulfillment">{fulfillmentCopy(order)}{order.pricing?.shippingFee != null && currency ? ` · Phí giao ${money(order.pricing.shippingFee, currency)}` : ""}</p>
-            <div className="order-detail__total"><span>Tổng theo đơn</span><strong>{money(total, currency)}</strong></div>
-            <h3>Hành động khả dụng</h3><OrderActions order={order} actorView="BUYER" onChanged={refresh} />
-            {!order.allowedActions?.length ? <p className="order-detail__no-actions">Không có thao tác nào được backend cho phép ở trạng thái hiện tại.</p> : null}
-            {(order.items ?? []).map((item, index) => <OrderReviewSection key={item.id ?? `review-${index}`} item={item} orderId={order.id} onChanged={refresh} />)}
+            <div className="order-detail__merchant-box">
+              <div className="order-detail__merchant-header">
+                <Storefront size={22} weight="duotone" className="order-detail__merchant-icon" />
+                <div>
+                  <p className="order-detail__merchant">{order.merchant?.merchantId ? `Người bán · ${order.merchant.merchantId}` : "Người bán"}</p>
+                  <small className="order-detail__merchant-note">Cư dân nội khu CoVie</small>
+                </div>
+              </div>
+              {contact ? (
+                <div className="order-detail__merchant-contact">
+                  <span>Liên hệ: {contact}</span>
+                  <a href={`tel:${contact.replace(/\D/g, "")}`} className="order-detail__merchant-call-btn">
+                    <Phone size={14} weight="fill" /> Gọi
+                  </a>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="order-detail__pricing-box">
+              <h3>Tóm tắt thanh toán</h3>
+              <div className="order-detail__pricing-row">
+                <span>Tiền hàng</span>
+                <strong>{money(order.pricing?.subtotal, currency)}</strong>
+              </div>
+              <div className="order-detail__pricing-row">
+                <span>Phí giao hàng</span>
+                <span>
+                  {order.pricing?.shippingFeeType === "NEGOTIATED"
+                    ? negotiatedShippingCopy()
+                    : money(order.pricing?.shippingFee, currency)}
+                </span>
+              </div>
+              {order.paymentMethod ? (
+                <div className="order-detail__pricing-row">
+                  <span>Thanh toán</span>
+                  <span>{order.paymentMethod === "COD" ? "COD khi nhận" : "Chuyển khoản thỏa thuận"}</span>
+                </div>
+              ) : null}
+              <div className="order-detail__total">
+                <span>Tổng theo đơn</span>
+                <strong>{money(total, currency)}</strong>
+              </div>
+            </div>
+
+            <div className="order-detail__actions-box">
+              <h3>Hành động khả dụng</h3>
+              <OrderActions order={order} actorView="BUYER" onChanged={refresh} />
+              {!order.allowedActions?.length ? (
+                <p className="order-detail__no-actions">Không có thao tác nào được backend cho phép ở trạng thái hiện tại.</p>
+              ) : null}
+            </div>
+
+            {(order.items ?? []).map((item, index) => (
+              <OrderReviewSection key={item.id ?? `review-${index}`} item={item} orderId={order.id} onChanged={refresh} />
+            ))}
+
+            <Link href="/" className="button-secondary order-detail__reorder-cta">
+              <ShoppingBag size={16} weight="bold" />
+              <span>Tiếp tục mua sắm</span>
+            </Link>
           </aside>
         </div>
       </article>

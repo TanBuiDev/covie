@@ -49,18 +49,28 @@ describe("AdSlot", () => {
     fireEvent.click(link);
     expect(trackAdEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "ad-1" }), "CLICK", expect.any(String));
   });
-  it("offers rotation controls and pause for multiple campaigns", async () => {
+  it("offers inside dots to switch between multiple campaigns", async () => {
     vi.mocked(listActiveAds).mockResolvedValue([first, { ...first, id: "ad-2", deliveryToken: "token-2", title: "Gian hàng nổi bật" }] as never);
     render(<AdSlot placement="IN_FEED" />);
-    fireEvent.click(await screen.findByRole("button", { name: "Quảng cáo tiếp theo" }));
+    const dot2 = await screen.findByRole("tab", { name: "Chuyển đến quảng cáo 2" });
+    fireEvent.click(dot2);
     expect(screen.getByRole("link", { name: "Gian hàng nổi bật — Xem ngay" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Tạm dừng xoay quảng cáo" }));
-    expect(screen.getByRole("button", { name: "Tiếp tục xoay quảng cáo" })).toBeInTheDocument();
   });
   it("fails closed for unsafe destinations even if API data is invalid", async () => {
     vi.mocked(listActiveAds).mockResolvedValue([{ ...first, targetUrl: "javascript:alert(1)" }] as never);
     const { container } = render(<AdSlot placement="IN_FEED" />);
     await waitFor(() => expect(listActiveAds).toHaveBeenCalled());
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("allows dismissing and restoring sidebar left rail banner", async () => {
+    render(<AdSlot placement="SIDEBAR_LEFT" />);
+    const dismissBtn = await screen.findByRole("button", { name: "Tạm ẩn quảng cáo" });
+    fireEvent.click(dismissBtn);
+    expect(screen.queryByRole("button", { name: "Tạm ẩn quảng cáo" })).not.toBeInTheDocument();
+    const restoreBtn = screen.getByRole("button", { name: "Mở lại quảng cáo bên trái" });
+    expect(restoreBtn).toBeInTheDocument();
+    fireEvent.click(restoreBtn);
+    expect(await screen.findByRole("button", { name: "Tạm ẩn quảng cáo" })).toBeInTheDocument();
   });
 });

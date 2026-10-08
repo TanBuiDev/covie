@@ -2,7 +2,18 @@
 
 import type { components } from "@covie/api-client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  CaretRight,
+  CheckCircle,
+  ForkKnife,
+  LockKey,
+  MagnifyingGlass,
+  Package,
+  Sparkle,
+  Wrench,
+  X,
+} from "@phosphor-icons/react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -13,6 +24,41 @@ import { CovieApiError } from "@/lib/api/api-error";
 import { merchantOrders, myOrders, type OrderSummary } from "./order-api";
 import { OrderStatusLabel } from "./order-status";
 import styles from "./order-list-mobile.module.css";
+
+function getItemVisual(name?: string | null, orderType?: string | null) {
+  const lower = (name ?? "").toLowerCase();
+  if (orderType === "SERVICE" || lower.includes("sửa") || lower.includes("dịch vụ") || lower.includes("bảo dưỡng")) {
+    return {
+      icon: <Wrench size={22} weight="duotone" />,
+      bg: "#ecfdf5",
+      color: "#059669",
+    };
+  }
+  if (
+    lower.includes("bánh") ||
+    lower.includes("chè") ||
+    lower.includes("trà") ||
+    lower.includes("cà phê") ||
+    lower.includes("cơm") ||
+    lower.includes("phở") ||
+    lower.includes("ăn") ||
+    lower.includes("kem") ||
+    lower.includes("nước") ||
+    lower.includes("món") ||
+    lower.includes("thực phẩm")
+  ) {
+    return {
+      icon: <ForkKnife size={22} weight="duotone" />,
+      bg: "#fffbeb",
+      color: "#d97706",
+    };
+  }
+  return {
+    icon: <Package size={22} weight="duotone" />,
+    bg: "#f1f5f9",
+    color: "#475569",
+  };
+}
 
 type Location = components["schemas"]["MerchantLocationResponse"];
 
@@ -45,10 +91,80 @@ export function OrderList({
   const [isAuthError, setIsAuthError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "DELIVERING" | "COMPLETED" | "CANCELLED">("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
   const morePending = useRef(false);
   const generation = useRef(0);
   const [moreError, setMoreError] = useState(false);
   const buyer = !sellerBase && !merchantId;
+
+  const allOrders = useMemo(() => orders ?? [], [orders]);
+  const tabs = useMemo(() => [
+    { key: "ALL" as const, label: "Tất cả", count: allOrders.length },
+    {
+      key: "PENDING" as const,
+      label: "Chờ xác nhận",
+      count: allOrders.filter((o) => o.status === "PENDING_CONFIRMATION").length,
+    },
+    {
+      key: "DELIVERING" as const,
+      label: "Đang giao",
+      count: allOrders.filter(
+        (o) =>
+          o.status === "CONFIRMED" ||
+          o.status === "OUT_FOR_DELIVERY" ||
+          o.status === "READY_FOR_PICKUP" ||
+          o.status === "AWAITING_BUYER_CONFIRMATION",
+      ).length,
+    },
+    {
+      key: "COMPLETED" as const,
+      label: "Hoàn tất",
+      count: allOrders.filter((o) => o.status === "COMPLETED").length,
+    },
+    {
+      key: "CANCELLED" as const,
+      label: "Đã hủy",
+      count: allOrders.filter(
+        (o) =>
+          o.status?.startsWith("CANCEL") ||
+          o.status === "REJECTED_BY_SELLER" ||
+          o.status === "EXPIRED" ||
+          o.status === "CLOSED_WITH_ISSUE",
+      ).length,
+    },
+  ], [allOrders]);
+
+  const filteredOrders = useMemo(() => {
+    return allOrders.filter((order) => {
+      if (statusFilter === "PENDING" && order.status !== "PENDING_CONFIRMATION") return false;
+      if (
+        statusFilter === "DELIVERING" &&
+        order.status !== "CONFIRMED" &&
+        order.status !== "OUT_FOR_DELIVERY" &&
+        order.status !== "READY_FOR_PICKUP" &&
+        order.status !== "AWAITING_BUYER_CONFIRMATION"
+      )
+        return false;
+      if (statusFilter === "COMPLETED" && order.status !== "COMPLETED") return false;
+      if (
+        statusFilter === "CANCELLED" &&
+        !order.status?.startsWith("CANCEL") &&
+        order.status !== "REJECTED_BY_SELLER" &&
+        order.status !== "EXPIRED" &&
+        order.status !== "CLOSED_WITH_ISSUE"
+      )
+        return false;
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const codeMatch = order.orderCode?.toLowerCase().includes(q);
+        const itemMatch = order.items?.some((i) => i.name?.toLowerCase().includes(q));
+        if (!codeMatch && !itemMatch) return false;
+      }
+      return true;
+    });
+  }, [allOrders, statusFilter, searchQuery]);
 
   useEffect(() => {
     let active = true;
@@ -125,13 +241,29 @@ export function OrderList({
 
   if (buyer) {
     if (error) {
-
       if (isAuthError) {
         return (
-          <section className={`buyer-orders-empty ${styles.state}`} aria-label="Đăng nhập để xem đơn hàng">
+          <section className={`buyer-orders-empty buyer-orders-auth-card ${styles.state}`} aria-label="Đăng nhập để xem đơn hàng">
+            <div className="buyer-orders-auth-badge">
+              <LockKey size={32} weight="duotone" />
+            </div>
             <h2>Đăng nhập để xem đơn hàng</h2>
             <p>Vui lòng đăng nhập tài khoản CoVie để quản lý và theo dõi trạng thái các đơn hàng của bạn.</p>
-            <Link className="button-primary" href="/login?returnTo=%2Forders">Đăng nhập ngay</Link>
+            <div className="buyer-orders-auth-benefits">
+              <div className="buyer-orders-auth-benefit-item">
+                <CheckCircle size={16} weight="fill" className="text-emerald" />
+                <span>Theo dõi tiến trình đơn hàng theo thời gian thực</span>
+              </div>
+              <div className="buyer-orders-auth-benefit-item">
+                <CheckCircle size={16} weight="fill" className="text-emerald" />
+                <span>Liên hệ trao đổi trực tiếp với người bán nội khu</span>
+              </div>
+              <div className="buyer-orders-auth-benefit-item">
+                <CheckCircle size={16} weight="fill" className="text-emerald" />
+                <span>Đánh giá món ăn & dịch vụ để tích lũy uy tín cư dân</span>
+              </div>
+            </div>
+            <Link className="button-primary buyer-orders-auth-btn" href="/login?returnTo=%2Forders">Đăng nhập ngay</Link>
           </section>
         );
       }
@@ -161,6 +293,9 @@ export function OrderList({
     if (!orders.length) {
       return (
         <section className={`buyer-orders-empty ${styles.state}`} aria-label="Chưa có đơn hàng">
+          <div className="buyer-orders-empty-icon-surface">
+            <Package size={44} weight="duotone" />
+          </div>
           <h2>Chưa có đơn hàng</h2>
           <p>Các đơn mua và dịch vụ của bạn sẽ xuất hiện tại đây.</p>
           <Link className="button-primary" href="/">Khám phá</Link>
@@ -170,34 +305,144 @@ export function OrderList({
 
     return (
       <div className="buyer-orders-content">
-        <h2 className="buyer-orders-section-title">Đơn gần đây</h2>
-        <section className={`orders-ledger buyer-orders-ledger ${styles.ledger}`} aria-label="Danh sách đơn hàng">
-          {orders.map((order) => order.id ? (
-            <Link className={`order-row buyer-order-row ${styles.card}`} key={order.id} href={`/orders/${encodeURIComponent(order.id)}`}>
-              <div className={`buyer-order-main ${styles.meta}`}>
-                <div className={`buyer-order-heading ${styles.heading}`}>
-                  <strong>{order.orderCode ?? "Đơn hàng"}</strong>
+        {/* Toolbar: Search & Status Filter Tabs */}
+        <div className="buyer-orders-toolbar">
+          <div className="buyer-orders-search">
+            <MagnifyingGlass size={18} className="buyer-orders-search-icon" aria-hidden="true" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm theo mã đơn hoặc tên món..."
+              aria-label="Tìm kiếm đơn hàng"
+              className="buyer-orders-search-input"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="buyer-orders-search-clear"
+                aria-label="Xóa tìm kiếm"
+              >
+                <X size={14} />
+              </button>
+            ) : null}
+          </div>
+
+          <div className="buyer-orders-tabs" role="tablist" aria-label="Lọc trạng thái đơn hàng">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === tab.key}
+                className={`buyer-orders-tab ${statusFilter === tab.key ? "buyer-orders-tab--active" : ""}`}
+                onClick={() => setStatusFilter(tab.key)}
+              >
+                <span>{tab.label}</span>
+                {tab.count > 0 ? <span className="buyer-orders-tab-count">{tab.count}</span> : null}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filteredOrders.length === 0 ? (
+          <div className="buyer-orders-filtered-empty" role="status">
+            <Package size={36} weight="duotone" className="buyer-orders-empty-icon" />
+            <p>Không tìm thấy đơn hàng nào phù hợp với bộ lọc hiện tại.</p>
+            <button
+              type="button"
+              className="button-secondary"
+              onClick={() => { setStatusFilter("ALL"); setSearchQuery(""); }}
+            >
+              Đặt lại bộ lọc
+            </button>
+          </div>
+        ) : (
+          <section className={`orders-ledger buyer-orders-ledger ${styles.ledger}`} aria-label="Danh sách đơn hàng">
+            {filteredOrders.map((order) => order.id ? (
+              <Link className={`order-row buyer-order-row ${styles.card}`} key={order.id} href={`/orders/${encodeURIComponent(order.id)}`}>
+                {/* 1. Header Row */}
+                <div className={`buyer-order-card__header ${styles.heading}`}>
+                  <div className="buyer-order-card__meta-left">
+                    <span className="buyer-order-code-badge buyer-order-code-pill">
+                      <strong>{order.orderCode ?? "Đơn hàng"}</strong>
+                    </span>
+                    <span className={`buyer-order-type ${styles.type}`}>
+                      {order.type === "SERVICE" ? "Đơn dịch vụ" : order.type === "PRODUCT" ? "Đơn sản phẩm" : "Đơn hàng"}
+                    </span>
+                    <span className="buyer-order-dot-separator" aria-hidden="true">·</span>
+                    {order.updatedAt ? (
+                      <small className={styles.date}>Cập nhật {formatDateTime(order.updatedAt)}</small>
+                    ) : order.createdAt ? (
+                      <small className={styles.date}>Tạo {formatDateTime(order.createdAt)}</small>
+                    ) : null}
+                  </div>
                   <OrderStatusLabel status={order.status} />
                 </div>
-                <span className={`buyer-order-type ${styles.type}`}>
-                  {order.type === "SERVICE" ? "Đơn dịch vụ" : order.type === "PRODUCT" ? "Đơn sản phẩm" : "Đơn hàng"}
-                </span>
-                {order.items?.length ? <ul className={styles.items} aria-label="Món trong đơn">
-                  {order.items.map((item, index) => <li key={index}>{item.quantity?.toLocaleString("vi-VN") ?? "—"} × {item.name?.trim() || "Mục đơn hàng"}</li>)}
-                </ul> : null}
-                <StoredOrderPrice order={order} />
-                {order.updatedAt ? <small className={styles.date}>Cập nhật {formatDateTime(order.updatedAt)}</small> : order.createdAt ? (
-                  <small className={styles.date}>Tạo {formatDateTime(order.createdAt)}</small>
-                ) : null}
-              </div>
-              <span className={`button-secondary buyer-order-detail-action ${styles.detailAction}`}>
-                Xem chi tiết
-              </span>
-            </Link>
-          ) : null)}
-        </section>
+
+                {/* 2. Items & Pricing Body */}
+                <div className="buyer-order-card__body">
+                  <div className="buyer-order-card__items-section">
+                    {order.items?.length ? (
+                      <ul className={`buyer-order-card__items-list ${styles.items}`} aria-label="Món trong đơn">
+                        {order.items.map((item, index) => {
+                          const visual = getItemVisual(item.name, order.type);
+                          return (
+                            <li key={index} className="buyer-order-item-line">
+                              <div
+                                className="buyer-order-item-visual"
+                                style={{ backgroundColor: visual.bg, color: visual.color }}
+                                aria-hidden="true"
+                              >
+                                {visual.icon}
+                              </div>
+                              <div className="buyer-order-item-info">
+                                <span className="buyer-order-item-name">{item.name?.trim() || "Mục đơn hàng"}</span>
+                                <span className="buyer-order-item-qty">
+                                  {item.quantity?.toLocaleString("vi-VN") ?? "—"} × {item.name?.trim() || "Mục đơn hàng"}
+                                </span>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <p className="buyer-order-no-items">Không có thông tin món trong đơn</p>
+                    )}
+                  </div>
+
+                  <div className="buyer-order-card__pricing-section">
+                    <StoredOrderPrice order={order} />
+                  </div>
+                </div>
+
+                {/* 3. Footer Row: Actions & Hints */}
+                <div className="buyer-order-card__footer">
+                  <div className="buyer-order-card__hints">
+                    {order.status === "COMPLETED" ? (
+                      <span className="buyer-order-badge-hint">
+                        <Sparkle size={14} weight="fill" /> Có thể đánh giá
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="buyer-order-card-actions">
+                    <span className={`button-secondary buyer-order-detail-action ${styles.detailAction}`}>
+                      <span>Xem chi tiết</span>
+                      <CaretRight size={14} weight="bold" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ) : null)}
+          </section>
+        )}
         {moreError ? <p role="alert">Không thể tải thêm đơn hàng. Vui lòng thử lại.</p> : null}
-        {nextCursor ? <button className="button-secondary" type="button" onClick={() => void loadMore()} disabled={loadingMore}>{loadingMore ? "Đang tải…" : "Tải thêm đơn hàng"}</button> : null}
+        {nextCursor ? (
+          <button className="button-secondary buyer-orders-more-btn" type="button" onClick={() => void loadMore()} disabled={loadingMore}>
+            {loadingMore ? "Đang tải…" : "Tải thêm đơn hàng"}
+          </button>
+        ) : null}
       </div>
     );
   }

@@ -52,9 +52,7 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1366, height: 768 
       const slot = page.locator('[data-ad-placement="IN_FEED"]').first();
       await slot.scrollIntoViewIfNeeded();
       await expect.poll(() => events.some(event => event.type === "IMPRESSION" && event.deliveryToken === "IN_FEED-0")).toBe(true);
-      await slot.getByRole("button", { name: "Tạm dừng xoay quảng cáo" }).click();
-      await expect(slot.getByRole("button", { name: "Tiếp tục xoay quảng cáo" })).toBeVisible();
-      await slot.getByRole("button", { name: "Quảng cáo tiếp theo" }).click();
+      await slot.getByRole("tab", { name: "Chuyển đến quảng cáo 2" }).click();
       await expect(slot.getByRole("link", { name: "Gian hàng nổi bật — Xem ngay" })).toBeVisible();
       await page.screenshot({ path: resolve(directory, `${path === "/" ? "home" : "search"}-${viewport.width}.png`) });
     }
