@@ -5,7 +5,7 @@ import { CartAppBar } from "@/features/cart/cart-app-bar";
 import styles from "@/features/cart/cart-list.module.css";
 
 export default async function CartPage() {
-  await requireUser();
+  await requireUser("/cart");
   const client = await createServerReadClient();
   const { data, response } = await client.GET("/api/v1/me/carts");
 

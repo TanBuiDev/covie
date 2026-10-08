@@ -2,17 +2,32 @@
 
 import type { components } from "@covie/api-client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { CoVieIcon } from "@/components/ui/covie-icon";
 import { formatDateTime } from "@/lib/format/time";
+import { formatMoney } from "@/lib/format/money";
+import { CovieApiError } from "@/lib/api/api-error";
 import { merchantOrders, myOrders, type OrderSummary } from "./order-api";
 import { OrderStatusLabel } from "./order-status";
 import styles from "./order-list-mobile.module.css";
 
 type Location = components["schemas"]["MerchantLocationResponse"];
+
+function StoredOrderPrice({ order }: { order: OrderSummary }) {
+  const pricing = order.pricing;
+  if (!pricing) return null;
+  const totalKnown = pricing.totalAmount != null;
+  const amount = totalKnown ? pricing.totalAmount : pricing.knownTotal;
+  if (amount == null || !pricing.currency) return null;
+  return <div className={styles.pricing}>
+    <small>{totalKnown ? "Tổng tiền" : "Số tiền đã biết"}</small>
+    <strong>{formatMoney({ amount, currency: pricing.currency })}</strong>
+    {!totalKnown && pricing.shippingFeeType === "NEGOTIATED" ? <small>Phí giao hàng cần thỏa thuận.</small> : null}
+  </div>;
+}
 
 export function OrderList({
   sellerBase,
@@ -27,26 +42,43 @@ export function OrderList({
   const [nextCursor, setNextCursor] = useState<string>();
   const [locationId, setLocationId] = useState("");
   const [error, setError] = useState<string>();
+  const [isAuthError, setIsAuthError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const morePending = useRef(false);
+  const generation = useRef(0);
+  const [moreError, setMoreError] = useState(false);
   const buyer = !sellerBase && !merchantId;
 
   useEffect(() => {
     let active = true;
+    const effectGeneration = ++generation.current;
+    morePending.current = false;
     void (merchantId ? merchantOrders(merchantId, { locationId: locationId || undefined, limit: 20 }) : myOrders())
       .then((page) => {
         if (!active) return;
+        setLoadingMore(false);
+        setMoreError(false);
         setOrders(page.items ?? []);
-        setNextCursor(merchantId ? page.nextCursor : undefined);
+        setNextCursor(page.nextCursor);
         setError(undefined);
+        setIsAuthError(false);
       })
       .catch((cause: unknown) => {
-        if (active) setError(cause instanceof Error ? cause.message : "Không thể tải đơn hàng.");
+        if (active) {
+          setLoadingMore(false);
+          setMoreError(false);
+          setIsAuthError(cause instanceof CovieApiError && cause.status === 401);
+          setError(cause instanceof Error ? cause.message : "Không thể tải đơn hàng.");
+        }
       });
-    return () => { active = false; };
+    return () => { active = false; generation.current = effectGeneration + 1; };
   }, [merchantId, locationId, reloadKey]);
 
   function changeLocation(nextLocationId: string) {
+    generation.current++;
+    setLoadingMore(false);
+    setMoreError(false);
     setLocationId(nextLocationId);
     setOrders(undefined);
     setNextCursor(undefined);
@@ -54,6 +86,9 @@ export function OrderList({
   }
 
   function reload() {
+    generation.current++;
+    setLoadingMore(false);
+    setMoreError(false);
     setOrders(undefined);
     setNextCursor(undefined);
     setError(undefined);
@@ -61,35 +96,42 @@ export function OrderList({
   }
 
   async function loadMore() {
-    if (!merchantId || !nextCursor || loadingMore) return;
+    if (!nextCursor || morePending.current) return;
+    morePending.current = true;
+    const requestGeneration = generation.current;
     setLoadingMore(true);
+    setMoreError(false);
     setError(undefined);
     try {
-      const page = await merchantOrders(merchantId, { cursor: nextCursor, locationId: locationId || undefined, limit: 20 });
-      setOrders((current) => [...(current ?? []), ...(page.items ?? [])]);
+      const page = await (merchantId ? merchantOrders(merchantId, { cursor: nextCursor, locationId: locationId || undefined, limit: 20 }) : myOrders({ cursor: nextCursor, limit: 20 }));
+      if (requestGeneration !== generation.current) return;
+      setOrders((current) => {
+        const merged = [...(current ?? [])];
+        const seen = new Set(merged.map(order => order.id));
+        for (const order of page.items ?? []) if (order.id && !seen.has(order.id)) { merged.push(order); seen.add(order.id); }
+        return merged;
+      });
       setNextCursor(page.nextCursor);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể tải thêm đơn hàng.");
+      if (requestGeneration !== generation.current) return;
+      if (buyer) {
+        if (cause instanceof CovieApiError && cause.status === 401) { setIsAuthError(true); setError("Vui lòng đăng nhập lại."); }
+        else setMoreError(true);
+      } else setError(cause instanceof Error ? cause.message : "Không thể tải thêm đơn hàng.");
     } finally {
-      setLoadingMore(false);
+      if (requestGeneration === generation.current) { morePending.current = false; setLoadingMore(false); }
     }
   }
 
   if (buyer) {
     if (error) {
-      const isAuthError = Boolean(
-        error.toLowerCase().includes("token") ||
-        error.toLowerCase().includes("unauthorized") ||
-        error.toLowerCase().includes("401") ||
-        error.toLowerCase().includes("đăng nhập")
-      );
 
       if (isAuthError) {
         return (
           <section className={`buyer-orders-empty ${styles.state}`} aria-label="Đăng nhập để xem đơn hàng">
             <h2>Đăng nhập để xem đơn hàng</h2>
             <p>Vui lòng đăng nhập tài khoản CoVie để quản lý và theo dõi trạng thái các đơn hàng của bạn.</p>
-            <Link className="button-primary" href="/login?redirect=/orders">Đăng nhập ngay</Link>
+            <Link className="button-primary" href="/login?returnTo=%2Forders">Đăng nhập ngay</Link>
           </section>
         );
       }
@@ -140,7 +182,11 @@ export function OrderList({
                 <span className={`buyer-order-type ${styles.type}`}>
                   {order.type === "SERVICE" ? "Đơn dịch vụ" : order.type === "PRODUCT" ? "Đơn sản phẩm" : "Đơn hàng"}
                 </span>
-                {order.createdAt ? (
+                {order.items?.length ? <ul className={styles.items} aria-label="Món trong đơn">
+                  {order.items.map((item, index) => <li key={index}>{item.quantity?.toLocaleString("vi-VN") ?? "—"} × {item.name?.trim() || "Mục đơn hàng"}</li>)}
+                </ul> : null}
+                <StoredOrderPrice order={order} />
+                {order.updatedAt ? <small className={styles.date}>Cập nhật {formatDateTime(order.updatedAt)}</small> : order.createdAt ? (
                   <small className={styles.date}>Tạo {formatDateTime(order.createdAt)}</small>
                 ) : null}
               </div>
@@ -150,6 +196,8 @@ export function OrderList({
             </Link>
           ) : null)}
         </section>
+        {moreError ? <p role="alert">Không thể tải thêm đơn hàng. Vui lòng thử lại.</p> : null}
+        {nextCursor ? <button className="button-secondary" type="button" onClick={() => void loadMore()} disabled={loadingMore}>{loadingMore ? "Đang tải…" : "Tải thêm đơn hàng"}</button> : null}
       </div>
     );
   }

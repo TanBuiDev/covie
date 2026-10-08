@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LoadingState } from "@/components/ui/loading-state";
+import { CovieApiError } from "@/lib/api/api-error";
 import { listMyNeeds, type NeedStatus, type NeedSummary } from "./need-api";
 import styles from "./buyer-needs-mobile.module.css";
 
@@ -27,26 +28,35 @@ export function NeedList() {
   const [cursor, setCursor] = useState<string | undefined>();
   const [nextCursor, setNextCursor] = useState<string | null>();
   const [error, setError] = useState<string | null>(null);
+  const [isAuthError, setIsAuthError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(null);
-    listMyNeeds(status || undefined, cursor)
+    Promise.resolve().then(() => {
+      if (!active) return undefined;
+      setLoading(true);
+      setError(null);
+      setIsAuthError(false);
+      return listMyNeeds(status || undefined, cursor);
+    })
       .then((page) => {
-        if (!active) return;
+        if (!active || !page) return;
         setItems((current) => cursor ? [...current, ...page.items] : page.items);
         setNextCursor(page.nextCursor ?? null);
       })
       .catch((cause) => {
-        if (active) setError(cause instanceof Error ? cause.message : "Không thể tải nhu cầu.");
+        if (active) {
+          setIsAuthError(cause instanceof CovieApiError && cause.status === 401);
+          setError(cause instanceof Error ? cause.message : "Không thể tải nhu cầu.");
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, [status, cursor]);
+  }, [status, cursor, reloadKey]);
 
   function changeStatus(value: NeedStatus | "") {
     setStatus(value);
@@ -54,14 +64,6 @@ export function NeedList() {
     setItems([]);
   }
 
-  const isAuthError = Boolean(
-    error && (
-      error.toLowerCase().includes("token") ||
-      error.toLowerCase().includes("unauthorized") ||
-      error.toLowerCase().includes("401") ||
-      error.toLowerCase().includes("đăng nhập")
-    )
-  );
 
   return (
     <section className={`need-list ${styles.list}`} aria-label="Danh sách nhu cầu">
@@ -96,7 +98,7 @@ export function NeedList() {
         </Link>
       </div>
 
-      {error && !isAuthError ? <p className="form-alert" role="alert">{error}</p> : null}
+      {error && !isAuthError ? <div className="need-empty"><p className="form-alert" role="alert">{error}</p><button className="button-secondary" type="button" onClick={() => setReloadKey(value => value + 1)}>Thử lại</button></div> : null}
 
       {loading && !items.length ? (
         <div className={`need-loading ${styles.state}`}><LoadingState label="Đang tải nhu cầu…" /></div>
@@ -106,7 +108,7 @@ export function NeedList() {
         <div className={`need-empty ${styles.state}`}>
           <h2>Đăng nhập để xem nhu cầu</h2>
           <p>Vui lòng đăng nhập tài khoản CoVie để quản lý các nhu cầu cần mua và theo dõi phản hồi từ người bán.</p>
-          <Link className="button-primary" href="/login?redirect=/needs">Đăng nhập ngay</Link>
+          <Link className="button-primary" href="/login?returnTo=%2Fneeds">Đăng nhập ngay</Link>
         </div>
       ) : null}
 

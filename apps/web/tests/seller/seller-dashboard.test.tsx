@@ -15,6 +15,8 @@ describe("SellerDashboard", () => {
       />,
     );
 
+    const desktopHeading = screen.getByRole("heading", { name: "Tổng quan", level: 1 });
+    expect(desktopHeading.closest("header")).toHaveClass("seller-dashboard__header");
     expect(screen.getByText("Tiệm A · Trung tâm bán hàng")).toBeInTheDocument();
     const orderLink = screen.getByText("CV-1").closest("a");
     expect(orderLink).toHaveAttribute("href", "/seller/merchant-1/orders/order-1");

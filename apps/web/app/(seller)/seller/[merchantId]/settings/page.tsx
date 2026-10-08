@@ -7,7 +7,7 @@ export default async function SellerSettingsPage({ params }: { params: Promise<{
 
   return (
     <section className="seller-stack seller-settings-page">
-      <header className="seller-workspace-header">
+      <header className="seller-workspace-header seller-desktop-only">
         <h1>Cài đặt shop</h1>
         <p>Hồ sơ shop &amp; phương thức liên hệ</p>
       </header>

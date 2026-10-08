@@ -54,7 +54,7 @@
     white-space: nowrap;
   }
 
-  .seller-order-open {
+  .seller-order-list-card > .seller-order-open {
     grid-column: 4;
     justify-self: end;
     white-space: nowrap;
@@ -83,10 +83,30 @@
     grid-column: 1;
   }
 
+  .seller-order-detail:has(.dialog-backdrop--seller-page) {
+    display: block;
+    max-width: 1128px;
+  }
+
   .seller-order-detail__actions,
   .seller-order-detail__privacy,
   .seller-order-detail__fulfillment {
     grid-column: 2;
+  }
+
+  .seller-order-detail__timeline,
+  .seller-order-detail__actions {
+    grid-row: 2;
+  }
+
+  .seller-order-detail__snapshot,
+  .seller-order-detail__fulfillment {
+    grid-row: 3;
+  }
+
+  .seller-order-detail__info,
+  .seller-order-detail__privacy {
+    grid-row: 4;
   }
 
   .seller-order-detail__snapshot-grid {
@@ -97,12 +117,15 @@
     max-width: 1128px;
   }
 
-  .seller-order-action__body,
-  .seller-order-action__content {
+  .seller-order-action__body {
     align-items: start;
     display: grid;
     gap: 24px;
     grid-template-columns: minmax(0, 720px) minmax(280px, 376px);
+  }
+
+  .seller-order-action__content {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .seller-order-action__impact {
@@ -134,8 +157,58 @@
   }
 
   .seller-need-card {
+    align-items: center;
+    grid-template-columns: minmax(160px, 1fr) minmax(130px, .75fr) auto;
     min-height: 96px;
   }
+
+  .seller-need-card__summary {
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  .seller-need-card > .seller-need-expiry {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    width: 100%;
+  }
+
+  .seller-need-card > .status-chip {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .seller-need-card > .seller-order-open {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+    white-space: nowrap;
+  }
+
+  .seller-need-workspace {
+    align-items: start;
+    grid-template-columns: minmax(0, 548px) minmax(0, 564px);
+    max-width: 1128px;
+  }
+
+  .seller-need-workspace > .seller-need-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .seller-need-workspace--existing {
+    grid-template-columns: minmax(0, 740px);
+  }
+
+  .seller-need-existing { padding: 20px; }
+
+  .seller-need-existing__items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .seller-need-candidates textarea { min-height: 104px; }
+
+  .seller-need-candidates form > button[type="submit"] { min-height: 40px; }
 
   .seller-need-detail {
     display: grid;

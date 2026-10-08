@@ -4,7 +4,7 @@ import { getActiveSessions } from "@/features/profile/profile-api";
 import { requireUser } from "@/lib/auth/require-user";
 
 export default async function SessionsPage() {
-  await requireUser();
+  await requireUser("/me/security/sessions");
   const sessions = await getActiveSessions();
   return (
     <main className={styles.page}>

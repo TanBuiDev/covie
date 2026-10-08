@@ -40,22 +40,27 @@
 
   .seller-settings-page .seller-merchant-form {
     align-items: start;
+    background: var(--seller-surface);
+    border: 1px solid var(--seller-border);
+    border-radius: 12px;
     display: grid;
-    gap: 16px 24px;
-    grid-template-columns: minmax(0, 726px) minmax(300px, 378px);
-    max-width: 1128px;
+    gap: 12px;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 760px;
+    padding: 16px;
   }
 
   .seller-settings-page .seller-merchant-form > .seller-media-settings {
-    grid-column: 2;
-    grid-row: 1 / span 5;
-    min-height: 220px;
+    background: transparent;
+    grid-column: 1;
+    min-height: 0;
+    order: 0;
   }
 
-  .seller-settings-page .seller-merchant-form > label,
-  .seller-settings-page .seller-merchant-form > p,
-  .seller-settings-page .seller-merchant-form > button {
-    grid-column: 1;
+  .seller-settings-page .seller-settings-card-title {
+    font-size: 20px;
+    line-height: 28px;
+    margin: 0;
   }
 
   .seller-settings-page .seller-merchant-form > label {
@@ -162,10 +167,6 @@
 }
 
 @media (min-width: 1024px) and (max-width: 1199px) {
-  .seller-settings-page .seller-merchant-form {
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 36%);
-  }
-
   .seller-locations-page .seller-location-card {
     grid-template-columns: minmax(220px, 1fr) minmax(180px, .8fr);
   }

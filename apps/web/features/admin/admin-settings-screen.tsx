@@ -26,6 +26,10 @@ function normalizeSection(value: string | undefined): AdminSettingsSection {
   return value === "orders" || value === "needs" || value === "advanced" ? value : "policy";
 }
 
+export function formatSettingEtag(version: number): string {
+  return `"v${version}"`;
+}
+
 export function AdminSettingsScreen({ section: requestedSection }: { section?: string }) {
   const section = normalizeSection(requestedSection);
   const [definitions, setDefinitions] = useState<AdminSettingDefinition[]>([]);
@@ -33,21 +37,26 @@ export function AdminSettingsScreen({ section: requestedSection }: { section?: s
   const [loading, setLoading] = useState(true);
   const [etags, setEtags] = useState<Record<string, string>>({});
 
-  const load = useCallback(async () => {
-    setLoading(true); setError(undefined);
+  const load = useCallback(async (isActive: () => boolean = () => true) => {
     try {
       const values = await loadAdminSettingDefinitions();
       const details = await Promise.all(values.map(value => loadAdminSettingDetail(value.key)));
+      if (!isActive()) return;
       setDefinitions(values.map((value, index) => ({ ...value, effectiveValue: details[index]?.effectiveValue })));
       setEtags(Object.fromEntries(values.map((value, index) => {
         const global = details[index]?.persistedOverrides.find(override => override.scopeType === "GLOBAL");
-        return [value.key, global ? `"${global.version}"` : ""];
+        return [value.key, global ? formatSettingEtag(global.version) : ""];
       })));
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Không thể tải cấu hình hệ thống"); }
-    finally { setLoading(false); }
+    } catch (cause) { if (isActive()) setError(cause instanceof Error ? cause.message : "Không thể tải cấu hình hệ thống"); }
+    finally { if (isActive()) setLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => { if (active) void load(() => active); });
+    return () => { active = false; };
+  }, [load]);
+  function reload() { setLoading(true); setError(undefined); void load(); }
   const filtered = useMemo(() => definitions.filter(definition => sectionKeys[section].has(definition.key)), [definitions, section]);
 
   return <div className="admin-page-stack">
@@ -55,7 +64,7 @@ export function AdminSettingsScreen({ section: requestedSection }: { section?: s
     <nav className="admin-settings-tabs" aria-label="Nhóm cài đặt"><Link href="/admin/settings" aria-current={section === "policy" ? "page" : undefined}>Chính sách</Link><Link href="/admin/settings?section=orders" aria-current={section === "orders" ? "page" : undefined}>Đơn hàng</Link><Link href="/admin/settings?section=needs" aria-current={section === "needs" ? "page" : undefined}>Cần mua</Link><Link href="/admin/settings?section=advanced" aria-current={section === "advanced" ? "page" : undefined}>Nâng cao</Link></nav>
     <AdminSurface className="admin-contract-note"><strong>Validation và concurrency</strong><p>Giá trị, phạm vi và version lấy từ API. Mọi thay đổi toàn hệ thống cần xác nhận; PATCH gửi If-Match khi có version và không hard-code range từ Figma.</p></AdminSurface>
     {loading ? <AdminSurface><p className="admin-muted">Đang tải cấu hình…</p></AdminSurface> : null}
-    {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={() => void load()}>Thử lại</button></AdminSurface> : null}
-    {!loading && !error ? <SettingsEditor definitions={filtered} onReload={load} onSave={async (key, value) => { const etag = await updateGlobalAdminSetting(key, value, etags[key]); if (etag) setEtags(current => ({ ...current, [key]: etag })); await load(); }} /> : null}
+    {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={reload}>Thử lại</button></AdminSurface> : null}
+    {!loading && !error ? <SettingsEditor definitions={filtered} onReload={async () => { reload(); }} onSave={async (key, value) => { const etag = await updateGlobalAdminSetting(key, value, etags[key]); if (etag) setEtags(current => ({ ...current, [key]: etag })); setLoading(true); setError(undefined); await load(); }} /> : null}
   </div>;
 }

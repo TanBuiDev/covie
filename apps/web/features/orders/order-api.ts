@@ -1,6 +1,6 @@
 import type { components } from "@covie/api-client";
 import { createApiClient } from "@/lib/api/api-client";
-import { readApiError } from "@/lib/api/api-error";
+import { parsedApiError } from "@/lib/api/api-error";
 
 export type OrderSummary = components["schemas"]["OrderSummaryResponse"];
 export type OrderDetail = components["schemas"]["OrderDetailResponse"];
@@ -17,35 +17,35 @@ type MerchantOrderQuery = {
   limit?: number;
 };
 
-async function dataOrThrow<T>(response: Response, data: T | undefined): Promise<T> {
-  if (!response.ok || !data) throw await readApiError(response);
+async function dataOrThrow<T>(response: Response, data: T | undefined, error?: unknown): Promise<T> {
+  if (!response.ok || !data) throw await parsedApiError(response, error);
   return data;
 }
 
-async function ensureOk(response: Response): Promise<void> {
-  if (!response.ok) throw await readApiError(response);
+async function ensureOk(response: Response, error?: unknown): Promise<void> {
+  if (!response.ok) throw await parsedApiError(response, error);
 }
 
-export async function myOrders(): Promise<components["schemas"]["OrderPageResponse"]> {
-  const { data, response } = await createApiClient().GET("/api/v1/me/orders");
-  return dataOrThrow(response, data);
+export async function myOrders(query: { cursor?: string; limit?: number } = {}): Promise<components["schemas"]["OrderPageResponse"]> {
+  const { data, error, response } = await createApiClient().GET("/api/v1/me/orders", { params: { query } });
+  return dataOrThrow(response, data, error);
 }
 
 export async function merchantOrders(
   merchantId: string,
   query: MerchantOrderQuery = {},
 ): Promise<components["schemas"]["OrderPageResponse"]> {
-  const { data, response } = await createApiClient().GET("/api/v1/merchants/{merchantId}/orders", {
+  const { data, error, response } = await createApiClient().GET("/api/v1/merchants/{merchantId}/orders", {
     params: { path: { merchantId }, query: { limit: query.limit ?? 20, cursor: query.cursor, locationId: query.locationId } },
   });
-  return dataOrThrow(response, data);
+  return dataOrThrow(response, data, error);
 }
 
 export async function getOrder(orderId: string): Promise<OrderDetail> {
-  const { data, response } = await createApiClient().GET("/api/v1/orders/{orderId}", {
+  const { data, error, response } = await createApiClient().GET("/api/v1/orders/{orderId}", {
     params: { path: { orderId } },
   });
-  return dataOrThrow(response, data);
+  return dataOrThrow(response, data, error);
 }
 
 /**
@@ -64,89 +64,89 @@ export async function orderCommand(
 
   switch (action) {
     case "CONFIRM": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/confirm", { params: { path, header } });
-      return ensureOk(response);
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/confirm", { params: { path, header } });
+      return ensureOk(response, error);
     }
     case "REJECT": {
       if (!input.reasonCode) throw new Error("REASON_REQUIRED");
-      const { response } = await client.POST("/api/v1/orders/{orderId}/reject", {
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/reject", {
         params: { path, header }, body: { reasonCode: input.reasonCode, note: input.note },
       });
-      return ensureOk(response);
+      return ensureOk(response, error);
     }
     case "CANCEL": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/cancel", {
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/cancel", {
         params: { path, header },
         body: input.reasonCode || input.note ? { reasonCode: input.reasonCode, note: input.note } : undefined,
       });
-      return ensureOk(response);
+      return ensureOk(response, error);
     }
     case "REQUEST_CANCELLATION": {
       if (!input.reasonCode) throw new Error("REASON_REQUIRED");
-      const { response } = await client.POST("/api/v1/orders/{orderId}/request-cancellation", {
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/request-cancellation", {
         params: { path, header }, body: { reasonCode: input.reasonCode, note: input.note },
       });
-      return ensureOk(response);
+      return ensureOk(response, error);
     }
     case "ACCEPT_CANCELLATION": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/accept-cancellation", {
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/accept-cancellation", {
         params: { path, header }, body: input.note ? { note: input.note } : undefined,
       });
-      return ensureOk(response);
+      return ensureOk(response, error);
     }
     case "REJECT_CANCELLATION": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/reject-cancellation", {
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/reject-cancellation", {
         params: { path, header }, body: input.note ? { note: input.note } : undefined,
       });
-      return ensureOk(response);
+      return ensureOk(response, error);
     }
     case "MARK_OUT_FOR_DELIVERY": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/mark-out-for-delivery", { params: { path, header } });
-      return ensureOk(response);
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/mark-out-for-delivery", { params: { path, header } });
+      return ensureOk(response, error);
     }
     case "MARK_DELIVERED": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/mark-delivered", { params: { path, header } });
-      return ensureOk(response);
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/mark-delivered", { params: { path, header } });
+      return ensureOk(response, error);
     }
     case "MARK_READY_FOR_PICKUP": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/mark-ready-for-pickup", { params: { path, header } });
-      return ensureOk(response);
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/mark-ready-for-pickup", { params: { path, header } });
+      return ensureOk(response, error);
     }
     case "MARK_SERVICE_PERFORMED": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/mark-service-performed", { params: { path, header } });
-      return ensureOk(response);
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/mark-service-performed", { params: { path, header } });
+      return ensureOk(response, error);
     }
     case "CONFIRM_RECEIVED": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/confirm-received", { params: { path, header } });
-      return ensureOk(response);
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/confirm-received", { params: { path, header } });
+      return ensureOk(response, error);
     }
     case "CONFIRM_COMPLETED": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/confirm-completed", { params: { path, header } });
-      return ensureOk(response);
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/confirm-completed", { params: { path, header } });
+      return ensureOk(response, error);
     }
     case "REPORT_DELIVERY_ISSUE": {
       if (!input.note?.trim()) throw new Error("REASON_REQUIRED");
-      const { response } = await client.POST("/api/v1/orders/{orderId}/report-delivery-issue", {
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/report-delivery-issue", {
         params: { path, header }, body: { reasonText: input.note.trim() },
       });
-      return ensureOk(response);
+      return ensureOk(response, error);
     }
     case "REPORT_SERVICE_ISSUE": {
       if (!input.note?.trim()) throw new Error("REASON_REQUIRED");
-      const { response } = await client.POST("/api/v1/orders/{orderId}/report-service-issue", {
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/report-service-issue", {
         params: { path, header }, body: { reasonText: input.note.trim() },
       });
-      return ensureOk(response);
+      return ensureOk(response, error);
     }
     case "REPORT_BUYER_NO_SHOW": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/report-buyer-no-show", { params: { path, header } });
-      return ensureOk(response);
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/report-buyer-no-show", { params: { path, header } });
+      return ensureOk(response, error);
     }
     case "CONTEST_NO_SHOW": {
-      const { response } = await client.POST("/api/v1/orders/{orderId}/contest-no-show", {
+      const { error, response } = await client.POST("/api/v1/orders/{orderId}/contest-no-show", {
         params: { path, header }, body: input.note ? { note: input.note } : undefined,
       });
-      return ensureOk(response);
+      return ensureOk(response, error);
     }
   }
 }

@@ -33,25 +33,34 @@ export function AdminEntityTable({ type, title, columns }: { type: "users" | "me
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(undefined);
+  const load = useCallback(async (isActive: () => boolean = () => true) => {
     try {
       const response = await requestBrowserApi("GET", `/api/v1/admin/${type}?page=${page}&size=${PAGE_SIZE}`);
       if (!response.ok) throw await readApiError(response);
       const payload = await response.json() as PagePayload;
       const nextItems = payload.items ?? [];
+      if (!isActive()) return;
       setItems(nextItems);
       setTotal(payload.total ?? nextItems.length);
       setSelectedId(current => current && nextItems.some(item => item.id === current) ? current : nextItems[0]?.id);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể tải dữ liệu quản trị");
+      if (isActive()) setError(cause instanceof Error ? cause.message : "Không thể tải dữ liệu quản trị");
     } finally {
-      setLoading(false);
+      if (isActive()) setLoading(false);
     }
   }, [page, type]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => { if (active) void load(() => active); });
+    return () => { active = false; };
+  }, [load]);
+
+  function reload() {
+    setLoading(true);
+    setError(undefined);
+    void load();
+  }
 
   async function mutate(id: string, operation: "suspend" | "restore", reason?: string) {
     const response = await requestBrowserApi(
@@ -61,6 +70,8 @@ export function AdminEntityTable({ type, title, columns }: { type: "users" | "me
       { "Idempotency-Key": crypto.randomUUID(), "Content-Type": "application/json" },
     );
     if (!response.ok) throw await readApiError(response);
+    setLoading(true);
+    setError(undefined);
     await load();
   }
 
@@ -72,7 +83,7 @@ export function AdminEntityTable({ type, title, columns }: { type: "users" | "me
     <div className="admin-page-stack">
       <AdminPageHeader title={title} subtitle={subtitle} />
       {loading ? <AdminSurface><p className="admin-muted" aria-live="polite">Đang tải dữ liệu…</p></AdminSurface> : null}
-      {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={() => void load()}>Thử lại</button></AdminSurface> : null}
+      {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={reload}>Thử lại</button></AdminSurface> : null}
       {!loading && !error && items.length === 0 ? <AdminSurface><p className="admin-muted">Chưa có dữ liệu.</p></AdminSurface> : null}
       {!loading && !error && items.length > 0 ? (
         <>
@@ -102,7 +113,7 @@ export function AdminEntityTable({ type, title, columns }: { type: "users" | "me
               <p className="admin-caption">Thông tin chi tiết theo dữ liệu hệ thống.</p>
             </AdminSurface> : null}
           </div>
-          {totalPages > 1 ? <div className="admin-pagination"><span>Trang {page + 1} / {totalPages} · {total} mục</span><div><button className="admin-button admin-button--secondary" disabled={page === 0 || loading} onClick={() => setPage(value => Math.max(0, value - 1))}>Trước</button><button className="admin-button admin-button--secondary" disabled={page + 1 >= totalPages || loading} onClick={() => setPage(value => value + 1)}>Sau</button></div></div> : null}
+          {totalPages > 1 ? <div className="admin-pagination"><span>Trang {page + 1} / {totalPages} · {total} mục</span><div><button className="admin-button admin-button--secondary" disabled={page === 0 || loading} onClick={() => { setLoading(true); setError(undefined); setPage(value => Math.max(0, value - 1)); }}>Trước</button><button className="admin-button admin-button--secondary" disabled={page + 1 >= totalPages || loading} onClick={() => { setLoading(true); setError(undefined); setPage(value => value + 1); }}>Sau</button></div></div> : null}
           {selected ? <AdminSurface className="admin-safety-card">
             <h2>Tạm ngưng / khôi phục tài khoản</h2>
             <p>Mọi thao tác có tác động đến tài khoản đều yêu cầu xác nhận. Trạng thái được quyết định bởi hệ thống; màn hình này không cung cấp trường sửa trạng thái trực tiếp.</p>

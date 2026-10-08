@@ -59,14 +59,17 @@ export function AdminOrdersExplorer() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(undefined);
     const params = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
     if (appliedQuery.trim()) params.set("orderCode", appliedQuery.trim());
-    requestBrowserApi("GET", `/api/v1/admin/orders?${params.toString()}`)
-      .then(async response => { if (!response.ok) throw await readApiError(response); return response.json() as Promise<OrderPage>; })
+    Promise.resolve().then(() => {
+      if (!active) return undefined;
+      setLoading(true);
+      setError(undefined);
+      return requestBrowserApi("GET", `/api/v1/admin/orders?${params.toString()}`);
+    })
+      .then(async response => { if (!response) return undefined; if (!response.ok) throw await readApiError(response); return response.json() as Promise<OrderPage>; })
       .then(payload => {
-        if (!active) return;
+        if (!active || !payload) return;
         const nextItems = payload.items ?? [];
         setItems(nextItems);
         setTotal(payload.total ?? nextItems.length);
@@ -78,13 +81,16 @@ export function AdminOrdersExplorer() {
   }, [appliedQuery, page]);
 
   useEffect(() => {
-    if (!selectedId) { setDetail(undefined); return; }
+    if (!selectedId) return;
     let active = true;
-    setDetailLoading(true);
-    setDetailError(undefined);
-    requestBrowserApi("GET", `/api/v1/admin/orders/${encodeURIComponent(selectedId)}`)
-      .then(async response => { if (!response.ok) throw await readApiError(response); return response.json() as Promise<OrderDetail>; })
-      .then(payload => { if (active) setDetail(payload); })
+    Promise.resolve().then(() => {
+      if (!active) return undefined;
+      setDetailLoading(true);
+      setDetailError(undefined);
+      return requestBrowserApi("GET", `/api/v1/admin/orders/${encodeURIComponent(selectedId)}`);
+    })
+      .then(async response => { if (!response) return undefined; if (!response.ok) throw await readApiError(response); return response.json() as Promise<OrderDetail>; })
+      .then(payload => { if (active && payload) setDetail(payload); })
       .catch(cause => { if (active) { setDetail(undefined); setDetailError(cause instanceof Error ? cause.message : "Không thể tải chi tiết đơn hàng"); } })
       .finally(() => { if (active) setDetailLoading(false); });
     return () => { active = false; };

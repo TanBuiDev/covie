@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AddressList } from "@/features/profile/address-list";
 
@@ -39,13 +39,13 @@ describe("BUY-003 Address List", () => {
   it("renders contract-backed address cards and dedicated create/edit links", () => {
     render(<AddressList addresses={addresses} />);
 
-    expect(screen.getByRole("heading", { name: "Địa chỉ của tôi" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Địa chỉ của tôi" })).toHaveLength(2);
     expect(screen.getByText("MẶC ĐỊNH")).toBeInTheDocument();
     expect(screen.getByText("Nhà · Nguyễn Văn Minh")).toBeInTheDocument();
     expect(screen.getByText("0909 123 456")).toBeInTheDocument();
     expect(screen.getByText("Giao tại lễ tân · Không phải địa chỉ mặc định")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Chỉnh sửa Nhà" })).toHaveAttribute("href", "/me/addresses/address-1");
-    expect(screen.queryByRole("link", { name: "Chỉnh sửa Công ty" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Chỉnh sửa Công ty" })).toHaveAttribute("href", "/me/addresses/address-2");
     expect(screen.getByRole("link", { name: "Thêm địa chỉ mới" })).toHaveAttribute("href", "/me/addresses/new");
   });
 
@@ -54,11 +54,13 @@ describe("BUY-003 Address List", () => {
     render(<AddressList addresses={addresses} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Xóa Nhà" }));
-    expect(screen.getByRole("heading", { name: "Xóa địa chỉ này?" })).toBeInTheDocument();
-    expect(screen.getByText("Địa chỉ sẽ bị xóa khỏi tài khoản. Hành động cần xác nhận trước khi thực hiện.")).toBeInTheDocument();
-    expect(screen.queryByText("Công ty · Nguyễn Văn Minh")).not.toBeInTheDocument();
+    const mobileDescription = screen.getByText("Địa chỉ sẽ bị xóa khỏi tài khoản. Hành động cần xác nhận trước khi thực hiện.");
+    const mobileFlow = mobileDescription.closest("section")?.parentElement;
+    expect(mobileFlow).not.toBeNull();
+    expect(within(mobileFlow!).getByRole("heading", { name: "Xóa địa chỉ này?" })).toBeInTheDocument();
+    expect(within(mobileFlow!).queryByText("Công ty · Nguyễn Văn Minh")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Xác nhận xóa" }));
+    fireEvent.click(within(mobileFlow!).getByRole("button", { name: "Xác nhận xóa" }));
     await waitFor(() => expect(deleteSavedAddress).toHaveBeenCalledWith("address-1"));
     expect(navigation.refresh).toHaveBeenCalledTimes(1);
   });
@@ -73,7 +75,7 @@ describe("BUY-003 Address List", () => {
   it("keeps the frozen app bar visible while addresses are loading", () => {
     render(<AddressList addresses={[]} state="loading" />);
 
-    expect(screen.getByRole("heading", { name: "Địa chỉ của tôi" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Địa chỉ của tôi" })).toHaveLength(2);
     expect(screen.getByRole("status")).toHaveTextContent("Đang tải địa chỉ");
     expect(screen.queryByRole("link", { name: "Thêm địa chỉ mới" })).not.toBeInTheDocument();
   });

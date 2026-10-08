@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { logout } from "@/features/auth/auth-api";
 
 export function LogoutButton() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string>();
+  const logoutPending = useRef(false);
 
   return (
     <div>
@@ -15,10 +16,12 @@ export function LogoutButton() {
         type="button"
         disabled={pending}
         onClick={() => {
-          if (pending) return;
+          if (logoutPending.current) return;
+          logoutPending.current = true;
           setPending(true);
           setMessage(undefined);
           void logout((path) => router.replace(path)).catch(() => {
+            logoutPending.current = false;
             setPending(false);
             setMessage("Không thể đăng xuất. Vui lòng thử lại.");
           });

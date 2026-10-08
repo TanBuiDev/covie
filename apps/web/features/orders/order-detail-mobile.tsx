@@ -8,6 +8,7 @@ import { OrderActions } from "./order-actions";
 import { OrderStatusLabel } from "./order-status";
 import { OrderTimeline } from "./order-timeline";
 import styles from "./order-detail-mobile.module.css";
+import { OrderReviewSection } from "@/features/reviews/order-review-section";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -121,6 +122,8 @@ export function OrderDetailMobile({ order, error, onChanged }: { order: OrderDet
           <OrderActions order={order} onChanged={onChanged} />
           {!order.allowedActions?.length ? <p className={styles.noActions}>Không có thao tác nào được backend cho phép ở trạng thái hiện tại.</p> : null}
         </section>
+
+        {(order.items ?? []).map((item, index) => <OrderReviewSection key={item.id ?? `review-${index}`} item={item} orderId={order.id} onChanged={onChanged} />)}
       </div>
     </article>
   );

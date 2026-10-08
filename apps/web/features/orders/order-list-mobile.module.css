@@ -51,6 +51,10 @@
   line-height: 16px;
 }
 
+.pricing { display: flex; flex-direction: column; gap: 2px; }
+.pricing strong { font-size: 16px; font-weight: 600; line-height: 24px; }
+.items { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; color: var(--semantic-text-secondary, #475569); font-size: 14px; line-height: 20px; overflow-wrap: anywhere; }
+
 .type {
   color: var(--semantic-text-primary, #0f172a) !important;
   font-size: 14px !important;

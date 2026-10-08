@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import type { OrderAction } from "./order-api";
+import { statusCopy } from "@/lib/format/status-copy";
+import type { OrderAction, OrderDetail } from "./order-api";
 
 export type OrderActorView = "BUYER" | "SELLER";
 
@@ -45,29 +46,33 @@ export function OrderActionDialog({
   action,
   actorView = "BUYER",
   pending,
+  order,
   onCancel,
   onSubmit,
 }: {
   action?: OrderAction;
   actorView?: OrderActorView;
   pending?: boolean;
+  order?: OrderDetail;
   onCancel(): void;
   onSubmit(input: { reasonCode?: string; note?: string }): void;
 }) {
   if (!action) return null;
-  return <OrderActionDialogForm key={`${actorView}-${action}`} action={action} actorView={actorView} pending={pending} onCancel={onCancel} onSubmit={onSubmit} />;
+  return <OrderActionDialogForm key={`${actorView}-${action}`} action={action} actorView={actorView} pending={pending} order={order} onCancel={onCancel} onSubmit={onSubmit} />;
 }
 
 function OrderActionDialogForm({
   action,
   actorView,
   pending,
+  order,
   onCancel,
   onSubmit,
 }: {
   action: OrderAction;
   actorView: OrderActorView;
   pending?: boolean;
+  order?: OrderDetail;
   onCancel(): void;
   onSubmit(input: { reasonCode?: string; note?: string }): void;
 }) {
@@ -75,6 +80,22 @@ function OrderActionDialogForm({
   const copy = copyFor(action, actorView);
   const trimmed = reason.trim();
   const reasonRequired = copy.reason === "required";
+  const reasonField = copy.reason ? (
+    <>
+      <label>
+        Lý do {reasonRequired ? "(bắt buộc)" : "(không bắt buộc)"}
+        <textarea
+          value={reason}
+          maxLength={1000}
+          required={reasonRequired}
+          disabled={pending}
+          onChange={(event) => setReason(event.target.value)}
+        />
+      </label>
+      {reasonRequired && !trimmed ? <p className="field-hint">Nhập lý do để tiếp tục.</p> : null}
+    </>
+  ) : null;
+  const impact = action === "REJECT" ? "Đơn sẽ được từ chối" : action === "CANCEL" ? "Đơn sẽ bị hủy" : "Trạng thái đơn sẽ được cập nhật";
 
   return (
     <ConfirmDialog
@@ -82,6 +103,7 @@ function OrderActionDialogForm({
       title={copy.title}
       description={copy.description}
       confirmLabel={pending ? "Đang xử lý…" : copy.confirm}
+      presentation={actorView === "SELLER" ? "seller-page" : "modal"}
       dangerous={copy.dangerous}
       confirmDisabled={Boolean(pending || (reasonRequired && !trimmed))}
       cancelDisabled={Boolean(pending)}
@@ -94,19 +116,21 @@ function OrderActionDialogForm({
         });
       }}
     >
-      {copy.reason ? (
-        <label>
-          Lý do {reasonRequired ? "(bắt buộc)" : "(không bắt buộc)"}
-          <textarea
-            value={reason}
-            maxLength={1000}
-            required={reasonRequired}
-            disabled={pending}
-            onChange={(event) => setReason(event.target.value)}
-          />
-        </label>
-      ) : null}
-      {reasonRequired && !trimmed ? <p className="field-hint">Nhập lý do để tiếp tục.</p> : null}
+      {actorView === "SELLER" ? (
+        <div className="seller-order-action__body">
+          <div className="seller-order-action__content">
+            <div className="seller-order-action__summary" aria-label="Đơn đang thao tác">
+              <strong>{order?.orderCode ?? order?.id ?? "Đơn hàng"}</strong>
+              <small>{statusCopy(order?.status)}</small>
+            </div>
+            {reasonField}
+          </div>
+          <aside className="seller-order-action__impact">
+            <strong>{impact}</strong>
+            <p>Chỉ tiếp tục khi bạn đã kiểm tra trạng thái và thông tin đơn hiện tại.</p>
+          </aside>
+        </div>
+      ) : reasonField}
     </ConfirmDialog>
   );
 }

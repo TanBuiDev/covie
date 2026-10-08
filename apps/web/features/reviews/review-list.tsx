@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import type { components } from "@covie/api-client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ReportButton } from "@/features/reports/report-button";
 import { listCatalogReviews, listMerchantReviews, type PublicReview } from "./review-api";
 
@@ -26,6 +26,7 @@ export function ReviewList({ targetId, targetType, contextMerchantId, initialPag
   const [cursor, setCursor] = useState<string | undefined>(initialPage?.page?.nextCursor);
   const [loading, setLoading] = useState(!initialPage);
   const [error, setError] = useState<string>();
+  const requestGeneration = useRef(0);
 
   async function fetchPage(next?: string) {
     return targetType === "MERCHANT"
@@ -34,22 +35,26 @@ export function ReviewList({ targetId, targetType, contextMerchantId, initialPag
   }
 
   async function load(next?: string) {
+    const generation = ++requestGeneration.current;
     setLoading(true);
     setError(undefined);
     try {
       const page = await fetchPage(next);
+      if (generation !== requestGeneration.current) return;
       setItems((current) => next ? [...current, ...(page.items ?? [])] : (page.items ?? []));
       setCursor(page.page?.nextCursor);
     } catch {
+      if (generation !== requestGeneration.current) return;
       setError("Không thể tải đánh giá.");
     } finally {
-      setLoading(false);
+      if (generation === requestGeneration.current) setLoading(false);
     }
   }
 
   useEffect(() => {
     if (initialPage) return;
     void load();
+    return () => { requestGeneration.current += 1; };
     // target changes remount at route level; avoid duplicate request from function identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetId, targetType]);

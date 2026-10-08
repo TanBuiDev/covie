@@ -5,7 +5,38 @@ import { CoVieIcon } from "@/components/ui/covie-icon";
 import { createReview } from "./review-api";
 import styles from "./review-form.module.css";
 
-export function ReviewForm({ orderItemId, onCreated }: { orderItemId: string; onCreated?(): void }) {
+type ReviewInput = Parameters<typeof createReview>[0];
+type SubmitResult = "done" | "stale" | "error";
+
+export async function submitReviewIntent(
+  input: ReviewInput,
+  key: string,
+  callbacks: { onCreated?(): void | Promise<void>; onStale?(): void | Promise<void> },
+  submitReview: typeof createReview = createReview,
+): Promise<SubmitResult> {
+  try {
+    await submitReview(input, key);
+  } catch (cause) {
+    const code = cause && typeof cause === "object" && "code" in cause ? String(cause.code) : "";
+    if (code === "REVIEW_ALREADY_EXISTS" || code === "REVIEW_CREATION_DISABLED") {
+      try {
+        await callbacks.onStale?.();
+        return "stale";
+      } catch {
+        return "error";
+      }
+    }
+    return "error";
+  }
+  try {
+    await callbacks.onCreated?.();
+    return "done";
+  } catch {
+    return "error";
+  }
+}
+
+export function ReviewForm({ orderItemId, onCreated, onStale }: { orderItemId: string; onCreated?(): void | Promise<void>; onStale?(): void | Promise<void> }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
@@ -13,22 +44,22 @@ export function ReviewForm({ orderItemId, onCreated }: { orderItemId: string; on
   const [error, setError] = useState<string>();
   const [idempotencyKey, setIdempotencyKey] = useState<string>();
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy || done) return;
     const key = idempotencyKey ?? crypto.randomUUID();
     if (!idempotencyKey) setIdempotencyKey(key);
     setBusy(true);
     setError(undefined);
-    try {
-      await createReview({ orderItemId, rating, comment: comment.trim() || undefined }, key);
-      setDone(true);
-      onCreated?.();
-    } catch {
-      setError("Chưa thể gửi đánh giá. Vui lòng thử lại.");
-    } finally {
-      setBusy(false);
-    }
+    void submitReviewIntent(
+      { orderItemId, rating, comment: comment.trim() || undefined },
+      key,
+      { onCreated, onStale },
+    ).then((result) => {
+      if (result === "done") setDone(true);
+      if (result === "error") setError("Chưa thể gửi đánh giá. Vui lòng thử lại.");
+    })
+      .finally(() => setBusy(false));
   }
 
   if (done) return <p className={`form-success ${styles.success}`} role="status">Cảm ơn bạn đã gửi đánh giá.</p>;
@@ -37,7 +68,7 @@ export function ReviewForm({ orderItemId, onCreated }: { orderItemId: string; on
     <form className={`review-form ${styles.form}`} onSubmit={submit}>
       <fieldset className={styles.fieldset} disabled={busy}>
         <legend>Đánh giá giao dịch</legend>
-        <p className={styles.hint}>Chọn từ 1 đến 5 sao</p>
+        <p className={`review-rating-hint ${styles.hint}`}>Chọn từ 1 đến 5 sao</p>
         <div className={styles.stars} role="radiogroup" aria-label="Điểm đánh giá">
           {[1, 2, 3, 4, 5].map((value) => (
             <button

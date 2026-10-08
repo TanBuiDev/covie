@@ -3,6 +3,28 @@ export type CheckoutUiSource =
   | { type: "DIRECT"; locationVariantId: string; quantity: number }
   | { type: "NEED_REQUEST"; needRequestId: string; needResponseItemId: string; quantity: number };
 
+export type NeedCheckoutSelection = {
+  fixedQuantity?: boolean;
+  variantName?: string;
+  needRequestId: string;
+  needResponseItemId: string;
+  locationVariantId: string;
+  itemName: string;
+  type: "PRODUCT" | "SERVICE";
+  quantity: number;
+};
+
+export type DirectCheckoutSelection = {
+  fixedQuantity?: boolean;
+  variantName?: string;
+  itemId: string;
+  locationId: string;
+  locationVariantId: string;
+  itemName: string;
+  type: "PRODUCT" | "SERVICE";
+  quantity: number;
+};
+
 type ParamValue = string | string[] | undefined;
 type ParamSource = URLSearchParams | Record<string, ParamValue>;
 
@@ -15,7 +37,7 @@ function read(params: ParamSource, key: string): string | undefined {
 function positiveQuantity(value: string | undefined): number | null {
   if (!value) return 1;
   const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
 function id(value: string | undefined): string | null {

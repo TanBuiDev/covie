@@ -79,9 +79,7 @@ export function AdminAuditLog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(undefined);
+  const load = useCallback(async (isActive: () => boolean = () => true) => {
     try {
       const params = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE), sort: filters.sort });
       if (filters.actorUserId.trim()) params.set("actorUserId", filters.actorUserId.trim());
@@ -98,6 +96,7 @@ export function AdminAuditLog() {
       if (!response.ok) throw await readApiError(response);
       const payload = await response.json() as AuditPage;
       const content = payload.content ?? [];
+      if (!isActive()) return;
       setRows(content);
       setPageInfo({
         totalPages: Math.max(1, payload.totalPages ?? 1),
@@ -106,20 +105,34 @@ export function AdminAuditLog() {
         last: payload.last ?? true,
       });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể tải nhật ký quản trị");
+      if (isActive()) setError(cause instanceof Error ? cause.message : "Không thể tải nhật ký quản trị");
     } finally {
-      setLoading(false);
+      if (isActive()) setLoading(false);
     }
   }, [filters, page]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => { if (active) void load(() => active); });
+    return () => { active = false; };
+  }, [load]);
+
+  function reload() {
+    setLoading(true);
+    setError(undefined);
+    void load();
+  }
 
   function applyFilters() {
+    setLoading(true);
+    setError(undefined);
     setPage(0);
     setFilters({ ...draft });
   }
 
   function resetFilters() {
+    setLoading(true);
+    setError(undefined);
     setPage(0);
     setDraft(initialFilters);
     setFilters(initialFilters);
@@ -144,7 +157,7 @@ export function AdminAuditLog() {
       </form>
     </AdminSurface>
     {loading ? <AdminSurface><p className="admin-muted">Đang tải nhật ký…</p></AdminSurface> : null}
-    {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={() => void load()}>Thử lại</button></AdminSurface> : null}
+    {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={reload}>Thử lại</button></AdminSurface> : null}
     {!loading && !error ? <>
       <div className="admin-audit-list" role="list">
         {rows.length ? rows.map((row, index) => <article className="admin-audit-row" role="listitem" key={row.id ?? index}>
@@ -155,7 +168,7 @@ export function AdminAuditLog() {
           <small title={safeMetadataSummary(row.metadata)}>{safeMetadataSummary(row.metadata)}{row.requestId ? ` · requestId ${row.requestId}` : ""}</small>
         </article>) : <AdminSurface><p className="admin-muted">Không có mục phù hợp bộ lọc.</p></AdminSurface>}
       </div>
-      <div className="admin-pagination"><span>Trang {page + 1} / {pageInfo.totalPages} · tối đa {PAGE_SIZE} mục mỗi trang · {pageInfo.totalElements} mục</span><div><button className="admin-button admin-button--secondary" disabled={pageInfo.first} onClick={() => setPage(value => Math.max(0, value - 1))}>Trước</button><button className="admin-button admin-button--secondary" disabled={pageInfo.last} onClick={() => setPage(value => value + 1)}>Sau</button></div></div>
+      <div className="admin-pagination"><span>Trang {page + 1} / {pageInfo.totalPages} · tối đa {PAGE_SIZE} mục mỗi trang · {pageInfo.totalElements} mục</span><div><button className="admin-button admin-button--secondary" disabled={pageInfo.first} onClick={() => { setLoading(true); setError(undefined); setPage(value => Math.max(0, value - 1)); }}>Trước</button><button className="admin-button admin-button--secondary" disabled={pageInfo.last} onClick={() => { setLoading(true); setError(undefined); setPage(value => value + 1); }}>Sau</button></div></div>
     </> : null}
   </div>;
 }

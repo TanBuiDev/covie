@@ -1,0 +1,31 @@
+:global(.consumer-shell) .status { display: inline-flex; min-width: 0; }
+:global(.consumer-shell) .status :global(.status-chip) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--semantic-border-default, #e2e8f0);
+  border-radius: 999px;
+  background: var(--semantic-bg-subtle, #f8fafc);
+  color: var(--semantic-text-secondary, #475569);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  white-space: nowrap;
+}
+:global(.consumer-shell) .status :global(.status-chip[data-tone="info"]) {
+  background: var(--semantic-status-info-bg, #eff6ff);
+  border-color: var(--semantic-status-info-border, #bfdbfe);
+  color: var(--semantic-status-info-text, #1d4ed8);
+}
+:global(.consumer-shell) .status :global(.status-chip[data-tone="warning"]) {
+  background: var(--semantic-status-warning-bg, #fffbeb);
+  border-color: var(--semantic-status-warning-border, #fde68a);
+  color: var(--semantic-status-warning-text, #b45309);
+}
+:global(.consumer-shell) .status :global(.status-chip[data-tone="success"]) {
+  background: var(--semantic-status-success-bg, #ecfdf5);
+  border-color: var(--semantic-status-success-border, #a7f3d0);
+  color: var(--semantic-status-success-text, #047857);
+}

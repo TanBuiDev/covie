@@ -23,7 +23,7 @@ export default async function LocationsPage({ params }: { params: Promise<{ merc
   return (
     <section className="seller-stack seller-locations-page">
       <header className="seller-workspace-header seller-workspace-header--action">
-        <div>
+        <div className="seller-desktop-only">
           <h1>Điểm bán</h1>
           <p>Nơi phục vụ, giao hàng &amp; pickup</p>
         </div>

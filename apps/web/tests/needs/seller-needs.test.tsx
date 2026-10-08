@@ -13,7 +13,7 @@ afterEach(() => {
   discoverMerchantNeeds.mockReset();
 });
 
-it("renders a matched need without inventing an ineligible response action", async () => {
+it("renders a matched Need with an expired countdown as presentation and asks for authoritative reload", async () => {
   discoverMerchantNeeds.mockResolvedValueOnce({
     items: [{
       need: {
@@ -45,5 +45,7 @@ it("renders a matched need without inventing an ineligible response action", asy
   expect(screen.getByLabelText("Điểm bán đang phản hồi")).toHaveValue("location-1");
   expect(screen.getByText(/Thủ Đức · cách điểm bán 1,2 km/)).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Phản hồi nhu cầu" })).not.toBeInTheDocument();
-  expect(screen.getByText(/Hệ thống chưa cung cấp danh sách mục phù hợp/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Phản hồi need-1/ })).not.toBeInTheDocument();
+  expect(screen.getByText(/Thời gian hiển thị đã hết/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Tải lại nhu cầu" })).toBeInTheDocument();
 });

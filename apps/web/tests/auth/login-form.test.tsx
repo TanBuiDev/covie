@@ -3,16 +3,33 @@ import { afterEach, expect, it, vi } from "vitest";
 import { renderToString } from "react-dom/server";
 import { GoogleLoginButton } from "../../features/auth/google-login-button";
 import { LoginForm } from "../../features/auth/login-form";
+import { GoogleAuthProvider } from "@/features/auth/google-auth-provider";
+vi.mock("@/features/auth/google-auth-status",()=>({getGoogleAuthStatus:async()=>true}));
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
-it("uses PASSWORD_RESET intent for the Google recovery link", () => {
-  render(<GoogleLoginButton intent="PASSWORD_RESET" />);
+it.each(["/me", "//evil.test"])("uses a safe destination after successful email login: %s", async (returnTo) => {
+  vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    return url.includes("csrf")
+      ? new Response(JSON.stringify({ headerName: "X-CSRF-Token", token: "token" }))
+      : new Response(null, { status: 204 });
+  }));
+  const navigate = vi.fn();
+  render(<LoginForm returnTo={returnTo} onNavigate={navigate} />);
+  fireEvent.change(screen.getByLabelText("Email"), { target: { value: "person@example.com" } });
+  fireEvent.change(screen.getByLabelText("Mật khẩu"), { target: { value: "password" } });
+  fireEvent.click(screen.getByRole("button", { name: "Đăng nhập" }));
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith(returnTo === "/me" ? "/me" : "/"));
+});
 
-  expect(screen.getByRole("link", { name: "Tiếp tục với Google" })).toHaveAttribute(
+it("uses PASSWORD_RESET intent for the configured Google recovery link", async () => {
+  render(<GoogleAuthProvider><GoogleLoginButton intent="PASSWORD_RESET" /></GoogleAuthProvider>);
+
+  expect(await screen.findByRole("link", { name: "Tiếp tục với Google" })).toHaveAttribute(
     "href",
     "/api/v1/auth/google/start?intent=PASSWORD_RESET",
   );

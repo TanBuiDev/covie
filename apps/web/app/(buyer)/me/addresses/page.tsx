@@ -3,7 +3,7 @@ import { getSavedAddresses } from "@/features/profile/profile-api";
 import { requireUser } from "@/lib/auth/require-user";
 
 export default async function AddressesPage() {
-  await requireUser();
+  await requireUser("/me/addresses");
   const addresses = await getSavedAddresses();
 
   return <AddressList addresses={addresses} />;

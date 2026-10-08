@@ -1,0 +1,476 @@
+.footer {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  color: #334155;
+  margin-top: 48px;
+  padding-bottom: 96px; /* Space for ConsumerBottomNav on mobile */
+  position: relative;
+  width: 100%;
+}
+
+.container {
+  margin: 0 auto;
+  max-width: 1240px;
+  padding: 0 20px;
+}
+
+/* 1. Main Navigation Grid */
+.mainGrid {
+  display: grid;
+  gap: 32px;
+  grid-template-columns: 1fr;
+  padding: 44px 0 32px;
+}
+
+/* Brand Column */
+.brandCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.brandLogo {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.logoBadge {
+  align-items: center;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+  color: #ffffff;
+  display: flex;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.logoText {
+  color: #0f172a;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.brandTagline {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 20px;
+  margin: 0;
+}
+
+/* Location Widget */
+.locationWidget {
+  align-items: center;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+}
+
+.locationInfo {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.locationPin {
+  color: #059669;
+  flex-shrink: 0;
+}
+
+.locationInfo small {
+  color: #065f46;
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.locationInfo strong {
+  color: #047857;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.changeLocationBtn {
+  background: #ffffff;
+  border: 1px solid #6ee7b7;
+  border-radius: 8px;
+  color: #047857;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  transition: all 0.15s ease;
+}
+
+.changeLocationBtn:hover {
+  background: #059669;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+/* Direct Contacts */
+.contactList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contactItem {
+  align-items: center;
+  color: #475569;
+  display: flex;
+  font-size: 13px;
+  gap: 8px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.contactItem:hover {
+  color: #059669;
+}
+
+/* Social Buttons */
+.socialGroup {
+  display: flex;
+  gap: 10px;
+}
+
+.socialBtn {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #475569;
+  display: flex;
+  height: 36px;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  width: 36px;
+}
+
+.socialBtn:hover {
+  background: #059669;
+  border-color: #059669;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Navigation Columns */
+.navCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.colTitle {
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navList a {
+  color: #64748b;
+  display: inline-block;
+  font-size: 13px;
+  line-height: 20px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.navList a:hover {
+  color: #059669;
+  transform: translateX(3px);
+}
+
+/* Newsletter Column */
+.newsletterCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.newsletterSubtitle {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 20px;
+  margin: 0;
+}
+
+.newsletterForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputWrapper {
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  display: flex;
+  overflow: hidden;
+  padding: 4px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.inputWrapper:focus-within {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+.newsletterInput {
+  background: transparent;
+  border: 0;
+  color: #0f172a;
+  flex: 1;
+  font-size: 13px;
+  min-width: 0;
+  outline: none;
+  padding: 8px 10px;
+}
+
+.newsletterInput::placeholder {
+  color: #94a3b8;
+}
+
+.newsletterSubmitBtn {
+  align-items: center;
+  background: #059669;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  transition: all 0.15s ease;
+  width: 38px;
+}
+
+.newsletterSubmitBtn:hover {
+  background: #047857;
+  transform: scale(1.05);
+}
+
+.newsletterSuccess {
+  align-items: center;
+  background: #ecfdf5;
+  border-radius: 8px;
+  color: #065f46;
+  display: flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+  line-height: 18px;
+  padding: 8px 12px;
+}
+
+.newsletterError {
+  background: #fef2f2;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+}
+
+.safetyBadge {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #475569;
+  display: flex;
+  font-size: 12px;
+  gap: 8px;
+  line-height: 16px;
+  padding: 10px 12px;
+}
+
+.safetyIcon {
+  color: #059669;
+  flex-shrink: 0;
+}
+
+/* 2. Trust Pillars Bar (Phần dưới, liền mạch trong cùng khối) */
+.trustBar {
+  border-top: 1px solid #e2e8f0;
+  padding: 28px 0 32px;
+  width: 100%;
+}
+
+.trustGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+.trustItem {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  transition: all 0.2s ease;
+}
+
+.trustItem:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  transform: translateY(-2px);
+}
+
+.trustIconWrapper {
+  align-items: center;
+  background: #ecfdf5;
+  border-radius: 12px;
+  color: #059669;
+  display: flex;
+  flex-shrink: 0;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.trustContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trustContent strong {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.trustContent p {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 16px;
+  margin: 0;
+}
+
+/* 3. Bottom Legal & Copyright Bar */
+.bottomBar {
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 20px 0 12px;
+  text-align: center;
+}
+
+.copyrightText {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.legalLinks {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.legalLinks a {
+  color: #64748b;
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.legalLinks a:hover {
+  color: #059669;
+}
+
+.legalLinks span {
+  color: #cbd5e1;
+}
+
+/* Tablet & Desktop Layout */
+@media (min-width: 640px) {
+  .trustGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mainGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .footer {
+    padding-bottom: 32px; /* Reset mobile bottom padding */
+  }
+
+  .mainGrid {
+    gap: 40px;
+    grid-template-columns: 1.4fr 1fr 1fr 1.3fr;
+    padding: 48px 0 36px;
+  }
+
+  .trustGrid {
+    gap: 20px;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .bottomBar {
+    flex-direction: row;
+    text-align: left;
+  }
+}
+
+/* Location Chooser Modal Backdrop & Dialog */
+.modalBackdrop {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  padding: 16px;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 100;
+}
+
+.modalDialog {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  max-width: 480px;
+  overflow-y: auto;
+  position: relative;
+  width: 100%;
+}

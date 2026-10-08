@@ -4,8 +4,8 @@ import { createServerReadClient } from "@/lib/api/server-api-client";
 import { requireUser } from "@/lib/auth/require-user";
 
 export default async function CartDetailPage({ params }: { params: Promise<{ cartId: string }> }) {
-  await requireUser();
   const { cartId } = await params;
+  await requireUser(`/cart/${encodeURIComponent(cartId)}`);
   const client = await createServerReadClient();
   const { data, response } = await client.GET("/api/v1/me/carts/{cartId}", {
     params: { path: { cartId } },
