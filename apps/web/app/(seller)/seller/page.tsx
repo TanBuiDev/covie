@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MerchantForm, MerchantList } from "@/features/merchant/merchant-form";
 import { listMyMerchantsForServer } from "@/features/merchant/merchant-server-api";
 import { requireUser } from "@/lib/auth/require-user";
 import {
+  ArrowLeft,
   Bicycle,
   CheckCircle,
   HouseLine,
@@ -24,10 +26,16 @@ export default async function SellerPage() {
 
   return (
     <main className="seller-entry seller-stack">
-      <header className="surface-header">
-        <p className="eyebrow">CoVie Seller</p>
-        <h1>Seller Center</h1>
-        <p>Chọn cửa hàng đang quản lý hoặc tạo cửa hàng đầu tiên. Merchant hiện tại luôn được thể hiện trên route, không nằm trong session ẩn phía client.</p>
+      <header className="surface-header seller-entry-header">
+        <div className="seller-entry-header__text">
+          <p className="eyebrow">CoVie Seller</p>
+          <h1>Seller Center</h1>
+          <p>Chọn cửa hàng đang quản lý hoặc tạo cửa hàng đầu tiên. Merchant hiện tại luôn được thể hiện trên route, không nằm trong session ẩn phía client.</p>
+        </div>
+        <Link href="/" className="seller-entry-back-btn">
+          <ArrowLeft size={16} weight="bold" aria-hidden="true" />
+          <span>Quay lại Chợ CoVie</span>
+        </Link>
       </header>
 
       {merchants.length === 0 ? (

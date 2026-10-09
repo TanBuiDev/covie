@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { ArrowLeft } from "@phosphor-icons/react";
 import { SellerNavLinks } from "@/features/seller/seller-nav";
 import { SellerPageTitle } from "@/features/seller/seller-page-title";
 import { sellerBasePath } from "@/features/seller/seller-context";
@@ -31,8 +32,14 @@ export function SellerShell({
   return (
     <div className="seller-shell">
       <header className="seller-mobile-header">
+        <div className="seller-mobile-header-bar">
+          <Link href="/" className="seller-mobile-back-btn" aria-label="Quay lại Chợ CoVie">
+            <ArrowLeft size={16} weight="bold" aria-hidden="true" />
+            <span>Chợ CoVie</span>
+          </Link>
+          <Link className="button-link" href={`${base}/ads`}>Quảng cáo</Link>
+        </div>
         <SellerPageTitle merchantId={merchantId} />
-        <Link className="button-link" href={`${base}/ads`}>Quảng cáo</Link>
         {switcher ? <div className="seller-mobile-switcher">{switcher}</div> : null}
       </header>
 
@@ -44,7 +51,13 @@ export function SellerShell({
         <Link className="seller-desktop-brand" href={base}>TRUNG TÂM BÁN HÀNG</Link>
         {switcher ? <div className="seller-desktop-switcher">{switcher}</div> : null}
         <SellerNavLinks merchantId={merchantId} includeAds />
-        <p className="seller-desktop-role">Người bán / Nhà cung cấp</p>
+        <div className="seller-desktop-footer">
+          <Link href="/" className="seller-desktop-back-btn">
+            <ArrowLeft size={16} weight="bold" aria-hidden="true" />
+            <span>Về Chợ CoVie</span>
+          </Link>
+          <p className="seller-desktop-role">Người bán / Nhà cung cấp</p>
+        </div>
       </aside>
 
       <main className="seller-shell__main" id="seller-main-content">
