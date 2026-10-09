@@ -2,7 +2,19 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ForkKnife, Package, Phone, ShoppingBag, Storefront, Wrench } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  ForkKnife,
+  Package,
+  Phone,
+  ShieldCheck,
+  ShoppingBag,
+  Storefront,
+  Truck,
+  Wrench,
+} from "@phosphor-icons/react";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { CovieApiError } from "@/lib/api/api-error";
@@ -263,9 +275,26 @@ export function SellerOrderDetail({ order, merchantId, error, refresh }: { order
   return (
     <article className="order-detail seller-order-detail">
       <header className="surface-header seller-order-detail__hero">
-        <p className="eyebrow">Đơn {order.orderCode ?? order.id ?? ""}</p>
-        <h1>{order.type === "SERVICE" ? "Đơn dịch vụ" : "Đơn sản phẩm"}</h1>
-        <OrderStatusLabel status={order.status} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+          <p className="eyebrow" style={{ margin: 0 }}>Đơn {order.orderCode ?? order.id ?? ""}</p>
+          <Link href={`/seller/${encodeURIComponent(merchantId)}/orders`} className="seller-order-back-link" style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "600", color: "var(--seller-brand, #047857)", textDecoration: "none" }}>
+            <ArrowLeft size={14} weight="bold" />
+            <span>Quay lại danh sách đơn</span>
+          </Link>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: order.type === "SERVICE" ? "rgba(4, 120, 87, 0.08)" : "rgba(71, 85, 105, 0.08)", color: order.type === "SERVICE" ? "#047857" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            {order.type === "SERVICE" ? <Wrench size={22} weight="duotone" /> : <Package size={22} weight="duotone" />}
+          </div>
+          <h1 style={{ margin: 0 }}>{order.type === "SERVICE" ? "Đơn dịch vụ" : "Đơn sản phẩm"}</h1>
+          <OrderStatusLabel status={order.status} />
+        </div>
+        {order.createdAt ? (
+          <p style={{ margin: "6px 0 0", fontSize: "12px", color: "var(--seller-text-secondary, #64748b)", display: "flex", alignItems: "center", gap: "4px" }}>
+            <Clock size={13} weight="bold" />
+            <span>Đặt lúc {formatDateTime(order.createdAt)}</span>
+          </p>
+        ) : null}
         {error ? <p role="status">Dữ liệu gần nhất vẫn đang hiển thị. Lần làm mới vừa rồi thất bại: {error}</p> : null}
       </header>
 
@@ -277,11 +306,57 @@ export function SellerOrderDetail({ order, merchantId, error, refresh }: { order
         <h2 id="order-items-title">Nội dung đơn</h2>
         <div className="seller-order-detail__snapshot-grid">
           <div>
-            {order.items?.length ? <ul className="seller-order-item-list">{order.items.map((item, index) => <li key={item.id ?? `${item.catalogItemId ?? "item"}-${index}`}><div><strong>{item.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"}</strong><small>Số lượng: {item.quantity ?? "—"}</small></div><div className="seller-order-item-price"><small>Đơn giá: {money(item.unitPrice, item.currency ?? currency)}</small><strong>{money(item.lineTotal, item.currency ?? currency)}</strong></div></li>)}</ul> : <p className="seller-muted">Chưa có thông tin sản phẩm hoặc dịch vụ trong đơn.</p>}
+            {order.items?.length ? (
+              <ul className="seller-order-item-list">
+                {order.items.map((item, index) => {
+                  const name = itemName(item.snapshot);
+                  const visual = getItemVisual(name, item.type);
+                  return (
+                    <li key={item.id ?? `${item.catalogItemId ?? "item"}-${index}`}>
+                      <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                        <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: visual.bg, color: visual.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {visual.icon}
+                        </div>
+                        <div>
+                          <strong>{item.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"}</strong>
+                          {name !== "Mục đơn hàng" ? <span style={{ display: "block", fontSize: "12px", color: "var(--seller-text-primary, #0f172a)", fontWeight: "500" }}>{name}</span> : null}
+                          <small>Số lượng: {item.quantity ?? "—"}</small>
+                        </div>
+                      </div>
+                      <div className="seller-order-item-price">
+                        <small>Đơn giá: {money(item.unitPrice, item.currency ?? currency)}</small>
+                        <strong>{money(item.lineTotal, item.currency ?? currency)}</strong>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="seller-muted">Chưa có thông tin sản phẩm hoặc dịch vụ trong đơn.</p>
+            )}
           </div>
           <div>
             <h3>Thanh toán</h3>
-            <dl className="seller-order-facts"><div><dt>Tiền hàng</dt><dd>{money(order.pricing?.subtotal, currency)}</dd></div><div><dt>Phí giao</dt><dd>{order.pricing?.shippingFeeType === "NEGOTIATED" ? negotiatedShippingCopy() : money(order.pricing?.shippingFee, currency)}</dd></div><div><dt>{order.pricing?.shippingFeeType === "NEGOTIATED" ? "Tạm tính trên CoVie" : "Tổng"}</dt><dd>{money(order.pricing?.shippingFeeType === "NEGOTIATED" ? order.pricing?.knownTotal : order.pricing?.totalAmount ?? order.pricing?.knownTotal, currency)}</dd></div><div><dt>Phương thức thanh toán</dt><dd>{order.paymentMethod === "COD" ? "Thanh toán khi nhận" : order.paymentMethod === "BANK_TRANSFER_NEGOTIATED" ? "Chuyển khoản thỏa thuận" : "—"}</dd></div></dl>
+            <dl className="seller-order-facts">
+              <div>
+                <dt>Tiền hàng</dt>
+                <dd>{money(order.pricing?.subtotal, currency)}</dd>
+              </div>
+              <div>
+                <dt>Phí giao</dt>
+                <dd>{order.pricing?.shippingFeeType === "NEGOTIATED" ? negotiatedShippingCopy() : money(order.pricing?.shippingFee, currency)}</dd>
+              </div>
+              <div>
+                <dt>{order.pricing?.shippingFeeType === "NEGOTIATED" ? "Tạm tính trên CoVie" : "Tổng"}</dt>
+                <dd style={{ color: "var(--seller-brand, #047857)", fontSize: "16px" }}>
+                  {money(order.pricing?.shippingFeeType === "NEGOTIATED" ? order.pricing?.knownTotal : order.pricing?.totalAmount ?? order.pricing?.knownTotal, currency)}
+                </dd>
+              </div>
+              <div>
+                <dt>Phương thức thanh toán</dt>
+                <dd>{order.paymentMethod === "COD" ? "Thanh toán khi nhận" : order.paymentMethod === "BANK_TRANSFER_NEGOTIATED" ? "Chuyển khoản thỏa thuận" : "—"}</dd>
+              </div>
+            </dl>
             {order.pricing?.shippingFeeType === "NEGOTIATED" ? <p className="seller-muted">Tổng cuối cùng sẽ được cập nhật sau khi phí giao được thống nhất.</p> : null}
           </div>
         </div>
@@ -289,21 +364,77 @@ export function SellerOrderDetail({ order, merchantId, error, refresh }: { order
 
       <section className="seller-order-detail__fulfillment" aria-labelledby="order-fulfillment-title">
         <h2 id="order-fulfillment-title">Thực hiện đơn</h2>
-        <dl className="seller-order-facts"><div><dt>Hình thức</dt><dd>{fulfillmentCopy(order)}</dd></div>{order.fulfillment?.distanceMeters != null ? <div><dt>Khoảng cách</dt><dd>{(order.fulfillment.distanceMeters / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km</dd></div> : null}</dl>
+        <dl className="seller-order-facts">
+          <div>
+            <dt>Hình thức</dt>
+            <dd>{fulfillmentCopy(order)}</dd>
+          </div>
+          {order.fulfillment?.distanceMeters != null ? (
+            <div>
+              <dt>Khoảng cách</dt>
+              <dd>{(order.fulfillment.distanceMeters / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km</dd>
+            </div>
+          ) : null}
+        </dl>
       </section>
 
-      {order.cancellation || order.issue ? <section className="seller-order-detail__info" aria-label="Thông tin cần chú ý">
-        {order.cancellation ? <div aria-labelledby="order-cancellation-title"><h2 id="order-cancellation-title">Yêu cầu hủy</h2><p><strong>{statusCopy(order.cancellation.status)}</strong></p>{order.cancellation.reasonText || order.cancellation.reasonCode ? <p>{order.cancellation.reasonText ?? order.cancellation.reasonCode}</p> : null}{order.cancellation.responseNote ? <p>Phản hồi: {order.cancellation.responseNote}</p> : null}</div> : null}
-        {order.issue ? <div className="warning-banner" aria-labelledby="order-issue-title"><h2 id="order-issue-title">Sự cố đang được ghi nhận</h2><p>{statusCopy(order.issue.status)}</p>{order.issue.reasonText ? <p>{order.issue.reasonText}</p> : null}</div> : null}
-      </section> : null}
+      {order.cancellation || order.issue ? (
+        <section className="seller-order-detail__info" aria-label="Thông tin cần chú ý">
+          {order.cancellation ? (
+            <div aria-labelledby="order-cancellation-title">
+              <h2 id="order-cancellation-title">Yêu cầu hủy</h2>
+              <p><strong>{statusCopy(order.cancellation.status)}</strong></p>
+              {order.cancellation.reasonText || order.cancellation.reasonCode ? <p>{order.cancellation.reasonText ?? order.cancellation.reasonCode}</p> : null}
+              {order.cancellation.responseNote ? <p>Phản hồi: {order.cancellation.responseNote}</p> : null}
+            </div>
+          ) : null}
+          {order.issue ? (
+            <div className="warning-banner" aria-labelledby="order-issue-title">
+              <h2 id="order-issue-title">Sự cố đang được ghi nhận</h2>
+              <p>{statusCopy(order.issue.status)}</p>
+              {order.issue.reasonText ? <p>{order.issue.reasonText}</p> : null}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
-      {buyerReputation ? <section className="seller-order-detail__privacy" aria-labelledby="buyer-reputation-title"><h2 id="buyer-reputation-title">Độ tin cậy người mua</h2><dl className="seller-order-facts"><div><dt>Đơn đủ điều kiện</dt><dd>{buyerReputation.eligibleOrders ?? "—"}</dd></div><div><dt>Đơn hoàn tất</dt><dd>{buyerReputation.completedOrders ?? "—"}</dd></div><div><dt>Tỷ lệ hoàn tất</dt><dd>{buyerReputation.completionRateBasisPoints != null ? `${(buyerReputation.completionRateBasisPoints / 100).toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "—"}</dd></div></dl>{buyerReputation.warning ? <p className="warning-banner" role="status">Người mua đang có cảnh báo độ tin cậy trong ngữ cảnh đơn này.</p> : null}</section> : null}
+      {buyerReputation ? (
+        <section className="seller-order-detail__privacy" aria-labelledby="buyer-reputation-title">
+          <h2 id="buyer-reputation-title">Độ tin cậy người mua</h2>
+          <dl className="seller-order-facts">
+            <div>
+              <dt>Đơn đủ điều kiện</dt>
+              <dd>{buyerReputation.eligibleOrders ?? "—"}</dd>
+            </div>
+            <div>
+              <dt>Đơn hoàn tất</dt>
+              <dd>{buyerReputation.completedOrders ?? "—"}</dd>
+            </div>
+            <div>
+              <dt>Tỷ lệ hoàn tất</dt>
+              <dd style={{ color: "#047857" }}>
+                {buyerReputation.completionRateBasisPoints != null
+                  ? `${(buyerReputation.completionRateBasisPoints / 100).toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`
+                  : "—"}
+              </dd>
+            </div>
+          </dl>
+          {buyerReputation.warning ? (
+            <p className="warning-banner" role="status">
+              Người mua đang có cảnh báo độ tin cậy trong ngữ cảnh đơn này.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="seller-order-detail__actions" aria-labelledby="seller-order-actions-title">
         <h2 id="seller-order-actions-title">Hành động khả dụng</h2>
         <OrderActions order={order} actorView="SELLER" onChanged={refresh} />
         {!hasActions ? <div className="seller-card" aria-label="Trạng thái thao tác"><p className="seller-muted">Hiện không có thao tác khả dụng cho đơn này.</p></div> : null}
-        <Link href={`/seller/${encodeURIComponent(merchantId)}/orders`}>Quay lại danh sách đơn</Link>
+        <Link href={`/seller/${encodeURIComponent(merchantId)}/orders`} style={{ display: "inline-flex", alignItems: "center", gap: "6px", textDecoration: "none", color: "var(--seller-brand, #047857)", fontWeight: "600", fontSize: "14px", marginTop: "8px" }}>
+          <ArrowLeft size={16} weight="bold" />
+          <span>Quay lại danh sách đơn</span>
+        </Link>
       </section>
     </article>
   );

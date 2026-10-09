@@ -393,6 +393,25 @@
   text-align: right;
 }
 
+.seller-order-detail {
+  display: grid;
+  gap: 16px;
+}
+
+.seller-order-detail__hero,
+.seller-order-detail__snapshot,
+.seller-order-detail__fulfillment,
+.seller-order-detail__privacy,
+.seller-order-detail__actions,
+.seller-order-detail__timeline,
+.seller-order-detail__info {
+  background: var(--seller-surface, #ffffff);
+  border: 1px solid var(--seller-border, #e2e8f0);
+  border-radius: var(--seller-radius-md, 12px);
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
 .seller-order-detail__snapshot-grid,
 .seller-order-detail__actions,
 .seller-order-detail__info {
