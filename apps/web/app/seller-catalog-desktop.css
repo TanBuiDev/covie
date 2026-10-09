@@ -136,6 +136,57 @@
     display: grid;
     gap: 10px;
   }
+
+  /* TOOLBAR & SEARCH DESKTOP */
+  .seller-catalog-toolbar {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .seller-catalog-toolbar .seller-segmented {
+    width: 520px;
+  }
+
+  .seller-catalog-toolbar .seller-catalog-add {
+    width: auto;
+  }
+
+  .seller-catalog-search {
+    grid-column: 1 / -1;
+    max-width: 520px;
+  }
+
+  /* CREATE STUDIO LAYOUT */
+  .seller-catalog-create-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.85fr);
+    gap: 28px;
+    align-items: start;
+    max-width: 1128px;
+  }
+
+  .seller-live-preview-box {
+    position: sticky;
+    top: 24px;
+  }
+
+  /* INVENTORY DESKTOP */
+  .seller-inventory-wrapper {
+    max-width: 1128px;
+    display: grid;
+    gap: 16px;
+  }
+
+  .seller-inventory-overview {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .seller-inventory-toolbar {
+    max-width: 460px;
+  }
 }
 
 @media (min-width: 1024px) and (max-width: 1199px) {
