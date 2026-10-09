@@ -261,6 +261,15 @@ export function AdminEntityTable({
                     </div>
                   </dl>
 
+                  {type === "merchants" ? (
+                    <div style={{ marginTop: "10px", padding: "10px 12px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                      <strong style={{ fontSize: "12px", color: "var(--admin-text, #0f172a)", display: "block" }}>Nguyên tắc đối tác CoVie</strong>
+                      <p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--admin-text-secondary, #64748b)", lineHeight: "16px" }}>
+                        Chỉ gian hàng được duyệt mới hiển thị trên chợ cư dân. Đình chỉ sẽ vô hiệu hóa nhận đơn ngay lập tức.
+                      </p>
+                    </div>
+                  ) : null}
+
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", borderTop: "1px solid #f1f5f9", paddingTop: "10px", marginTop: "4px" }}>
                     <ShieldCheck size={16} weight="fill" style={{ color: "#047857", flexShrink: 0 }} />
                     <p className="admin-caption" style={{ margin: 0 }}>
