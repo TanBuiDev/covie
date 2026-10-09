@@ -4,7 +4,22 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
-import { AdminPageHeader, AdminStatusChip, AdminSurface, formatAdminDate, formatAdminMoney, presentOrderStatus } from "./admin-ui";
+import {
+  ArrowLeft,
+  ArrowsClockwise,
+  Clock,
+  Package,
+  ShieldCheck,
+  User,
+} from "@phosphor-icons/react";
+import {
+  AdminPageHeader,
+  AdminStatusChip,
+  AdminSurface,
+  formatAdminDate,
+  formatAdminMoney,
+  presentOrderStatus,
+} from "./admin-ui";
 
 type EventRow = { id?: string; type?: string; actorUserId?: string; actorContext?: string; fromStatus?: string; toStatus?: string; reasonCode?: string; createdAt?: string };
 type OrderDetail = { id?: string; orderCode?: string; status?: string; buyer?: { userId?: string }; merchant?: { merchantId?: string; locationId?: string }; pricing?: { totalAmount?: number; knownTotal?: number; currency?: string } };
@@ -71,7 +86,9 @@ export function AdminOrderHistory({ orderId }: { orderId: string }) {
       setOrder(nextOrder);
     } catch (cause) {
       if (isActive()) setError(cause instanceof Error ? cause.message : "Không thể tải lịch sử đơn hàng");
-    } finally { if (isActive()) setLoading(false); }
+    } finally {
+      if (isActive()) setLoading(false);
+    }
   }, [orderId]);
 
   useEffect(() => {
@@ -79,20 +96,138 @@ export function AdminOrderHistory({ orderId }: { orderId: string }) {
     Promise.resolve().then(() => { if (active) void load(() => active); });
     return () => { active = false; };
   }, [load]);
-  function reload() { setLoading(true); setError(undefined); void load(); }
+
+  function reload() {
+    setLoading(true);
+    setError(undefined);
+    void load();
+  }
+
   const status = presentOrderStatus(order?.status);
 
-  return <div className="admin-page-stack">
-    <AdminPageHeader title={`Lịch sử đơn ${order?.orderCode ?? orderId}`} subtitle="CoVie Admin · Tra cứu đơn hàng" action={<AdminStatusChip label="Chỉ đọc" tone="neutral" />} />
-    <Link className="admin-inline-link" href="/admin/orders">← Quay lại tra cứu đơn hàng</Link>
-    {loading ? <AdminSurface><p className="admin-muted">Đang tải lịch sử…</p></AdminSurface> : null}
-    {error ? <AdminSurface><p className="admin-error" role="alert">{error}</p><button className="admin-button admin-button--secondary" onClick={reload}>Tải lại</button></AdminSurface> : null}
-    {!loading && !error ? <>
-      <div className="admin-history-grid">
-        <div className="admin-order-timeline">{events.length ? events.map((event, index) => { const copy = presentEvent(event.type); return <article className="admin-order-timeline__event" key={event.id ?? index}><span className="admin-order-timeline__marker" aria-hidden="true" /><div><strong>{copy[0]}</strong><small>{formatAdminDate(event.createdAt)}</small><p>{copy[1]}</p><p className="admin-caption">{actorLabel(event.actorContext)}{event.actorUserId ? ` · ${event.actorUserId}` : ""}{event.reasonCode ? ` · Lý do: ${event.reasonCode}` : ""}</p></div></article>; }) : <AdminSurface><p className="admin-muted">Chưa có sự kiện lịch sử được API trả về.</p></AdminSurface>}</div>
-        <AdminSurface className="admin-history-meta"><h2>Thông tin tham chiếu</h2><dl><div><dt>Người mua</dt><dd>{order?.buyer?.userId ?? "—"}</dd></div><div><dt>Người bán</dt><dd>{order?.merchant?.merchantId ?? "—"}</dd></div><div><dt>Điểm bán</dt><dd>{order?.merchant?.locationId ?? "—"}</dd></div><div><dt>Trạng thái</dt><dd><AdminStatusChip label={status.label} tone={status.tone} /></dd></div><div><dt>Tổng theo đơn</dt><dd>{formatAdminMoney(order?.pricing?.totalAmount ?? order?.pricing?.knownTotal, order?.pricing?.currency)}</dd></div></dl><strong>Dòng thời gian ghi lại các sự kiện đã xảy ra và chỉ dùng để tra cứu.</strong></AdminSurface>
-      </div>
-      <AdminSurface className="admin-contract-note"><strong>Không có điều khiển trạng thái</strong><p>Nếu trạng thái vừa thay đổi, hãy tải lại đơn hàng và dòng thời gian để xem dữ liệu mới nhất.</p><button className="admin-button admin-button--secondary" onClick={reload}>Tải lại dữ liệu</button></AdminSurface>
-    </> : null}
-  </div>;
+  return (
+    <div className="admin-page-stack">
+      <AdminPageHeader
+        title={`Lịch sử đơn ${order?.orderCode ?? orderId}`}
+        subtitle="CoVie Admin · Tra cứu tiến trình và dòng sự kiện đơn hàng"
+        action={<AdminStatusChip label="Chỉ đọc" tone="neutral" />}
+      />
+
+      <Link
+        className="admin-inline-link"
+        href="/admin/orders"
+        style={{ display: "inline-flex", alignItems: "center", gap: "6px", width: "fit-content", fontWeight: "600", color: "#047857" }}
+      >
+        <ArrowLeft size={16} weight="bold" />
+        <span>Quay lại tra cứu đơn hàng</span>
+      </Link>
+
+      {loading ? (
+        <AdminSurface>
+          <p className="admin-muted">Đang tải lịch sử…</p>
+        </AdminSurface>
+      ) : null}
+
+      {error ? (
+        <AdminSurface>
+          <p className="admin-error" role="alert">{error}</p>
+          <button className="admin-button admin-button--secondary" onClick={reload} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            <ArrowsClockwise size={16} weight="bold" />
+            <span>Tải lại</span>
+          </button>
+        </AdminSurface>
+      ) : null}
+
+      {!loading && !error ? (
+        <>
+          <div className="admin-history-grid">
+            <div className="admin-order-timeline">
+              {events.length ? (
+                events.map((event, index) => {
+                  const copy = presentEvent(event.type);
+                  return (
+                    <article className="admin-order-timeline__event" key={event.id ?? index}>
+                      <span className="admin-order-timeline__marker" aria-hidden="true" />
+                      <div>
+                        <strong>{copy[0]}</strong>
+                        <small style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Clock size={12} weight="bold" />
+                          <span>{formatAdminDate(event.createdAt)}</span>
+                        </small>
+                        <p>{copy[1]}</p>
+                        <p className="admin-caption">
+                          {actorLabel(event.actorContext)}
+                          {event.actorUserId ? ` · ${event.actorUserId}` : ""}
+                          {event.reasonCode ? ` · Lý do: ${event.reasonCode}` : ""}
+                        </p>
+                      </div>
+                    </article>
+                  );
+                })
+              ) : (
+                <AdminSurface>
+                  <p className="admin-muted">Chưa có sự kiện lịch sử được API trả về.</p>
+                </AdminSurface>
+              )}
+            </div>
+
+            <AdminSurface className="admin-history-meta">
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Package size={20} weight="duotone" style={{ color: "#047857" }} />
+                <h2 style={{ margin: 0 }}>Thông tin tham chiếu</h2>
+              </div>
+              <dl>
+                <div>
+                  <dt>Người mua</dt>
+                  <dd style={{ fontFamily: "monospace" }}>{order?.buyer?.userId ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt>Người bán</dt>
+                  <dd style={{ fontFamily: "monospace" }}>{order?.merchant?.merchantId ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt>Điểm bán</dt>
+                  <dd style={{ fontFamily: "monospace" }}>{order?.merchant?.locationId ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt>Trạng thái</dt>
+                  <dd>
+                    <AdminStatusChip label={status.label} tone={status.tone} />
+                  </dd>
+                </div>
+                <div>
+                  <dt>Tổng theo đơn</dt>
+                  <dd style={{ color: "#047857", fontWeight: "700" }}>
+                    {formatAdminMoney(order?.pricing?.totalAmount ?? order?.pricing?.knownTotal, order?.pricing?.currency)}
+                  </dd>
+                </div>
+              </dl>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", borderTop: "1px solid #f1f5f9", paddingTop: "8px" }}>
+                <ShieldCheck size={16} weight="fill" style={{ color: "#047857", flexShrink: 0 }} />
+                <strong style={{ fontSize: "12px", color: "#334155" }}>
+                  Dòng thời gian ghi lại các sự kiện đã xảy ra và chỉ dùng để tra cứu.
+                </strong>
+              </div>
+            </AdminSurface>
+          </div>
+
+          <AdminSurface className="admin-contract-note">
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <ShieldCheck size={18} weight="duotone" style={{ color: "#2563eb" }} />
+              <strong>Không có điều khiển trạng thái</strong>
+            </div>
+            <p>Nếu trạng thái vừa thay đổi, hãy tải lại đơn hàng và dòng thời gian để xem dữ liệu mới nhất.</p>
+            <button
+              className="admin-button admin-button--secondary"
+              onClick={reload}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <ArrowsClockwise size={16} weight="bold" />
+              <span>Tải lại dữ liệu</span>
+            </button>
+          </AdminSurface>
+        </>
+      ) : null}
+    </div>
+  );
 }
