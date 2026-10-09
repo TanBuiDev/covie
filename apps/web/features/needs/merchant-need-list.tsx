@@ -7,6 +7,16 @@ import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { StatusChip } from "@/components/ui/status-chip";
 import { countdownPresentation } from "@/lib/format/time";
+import {
+  CheckCircle,
+  Clock,
+  HourglassHigh,
+  Lightning,
+  Package,
+  Target,
+  Wrench,
+  X,
+} from "@phosphor-icons/react";
 import { discoverMerchantNeeds, getMerchantNeedResponse, listEligibleNeedItems, type MerchantNeedMatch, type NeedEligibleItemPage, type NeedResponse } from "./need-api";
 import { MerchantNeedResponseForm } from "./merchant-need-response-form";
 
@@ -201,6 +211,14 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
     && (!match.need?.expiresAt || !countdownPresentation(match.need.expiresAt).expired));
   const selectedExistingMatch = items?.find((match) => match.need?.id === selectedNeedId && match.alreadyResponded);
 
+  const totalNeeds = items?.length ?? 0;
+  const urgentNeeds = items?.filter((m) => {
+    if (!m.need?.expiresAt || m.alreadyResponded) return false;
+    const exp = countdownPresentation(m.need.expiresAt);
+    return !exp.expired && exp.urgent;
+  }).length ?? 0;
+  const respondedNeeds = items?.filter((m) => m.alreadyResponded).length ?? 0;
+
   return (
     <section className="seller-stack" aria-label="Nhu cầu phù hợp">
       <label className="seller-need-location-filter">
@@ -210,6 +228,38 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
         </select>
         <small>Chỉ dùng nội dung đang bán tại điểm bán này</small>
       </label>
+
+      {items && items.length > 0 ? (
+        <div className="seller-need-metrics-bar" role="region" aria-label="Tổng quan nhu cầu">
+          <div className="seller-need-metric-card">
+            <div className="seller-need-metric-card__icon" style={{ background: "rgba(4, 120, 87, 0.08)", color: "#047857" }}>
+              <Target size={20} weight="duotone" />
+            </div>
+            <div className="seller-need-metric-card__info">
+              <span className="seller-need-metric-card__value">{totalNeeds}</span>
+              <span className="seller-need-metric-card__label">Nhu cầu quanh điểm bán</span>
+            </div>
+          </div>
+          <div className="seller-need-metric-card">
+            <div className="seller-need-metric-card__icon" style={{ background: "rgba(234, 88, 12, 0.1)", color: "#ea580c" }}>
+              <Lightning size={20} weight="duotone" />
+            </div>
+            <div className="seller-need-metric-card__info">
+              <span className="seller-need-metric-card__value">{urgentNeeds}</span>
+              <span className="seller-need-metric-card__label">Khẩn cấp (sắp hết hạn)</span>
+            </div>
+          </div>
+          <div className="seller-need-metric-card">
+            <div className="seller-need-metric-card__icon" style={{ background: "rgba(37, 99, 235, 0.08)", color: "#2563eb" }}>
+              <CheckCircle size={20} weight="duotone" />
+            </div>
+            <div className="seller-need-metric-card__info">
+              <span className="seller-need-metric-card__value">{respondedNeeds}</span>
+              <span className="seller-need-metric-card__label">Đã gửi phản hồi</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {error && !items ? (
         <ErrorState
@@ -232,13 +282,19 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
             return (
               <article className="seller-need-card" key={key}>
                 <div className="seller-need-card__summary">
+                  <div className="seller-need-card__type-badge" style={{ background: need?.type === "SERVICE" ? "rgba(4, 120, 87, 0.08)" : "rgba(71, 85, 105, 0.08)", color: need?.type === "SERVICE" ? "#047857" : "#475569" }}>
+                    {need?.type === "SERVICE" ? <Wrench size={15} weight="duotone" /> : <Package size={15} weight="duotone" />}
+                    <span>{need?.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"}</span>
+                  </div>
                   <strong>{need?.title ?? "Nhu cầu"}</strong>
                   <small>{[match.buyerArea?.label, distance ? `cách điểm bán ${distance}` : null].filter(Boolean).join(" · ") || "Khu vực theo dữ liệu hệ thống"}</small>
                 </div>
 
                 {expiry ? (
                   <div className={`seller-need-expiry${expiry.urgent ? " seller-need-expiry--urgent" : ""}`} role="status">
-                    <span aria-hidden="true" />
+                    <span aria-hidden="true">
+                      {expiry.urgent ? <Clock size={16} weight="bold" /> : <HourglassHigh size={16} weight="bold" />}
+                    </span>
                     <div>
                       <strong>{expiry.expired ? "Đã hết hạn" : expiry.urgent ? "Sắp hết hạn" : "Còn thời gian"}</strong>
                       <small>{expiry.label}</small>
@@ -322,7 +378,10 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
                 <p className="eyebrow">PHẢN HỒI ĐÃ GỬI</p>
                 <h2>{selectedExistingMatch.need?.title ?? "Phản hồi đã gửi"}</h2>
               </div>
-              <button type="button" onClick={() => selectExistingResponse(selectedNeedId)}>Đóng</button>
+              <button type="button" onClick={() => selectExistingResponse(selectedNeedId)}>
+                <X size={15} weight="bold" style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 4 }} />
+                Đóng
+              </button>
             </div>
             {!existingResponse && !responseError ? <LoadingState label="Đang tải phản hồi đã gửi…" /> : null}
             {responseError && !existingResponse ? (
@@ -335,7 +394,9 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
             {existingResponse ? (
               <div className="seller-need-existing__content">
                 <div className="seller-need-existing__status" role="status">
-                  <span aria-hidden="true">✓</span>
+                  <span aria-hidden="true" style={{ color: "var(--seller-brand, #047857)", display: "inline-flex" }}>
+                    <CheckCircle size={22} weight="fill" />
+                  </span>
                   <div>
                     <strong>{existingResponse.status === "ACTIVE" ? "Phản hồi đang hoạt động" : "Phản hồi đã rút"}</strong>
                     <p>{existingResponse.items.length} nội dung đang được gửi cho yêu cầu này.</p>
@@ -344,13 +405,22 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
                 <div className="seller-need-existing__items" aria-label="Nội dung đã gửi">
                   {existingResponse.items.map((item) => (
                     <article className="seller-need-existing__item" key={item.id}>
-                      <div className="seller-need-existing__thumb" aria-hidden="true" />
+                      <div className="seller-need-existing__thumb" aria-hidden="true">
+                        {selectedExistingMatch.need?.type === "SERVICE" ? (
+                          <Wrench size={18} weight="duotone" color="#047857" />
+                        ) : (
+                          <Package size={18} weight="duotone" color="#475569" />
+                        )}
+                      </div>
                       <div>
                         <strong>{item.catalogItemName || "Nội dung catalog"}</strong>
                         <small>{selectedExistingMatch.need?.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"} · {existingResponse.merchantLocationName || "Điểm bán"}</small>
                       </div>
                       <strong>{item.priceAtResponse.amount.toLocaleString("vi-VN")} đ</strong>
-                      <span className="seller-need-existing__sent">✓ Đã gửi</span>
+                      <span className="seller-need-existing__sent">
+                        <CheckCircle size={14} weight="fill" style={{ marginRight: 4, display: "inline-block", verticalAlign: "-2px" }} />
+                        Đã gửi
+                      </span>
                     </article>
                   ))}
                 </div>
