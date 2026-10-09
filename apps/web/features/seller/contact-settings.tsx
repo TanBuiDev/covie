@@ -3,6 +3,15 @@
 import type { components } from "@covie/api-client";
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
+import Image from "next/image";
+import {
+  ChatCircleDots,
+  CheckCircle,
+  FloppyDisk,
+  PaperPlaneTilt,
+  QrCode,
+  Trash,
+} from "@phosphor-icons/react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { createMerchantContact, deleteMerchantContact } from "./contact-api";
@@ -42,13 +51,15 @@ export function MerchantContactSettings({
   const [message, setMessage] = useState<string>();
   const [messageIsError, setMessageIsError] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MerchantContact>();
+  const [selectedQrPreview, setSelectedQrPreview] = useState<string>();
+
   const visibleContacts = useMemo(
     () => contacts.filter((contact) => (merchantLocationId ? contact.merchantLocationId === merchantLocationId : !contact.merchantLocationId)),
     [contacts, merchantLocationId],
   );
-  const zaloContacts = visibleContacts.filter((contact) => contact.contactType === "ZALO_LINK");
-  const messengerContacts = visibleContacts.filter((contact) => contact.contactType === "MESSENGER_LINK");
-  const qrContacts = visibleContacts.filter((contact) => contact.contactType === "ZALO_QR");
+  const zaloContacts = useMemo(() => visibleContacts.filter((contact) => contact.contactType === "ZALO_LINK"), [visibleContacts]);
+  const messengerContacts = useMemo(() => visibleContacts.filter((contact) => contact.contactType === "MESSENGER_LINK"), [visibleContacts]);
+  const qrContacts = useMemo(() => visibleContacts.filter((contact) => contact.contactType === "ZALO_QR"), [visibleContacts]);
   const zaloContact = zaloContacts[0];
   const messengerContact = messengerContacts[0];
   const qrContact = qrContacts[0];
@@ -96,6 +107,7 @@ export function MerchantContactSettings({
       }
       setMessage("Đã lưu liên hệ.");
       formElement.reset();
+      setSelectedQrPreview(undefined);
       router.refresh();
     } catch {
       setMessageIsError(true);
@@ -127,71 +139,179 @@ export function MerchantContactSettings({
 
   return (
     <section className="seller-contact-settings" aria-label={title}>
+      <header className="seller-contact-settings__header">
+        <div className="seller-contact-settings__titles">
+          <h2>{title}</h2>
+          <p className="seller-muted">Kết nối các kênh Zalo, Messenger và mã QR để khách mua dễ dàng liên hệ tư vấn và hỗ trợ đơn hàng.</p>
+        </div>
+      </header>
+
       <form className="seller-contact-form" onSubmit={submit} aria-busy={pending}>
-        <label>
-          Zalo link
-          <input
-            name="zaloLink"
-            type="url"
-            inputMode="url"
-            defaultValue={zaloContact?.value ?? ""}
-            readOnly={Boolean(zaloContact)}
-            disabled={pending}
-            placeholder={zaloContact ? undefined : "https://zalo.me/..."}
-          />
-          <small>{zaloContact ? "Liên kết đã lưu hiện chỉ có thể xem." : "Liên kết liên hệ công khai"}</small>
-        </label>
+        {/* ZALO CHANNEL CARD */}
+        <div className="seller-contact-channel-card">
+          <div className="seller-contact-channel-card__head">
+            <div className="seller-contact-channel-icon seller-contact-channel-icon--zalo" aria-hidden="true">
+              <ChatCircleDots size={20} weight="fill" />
+            </div>
+            <div className="seller-contact-channel-info">
+              <strong>Zalo Official / Cá nhân</strong>
+              <small>Hỗ trợ giải đáp thắc mắc và gửi định vị nhanh cho khách hàng</small>
+            </div>
+            {zaloContact ? <span className="status-chip status-chip--success">Đã lưu</span> : null}
+          </div>
 
-        <label>
-          Messenger link
-          <input
-            name="messengerLink"
-            type="url"
-            inputMode="url"
-            defaultValue={messengerContact?.value ?? ""}
-            readOnly={Boolean(messengerContact)}
-            disabled={pending}
-            placeholder={messengerContact ? undefined : "https://m.me/..."}
-          />
-          <small>{messengerContact ? "Liên kết đã lưu hiện chỉ có thể xem." : "Liên kết liên hệ công khai"}</small>
-        </label>
+          <label>
+            Zalo link
+            <input
+              name="zaloLink"
+              type="url"
+              inputMode="url"
+              defaultValue={zaloContact?.value ?? ""}
+              readOnly={Boolean(zaloContact)}
+              disabled={pending}
+              placeholder={zaloContact ? undefined : "https://zalo.me/..."}
+              className="seller-contact-input"
+            />
+            <small>{zaloContact ? "Liên kết đã lưu hiện chỉ có thể xem." : "Liên kết liên hệ công khai"}</small>
+          </label>
+        </div>
 
+        {/* MESSENGER CHANNEL CARD */}
+        <div className="seller-contact-channel-card">
+          <div className="seller-contact-channel-card__head">
+            <div className="seller-contact-channel-icon seller-contact-channel-icon--messenger" aria-hidden="true">
+              <PaperPlaneTilt size={20} weight="fill" />
+            </div>
+            <div className="seller-contact-channel-info">
+              <strong>Facebook Messenger</strong>
+              <small>Hộp thư fanpage cửa hàng để trao đổi trực tuyến</small>
+            </div>
+            {messengerContact ? <span className="status-chip status-chip--success">Đã lưu</span> : null}
+          </div>
+
+          <label>
+            Messenger link
+            <input
+              name="messengerLink"
+              type="url"
+              inputMode="url"
+              defaultValue={messengerContact?.value ?? ""}
+              readOnly={Boolean(messengerContact)}
+              disabled={pending}
+              placeholder={messengerContact ? undefined : "https://m.me/..."}
+              className="seller-contact-input"
+            />
+            <small>{messengerContact ? "Liên kết đã lưu hiện chỉ có thể xem." : "Liên kết liên hệ công khai"}</small>
+          </label>
+        </div>
+
+        {/* QR CODE CARD */}
         <section className="seller-contact-qr" aria-labelledby="seller-contact-qr-heading">
-          <strong id="seller-contact-qr-heading">QR liên hệ</strong>
-          <p>Ảnh QR dùng để liên hệ Zalo. Không dùng cho thanh toán.</p>
+          <div className="seller-contact-qr__header">
+            <div className="seller-contact-channel-icon seller-contact-channel-icon--qr" aria-hidden="true">
+              <QrCode size={20} weight="duotone" />
+            </div>
+            <div>
+              <strong id="seller-contact-qr-heading">QR liên hệ</strong>
+              <p>Ảnh QR dùng để liên hệ Zalo. Không dùng cho thanh toán.</p>
+            </div>
+          </div>
+
           {qrContact ? (
-            <p className="seller-contact-qr__saved" role="status">Ảnh QR liên hệ đã được lưu. Hiện chưa hỗ trợ thay trực tiếp ảnh đã lưu.</p>
+            <div className="seller-contact-qr__status-box">
+              <CheckCircle size={18} weight="fill" className="seller-brand-accent" aria-hidden="true" />
+              <p className="seller-contact-qr__saved" role="status">
+                Ảnh QR liên hệ đã được lưu. Hiện chưa hỗ trợ thay trực tiếp ảnh đã lưu.
+              </p>
+            </div>
           ) : (
-            <label className="seller-contact-qr__picker">
-              <span>Chọn ảnh QR liên hệ</span>
-              <input name="qrFile" type="file" accept="image/jpeg,image/png,image/webp" disabled={pending} />
-            </label>
+            <div className="seller-contact-qr__upload-zone">
+              <label className="seller-contact-qr__picker">
+                <QrCode size={20} weight="bold" aria-hidden="true" />
+                <span>Chọn ảnh QR liên hệ</span>
+                <input
+                  name="qrFile"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={pending}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && typeof URL !== "undefined" && typeof URL.createObjectURL === "function") {
+                      setSelectedQrPreview(URL.createObjectURL(file));
+                    } else {
+                      setSelectedQrPreview(undefined);
+                    }
+                  }}
+                />
+              </label>
+
+              {selectedQrPreview ? (
+                <div className="seller-contact-qr__preview">
+                  <Image
+                    src={selectedQrPreview}
+                    alt="Xem trước ảnh QR liên hệ"
+                    width={100}
+                    height={100}
+                    unoptimized
+                    className="seller-contact-qr__preview-img"
+                  />
+                  <small>Ảnh QR đã sẵn sàng lưu</small>
+                </div>
+              ) : null}
+            </div>
           )}
         </section>
 
         {hasDuplicateFrozenType ? (
-          <p className="seller-contract-note" role="status">Có nhiều kênh cùng loại đang được lưu. Màn hình này hiển thị một giá trị; dùng phần quản lý trên desktop để xem hoặc xóa bản ghi thừa.</p>
+          <p className="seller-contract-note" role="status">
+            Có nhiều kênh cùng loại đang được lưu. Màn hình này hiển thị một giá trị; dùng phần quản lý trên desktop để xem hoặc xóa bản ghi thừa.
+          </p>
         ) : null}
-        {message ? <p role={messageIsError ? "alert" : "status"}>{message}</p> : null}
-        <button className="seller-contact-save" type="submit" disabled={pending}>
-          {pending ? "Đang lưu…" : "Lưu liên hệ"}
+
+        {message ? (
+          <p
+            role={messageIsError ? "alert" : "status"}
+            className={`seller-contact-msg ${messageIsError ? "seller-contact-msg--error" : "seller-contact-msg--success"}`}
+          >
+            {message}
+          </p>
+        ) : null}
+
+        <button className="seller-contact-save seller-button seller-button--primary" type="submit" disabled={pending}>
+          <FloppyDisk size={16} weight="bold" aria-hidden="true" />
+          <span>{pending ? "Đang lưu…" : "Lưu liên hệ"}</span>
         </button>
       </form>
 
+      {/* ACTIVE CHANNELS MANAGEMENT */}
       {visibleContacts.length ? (
-        <details className="seller-contact-management seller-desktop-only">
+        <details className="seller-contact-management seller-desktop-only" open>
           <summary>Quản lý kênh liên hệ</summary>
           <div className="seller-row-list">
             {visibleContacts.map((contact, index) => (
-              <div className="seller-row" key={contact.id ?? `${contact.contactType ?? "contact"}-${index}`}>
-                <div>
-                  <strong>{contactTypeCopy(contact.contactType)}</strong>
-                  {contact.value ? <small>{contact.value}</small> : null}
-                  {contact.qrMediaId ? <small>Ảnh QR liên hệ đã được lưu.</small> : null}
-                  <small>{contact.publicContact ? "Hiển thị công khai" : "Nội bộ"}</small>
+              <div className="seller-row seller-contact-row" key={contact.id ?? `${contact.contactType ?? "contact"}-${index}`}>
+                <div className="seller-contact-row__main">
+                  <div className="seller-contact-row__type">
+                    <strong>{contactTypeCopy(contact.contactType)}</strong>
+                    <span className="status-chip status-chip--neutral">
+                      {contact.publicContact ? "Hiển thị công khai" : "Nội bộ"}
+                    </span>
+                  </div>
+                  {contact.value ? <small className="seller-contact-row__value">{contact.value}</small> : null}
+                  {contact.qrMediaId ? <small className="seller-contact-row__qr-note">Ảnh QR liên hệ đã được lưu.</small> : null}
                 </div>
                 <div className="seller-row__actions">
-                  {contact.id ? <button type="button" className="button-danger" disabled={pending} onClick={() => setDeleteTarget(contact)}>Xóa</button> : null}
+                  {contact.id ? (
+                    <button
+                      type="button"
+                      className="button-danger seller-button seller-button--danger"
+                      disabled={pending}
+                      onClick={() => setDeleteTarget(contact)}
+                    >
+                      <Trash size={14} weight="bold" aria-hidden="true" />
+                      <span>Xóa</span>
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ))}
