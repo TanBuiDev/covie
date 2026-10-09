@@ -7,7 +7,16 @@ import { FormEvent, useMemo, useState } from "react";
 import { StatusChip, type StatusTone } from "@/components/ui/status-chip";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { CovieApiError } from "@/lib/api/api-error";
-import { ArrowRight, MagnifyingGlass, Sparkle, Storefront } from "@phosphor-icons/react";
+import {
+  ArrowRight,
+  Check,
+  CheckCircle,
+  FloppyDisk,
+  Image,
+  MagnifyingGlass,
+  Sparkle,
+  Storefront,
+} from "@phosphor-icons/react";
 import type { Etagged } from "./merchant-api";
 import { createMerchant, updateMerchant } from "./merchant-api";
 
@@ -198,35 +207,36 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
         {editing ? <small>Hiển thị trên trang shop công khai</small> : null}
       </label>
 
-      {!editing ? (
-        <div className="seller-live-preview" aria-hidden="true">
-          <div className="seller-live-preview__header">
-            <Sparkle size={15} weight="fill" className="seller-live-preview__sparkle" />
-            <span>Xem trước thẻ hiển thị cho cư dân</span>
+      <div className="seller-live-preview" aria-hidden="true" style={{ marginTop: "12px", marginBottom: "16px" }}>
+        <div className="seller-live-preview__header">
+          <Sparkle size={15} weight="fill" className="seller-live-preview__sparkle" />
+          <span>{editing ? "Xem trước thẻ hiển thị cho cư dân CoVie" : "Xem trước thẻ hiển thị cho cư dân"}</span>
+        </div>
+        <div className="seller-live-preview__card">
+          <div className="seller-live-preview__icon">
+            <Storefront size={26} weight="duotone" />
           </div>
-          <div className="seller-live-preview__card">
-            <div className="seller-live-preview__icon">
-              <Storefront size={26} weight="duotone" />
-            </div>
-            <div className="seller-live-preview__info">
-              <strong className="seller-live-preview__title">
-                {previewName.trim() || "Tên cửa hàng của bạn"}
-              </strong>
-              <p className="seller-live-preview__desc">
-                {previewDesc.trim() || "Mô tả món ăn, sản phẩm hoặc dịch vụ nội khu của bạn…"}
-              </p>
-              <div className="seller-live-preview__tags">
-                <span className="seller-live-preview__tag">Cửa hàng mới</span>
-                <span className="seller-live-preview__tag">Nội khu CoVie</span>
-              </div>
+          <div className="seller-live-preview__info">
+            <strong className="seller-live-preview__title">
+              {previewName.trim() || (editing ? "Tên shop của bạn" : "Tên cửa hàng của bạn")}
+            </strong>
+            <p className="seller-live-preview__desc">
+              {previewDesc.trim() || (editing ? "Mô tả giới thiệu gian hàng, sản phẩm hoặc dịch vụ…" : "Mô tả món ăn, sản phẩm hoặc dịch vụ nội khu của bạn…")}
+            </p>
+            <div className="seller-live-preview__tags">
+              <span className="seller-live-preview__tag">{editing ? "Đang hoạt động" : "Cửa hàng mới"}</span>
+              <span className="seller-live-preview__tag">Nội khu CoVie</span>
             </div>
           </div>
         </div>
-      ) : null}
+      </div>
 
       {editing ? (
         <section className="seller-media-settings" aria-label="Logo và ảnh bìa">
-          <strong>Logo & ảnh bìa</strong>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Image size={18} weight="duotone" style={{ color: "#047857" }} />
+            <strong>Logo & ảnh bìa</strong>
+          </div>
           <p>Dùng ảnh đã tải lên CoVie và thuộc shop này.</p>
           <button className="seller-button--secondary" type="button" disabled={pending} onClick={() => setShowMedia((value) => !value)}>
             {showMedia ? "Đóng quản lý hình ảnh" : "Quản lý hình ảnh"}
@@ -250,7 +260,10 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
       {message?.startsWith("Dữ liệu") ? (
         <button type="button" disabled={pending} onClick={reload}>Tải dữ liệu mới</button>
       ) : null}
-      <button type="submit" disabled={pending}>{pending ? "Đang lưu…" : editing ? "Lưu thay đổi" : "Tạo cửa hàng"}</button>
+      <button type="submit" disabled={pending} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+        {editing ? <FloppyDisk size={16} weight="bold" /> : <Storefront size={16} weight="bold" />}
+        <span>{pending ? "Đang lưu…" : editing ? "Lưu thay đổi" : "Tạo cửa hàng"}</span>
+      </button>
     </form>
   );
 }
