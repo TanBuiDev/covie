@@ -11,6 +11,19 @@ import {
   updateShippingPolicy,
 } from "./shipping-api";
 
+import {
+  ChatCircleDots,
+  FloppyDisk,
+  Gift,
+  Info,
+  PlusCircle,
+  SlidersHorizontal,
+  Sparkle,
+  Tag,
+  Truck,
+  Calculator,
+} from "@phosphor-icons/react";
+
 type Policy = components["schemas"]["ShippingPolicyResponse"];
 type ShippingMode = NonNullable<components["schemas"]["ShippingPolicyUpsertRequest"]["mode"]>;
 type RuleMatchMode = NonNullable<components["schemas"]["ShippingPolicyUpsertRequest"]["ruleMatchMode"]>;
@@ -24,6 +37,8 @@ const defaultRule: ShippingRule = {
   priority: 1,
   enabled: true,
 };
+
+const FIXED_FEE_PRESETS = [15000, 20000, 25000, 30000] as const;
 
 function isKnownCondition(rule: ShippingRule) {
   return rule.conditionType === "DISTANCE_MAX" || rule.conditionType === "ORDER_AMOUNT_MIN";
@@ -50,11 +65,13 @@ export function ShippingPolicyForm({
   locationId,
   policy,
   onCancelEdit,
+  locationName,
 }: {
   merchantId: string;
   locationId: string;
   policy?: Policy;
   onCancelEdit?: () => void;
+  locationName?: string;
 }) {
   const router = useRouter();
   const editing = Boolean(policy?.id);
@@ -65,6 +82,62 @@ export function ShippingPolicyForm({
   const [message, setMessage] = useState<string>();
   const [pending, setPending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // SIMULATOR STATE
+  const [simDistanceKm, setSimDistanceKm] = useState(2.5);
+  const [simOrderAmount, setSimOrderAmount] = useState(180000);
+
+  // Evaluate simulator outcome
+  const parsedBaseFee = Number(baseFee) || 0;
+  const simDistanceMeters = simDistanceKm * 1000;
+
+  const simResult = (() => {
+    if (mode === "FREE") {
+      return { fee: 0, label: "0 ₫ (Freeship toàn bộ)", isFree: true, reason: "Áp dụng miễn phí vận chuyển cho tất cả đơn." };
+    }
+    if (mode === "FIXED") {
+      return { fee: parsedBaseFee, label: `${parsedBaseFee.toLocaleString("vi-VN")} ₫`, isFree: false, reason: "Áp dụng mức phí cố định." };
+    }
+    if (mode === "NEGOTIATED") {
+      return { fee: 0, label: "Thỏa thuận với người bán", isFree: false, reason: "Phí giao được người mua và người bán thương lượng riêng." };
+    }
+
+    // CONDITIONAL mode
+    const activeRules = rules.filter((r) => r.enabled && isKnownCondition(r));
+    if (!activeRules.length) {
+      return { fee: parsedBaseFee, label: `${parsedBaseFee.toLocaleString("vi-VN")} ₫`, isFree: false, reason: "Chưa có điều kiện nào kích hoạt, tính theo phí mặc định." };
+    }
+
+    const evaluations = activeRules.map((r) => {
+      if (r.conditionType === "DISTANCE_MAX") {
+        return simDistanceMeters <= (r.thresholdValue ?? 0);
+      }
+      if (r.conditionType === "ORDER_AMOUNT_MIN") {
+        return simOrderAmount >= (r.thresholdValue ?? 0);
+      }
+      return false;
+    });
+
+    const satisfies = ruleMatchMode === "ALL"
+      ? evaluations.every(Boolean)
+      : evaluations.some(Boolean);
+
+    if (satisfies) {
+      return {
+        fee: 0,
+        label: "0 ₫ (Miễn phí vận chuyển)",
+        isFree: true,
+        reason: `Đạt điều kiện freeship (${ruleMatchMode === "ALL" ? "Thỏa mãn toàn bộ" : "Thỏa mãn ít nhất một"} điều kiện).`,
+      };
+    }
+
+    return {
+      fee: parsedBaseFee,
+      label: `${parsedBaseFee.toLocaleString("vi-VN")} ₫`,
+      isFree: false,
+      reason: `Chưa đạt điều kiện freeship, áp dụng mức phí mặc định ${parsedBaseFee.toLocaleString("vi-VN")} ₫.`,
+    };
+  })();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -141,138 +214,354 @@ export function ShippingPolicyForm({
   }
 
   return (
-    <form className="seller-config-form seller-shipping-form" onSubmit={submit} aria-busy={pending}>
-      <div className="seller-section__heading seller-desktop-only">
-        <h2>{editing ? "Sửa phí giao hàng" : "Thêm phí giao hàng"}</h2>
-        {editing && onCancelEdit ? <button type="button" disabled={pending} onClick={onCancelEdit}>Đóng chỉnh sửa</button> : null}
-      </div>
+    <div className="seller-shipping-studio-layout">
+      <div className="seller-shipping-studio-main">
+        <form className="seller-config-form seller-shipping-form" onSubmit={submit} aria-busy={pending}>
+          <div className="seller-section__heading seller-desktop-only">
+            <h2>{editing ? "Sửa phí giao hàng" : "Thêm phí giao hàng"}</h2>
+            {editing && onCancelEdit ? (
+              <button type="button" className="seller-button seller-button--secondary" disabled={pending} onClick={onCancelEdit}>
+                Đóng chỉnh sửa
+              </button>
+            ) : null}
+          </div>
 
-      <label>
-        Loại phí giao
-        <select aria-label="Loại phí giao" disabled={pending} value={mode} onChange={(event) => setMode(event.target.value as ShippingMode)}>
-          <option value="FREE">Freeship</option>
-          <option value="FIXED">Cố định</option>
-          <option value="CONDITIONAL">Theo điều kiện</option>
-          <option value="NEGOTIATED">Thỏa thuận</option>
-        </select>
-        <small className="field-hint">Freeship · Cố định · Theo điều kiện · Thỏa thuận</small>
-      </label>
+          {/* POLICY MODE SELECTOR */}
+          <div className="seller-shipping-mode-container">
+            <label>
+              Loại phí giao
+              <select
+                aria-label="Loại phí giao"
+                disabled={pending}
+                value={mode}
+                onChange={(event) => setMode(event.target.value as ShippingMode)}
+              >
+                <option value="FREE">Freeship</option>
+                <option value="FIXED">Cố định</option>
+                <option value="CONDITIONAL">Theo điều kiện</option>
+                <option value="NEGOTIATED">Thỏa thuận</option>
+              </select>
+              <small className="field-hint">Freeship · Cố định · Theo điều kiện · Thỏa thuận</small>
+            </label>
 
-      {mode === "NEGOTIATED" ? (
-        <p className="seller-contract-note">Phí giao được thỏa thuận với người mua và không được biểu diễn thành 0 ₫.</p>
-      ) : mode === "FIXED" || mode === "CONDITIONAL" ? (
-        <label>
-          {mode === "CONDITIONAL" ? "Phí mặc định" : "Phí cố định"}
-          <input
-            type="number"
-            inputMode="numeric"
-            min="0"
-            step="1"
-            value={baseFee}
-            onChange={(event) => setBaseFee(event.target.value)}
-            required
-            disabled={pending}
-          />
-          <small className="field-hint">Nhập số tiền theo đồng (₫), không dùng số lẻ.</small>
-        </label>
-      ) : null}
+            {/* Visual Mode Selector Cards */}
+            <div className="seller-shipping-mode-cards" aria-hidden="true">
+              <button
+                type="button"
+                tabIndex={-1}
+                disabled={pending}
+                className={`seller-shipping-mode-card ${mode === "FREE" ? "is-selected" : ""}`}
+                onClick={() => setMode("FREE")}
+              >
+                <div className="seller-shipping-mode-card__icon seller-shipping-mode-card__icon--emerald">
+                  <Gift size={20} weight="duotone" />
+                </div>
+                <strong>Freeship</strong>
+                <small>Miễn phí toàn bộ</small>
+              </button>
 
-      {mode === "CONDITIONAL" ? (
-        <section className="seller-shipping-conditions" aria-labelledby="shipping-condition-heading">
-          <strong id="shipping-condition-heading">Điều kiện freeship</strong>
-          {rules.map((rule, index) => {
-            const knownCondition = isKnownCondition(rule);
-            return (
-              <div className="seller-shipping-condition" key={`${rule.conditionType ?? "rule"}-${index}`}>
-                <label className="seller-shipping-condition__toggle">
-                  <input
-                    type="checkbox"
-                    checked={rule.enabled ?? false}
-                    disabled={pending || !knownCondition}
-                    onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
-                      ...item,
-                      enabled: event.target.checked,
-                    } : item))}
-                  />
-                  <span>{knownCondition ? `Freeship khi ${conditionCopy(rule).toLocaleLowerCase("vi-VN")}` : conditionCopy(rule)}</span>
-                </label>
-                {knownCondition ? (
-                  <div className="seller-shipping-condition__editor">
-                    <select
-                      aria-label={`Loại điều kiện ${index + 1}`}
-                      disabled={pending}
-                      value={rule.conditionType}
-                      onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
-                        ...item,
-                        conditionType: event.target.value as ShippingRule["conditionType"],
-                        operator: event.target.value === "DISTANCE_MAX" ? "LTE" : "GTE",
-                      } : item))}
-                    >
-                      <option value="DISTANCE_MAX">Khoảng cách tối đa</option>
-                      <option value="ORDER_AMOUNT_MIN">Đơn tối thiểu</option>
-                    </select>
-                    <label>
-                      Ngưỡng ({conditionUnit(rule)})
+              <button
+                type="button"
+                tabIndex={-1}
+                disabled={pending}
+                className={`seller-shipping-mode-card ${mode === "FIXED" ? "is-selected" : ""}`}
+                onClick={() => setMode("FIXED")}
+              >
+                <div className="seller-shipping-mode-card__icon seller-shipping-mode-card__icon--blue">
+                  <Tag size={20} weight="duotone" />
+                </div>
+                <strong>Cố định</strong>
+                <small>Đồng giá mọi đơn</small>
+              </button>
+
+              <button
+                type="button"
+                tabIndex={-1}
+                disabled={pending}
+                className={`seller-shipping-mode-card ${mode === "CONDITIONAL" ? "is-selected" : ""}`}
+                onClick={() => setMode("CONDITIONAL")}
+              >
+                <div className="seller-shipping-mode-card__icon seller-shipping-mode-card__icon--purple">
+                  <SlidersHorizontal size={20} weight="duotone" />
+                </div>
+                <strong>Điều kiện</strong>
+                <small>Theo cự ly / giá trị</small>
+              </button>
+
+              <button
+                type="button"
+                tabIndex={-1}
+                disabled={pending}
+                className={`seller-shipping-mode-card ${mode === "NEGOTIATED" ? "is-selected" : ""}`}
+                onClick={() => setMode("NEGOTIATED")}
+              >
+                <div className="seller-shipping-mode-card__icon seller-shipping-mode-card__icon--slate">
+                  <ChatCircleDots size={20} weight="duotone" />
+                </div>
+                <strong>Thỏa thuận</strong>
+                <small>Trao đổi riêng</small>
+              </button>
+            </div>
+          </div>
+
+          {mode === "NEGOTIATED" ? (
+            <p className="seller-contract-note">Phí giao được thỏa thuận với người mua và không được biểu diễn thành 0 ₫.</p>
+          ) : mode === "FIXED" || mode === "CONDITIONAL" ? (
+            <div className="seller-fee-input-group">
+              <label>
+                {mode === "CONDITIONAL" ? "Phí mặc định" : "Phí cố định"}
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  step="1"
+                  value={baseFee}
+                  onChange={(event) => setBaseFee(event.target.value)}
+                  required
+                  disabled={pending}
+                />
+                <small className="field-hint">Nhập số tiền theo đồng (₫), không dùng số lẻ.</small>
+              </label>
+
+              {/* Quick Fee Presets */}
+              <div className="seller-radius-preset-pills" aria-hidden="true">
+                {FIXED_FEE_PRESETS.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    tabIndex={-1}
+                    className={`seller-preset-pill ${Number(baseFee) === preset ? "is-selected" : ""}`}
+                    disabled={pending}
+                    onClick={() => setBaseFee(String(preset))}
+                  >
+                    {preset.toLocaleString("vi-VN")} ₫
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {mode === "CONDITIONAL" ? (
+            <section className="seller-shipping-conditions" aria-labelledby="shipping-condition-heading">
+              <div className="seller-shipping-conditions__head">
+                <strong id="shipping-condition-heading">Điều kiện freeship</strong>
+                <span className="seller-badge seller-badge--neutral">{rules.length} điều kiện</span>
+              </div>
+
+              {rules.map((rule, index) => {
+                const knownCondition = isKnownCondition(rule);
+                return (
+                  <div className="seller-shipping-condition seller-shipping-condition-card" key={`${rule.conditionType ?? "rule"}-${index}`}>
+                    <label className="seller-shipping-condition__toggle">
                       <input
-                        aria-label={`Ngưỡng điều kiện ${index + 1}`}
-                        type="number"
-                        inputMode="numeric"
-                        min="0"
-                        step="1"
-                        disabled={pending}
-                        value={rule.thresholdValue ?? 0}
+                        type="checkbox"
+                        checked={rule.enabled ?? false}
+                        disabled={pending || !knownCondition}
                         onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
                           ...item,
-                          thresholdValue: Math.max(0, Math.trunc(Number(event.target.value))),
+                          enabled: event.target.checked,
                         } : item))}
                       />
+                      <span>{knownCondition ? `Freeship khi ${conditionCopy(rule).toLocaleLowerCase("vi-VN")}` : conditionCopy(rule)}</span>
                     </label>
-                    <button className="seller-button--secondary" type="button" disabled={rules.length === 1 || pending} onClick={() => setRules((current) => current.filter((_, ruleIndex) => ruleIndex !== index))}>
-                      Xóa điều kiện
-                    </button>
+                    {knownCondition ? (
+                      <div className="seller-shipping-condition__editor">
+                        <select
+                          aria-label={`Loại điều kiện ${index + 1}`}
+                          disabled={pending}
+                          value={rule.conditionType}
+                          onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
+                            ...item,
+                            conditionType: event.target.value as ShippingRule["conditionType"],
+                            operator: event.target.value === "DISTANCE_MAX" ? "LTE" : "GTE",
+                          } : item))}
+                        >
+                          <option value="DISTANCE_MAX">Khoảng cách tối đa</option>
+                          <option value="ORDER_AMOUNT_MIN">Đơn tối thiểu</option>
+                        </select>
+                        <label>
+                          Ngưỡng ({conditionUnit(rule)})
+                          <input
+                            aria-label={`Ngưỡng điều kiện ${index + 1}`}
+                            type="number"
+                            inputMode="numeric"
+                            min="0"
+                            step="1"
+                            disabled={pending}
+                            value={rule.thresholdValue ?? 0}
+                            onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
+                              ...item,
+                              thresholdValue: Math.max(0, Math.trunc(Number(event.target.value))),
+                            } : item))}
+                          />
+                        </label>
+                        <button
+                          className="seller-button seller-button--secondary seller-condition-remove-btn"
+                          type="button"
+                          disabled={rules.length === 1 || pending}
+                          onClick={() => setRules((current) => current.filter((_, ruleIndex) => ruleIndex !== index))}
+                        >
+                          Xóa điều kiện
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="seller-contract-note">Điều kiện này chưa được phiên bản hiện tại hỗ trợ nên được giữ ở chế độ chỉ đọc.</p>
+                    )}
                   </div>
-                ) : (
-                  <p className="seller-contract-note">Điều kiện này chưa được phiên bản hiện tại hỗ trợ nên được giữ ở chế độ chỉ đọc.</p>
-                )}
-              </div>
-            );
-          })}
-          <button className="seller-button--secondary" type="button" disabled={pending} onClick={() => setRules((current) => [...current, { ...defaultRule, priority: current.length + 1 }])}>
-            Thêm điều kiện
+                );
+              })}
+
+              <button
+                className="seller-button seller-button--secondary seller-condition-add-btn"
+                type="button"
+                disabled={pending}
+                onClick={() => setRules((current) => [...current, { ...defaultRule, priority: current.length + 1 }])}
+              >
+                <PlusCircle size={16} weight="bold" aria-hidden="true" />
+                <span>Thêm điều kiện</span>
+              </button>
+
+              <fieldset className="seller-shipping-match" disabled={pending}>
+                <legend>Logic điều kiện</legend>
+                <div className="seller-radio-group">
+                  <label className="seller-radio-card">
+                    <input type="radio" name="shippingRuleMatch" value="ANY" checked={ruleMatchMode === "ANY"} onChange={() => setRuleMatchMode("ANY")} />
+                    <span>Bất kỳ điều kiện nào đúng</span>
+                  </label>
+                  <label className="seller-radio-card">
+                    <input type="radio" name="shippingRuleMatch" value="ALL" checked={ruleMatchMode === "ALL"} onChange={() => setRuleMatchMode("ALL")} />
+                    <span>Tất cả điều kiện phải đúng</span>
+                  </label>
+                </div>
+              </fieldset>
+            </section>
+          ) : null}
+
+          {editing ? (
+            <details className="seller-technical-fields">
+              <summary>Trạng thái & quản lý</summary>
+              <p className="field-hint">Trạng thái hiện tại: {policy?.status ?? "không xác định"}. Trạng thái này được giữ nguyên khi lưu.</p>
+              {policy?.status !== "INACTIVE" ? (
+                <button type="button" className="button-danger" disabled={pending} onClick={() => setConfirmDelete(true)}>
+                  Tạm ngưng chính sách
+                </button>
+              ) : null}
+            </details>
+          ) : null}
+
+          {message ? <p role="alert">{message}</p> : null}
+          <button
+            className="seller-button seller-button--primary seller-shipping-save"
+            type="submit"
+            disabled={pending}
+          >
+            <FloppyDisk size={16} weight="bold" aria-hidden="true" />
+            <span>{pending ? "Đang lưu…" : "Lưu phí giao"}</span>
           </button>
 
-          <fieldset className="seller-shipping-match" disabled={pending}>
-            <legend>Logic điều kiện</legend>
-            <label><input type="radio" name="shippingRuleMatch" value="ANY" checked={ruleMatchMode === "ANY"} onChange={() => setRuleMatchMode("ANY")} /> Bất kỳ điều kiện nào đúng</label>
-            <label><input type="radio" name="shippingRuleMatch" value="ALL" checked={ruleMatchMode === "ALL"} onChange={() => setRuleMatchMode("ALL")} /> Tất cả điều kiện phải đúng</label>
-          </fieldset>
-        </section>
-      ) : null}
+          <ConfirmDialog
+            open={confirmDelete}
+            title="Tạm ngưng chính sách giao hàng?"
+            description="Chính sách sẽ được chuyển sang trạng thái tạm ngưng; dữ liệu cấu hình vẫn được giữ lại."
+            confirmLabel={pending ? "Đang xử lý…" : "Tạm ngưng"}
+            dangerous
+            confirmDisabled={pending}
+            cancelDisabled={pending}
+            onCancel={() => { if (!pending) setConfirmDelete(false); }}
+            onConfirm={() => { void deactivate(); }}
+          />
+        </form>
+      </div>
 
-      {editing ? (
-        <details className="seller-technical-fields">
-          <summary>Trạng thái & quản lý</summary>
-          <p className="field-hint">Trạng thái hiện tại: {policy?.status ?? "không xác định"}. Trạng thái này được giữ nguyên khi lưu.</p>
-          {policy?.status !== "INACTIVE" ? (
-            <button type="button" className="button-danger" disabled={pending} onClick={() => setConfirmDelete(true)}>Tạm ngưng chính sách</button>
-          ) : null}
-        </details>
-      ) : null}
+      {/* ASIDE: LIVE SHIPPING COST SIMULATOR */}
+      <aside className="seller-shipping-studio-aside">
+        <div className="seller-live-preview-box">
+          <div className="seller-live-preview-box__title">
+            <Calculator size={18} weight="fill" className="seller-brand-accent" aria-hidden="true" />
+            <span>Giả lập tính phí giao hàng</span>
+          </div>
 
-      {message ? <p role="alert">{message}</p> : null}
-      <button className="seller-shipping-save" type="submit" disabled={pending}>{pending ? "Đang lưu…" : "Lưu phí giao"}</button>
+          <div className="seller-shipping-simulator-card">
+            <div className="seller-simulator-sliders">
+              <div className="seller-slider-item">
+                <div className="seller-slider-header">
+                  <span>Khoảng cách khách mua:</span>
+                  <strong>{simDistanceKm} km</strong>
+                </div>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="10"
+                  step="0.5"
+                  value={simDistanceKm}
+                  onChange={(e) => setSimDistanceKm(Number(e.target.value))}
+                  className="seller-simulator-range"
+                />
+              </div>
 
-      <ConfirmDialog
-        open={confirmDelete}
-        title="Tạm ngưng chính sách giao hàng?"
-        description="Chính sách sẽ được chuyển sang trạng thái tạm ngưng; dữ liệu cấu hình vẫn được giữ lại."
-        confirmLabel={pending ? "Đang xử lý…" : "Tạm ngưng"}
-        dangerous
-        confirmDisabled={pending}
-        cancelDisabled={pending}
-        onCancel={() => { if (!pending) setConfirmDelete(false); }}
-        onConfirm={() => { void deactivate(); }}
-      />
-    </form>
+              <div className="seller-slider-item">
+                <div className="seller-slider-header">
+                  <span>Giá trị đơn hàng:</span>
+                  <strong>{simOrderAmount.toLocaleString("vi-VN")} ₫</strong>
+                </div>
+                <input
+                  type="range"
+                  min="30000"
+                  max="500000"
+                  step="10000"
+                  value={simOrderAmount}
+                  onChange={(e) => setSimOrderAmount(Number(e.target.value))}
+                  className="seller-simulator-range"
+                />
+              </div>
+            </div>
+
+            {/* Quick Test Scenarios */}
+            <div className="seller-simulator-scenarios" aria-hidden="true">
+              <span className="seller-scenarios-title">Tình huống mẫu:</span>
+              <div className="seller-scenarios-chips">
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="seller-scenario-chip"
+                  onClick={() => { setSimDistanceKm(1.5); setSimOrderAmount(60000); }}
+                >
+                  Đơn nhỏ gần nhà (1.5km - 60k)
+                </button>
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="seller-scenario-chip"
+                  onClick={() => { setSimDistanceKm(4.0); setSimOrderAmount(250000); }}
+                >
+                  Đơn lớn xa nhà (4km - 250k)
+                </button>
+              </div>
+            </div>
+
+            {/* Simulator Live Calculation Output */}
+            <div className={`seller-simulator-output ${simResult.isFree ? "is-free" : ""}`}>
+              <div className="seller-simulator-output__head">
+                <span>Phí giao tính cho khách:</span>
+                <strong className="seller-simulator-output__fee">{simResult.label}</strong>
+              </div>
+              <p className="seller-simulator-output__reason">{simResult.reason}</p>
+            </div>
+          </div>
+
+          <div className="seller-create-tips-card">
+            <h4>
+              <Info size={16} weight="bold" aria-hidden="true" />
+              <span>Mẹo định giá phí vận chuyển</span>
+            </h4>
+            <ul className="seller-tips-list">
+              <li><strong>Freeship có điều kiện:</strong> Khuyến khích khách mua thêm để đạt ngưỡng freeship giúp tăng giá trị đơn hàng trung bình (AOV).</li>
+              <li><strong>Phí cố định:</strong> Phù hợp khi chi nhánh hoạt động trong bán kính hẹp (dưới 3km) với cước đồng giá 15k - 20k.</li>
+              <li><strong>Thỏa thuận:</strong> Dùng cho hàng cồng kềnh hoặc giao hàng hỏa tốc cần báo giá riêng.</li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
   );
 }

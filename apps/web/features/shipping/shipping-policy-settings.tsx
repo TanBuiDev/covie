@@ -36,10 +36,12 @@ export function ShippingPolicySettings({
   merchantId,
   locationId,
   policies,
+  locationName,
 }: {
   merchantId: string;
   locationId: string;
   policies: Policy[];
+  locationName?: string;
 }) {
   const [editingId, setEditingId] = useState<string>();
   const editing = useMemo(() => policies.find((policy) => policy.id === editingId), [policies, editingId]);
@@ -52,21 +54,24 @@ export function ShippingPolicySettings({
         merchantId={merchantId}
         locationId={locationId}
         policy={policy}
+        locationName={locationName}
       />
     );
   }
 
   return (
     <div className="seller-stack">
-      <section className="seller-section" aria-labelledby="shipping-list-heading">
-        <div className="seller-section__heading"><h2 id="shipping-list-heading">Các phí giao hiện có</h2></div>
+      <section className="seller-section seller-shipping-overview-section" aria-labelledby="shipping-list-heading">
+        <div className="seller-section__heading">
+          <h2 id="shipping-list-heading">Các phí giao hiện có</h2>
+        </div>
         <p className="seller-contract-note">Điểm bán đang có nhiều cấu hình phí giao. Chọn đúng cấu hình cần chỉnh để giữ nguyên dữ liệu của các cấu hình khác.</p>
         <div className="seller-row-list">
           {policies.map((policy, index) => {
             const status = policyStatus(policy.status);
             return (
-              <article className="seller-row" key={policy.id ?? `${policy.mode ?? "policy"}-${index}`}>
-                <div>
+              <article className="seller-row seller-shipping-row-card" key={policy.id ?? `${policy.mode ?? "policy"}-${index}`}>
+                <div className="seller-shipping-row-info">
                   <strong>{policyTitle(policy.mode)}</strong>
                   {policy.mode === "NEGOTIATED" ? <small>Thỏa thuận với người bán</small> : null}
                   {policy.mode !== "NEGOTIATED" && policy.baseFee != null && policy.currencyCode ? (
@@ -78,7 +83,11 @@ export function ShippingPolicySettings({
                 </div>
                 <div className="seller-row__actions">
                   <StatusChip label={status.label} tone={status.tone} />
-                  {policy.id ? <button type="button" onClick={() => setEditingId(policy.id)}>Sửa</button> : null}
+                  {policy.id ? (
+                    <button type="button" className="seller-button seller-button--secondary seller-row-edit-btn" onClick={() => setEditingId(policy.id)}>
+                      Sửa
+                    </button>
+                  ) : null}
                 </div>
               </article>
             );
@@ -93,11 +102,12 @@ export function ShippingPolicySettings({
           locationId={locationId}
           policy={editing}
           onCancelEdit={() => setEditingId(undefined)}
+          locationName={locationName}
         />
       ) : (
         <details className="seller-technical-fields">
           <summary>Thêm cấu hình phí giao</summary>
-          <ShippingPolicyForm merchantId={merchantId} locationId={locationId} />
+          <ShippingPolicyForm merchantId={merchantId} locationId={locationId} locationName={locationName} />
         </details>
       )}
     </div>
