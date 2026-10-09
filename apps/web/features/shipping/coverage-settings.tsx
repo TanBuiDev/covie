@@ -25,10 +25,12 @@ export function CoverageSettings({
   merchantId,
   locationId,
   coverages,
+  locationName,
 }: {
   merchantId: string;
   locationId: string;
   coverages: Coverage[];
+  locationName?: string;
 }) {
   const [editingId, setEditingId] = useState<string>();
   const editing = useMemo(() => coverages.find((coverage) => coverage.id === editingId), [coverages, editingId]);
@@ -41,28 +43,35 @@ export function CoverageSettings({
         merchantId={merchantId}
         locationId={locationId}
         coverage={coverage}
+        locationName={locationName}
       />
     );
   }
 
   return (
     <div className="seller-stack">
-      <section className="seller-section" aria-labelledby="coverage-list-heading">
-        <div className="seller-section__heading"><h2 id="coverage-list-heading">Các phạm vi hiện có</h2></div>
+      <section className="seller-section seller-coverage-overview-section" aria-labelledby="coverage-list-heading">
+        <div className="seller-section__heading">
+          <h2 id="coverage-list-heading">Các phạm vi hiện có</h2>
+        </div>
         <p className="seller-contract-note">Điểm bán đang có nhiều cấu hình phạm vi. Chọn đúng cấu hình cần chỉnh để giữ nguyên dữ liệu của các cấu hình khác.</p>
         <div className="seller-row-list">
           {coverages.map((coverage, index) => {
             const status = coverageStatus(coverage.status);
             return (
-              <article className="seller-row" key={coverage.id ?? `${coverage.coverageType ?? "coverage"}-${index}`}>
-                <div>
+              <article className="seller-row seller-coverage-row-card" key={coverage.id ?? `${coverage.coverageType ?? "coverage"}-${index}`}>
+                <div className="seller-coverage-row-info">
                   <strong>{coverageTypeCopy(coverage.coverageType)}</strong>
                   {coverage.radiusEnabled && coverage.radiusMeters != null ? <small>Bán kính: {coverage.radiusMeters.toLocaleString("vi-VN")} m</small> : null}
                   {coverage.areaEnabled ? <small>Khu vực đã chọn: {coverage.locationAreaIds?.length ?? 0}</small> : null}
                 </div>
                 <div className="seller-row__actions">
                   <StatusChip label={status.label} tone={status.tone} />
-                  {coverage.id ? <button type="button" onClick={() => setEditingId(coverage.id)}>Sửa</button> : null}
+                  {coverage.id ? (
+                    <button type="button" className="seller-button seller-button--secondary seller-row-edit-btn" onClick={() => setEditingId(coverage.id)}>
+                      Sửa
+                    </button>
+                  ) : null}
                 </div>
               </article>
             );
@@ -77,11 +86,12 @@ export function CoverageSettings({
           locationId={locationId}
           coverage={editing}
           onCancelEdit={() => setEditingId(undefined)}
+          locationName={locationName}
         />
       ) : (
         <details className="seller-technical-fields">
           <summary>Thêm cấu hình phạm vi</summary>
-          <CoverageForm merchantId={merchantId} locationId={locationId} />
+          <CoverageForm merchantId={merchantId} locationId={locationId} locationName={locationName} />
         </details>
       )}
     </div>
