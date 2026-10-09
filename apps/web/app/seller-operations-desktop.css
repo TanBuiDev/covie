@@ -7,6 +7,22 @@
     min-height: 44px;
   }
 
+  .seller-order-kpi-bar {
+    max-width: 920px;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .seller-order-filter-toolbar {
+    max-width: 920px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .seller-order-search-wrap {
+    max-width: 380px;
+  }
+
   .seller-order-list-block {
     display: grid;
     gap: 12px;

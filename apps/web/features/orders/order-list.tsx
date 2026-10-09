@@ -6,11 +6,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CaretRight,
   CheckCircle,
+  Clock,
   ForkKnife,
   LockKey,
   MagnifyingGlass,
   Package,
+  Receipt,
   Sparkle,
+  Storefront,
+  Truck,
   Wrench,
   X,
 } from "@phosphor-icons/react";
@@ -447,6 +451,16 @@ export function OrderList({
     );
   }
 
+  const pendingCount = allOrders.filter((o) => o.status === "PENDING_CONFIRMATION").length;
+  const deliveringCount = allOrders.filter(
+    (o) =>
+      o.status === "CONFIRMED" ||
+      o.status === "OUT_FOR_DELIVERY" ||
+      o.status === "READY_FOR_PICKUP" ||
+      o.status === "AWAITING_BUYER_CONFIRMATION",
+  ).length;
+  const completedCount = allOrders.filter((o) => o.status === "COMPLETED").length;
+
   return (
     <section className="seller-stack" aria-label="Danh sách đơn hàng">
       {merchantId && locations.length ? (
@@ -458,20 +472,170 @@ export function OrderList({
           <small>Có thể lọc theo một điểm bán cụ thể</small>
         </label>
       ) : null}
+
+      {allOrders.length > 0 ? (
+        <div className="seller-order-kpi-bar" role="region" aria-label="Tổng quan tình trạng đơn">
+          <div
+            className={`seller-order-kpi-card${statusFilter === "ALL" ? " seller-order-kpi-card--active" : ""}`}
+            onClick={() => setStatusFilter("ALL")}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="seller-order-kpi-card__icon" style={{ background: "rgba(71, 85, 105, 0.08)", color: "#475569" }}>
+              <Receipt size={20} weight="duotone" />
+            </div>
+            <div className="seller-order-kpi-card__info">
+              <span className="seller-order-kpi-card__value">{allOrders.length}</span>
+              <span className="seller-order-kpi-card__label">Tổng đơn bán</span>
+            </div>
+          </div>
+          <div
+            className={`seller-order-kpi-card${statusFilter === "PENDING" ? " seller-order-kpi-card--active" : ""}`}
+            onClick={() => setStatusFilter("PENDING")}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="seller-order-kpi-card__icon" style={{ background: "rgba(234, 88, 12, 0.1)", color: "#ea580c" }}>
+              <Clock size={20} weight="duotone" />
+            </div>
+            <div className="seller-order-kpi-card__info">
+              <span className="seller-order-kpi-card__value">{pendingCount}</span>
+              <span className="seller-order-kpi-card__label">Chờ xác nhận</span>
+            </div>
+          </div>
+          <div
+            className={`seller-order-kpi-card${statusFilter === "DELIVERING" ? " seller-order-kpi-card--active" : ""}`}
+            onClick={() => setStatusFilter("DELIVERING")}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="seller-order-kpi-card__icon" style={{ background: "rgba(37, 99, 235, 0.08)", color: "#2563eb" }}>
+              <Truck size={20} weight="duotone" />
+            </div>
+            <div className="seller-order-kpi-card__info">
+              <span className="seller-order-kpi-card__value">{deliveringCount}</span>
+              <span className="seller-order-kpi-card__label">Đang giao / xử lý</span>
+            </div>
+          </div>
+          <div
+            className={`seller-order-kpi-card${statusFilter === "COMPLETED" ? " seller-order-kpi-card--active" : ""}`}
+            onClick={() => setStatusFilter("COMPLETED")}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="seller-order-kpi-card__icon" style={{ background: "rgba(4, 120, 87, 0.08)", color: "#047857" }}>
+              <CheckCircle size={20} weight="duotone" />
+            </div>
+            <div className="seller-order-kpi-card__info">
+              <span className="seller-order-kpi-card__value">{completedCount}</span>
+              <span className="seller-order-kpi-card__label">Hoàn tất</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {allOrders.length > 0 ? (
+        <div className="seller-order-filter-toolbar">
+          <div className="seller-order-search-wrap">
+            <MagnifyingGlass size={16} weight="bold" className="seller-order-search-icon" />
+            <input
+              type="search"
+              className="seller-order-search-input"
+              placeholder="Tìm theo mã đơn (CV-...) hoặc tên món..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Tìm kiếm đơn hàng"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                className="seller-order-search-clear"
+                onClick={() => setSearchQuery("")}
+                aria-label="Xóa tìm kiếm"
+              >
+                <X size={14} weight="bold" />
+              </button>
+            ) : null}
+          </div>
+
+          <div className="seller-order-tabs" role="tablist" aria-label="Lọc đơn theo trạng thái">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === tab.key}
+                className={`seller-order-tab${statusFilter === tab.key ? " seller-order-tab--active" : ""}`}
+                onClick={() => setStatusFilter(tab.key)}
+              >
+                <span>{tab.label}</span>
+                <span className="seller-order-tab__badge">{tab.count}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {error && !orders ? <ErrorState title="Không thể tải đơn hàng" description={error} action={<button type="button" onClick={reload}>Thử lại</button>} /> : null}
       {!error && !orders ? <LoadingState label="Đang tải đơn hàng…" /> : null}
       {orders?.length === 0 ? <EmptyState title="Chưa có đơn hàng" description={locationId ? "Không có đơn trong điểm bán đang chọn." : "Đơn mới sẽ xuất hiện ở đây khi có dữ liệu mới."} /> : null}
-      {orders?.length ? (
-        <div className="seller-order-list-block"><h2>Mới nhất</h2><div className="seller-order-list-cards">
-          {orders.map((order) => order.id ? (
-            <Link className="seller-order-list-card" key={order.id} href={sellerBase ? `${sellerBase}/${encodeURIComponent(order.id)}` : `/orders/${encodeURIComponent(order.id)}`}>
-              <header><strong>{order.orderCode ?? "Đơn hàng"}</strong><OrderStatusLabel status={order.status} /></header>
-              <p>{order.type === "SERVICE" ? "Đơn dịch vụ" : "Đơn sản phẩm"}</p>
-              {order.createdAt ? <small>Tạo lúc {formatDateTime(order.createdAt)}</small> : null}
-              <span className="seller-order-open">Xem chi tiết</span>
-            </Link>
-          ) : null)}
-        </div></div>
+      {allOrders.length > 0 && filteredOrders.length === 0 ? (
+        <div className="seller-order-filter-empty">
+          <p>Không tìm thấy đơn hàng phù hợp với điều kiện tìm kiếm hoặc bộ lọc.</p>
+          <button
+            type="button"
+            className="seller-load-more"
+            onClick={() => {
+              setStatusFilter("ALL");
+              setSearchQuery("");
+            }}
+          >
+            Đặt lại bộ lọc
+          </button>
+        </div>
+      ) : null}
+
+      {filteredOrders.length ? (
+        <div className="seller-order-list-block">
+          <h2>Mới nhất</h2>
+          <div className="seller-order-list-cards">
+            {filteredOrders.map((order) => {
+              if (!order.id) return null;
+              const firstItem = order.items?.[0];
+              const visual = getItemVisual(firstItem?.name, order.type);
+              const pricing = order.pricing;
+              const totalAmount = pricing?.totalAmount ?? pricing?.knownTotal;
+
+              return (
+                <Link
+                  className="seller-order-list-card"
+                  key={order.id}
+                  href={sellerBase ? `${sellerBase}/${encodeURIComponent(order.id)}` : `/orders/${encodeURIComponent(order.id)}`}
+                >
+                  <header>
+                    <div className="seller-order-card__visual" style={{ background: visual.bg, color: visual.color }}>
+                      {visual.icon}
+                    </div>
+                    <div className="seller-order-card__meta">
+                      <strong>{order.orderCode ?? "Đơn hàng"}</strong>
+                      {firstItem?.name ? <span className="seller-order-card__brief">{firstItem.name}</span> : null}
+                    </div>
+                    <OrderStatusLabel status={order.status} />
+                  </header>
+                  <p>
+                    {order.type === "SERVICE" ? "Đơn dịch vụ" : "Đơn sản phẩm"}
+                    {totalAmount != null && pricing?.currency ? ` · ${formatMoney({ amount: totalAmount, currency: pricing.currency })}` : ""}
+                  </p>
+                  {order.createdAt ? <small>Tạo lúc {formatDateTime(order.createdAt)}</small> : <small />}
+                  <span className="seller-order-open">
+                    Xem chi tiết
+                    <CaretRight size={13} weight="bold" style={{ marginLeft: 4 }} />
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       ) : null}
       {error && orders ? <p role="alert">{error}</p> : null}
       {nextCursor ? <button className="seller-load-more" type="button" onClick={() => void loadMore()} disabled={loadingMore}>{loadingMore ? "Đang tải…" : "Tải thêm"}</button> : null}
