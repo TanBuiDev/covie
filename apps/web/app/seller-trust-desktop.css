@@ -25,6 +25,7 @@
     max-width: 1128px;
   }
 
+  .seller-notice-tabs,
   .seller-notice-list,
   .seller-notices__error {
     grid-column: 1;

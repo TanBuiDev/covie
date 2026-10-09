@@ -109,12 +109,14 @@
 
 .seller-notice__visual {
   align-items: center;
-  background: var(--seller-brand-subtle);
+  background: var(--seller-brand-subtle, rgba(4, 120, 87, 0.08));
+  color: var(--seller-brand, #047857);
   border-radius: 999px;
   display: flex;
   height: 40px;
   justify-content: center;
   width: 40px;
+  flex-shrink: 0;
 }
 
 .seller-notice__visual::after {
@@ -123,6 +125,10 @@
   content: "";
   height: 12px;
   width: 12px;
+}
+
+.seller-notice__visual:has(svg)::after {
+  display: none;
 }
 
 .seller-notice__content {
