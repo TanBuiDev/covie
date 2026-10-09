@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "@phosphor-icons/react";
+import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { SellerNavLinks } from "@/features/seller/seller-nav";
 import { SellerPageTitle } from "@/features/seller/seller-page-title";
 import { sellerBasePath } from "@/features/seller/seller-context";
