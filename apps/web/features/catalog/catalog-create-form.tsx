@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { CovieApiError } from "@/lib/api/api-error";
+import { CheckCircle, Clock, Package, Sparkle, Wrench } from "@phosphor-icons/react";
 import { createCatalogItem, getCategoryDetail } from "./catalog-api";
 
 type Category = components["schemas"]["CategorySummary"];
@@ -322,6 +323,10 @@ export function CatalogCreateForm({
     }
   }
 
+  const [previewName, setPreviewName] = useState("");
+  const [previewPrice, setPreviewPrice] = useState<number>();
+  const [previewPrepTime, setPreviewPrepTime] = useState<number>(0);
+
   const canSubmit = compatibleCategories.length > 0
     && compatibleLocations.length > 0
     && Boolean(selectedCategoryId)
@@ -329,177 +334,269 @@ export function CatalogCreateForm({
     && !categoryLoading
     && !categoryError;
 
+  const currentCategoryName = compatibleCategories.find((c) => c.id === selectedCategoryId)?.name;
+
   return (
-    <form className="seller-catalog-form" onSubmit={submit} onChange={invalidateIntent} aria-busy={pending}>
-      <header>
-        <p className="eyebrow">Catalog / Tạo mới</p>
-        <h1>Tạo nội dung bán</h1>
-        <p className="seller-muted">Tạo sản phẩm, dịch vụ hoặc hàng thanh lý từ danh mục và điểm bán hiện có.</p>
-      </header>
+    <div className="seller-catalog-create-layout">
+      <div className="seller-catalog-create-main">
+        <form className="seller-catalog-form" onSubmit={submit} onChange={invalidateIntent} aria-busy={pending}>
+          <header>
+            <p className="eyebrow">Catalog / Tạo mới</p>
+            <h1>Tạo nội dung bán</h1>
+            <p className="seller-muted">Tạo sản phẩm, dịch vụ hoặc hàng thanh lý từ danh mục và điểm bán hiện có.</p>
+          </header>
 
-      <fieldset disabled={pending}>
-        <legend>Loại nội dung</legend>
-        <label>
-          Loại
-          <select
-            name="type"
-            value={type}
-            onChange={(event) => {
-              const next = event.target.value as CatalogType;
-              setType(next);
-              resetCategorySelection();
-              if (next === "SERVICE") setListingKind("STANDARD");
-            }}
-          >
-            <option value="PRODUCT">Sản phẩm</option>
-            <option value="SERVICE">Dịch vụ</option>
-          </select>
-        </label>
-        {type === "PRODUCT" ? (
-          <label>
-            Loại sản phẩm
-            <select name="listingKind" value={listingKind} onChange={(event) => setListingKind(event.target.value as ListingKind)}>
-              <option value="STANDARD">Sản phẩm tiêu chuẩn</option>
-              <option value="RESALE">Thanh lý</option>
-            </select>
-          </label>
-        ) : null}
-      </fieldset>
-
-      <label>
-        Tên
-        <input name="name" autoComplete="off" maxLength={240} required />
-      </label>
-      <label>
-        Danh mục
-        <select
-          name="categoryId"
-          required
-          value={selectedCategoryId}
-          onChange={(event) => selectCategory(event.target.value)}
-        >
-          <option value="" disabled>Chọn danh mục</option>
-          {compatibleCategories.map((category) => category.id ? <option key={category.id} value={category.id}>{category.name ?? "Danh mục"}</option> : null)}
-        </select>
-      </label>
-      {!compatibleCategories.length ? <p className="warning-banner" role="status">Chưa có danh mục phù hợp với loại nội dung này.</p> : null}
-      {categoryLoading ? <p className="seller-muted" role="status">Đang tải thuộc tính danh mục…</p> : null}
-      {categoryError ? <p className="seller-contract-note" role="alert">{categoryError}</p> : null}
-      {categoryDetail ? <CategoryAttributeFields definitions={categoryDetail.attributes ?? []} pending={pending} /> : null}
-      {listingKind === "RESALE" && categoryDetail && !(categoryDetail.attributes ?? []).length ? (
-        <p className="seller-contract-note" role="status">Danh mục này chưa có tùy chọn tình trạng để chọn.</p>
-      ) : null}
-
-      <label>
-        Mô tả
-        <textarea name="description" maxLength={4000} />
-      </label>
-      <label>
-        Thẻ
-        <input name="tags" placeholder="ví dụ: handmade, giao nhanh" />
-      </label>
-
-      <fieldset disabled={pending}>
-        <legend>Điểm bán & giá</legend>
-        <label>
-          Điểm bán
-          <select name="locationId" required defaultValue="">
-            <option value="" disabled>Chọn điểm bán</option>
-            {compatibleLocations.map((location) => location.id ? (
-              <option key={location.id} value={location.id}>{location.name ?? "Điểm bán"}{location.addressText ? ` — ${location.addressText}` : ""}</option>
-            ) : null)}
-          </select>
-        </label>
-        {!compatibleLocations.length ? <p className="warning-banner" role="status">Chưa có điểm bán phù hợp. Với dịch vụ, hãy bật phục vụ dịch vụ tại ít nhất một điểm bán.</p> : null}
-        {!serviceVariantOffers ? (
-          <label>
-            Giá chính xác (VND)
-            <input name="price" type="number" inputMode="numeric" min="0" step="1" required />
-          </label>
-        ) : <p className="seller-muted">Mỗi gói dịch vụ có giá và trạng thái nhận đơn riêng bên dưới.</p>}
-        <label>
-          Thời gian chuẩn bị (phút)
-          <input name="preparationTimeMinutes" type="number" inputMode="numeric" min="0" step="1" defaultValue="0" required />
-        </label>
-        {type === "PRODUCT" ? (
-          <label>
-            Quản lý tồn kho
-            <select name="inventoryMode" value={inventoryMode} onChange={(event) => setInventoryMode(event.target.value as InventoryMode)}>
-              <option value="UNTRACKED">Không theo dõi số lượng</option>
-              <option value="TRACKED">Theo dõi tồn kho</option>
-            </select>
-          </label>
-        ) : null}
-      </fieldset>
-
-      <fieldset disabled={pending}>
-        <legend>{type === "SERVICE" ? "Gói dịch vụ" : "Biến thể"}</legend>
-        <label className="seller-check-row">
-          <input type="checkbox" checked={withOptions} onChange={(event) => setWithOptions(event.target.checked)} />
-          <span>{type === "SERVICE" ? "Dịch vụ có nhiều gói" : "Nội dung có lựa chọn / biến thể"}</span>
-        </label>
-        {withOptions ? (
-          <div className="seller-grid">
+          <fieldset disabled={pending}>
+            <legend>Loại nội dung</legend>
             <label>
-              Tên lựa chọn
-              <input name="optionName" placeholder={type === "SERVICE" ? "Ví dụ: Số máy" : "Ví dụ: Kích cỡ"} required />
+              Loại
+              <select
+                name="type"
+                value={type}
+                onChange={(event) => {
+                  const next = event.target.value as CatalogType;
+                  setType(next);
+                  resetCategorySelection();
+                  if (next === "SERVICE") setListingKind("STANDARD");
+                }}
+              >
+                <option value="PRODUCT">Sản phẩm</option>
+                <option value="SERVICE">Dịch vụ</option>
+              </select>
             </label>
+            {type === "PRODUCT" ? (
+              <label>
+                Loại sản phẩm
+                <select name="listingKind" value={listingKind} onChange={(event) => setListingKind(event.target.value as ListingKind)}>
+                  <option value="STANDARD">Sản phẩm tiêu chuẩn</option>
+                  <option value="RESALE">Thanh lý</option>
+                </select>
+              </label>
+            ) : null}
+          </fieldset>
+
+          <label>
+            Tên
+            <input
+              name="name"
+              autoComplete="off"
+              maxLength={240}
+              required
+              onChange={(e) => setPreviewName(e.target.value)}
+            />
+          </label>
+          <label>
+            Danh mục
+            <select
+              name="categoryId"
+              required
+              value={selectedCategoryId}
+              onChange={(event) => selectCategory(event.target.value)}
+            >
+              <option value="" disabled>Chọn danh mục</option>
+              {compatibleCategories.map((category) => category.id ? <option key={category.id} value={category.id}>{category.name ?? "Danh mục"}</option> : null)}
+            </select>
+          </label>
+          {!compatibleCategories.length ? <p className="warning-banner" role="status">Chưa có danh mục phù hợp với loại nội dung này.</p> : null}
+          {categoryLoading ? <p className="seller-muted" role="status">Đang tải thuộc tính danh mục…</p> : null}
+          {categoryError ? <p className="seller-contract-note" role="alert">{categoryError}</p> : null}
+          {categoryDetail ? <CategoryAttributeFields definitions={categoryDetail.attributes ?? []} pending={pending} /> : null}
+          {listingKind === "RESALE" && categoryDetail && !(categoryDetail.attributes ?? []).length ? (
+            <p className="seller-contract-note" role="status">Danh mục này chưa có tùy chọn tình trạng để chọn.</p>
+          ) : null}
+
+          <label>
+            Mô tả
+            <textarea name="description" maxLength={4000} />
+          </label>
+          <label>
+            Thẻ
+            <input name="tags" placeholder="ví dụ: handmade, giao nhanh" />
+          </label>
+
+          <fieldset disabled={pending}>
+            <legend>Điểm bán & giá</legend>
             <label>
-              Các giá trị
+              Điểm bán
+              <select name="locationId" required defaultValue="">
+                <option value="" disabled>Chọn điểm bán</option>
+                {compatibleLocations.map((location) => location.id ? (
+                  <option key={location.id} value={location.id}>{location.name ?? "Điểm bán"}{location.addressText ? ` — ${location.addressText}` : ""}</option>
+                ) : null)}
+              </select>
+            </label>
+            {!compatibleLocations.length ? <p className="warning-banner" role="status">Chưa có điểm bán phù hợp. Với dịch vụ, hãy bật phục vụ dịch vụ tại ít nhất một điểm bán.</p> : null}
+            {!serviceVariantOffers ? (
+              <label>
+                Giá chính xác (VND)
+                <input
+                  name="price"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  step="1"
+                  required
+                  onChange={(e) => setPreviewPrice(Number(e.target.value) || undefined)}
+                />
+              </label>
+            ) : <p className="seller-muted">Mỗi gói dịch vụ có giá và trạng thái nhận đơn riêng bên dưới.</p>}
+            <label>
+              Thời gian chuẩn bị (phút)
               <input
-                name="optionValues"
-                value={optionValuesInput}
-                onChange={(event) => setOptionValuesInput(event.target.value)}
-                placeholder={type === "SERVICE" ? "1 máy, 2 máy, 3 máy" : "S, M, L"}
+                name="preparationTimeMinutes"
+                type="number"
+                inputMode="numeric"
+                min="0"
+                step="1"
+                defaultValue="0"
                 required
+                onChange={(e) => setPreviewPrepTime(Number(e.target.value) || 0)}
               />
             </label>
-            {type !== "SERVICE" ? <p className="seller-muted">Mỗi giá trị tạo một biến thể và dùng chung giá cùng điểm bán trong lần tạo này.</p> : null}
-          </div>
-        ) : <p className="seller-muted">Không có lựa chọn: nội dung sẽ dùng một phiên bản mặc định.</p>}
+            {type === "PRODUCT" ? (
+              <label>
+                Quản lý tồn kho
+                <select name="inventoryMode" value={inventoryMode} onChange={(event) => setInventoryMode(event.target.value as InventoryMode)}>
+                  <option value="UNTRACKED">Không theo dõi số lượng</option>
+                  <option value="TRACKED">Theo dõi tồn kho</option>
+                </select>
+              </label>
+            ) : null}
+          </fieldset>
 
-        {serviceVariantOffers ? (
-          <div className="seller-service-variant-grid" aria-label="Giá các gói dịch vụ">
-            {optionValues.map((value, index) => (
-              <section className="seller-service-variant-card" key={`${value}-${index}`}>
-                <strong>{value}</strong>
+          <fieldset disabled={pending}>
+            <legend>{type === "SERVICE" ? "Gói dịch vụ" : "Biến thể"}</legend>
+            <label className="seller-check-row">
+              <input type="checkbox" checked={withOptions} onChange={(event) => setWithOptions(event.target.checked)} />
+              <span>{type === "SERVICE" ? "Dịch vụ có nhiều gói" : "Nội dung có lựa chọn / biến thể"}</span>
+            </label>
+            {withOptions ? (
+              <div className="seller-grid">
                 <label>
-                  Giá chính xác (VND) <span aria-hidden="true">*</span>
-                  <input name={`variantPrice:${index}`} type="number" inputMode="numeric" min="0" step="1" required />
-                  <small>Giá của gói này tại điểm phục vụ</small>
+                  Tên lựa chọn
+                  <input name="optionName" placeholder={type === "SERVICE" ? "Ví dụ: Số máy" : "Ví dụ: Kích cỡ"} required />
                 </label>
-                <label className="seller-switch-row">
-                  <input type="checkbox" name={`variantAvailable:${index}`} defaultChecked />
-                  <span>Đang nhận đơn</span>
+                <label>
+                  Các giá trị
+                  <input
+                    name="optionValues"
+                    value={optionValuesInput}
+                    onChange={(event) => setOptionValuesInput(event.target.value)}
+                    placeholder={type === "SERVICE" ? "1 máy, 2 máy, 3 máy" : "S, M, L"}
+                    required
+                  />
                 </label>
-              </section>
-            ))}
-            <p className="seller-muted">Mỗi gói có giá và trạng thái nhận đơn riêng tại điểm bán. Nội dung đã tạo hiện chưa hỗ trợ chỉnh cấu trúc gói.</p>
+                {type !== "SERVICE" ? <p className="seller-muted">Mỗi giá trị tạo một biến thể và dùng chung giá cùng điểm bán trong lần tạo này.</p> : null}
+              </div>
+            ) : <p className="seller-muted">Không có lựa chọn: nội dung sẽ dùng một phiên bản mặc định.</p>}
+
+            {serviceVariantOffers ? (
+              <div className="seller-service-variant-grid" aria-label="Giá các gói dịch vụ">
+                {optionValues.map((value, index) => (
+                  <section className="seller-service-variant-card" key={`${value}-${index}`}>
+                    <strong>{value}</strong>
+                    <label>
+                      Giá chính xác (VND) <span aria-hidden="true">*</span>
+                      <input name={`variantPrice:${index}`} type="number" inputMode="numeric" min="0" step="1" required />
+                      <small>Giá của gói này tại điểm phục vụ</small>
+                    </label>
+                    <label className="seller-switch-row">
+                      <input type="checkbox" name={`variantAvailable:${index}`} defaultChecked />
+                      <span>Đang nhận đơn</span>
+                    </label>
+                  </section>
+                ))}
+                <p className="seller-muted">Mỗi gói có giá và trạng thái nhận đơn riêng tại điểm bán. Nội dung đã tạo hiện chưa hỗ trợ chỉnh cấu trúc gói.</p>
+              </div>
+            ) : null}
+          </fieldset>
+
+          <fieldset disabled={pending}>
+            <legend>Ảnh</legend>
+            <label>
+              Ảnh catalog
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                onChange={(event) => {
+                  setFiles(Array.from(event.target.files ?? []));
+                  idempotencyKeyRef.current = undefined;
+                }}
+              />
+            </label>
+            <p className="seller-muted">JPEG, PNG hoặc WebP; tối đa 10 MB mỗi ảnh.</p>
+            {files.length ? <p role="status">Đã chọn {files.length} ảnh.</p> : null}
+          </fieldset>
+
+          {progress ? <p role="status" aria-live="polite">{progress}</p> : null}
+          {message ? <p role="alert">{message}</p> : null}
+          <button type="submit" disabled={pending || !canSubmit}>{pending ? "Đang lưu…" : "Tạo nội dung"}</button>
+        </form>
+      </div>
+
+      <aside className="seller-catalog-create-aside">
+        {/* LIVE CARD PREVIEW */}
+        <div className="seller-live-preview-box" aria-hidden="true">
+          <div className="seller-live-preview-box__header">
+            <Sparkle size={16} weight="fill" className="seller-live-preview-box__sparkle" />
+            <span>Xem trước hiển thị với cư dân</span>
           </div>
-        ) : null}
-      </fieldset>
+          <div className="seller-product-preview-card">
+            <div className="seller-product-preview-card__media">
+              {type === "SERVICE" ? (
+                <Wrench size={44} weight="duotone" />
+              ) : (
+                <Package size={44} weight="duotone" />
+              )}
+            </div>
+            <div className="seller-product-preview-card__content">
+              <span className="seller-product-preview-card__badge">
+                {currentCategoryName || (type === "SERVICE" ? "Dịch vụ cư dân" : "Món ăn & Hàng hóa")}
+              </span>
+              <strong className="seller-product-preview-card__title">
+                {previewName.trim() || "Tên món hoặc sản phẩm"}
+              </strong>
+              <div className="seller-product-preview-card__price-row">
+                <span className="seller-product-preview-card__price">
+                  {previewPrice ? `${previewPrice.toLocaleString("vi-VN")} đ` : "Chưa đặt giá"}
+                </span>
+                {previewPrepTime > 0 ? (
+                  <span className="seller-product-preview-card__prep">
+                    <Clock size={12} weight="bold" />
+                    <span>{previewPrepTime} phút</span>
+                  </span>
+                ) : null}
+              </div>
+              <div className="seller-product-preview-card__footer">
+                <span className="seller-product-preview-card__hub">Giao nhận sảnh toà nhà</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <fieldset disabled={pending}>
-        <legend>Ảnh</legend>
-        <label>
-          Ảnh catalog
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            onChange={(event) => {
-              setFiles(Array.from(event.target.files ?? []));
-              idempotencyKeyRef.current = undefined;
-            }}
-          />
-        </label>
-        <p className="seller-muted">JPEG, PNG hoặc WebP; tối đa 10 MB mỗi ảnh.</p>
-        {files.length ? <p role="status">Đã chọn {files.length} ảnh.</p> : null}
-      </fieldset>
-
-      {progress ? <p role="status" aria-live="polite">{progress}</p> : null}
-      {message ? <p role="alert">{message}</p> : null}
-      <button type="submit" disabled={pending || !canSubmit}>{pending ? "Đang lưu…" : "Tạo nội dung"}</button>
-    </form>
+        {/* TIPS CHECKLIST */}
+        <div className="seller-create-tips-card" aria-hidden="true">
+          <div className="seller-create-tips-card__header">
+            <CheckCircle size={18} weight="duotone" className="seller-create-tips-card__icon" />
+            <strong>Gợi ý niêm yết chuẩn CoVie</strong>
+          </div>
+          <ul className="seller-create-tips-list">
+            <li>
+              <strong>Tên món kèm định lượng:</strong>
+              <span>Ví dụ: "Bánh mì chảo - Phần đặc biệt" hoặc "Cà phê muối 500ml" giúp cư dân dễ chọn mua.</span>
+            </li>
+            <li>
+              <strong>Thời gian chuẩn bị chính xác:</strong>
+              <span>Giúp hàng xóm chủ động canh giờ xuống sảnh thang máy nhận món nóng hổi.</span>
+            </li>
+            <li>
+              <strong>Ghim đúng điểm bán:</strong>
+              <span>Cư dân trong cùng toà nhà sẽ được hiển thị ưu tiên hàng đầu và freeship.</span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
   );
 }
