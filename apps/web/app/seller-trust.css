@@ -6,12 +6,13 @@
 }
 
 .seller-reputation-summary {
-  background: var(--seller-surface);
-  border: 1px solid var(--seller-border);
+  background: var(--seller-surface, #ffffff);
+  border: 1px solid var(--seller-border, #e2e8f0);
   border-radius: 12px;
   display: grid;
   gap: 12px;
-  padding: 16px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .seller-reputation-summary h2,
@@ -68,12 +69,13 @@
 }
 
 .seller-trust-note {
-  background: var(--seller-bg-subtle);
-  border: 1px solid var(--seller-border-subtle);
+  background: var(--seller-surface, #ffffff);
+  border: 1px solid var(--seller-border, #e2e8f0);
   border-radius: 12px;
   display: grid;
-  gap: 8px;
-  padding: 14px;
+  gap: 10px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .seller-trust-note p {
