@@ -30,6 +30,7 @@ jobs:
       GOOGLE_OAUTH_CLIENT_ID: ci-test-client
       GOOGLE_OAUTH_CLIENT_SECRET: ci-test-secret
       GOOGLE_OAUTH_REDIRECT_URI: http://localhost:3000/api/v1/auth/google/callback/google
+      JAVA_TOOL_OPTIONS: -Dcovie.test.minio-image=cgr.dev/chainguard/minio@sha256:a05a4497e8dce3cb7a7a1bf1872ba5d30ea988f1e8c22c9e0920503761c4b5f1
     steps:
       - uses: actions/checkout@v4
         with:

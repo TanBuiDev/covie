@@ -3,7 +3,7 @@ set -euo pipefail
 
 case "${FAKE_GIT_MODE:-}:${1:-}" in
   match:ls-files)
-    printf '%s\n' 'infra/secrets-placeholder'
+    printf '%s\n' 'infra/secrets/test.pem'
     ;;
   no-match:ls-files)
     printf '%s\n' 'apps/api/src/main/java/vn/covie/CovieApplication.java'

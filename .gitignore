@@ -2,11 +2,19 @@
 .env
 .env.local
 .env.*.local
+.env.*
+!.env.example
+!**/.env.example
+!**/*.env.example
 .local/
 infra/deploy/*.env
 !infra/deploy/prod.env.example
 *.pem
 *.key
+*.p12
+*.pfx
+*.jks
+*.keystore
 infra/secrets/
 
 # Runtime/release evidence

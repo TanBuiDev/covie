@@ -17,6 +17,7 @@ jobs:
       GOOGLE_OAUTH_CLIENT_ID: ci-test-client
       GOOGLE_OAUTH_CLIENT_SECRET: ci-test-secret
       GOOGLE_OAUTH_REDIRECT_URI: http://localhost:3000/api/v1/auth/google/callback/google
+      JAVA_TOOL_OPTIONS: -Dcovie.test.minio-image=cgr.dev/chainguard/minio@sha256:a05a4497e8dce3cb7a7a1bf1872ba5d30ea988f1e8c22c9e0920503761c4b5f1
     defaults:
       run:
         working-directory: apps/api
@@ -29,8 +30,6 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - name: Restore Maven wrapper executable bit
-        run: chmod +x mvnw
       - name: Verify backend with test OIDC fixtures and ephemeral RSA keys
         run: ./mvnw verify
 
@@ -90,3 +89,15 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Trivy 0.72.0 source, misconfiguration and secret scan
         run: ./infra/scripts/security-scan.sh
+
+  secret-history:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan every fetched branch and tag for secrets
+        run: |
+          docker run --rm -v "$PWD:/repo:ro" \
+            zricethezav/gitleaks@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9 \
+            git /repo --log-opts=--all --gitleaks-ignore-path=/repo/.gitleaksignore --redact

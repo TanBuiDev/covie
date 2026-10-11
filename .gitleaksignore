@@ -1,0 +1,7 @@
+# Reviewed documentation false positives only: Figma file identifier, internal API URL, sample idempotency UUIDs.
+41a5118621368f3cdf8a986a39a22d7b5651c039:docs/buyer-desktop-engineering-handoff.md:generic-api-key:6
+fb85a1c0bab93d9be5852f6f5acafe5a3fbcf363:docs/operations/production-topology.md:generic-api-key:7
+e826cc61498db79d5bcba587300aa63a15c1c42e:docs/CoVie-technical-plan-03-merchant-location-media-catalog-v1.0.md:generic-api-key:2167
+e826cc61498db79d5bcba587300aa63a15c1c42e:docs/CoVie-technical-plan-03-merchant-location-media-catalog-v1.0.md:generic-api-key:2539
+e826cc61498db79d5bcba587300aa63a15c1c42e:docs/CoVie-technical-plan-10-production-hardening-pilot-launch-v1.0.md:generic-api-key:73
+e826cc61498db79d5bcba587300aa63a15c1c42e:docs/CoVie-technical-plan-10-production-hardening-pilot-launch-v1.0.md:generic-api-key:1570
