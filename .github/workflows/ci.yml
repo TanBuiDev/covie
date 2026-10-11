@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Restore Maven wrapper executable bit
         run: chmod +x mvnw
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Restore Maven wrapper executable bit
         run: chmod +x apps/api/mvnw
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
