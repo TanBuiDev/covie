@@ -108,7 +108,7 @@ export function LocationList({
       {/* LOCATION LIST */}
       {!filteredLocations.length ? (
         <div className="seller-catalog-empty-search">
-          <p>Không tìm thấy điểm bán nào khớp với từ khóa "{searchQuery}".</p>
+          <p>Không tìm thấy điểm bán nào khớp với từ khóa &quot;{searchQuery}&quot;.</p>
         </div>
       ) : (
         <div className="seller-location-list" aria-label="Danh sách điểm bán">
