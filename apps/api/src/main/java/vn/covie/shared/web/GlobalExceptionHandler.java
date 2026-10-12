@@ -17,6 +17,9 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -25,6 +28,11 @@ import vn.covie.ratelimit.RateLimitExceededException;
 @RestControllerAdvice
 public final class GlobalExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private final vn.covie.ops.ApiErrorMetrics errorMetrics;
+
+    public GlobalExceptionHandler(vn.covie.ops.ApiErrorMetrics errorMetrics) {
+        this.errorMetrics = errorMetrics;
+    }
 
     @ExceptionHandler(RateLimitExceededException.class)
     ResponseEntity<ApiErrorResponse> handleRateLimit(RateLimitExceededException exception) {
@@ -35,6 +43,7 @@ public final class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     ResponseEntity<ApiErrorResponse> handleApiException(ApiException exception) {
+        errorMetrics.record(exception.code(), exception.status().value());
         return ResponseEntity.status(exception.status()).body(ApiErrorResponse.of(
                 exception.code(), exception.getMessage(), exception.details(), Map.of(), requestId()));
     }
@@ -82,6 +91,19 @@ public final class GlobalExceptionHandler {
                 Map.of(),
                 Map.of(),
                 requestId()));
+    }
+
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    ResponseEntity<ApiErrorResponse> handleRouteNotFound(Exception exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiErrorResponse.of(
+                ErrorCode.RESOURCE_NOT_FOUND, "Resource not found.", Map.of(), Map.of(), requestId()));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    ResponseEntity<ApiErrorResponse> handleUnsupportedMethod(HttpRequestMethodNotSupportedException exception) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).headers(exception.getHeaders())
+                .body(ApiErrorResponse.of(ErrorCode.MALFORMED_REQUEST,
+                        "Request method is not supported.", Map.of(), Map.of(), requestId()));
     }
 
     @ExceptionHandler(Exception.class)

@@ -37,12 +37,14 @@ import static vn.covie.shared.json.JsonValues.unwrap;
 
 @Service
 public class SystemSettingService {
+    private static final java.util.Set<String> OVERRIDE_UNIQUE_CONSTRAINTS = java.util.Set.of(
+            "ux_system_setting_global", "ux_system_setting_area", "ux_system_setting_category", "ux_system_setting_merchant");
     private static final com.fasterxml.jackson.databind.ObjectMapper JSON = new com.fasterxml.jackson.databind.ObjectMapper();
     private final AdminAccessPolicy admin; private final SystemSettingRegistry registry; private final SystemSettingRepository settings; private final SystemSettingHistoryRepository history; private final AuditLogWriter audit; private final OutboxEventWriter outbox; private final RequestIdAccessor requestIds; private final UuidV7Generator ids; private final AppClock clock; private final MerchantProfileRepository merchants; private final CategoryRepository categories; private final LocationAreaRepository areas;
     public SystemSettingService(AdminAccessPolicy admin, SystemSettingRegistry registry, SystemSettingRepository settings, SystemSettingHistoryRepository history, AuditLogWriter audit, OutboxEventWriter outbox, RequestIdAccessor requestIds, UuidV7Generator ids, AppClock clock, MerchantProfileRepository merchants, CategoryRepository categories, LocationAreaRepository areas) { this.admin=admin; this.registry=registry; this.settings=settings; this.history=history; this.audit=audit; this.outbox=outbox; this.requestIds=requestIds; this.ids=ids; this.clock=clock; this.merchants=merchants; this.categories=categories; this.areas=areas; }
     @Transactional public MutationResult patch(String key, String ifMatch, PatchSystemSettingRequest request) {
         var actor=admin.requireAdmin(); if(request==null||request.scopeType()==null||request.value()==null) throw invalid("A scope and value are required."); JsonNode value=JSON.valueToTree(request.value()); registry.validateScope(key,request.scopeType()); registry.validateValue(key,value); validateScopeShape(request.scopeType(),request.scopeId()); Optional<SystemSettingEntity> existing=find(key,request.scopeType(),request.scopeId()); Instant now=clock.now(); SystemSettingEntity setting; boolean created=existing.isEmpty(); JsonNode oldValue=null; long oldVersion=0;
-        if(created) { if(ifMatch!=null&&!ifMatch.isBlank()) throw invalid("If-Match must be omitted when creating an override."); setting=create(key,request,value,actor.userId(),now); setting=settings.saveAndFlush(setting); }
+        if(created) { if(ifMatch!=null&&!ifMatch.isBlank()) throw invalid("If-Match must be omitted when creating an override."); setting=create(key,request,value,actor.userId(),now); setting=saveNewOverride(setting); }
         else { setting=existing.get(); oldValue=setting.getValueJson(); oldVersion=setting.getVersion(); VersionPrecondition.require(VersionPrecondition.parseRequired(ifMatch),oldVersion); setting.replaceValue(value,actor.userId(),now); setting=settings.saveAndFlush(setting); }
         history.save(SystemSettingHistoryEntity.create(ids.generate(),setting.getId(),oldValue,setting.getValueJson(),oldVersion,setting.getVersion(),actor.userId(),now)); Map<String,Object> payload=payload(setting); outbox.append(new OutboxEventIntent("SYSTEM_SETTING_CHANGED","SYSTEM_SETTING",setting.getId(),payload)); audit.securityEvent(actor.userId(),"SYSTEM_SETTING_CHANGED","SYSTEM_SETTING",setting.getId(),requestIds.current(),payload); return new MutationResult(setting,created);
     }
@@ -56,5 +58,20 @@ public class SystemSettingService {
     private void validateScopeShape(SettingScopeType scope, UUID id) { if(scope==SettingScopeType.GLOBAL){if(id!=null)throw invalid("Global settings cannot have a scope id.");return;} if(id==null)throw invalid("Scoped settings require a scope id."); boolean exists=switch(scope){case MERCHANT->merchants==null||merchants.existsById(id);case CATEGORY->categories==null||categories.existsById(id);case LOCATION_AREA->areas==null||areas.existsById(id);case GLOBAL->true;}; if(!exists)throw new ApiException(ErrorCode.RESOURCE_NOT_FOUND,HttpStatus.NOT_FOUND,"Setting scope target was not found."); }
     private static Map<String,Object> payload(SystemSettingEntity s){Map<String,Object> p=new HashMap<>();p.put("settingKey",s.getSettingKey());p.put("scopeType",s.getScopeType().name());p.put("version",s.getVersion()); UUID id=s.getMerchantProfileId()!=null?s.getMerchantProfileId():s.getCategoryId()!=null?s.getCategoryId():s.getLocationAreaId();if(id!=null)p.put("scopeId",id.toString());return Map.copyOf(p);}
     private static ApiException invalid(String message){return new ApiException(ErrorCode.SYSTEM_SETTING_VALUE_INVALID,HttpStatus.UNPROCESSABLE_ENTITY,message);}
+    private SystemSettingEntity saveNewOverride(SystemSettingEntity setting) {
+        try { return settings.saveAndFlush(setting); }
+        catch (org.springframework.dao.DataIntegrityViolationException exception) {
+            for (Throwable cause=exception; cause!=null; cause=cause.getCause()) {
+                if (cause instanceof org.hibernate.exception.ConstraintViolationException constraint
+                        && "23505".equals(constraint.getSQLState())
+                        && constraint.getConstraintName()!=null
+                        && OVERRIDE_UNIQUE_CONSTRAINTS.contains(constraint.getConstraintName())) {
+                    throw new ApiException(ErrorCode.SYSTEM_SETTING_OVERRIDE_ALREADY_EXISTS, HttpStatus.CONFLICT,
+                            "Setting override already exists.");
+                }
+            }
+            throw exception;
+        }
+    }
     public record MutationResult(SystemSettingEntity setting, boolean created) {}
 }

@@ -50,6 +50,7 @@ public class OrderReadService {
         this(orders,access,actions,merchantAccess,null,null,null,null,null,null,clock,null,null);
     }
     public OrderDetailResponse detail(UUID id) { OrderEntity order=orders.findById(id).orElseThrow(this::notFound); return map(order,access.requireVisible(order)); }
+    public OrderDetailResponse adminDetail(UUID id) { OrderEntity order=orders.findById(id).orElseThrow(this::notFound); return map(order,access.requireAdminVisible(order)); }
     public OrderPageResponse myOrders(UUID buyerId) {
         List<OrderSummaryResponse> items=summaries(orders.findAllByBuyerUserIdOrderByCreatedAtDesc(buyerId));
         return new OrderPageResponse(items,null);

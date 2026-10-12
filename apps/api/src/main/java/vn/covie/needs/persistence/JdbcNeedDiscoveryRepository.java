@@ -48,6 +48,8 @@ public class JdbcNeedDiscoveryRepository implements NeedDiscoveryRepository {
                     from need_requests n
                     join merchant_locations ml on ml.merchant_profile_id=:merchantId and ml.id in (:locationIds)
                         and ml.location_status='ACTIVE' and ml.deleted_at is null
+                    join merchant_profiles mp on mp.id=ml.merchant_profile_id and mp.merchant_status='ACTIVE'
+                        and mp.moderation_status in ('NOT_REQUIRED','APPROVED') and mp.deleted_at is null
                     join location_variants lv on lv.merchant_location_id=ml.id and lv.is_available=true and lv.deleted_at is null
                     join variants v on v.id=lv.variant_id and v.variant_status='ACTIVE' and v.deleted_at is null
                     join catalog_items ci on ci.id=v.catalog_item_id and ci.item_type=n.need_type and ci.listing_status='ACTIVE'
@@ -60,9 +62,9 @@ public class JdbcNeedDiscoveryRepository implements NeedDiscoveryRepository {
                       and (n.need_type='SERVICE' or lv.inventory_mode='UNTRACKED' or (lv.inventory_mode='TRACKED' and coalesce(ib.stock_on_hand,0)>coalesce(ib.reserved_quantity,0)))
                     group by n.id,n.need_type,n.category_id,n.title,n.description,n.expires_at,ml.id,ml.name,area.name,ml.pickup_enabled
                 ) select * from candidate
-                where :cursorAbsent=true or text_rank < :rank or (text_rank=:rank and distance_meters>:distance)
-                   or (text_rank=:rank and distance_meters=:distance and need_id>:needId)
-                   or (text_rank=:rank and distance_meters=:distance and need_id=:needId and merchant_location_id>:locationId)
+                where :cursorAbsent=true or text_rank < cast(:rank as real) or (text_rank=cast(:rank as real) and distance_meters>:distance)
+                   or (text_rank=cast(:rank as real) and distance_meters=:distance and need_id>:needId)
+                   or (text_rank=cast(:rank as real) and distance_meters=:distance and need_id=:needId and merchant_location_id>:locationId)
                 order by text_rank desc,distance_meters asc,need_id asc,merchant_location_id asc limit :limit
                 """;
         MapSqlParameterSource p = new MapSqlParameterSource().addValue("merchantId", merchantId).addValue("locationIds", locationIds)

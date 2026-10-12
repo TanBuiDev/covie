@@ -28,6 +28,8 @@ import vn.covie.inventory.persistence.InventoryBalanceRepository;
 import vn.covie.merchants.model.MerchantLocationEntity;
 import vn.covie.merchants.model.MerchantLocationStatus;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
+import vn.covie.merchants.persistence.MerchantProfileRepository;
+import vn.covie.checkout.application.CheckoutTradingPolicy;
 import vn.covie.merchants.security.MerchantAccessPolicy;
 import vn.covie.merchants.security.MerchantCapability;
 import vn.covie.moderation.model.ContentModerationStatus;
@@ -41,6 +43,7 @@ import vn.covie.shared.web.ErrorCode;
 public class NeedResponseEligibilityPolicy {
     private final MerchantAccessPolicy merchantAccess;
     private final MerchantLocationRepository locations;
+    private final MerchantProfileRepository merchants;
     private final LocationVariantRepository locationVariants;
     private final VariantRepository variants;
     private final CatalogItemRepository catalogItems;
@@ -53,6 +56,7 @@ public class NeedResponseEligibilityPolicy {
     public NeedResponseEligibilityPolicy(
             MerchantAccessPolicy merchantAccess,
             MerchantLocationRepository locations,
+            MerchantProfileRepository merchants,
             LocationVariantRepository locationVariants,
             VariantRepository variants,
             CatalogItemRepository catalogItems,
@@ -63,6 +67,7 @@ public class NeedResponseEligibilityPolicy {
             DeliveryCoverageEvaluator coverage) {
         this.merchantAccess = merchantAccess;
         this.locations = locations;
+        this.merchants = merchants;
         this.locationVariants = locationVariants;
         this.variants = variants;
         this.catalogItems = catalogItems;
@@ -87,6 +92,8 @@ public class NeedResponseEligibilityPolicy {
         }
 
         merchantAccess.requireLocation(merchantId, merchantLocationId, MerchantCapability.RESPOND_TO_NEEDS);
+        if (!CheckoutTradingPolicy.merchantVisible(merchants.findByIdAndDeletedAtIsNull(merchantId).orElse(null)))
+            throw notFound();
         MerchantLocationEntity location = locations
                 .findByIdAndMerchantProfileIdAndDeletedAtIsNull(merchantLocationId, merchantId)
                 .orElseThrow(NeedResponseEligibilityPolicy::notFound);

@@ -41,21 +41,27 @@ public class MediaUploadService {
     private final AppClock clock;
     private final AuditLogWriter audit;
     private final RequestIdAccessor requestIds;
+    private final vn.covie.users.persistence.UserRepository users;
 
     public MediaUploadService(CurrentActorProvider actors, MediaAssetRepository repository, ObjectStorage storage,
             StorageProperties properties, MediaMagicSniffer magic, MediaUrlResolver urls, IdempotencyExecutor idempotency,
-            UuidV7Generator ids, AppClock clock, AuditLogWriter audit, RequestIdAccessor requestIds) {
+            UuidV7Generator ids, AppClock clock, AuditLogWriter audit, RequestIdAccessor requestIds,
+            vn.covie.users.persistence.UserRepository users) {
         this.actors = actors; this.repository = repository; this.storage = storage; this.properties = properties;
         this.magic = magic; this.urls = urls; this.idempotency = idempotency; this.ids = ids; this.clock = clock;
         this.audit = audit; this.requestIds = requestIds;
+        this.users = users;
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public MediaUploadResponse createUpload(CreateMediaUploadRequest request) {
         CurrentActor actor = actors.currentActor();
         String contentType = normalizeSupportedType(request.contentType(), request.purpose());
         long maxBytes = contentType.startsWith("video/") ? properties.maxVideoBytes() : properties.maxImageBytes();
         if (request.fileSize() <= 0 || request.fileSize() > maxBytes) throw new ApiException(ErrorCode.MEDIA_UPLOAD_VERIFICATION_FAILED,
                 HttpStatus.UNPROCESSABLE_ENTITY, "Media exceeds the configured size limit.");
+        users.findByIdForUpdate(actor.userId()).orElseThrow(() -> new ApiException(
+                ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Resource not found."));
         if (repository.countByOwnerUserIdAndMediaStatus(actor.userId(), MediaStatus.PENDING_UPLOAD)
                 >= properties.maxPendingUploadsPerUser()) throw new ApiException(ErrorCode.MEDIA_UPLOAD_LIMIT_REACHED,
                 HttpStatus.TOO_MANY_REQUESTS, "Media upload limit reached.");

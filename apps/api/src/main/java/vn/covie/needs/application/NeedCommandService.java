@@ -86,6 +86,8 @@ public class NeedCommandService {
         if (moderation.decide(new ModerationSubject(ModerationTargetType.NEED_REQUEST, buyerId, null,
                 need.getCategoryId(), need.getLocationAreaId())) == ModerationDecision.REQUIRE_MODERATION) {
             need.requireModeration(now);
+            // The case writer uses JDBC and needs the newly persisted target visible to its FK check.
+            needs.flush();
             moderationCases.openPreApproval(new ModerationTargetRef(ModerationTargetType.NEED_REQUEST, need.getId()),
                     "PUBLISH_REQUIRES_MODERATION");
         }
