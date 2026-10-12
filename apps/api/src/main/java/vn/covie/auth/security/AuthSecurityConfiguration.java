@@ -28,6 +28,7 @@ public class AuthSecurityConfiguration {
                 "/api/v1/categories",
                 "/api/v1/categories/**",
                 "/api/v1/catalog/**",
+                "/api/v1/barcodes/**",
                 "/api/v1/merchants/*/reviews").permitAll()
             .requestMatchers("/api/v1/auth/google/callback/**","/api/v1/auth/oauth2/authorization/**").permitAll()
             .requestMatchers(HttpMethod.POST,"/api/v1/ads/*/events").permitAll()
