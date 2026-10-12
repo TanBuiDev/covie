@@ -22,6 +22,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.86.0",
+    "redis": "6.3.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {

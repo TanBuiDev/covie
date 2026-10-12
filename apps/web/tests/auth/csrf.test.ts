@@ -108,17 +108,16 @@ describe("session refresh coordination", () => {
 
     const first = refreshSession();
     const second = refreshSession();
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     resolveRefresh?.(new Response(null, { status: 200 }));
     await Promise.all([first, second]);
 
-    expect(fetchMock.mock.calls.filter(([request]) => (typeof request === "string" ? request : new Request(request).url).endsWith("/refresh"))).toHaveLength(1);
+    expect(fetchMock.mock.calls.filter(([request]) => (typeof request === "string" ? request : new Request(request).url).includes("/ssr-refresh?client=1"))).toHaveLength(1);
   });
 
   it("retries a safe resource read once after a successful refresh", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(null, { status: 401 }))
-      .mockResolvedValueOnce(json({ headerName: "X-CSRF-Token", token: "token" }))
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(json({ status: "ok" }));
     vi.stubGlobal("fetch", fetchMock);
@@ -126,7 +125,7 @@ describe("session refresh coordination", () => {
     const result = await createApiClient().GET("/api/v1/health");
 
     expect(result.response.status).toBe(200);
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("does not replay an unsafe mutation after a 401", async () => {
@@ -139,6 +138,16 @@ describe("session refresh coordination", () => {
 
     expect(response.status).toBe(401);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+  it("returns the refreshed response body for an ungenerated safe endpoint", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+      .mockResolvedValueOnce(json({ items: ["fresh"] }));
+    vi.stubGlobal("fetch", fetchMock);
+    const response = await requestBrowserApi("GET", "/api/v1/example");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ items: ["fresh"] });
   });
 });
 
