@@ -1,6 +1,8 @@
 package vn.covie.shared.web;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -22,6 +24,21 @@ class GlobalExceptionHandlerTest extends PostgresIntegrationTest {
     @Autowired
     MockMvc mockMvc;
 
+    @Autowired
+    io.micrometer.core.instrument.MeterRegistry meters;
+
+    @Test
+    void recordsMappedApiErrorWithoutChangingItsEnvelope() throws Exception {
+        var counter = meters.find("covie.api.errors").tags("code", "RESOURCE_NOT_FOUND", "status", "404").counter();
+        double before = counter == null ? 0 : counter.count();
+        mockMvc.perform(get("/__test/not-found"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"));
+        var recorded = meters.get("covie.api.errors").tags("code", "RESOURCE_NOT_FOUND", "status", "404").counter();
+        org.assertj.core.api.Assertions.assertThat(recorded.count()).isEqualTo(before + 1);
+        org.assertj.core.api.Assertions.assertThat(recorded.getId().getTags()).hasSize(2);
+    }
+
     @Test
     void serializesStandardErrorEnvelope() throws Exception {
         mockMvc.perform(get("/__test/not-found"))
@@ -35,6 +52,19 @@ class GlobalExceptionHandlerTest extends PostgresIntegrationTest {
         mockMvc.perform(get("/__test/optimistic-lock"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("RESOURCE_VERSION_CONFLICT"))
+                .andExpect(jsonPath("$.error.requestId").isNotEmpty());
+    }
+
+    @Test void unmappedRequestsUseTheNotFoundEnvelopeInsteadOfAnInternalError() throws Exception {
+        mockMvc.perform(get("/__test/unmapped-route"))
+                .andExpect(status().isNotFound()).andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.error.requestId").isNotEmpty());
+    }
+
+    @Test void unsupportedMethodsPreserveTheFrameworkStatusAndAllowedMethods() throws Exception {
+        mockMvc.perform(post("/__test/not-found").with(csrf()))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Allow",org.hamcrest.Matchers.containsString("GET")))
                 .andExpect(jsonPath("$.error.requestId").isNotEmpty());
     }
 

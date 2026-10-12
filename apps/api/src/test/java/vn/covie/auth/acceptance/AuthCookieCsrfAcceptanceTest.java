@@ -84,6 +84,7 @@ class AuthCookieCsrfAcceptanceTest extends AuthAcceptanceSupport {
         String subject = "csrf-reset-" + java.util.UUID.randomUUID(); String email = "csrf-reset-" + java.util.UUID.randomUUID() + "@example.com";
         identities.save(vn.covie.users.model.UserIdentityEntity.google(java.util.UUID.randomUUID(), resetUser.getId(), subject, email, java.time.Instant.now()));
         identities.save(vn.covie.users.model.UserIdentityEntity.email(java.util.UUID.randomUUID(), resetUser.getId(), email, passwords.encode("Csrf-Reset-Password-42"), java.time.Instant.now()));
+        IssuedSession oldResetSession=issuer.issue(resetUser.getId(),device());
         String resetTicket = ((GoogleAuthResult.PasswordReset) google.handlePasswordReset(claims(subject, email))).ticket().rawToken();
         MvcResult resetResponse = mvc.perform(post("/api/v1/auth/password/reset-with-google")
                         .cookie(new Cookie(authProperties.cookies().actionName(), resetTicket), afterRefresh).header("X-CSRF-Token", afterRefresh.getValue())
@@ -93,6 +94,11 @@ class AuthCookieCsrfAcceptanceTest extends AuthAcceptanceSupport {
 
         String access = cookieValue(resetResponse, authProperties.cookies().accessName());
         String refresh = cookieValue(resetResponse, authProperties.cookies().refreshName());
+        mvc.perform(get("/api/v1/me").header("Authorization","Bearer "+oldResetSession.accessToken().value()))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/me").cookie(new Cookie(authProperties.cookies().accessName(),access)))
+                .andExpect(status().isOk());
+        assertThat(sessions.findById(oldResetSession.sessionId()).orElseThrow().getRevokedAt()).isNotNull();
         MvcResult logout = mvc.perform(post("/api/v1/auth/logout")
                         .cookie(new Cookie(authProperties.cookies().accessName(), access), new Cookie(authProperties.cookies().refreshName(), refresh), afterReset)
                         .header("X-CSRF-Token", afterReset.getValue())).andExpect(status().isNoContent()).andReturn();

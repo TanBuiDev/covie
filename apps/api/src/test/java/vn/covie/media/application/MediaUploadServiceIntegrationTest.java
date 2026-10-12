@@ -45,6 +45,7 @@ class MediaUploadServiceIntegrationTest extends PostgresIntegrationTest {
     @Autowired UserRepository users;
     @Autowired UuidV7Generator ids;
     @Autowired JdbcTemplate jdbc;
+    @Autowired MediaCleanupService cleanup;
     @MockitoBean ObjectStorage storage;
     @MockitoBean CurrentActorProvider actors;
     private UUID owner;
@@ -76,6 +77,64 @@ class MediaUploadServiceIntegrationTest extends PostgresIntegrationTest {
         assertThatThrownBy(() -> uploads.complete(wrong.mediaId(), "ad-wrong-container")).isInstanceOf(ApiException.class);
         assertThat(media.findById(wrong.mediaId()).orElseThrow().getMediaStatus()).isEqualTo(MediaStatus.FAILED);
         org.mockito.Mockito.verify(storage).deleteIfExists(wrongAsset.getStorageKey());
+    }
+
+    @Test
+    void cleanupCannotDeleteMediaWhileCompletionHoldsItsVerificationLock() throws Exception {
+        UUID id=UUID.randomUUID(); String key="users/"+owner+"/cleanup-race.png";
+        Instant old=Instant.parse("1900-01-01T00:00:00Z");
+        media.saveAndFlush(MediaAssetEntity.pending(id,owner,key,MediaPurpose.USER_AVATAR,"image/png",PNG.length,old.plusSeconds(600),old));
+        var verifying=new CountDownLatch(1); var release=new CountDownLatch(1);
+        when(storage.head(key)).thenAnswer(invocation -> {
+            verifying.countDown();
+            assertThat(release.await(10,java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            return new StoredObjectMetadata("image/png",PNG.length);
+        });
+        when(storage.readPrefix(key,32)).thenReturn(PNG);
+        try(var workers=Executors.newFixedThreadPool(2)) {
+            var completion=workers.submit(()->uploads.complete(id,"cleanup-race-"+id));
+            assertThat(verifying.await(5,java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            var cleaning=workers.submit(()->cleanup.cleanupExpiredPending(1));
+            try {
+                long deadline=System.nanoTime()+java.util.concurrent.TimeUnit.SECONDS.toNanos(3);
+                while(!cleaning.isDone() && System.nanoTime()<deadline) {
+                    // Observe the real blocked cleanup UPDATE rather than releasing verification on a timing guess.
+                    int blocked=jdbc.queryForObject("select count(*) from pg_stat_activity where datname=current_database() and wait_event_type='Lock' and lower(query) like '%update media_assets%'",Integer.class);
+                    if(blocked>0) break;
+                    Thread.sleep(10);
+                }
+            } finally { release.countDown(); }
+            assertThat(completion.get(10,java.util.concurrent.TimeUnit.SECONDS).mediaId()).isEqualTo(id);
+            cleaning.get(10,java.util.concurrent.TimeUnit.SECONDS);
+        } finally { release.countDown(); }
+        assertThat(media.findById(id).orElseThrow().getMediaStatus()).isEqualTo(MediaStatus.READY);
+        org.mockito.Mockito.verify(storage,org.mockito.Mockito.never()).deleteIfExists(key);
+    }
+
+    @Test
+    void concurrentCreatesCannotExceedThePendingUploadQuota() throws Exception {
+        Instant now=Instant.now();
+        for(int index=0;index<19;index++) media.saveAndFlush(MediaAssetEntity.pending(UUID.randomUUID(),owner,
+                "users/"+owner+"/quota-"+index+".png",MediaPurpose.USER_AVATAR,"image/png",PNG.length,now.plusSeconds(600),now));
+        var ready=new java.util.concurrent.CyclicBarrier(2);
+        org.mockito.Mockito.doAnswer(invocation -> {
+            // Unprotected requests both count19 before either persists; serialized requests may proceed after the bounded wait.
+            try { ready.await(500,java.util.concurrent.TimeUnit.MILLISECONDS); }
+            catch(java.util.concurrent.TimeoutException | java.util.concurrent.BrokenBarrierException ignored) { }
+            return new PresignedUpload(URI.create("https://upload.example/"+invocation.getArgument(0)),"PUT",
+                    now.plusSeconds(600),Map.of("content-type","image/png"));
+        }).when(storage).presignPut(any(),any(),anyLong(),any());
+        try(var workers=Executors.newFixedThreadPool(2)) {
+            java.util.concurrent.Callable<ErrorCode> create=()-> {
+                try { uploads.createUpload(new CreateMediaUploadRequest(MediaPurpose.USER_AVATAR,"image/png",PNG.length)); return null; }
+                catch(ApiException error) { return error.code(); }
+            };
+            var first=workers.submit(create); var second=workers.submit(create);
+            assertThat(java.util.Arrays.asList(first.get(10,java.util.concurrent.TimeUnit.SECONDS),second.get(10,java.util.concurrent.TimeUnit.SECONDS)))
+                    .containsExactlyInAnyOrder(null,ErrorCode.MEDIA_UPLOAD_LIMIT_REACHED);
+        }
+        assertThat(media.countByOwnerUserIdAndMediaStatus(owner,MediaStatus.PENDING_UPLOAD)).isEqualTo(20);
+        org.mockito.Mockito.verify(storage,org.mockito.Mockito.times(1)).presignPut(any(),any(),anyLong(),any());
     }
 
     @Test

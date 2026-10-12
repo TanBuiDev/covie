@@ -151,7 +151,7 @@ class CheckoutPreviewSnapshotTest {
                 mock(ShippingEvaluator.class), mock(CheckoutSessionService.class), new ObjectMapper(), mock(UserAddressRepository.class),
                 mock(DeliveryCoverageEvaluator.class), mock(CatalogItemRepository.class), mock(VariantRepository.class),
                 mock(MerchantContactMethodRepository.class), mock(CheckoutSnapshotFactory.class),
-                mock(ShippingPolicySnapshotFactory.class));
+                mock(ShippingPolicySnapshotFactory.class), mock(CheckoutTradingPolicy.class));
 
         assertThatThrownBy(() -> service.preview(new CheckoutPreviewRequest(CheckoutSourceType.DIRECT, null,
                 List.of(new CheckoutPreviewRequest.DirectItem(offerId, 1)), FulfillmentMethod.PICKUP, null, PaymentMethod.COD)))
@@ -200,7 +200,7 @@ class CheckoutPreviewSnapshotTest {
                 mock(InventoryBalanceRepository.class), mock(ShippingPolicyRepository.class), mock(ShippingRuleRepository.class),
                 mock(ShippingEvaluator.class), sessions, new ObjectMapper(), mock(UserAddressRepository.class),
                 mock(DeliveryCoverageEvaluator.class), catalogItems, variants, mock(MerchantContactMethodRepository.class),
-                snapshotFactory, mock(ShippingPolicySnapshotFactory.class));
+                snapshotFactory, mock(ShippingPolicySnapshotFactory.class), mock(CheckoutTradingPolicy.class));
 
         service.preview(new CheckoutPreviewRequest(CheckoutSourceType.CART, UUID.randomUUID(), null,
                 FulfillmentMethod.PICKUP, null, PaymentMethod.COD));
@@ -264,7 +264,7 @@ class CheckoutPreviewSnapshotTest {
         CheckoutPreviewService service = new CheckoutPreviewService(actors, candidates, offers, locations,
                 mock(InventoryBalanceRepository.class), policies, rules, shipping,
                 mock(CheckoutSessionService.class), new ObjectMapper(), addresses, coverage, catalogItems, variants,
-                mock(MerchantContactMethodRepository.class), snapshotFactory, mock(ShippingPolicySnapshotFactory.class));
+                mock(MerchantContactMethodRepository.class), snapshotFactory, mock(ShippingPolicySnapshotFactory.class), mock(CheckoutTradingPolicy.class));
         CheckoutPreviewRequest request = new CheckoutPreviewRequest(CheckoutSourceType.DIRECT, null,
                 List.of(new CheckoutPreviewRequest.DirectItem(offerId, 1)), fulfillment,
                 fulfillment == FulfillmentMethod.PICKUP ? null : addressId, PaymentMethod.COD);

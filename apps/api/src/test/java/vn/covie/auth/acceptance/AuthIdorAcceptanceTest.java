@@ -30,6 +30,90 @@ class AuthIdorAcceptanceTest extends AuthAcceptanceSupport {
     @Autowired MockMvc mvc;
     @Autowired UserAddressRepository addresses;
     @Autowired UserContactMethodRepository contacts;
+    @Autowired vn.covie.realtime.SseConnectionRegistry streams;
+    @Autowired vn.covie.auth.security.AuthProperties authProperties;
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void signedJwtStreamsIsolateRecipientsAcrossTabsAndReconnect(boolean browserCookie) throws Exception {
+        var first = activeUser("SSE first user");
+        var second = activeUser("SSE second user");
+        String firstBearer = "Bearer " + issuer.issue(first.getId(), device()).accessToken().value();
+        String secondBearer = "Bearer " + issuer.issue(second.getId(), device()).accessToken().value();
+        var firstTab = mvc.perform(streamRequest(firstBearer, browserCookie))
+                .andExpect(status().isOk()).andReturn();
+        var otherTab = mvc.perform(streamRequest(firstBearer, browserCookie))
+                .andExpect(status().isOk()).andReturn();
+        var secondTab = mvc.perform(streamRequest(secondBearer, browserCookie))
+                .andExpect(status().isOk()).andReturn();
+        org.springframework.test.web.servlet.MvcResult reconnected = null;
+        try {
+            streams.publish(new vn.covie.realtime.SseSignal(first.getId(), "order.updated",
+                    java.util.Map.of("orderId", "first-private-order")));
+            assertThat(firstTab.getResponse().getContentAsString()).contains("first-private-order");
+            assertThat(otherTab.getResponse().getContentAsString()).contains("first-private-order");
+            assertThat(secondTab.getResponse().getContentAsString()).doesNotContain("first-private-order");
+            streams.publish(new vn.covie.realtime.SseSignal(second.getId(), "notification.created",
+                    java.util.Map.of("notificationId", "second-private-notification")));
+            assertThat(secondTab.getResponse().getContentAsString()).contains("second-private-notification");
+            assertThat(firstTab.getResponse().getContentAsString()).doesNotContain("second-private-notification");
+            assertThat(otherTab.getResponse().getContentAsString()).doesNotContain("second-private-notification");
+            firstTab.getRequest().getAsyncContext().complete();
+            reconnected = mvc.perform(streamRequest(firstBearer, browserCookie))
+                    .andExpect(status().isOk()).andReturn();
+            assertThat(reconnected.getResponse().getContentAsString()).contains("sync-required")
+                    .doesNotContain("first-private-order");
+            streams.publish(new vn.covie.realtime.SseSignal(first.getId(), "order.updated",
+                    java.util.Map.of("orderId", "after-reconnect")));
+            assertThat(reconnected.getResponse().getContentAsString()).contains("after-reconnect");
+            assertThat(otherTab.getResponse().getContentAsString()).contains("after-reconnect");
+            assertThat(secondTab.getResponse().getContentAsString()).doesNotContain("after-reconnect");
+        } finally {
+            if (reconnected != null) reconnected.getRequest().getAsyncContext().complete();
+            otherTab.getRequest().getAsyncContext().complete();
+            secondTab.getRequest().getAsyncContext().complete();
+        }
+    }
+
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder streamRequest(
+            String bearer, boolean browserCookie) {
+        var request = get("/api/v1/me/events");
+        return browserCookie
+                ? request.cookie(new jakarta.servlet.http.Cookie(authProperties.cookies().accessName(), bearer.substring(7)))
+                : request.header("Authorization", bearer);
+    }
+
+    @Test
+    void eventStreamRequiresAnActiveSessionAndReconnectAfterLogoutIsRejected() throws Exception {
+        mvc.perform(get("/api/v1/me/events")).andExpect(status().isUnauthorized());
+        UserEntity user = activeUser("SSE session");
+        IssuedSession session = issuer.issue(user.getId(), device());
+        String bearer = "Bearer " + session.accessToken().value();
+        var stream = mvc.perform(get("/api/v1/me/events").header("Authorization", bearer))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.request().asyncStarted())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
+                .andReturn();
+        assertThat(stream.getResponse().getContentAsString()).contains("sync-required");
+        stream.getRequest().getAsyncContext().complete();
+        mvc.perform(post("/api/v1/auth/logout").header("Authorization", bearer)).andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/me/events").header("Authorization", bearer)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void rotatedCredentialsCannotRestoreAccessForANonActiveAccount() throws Exception {
+        for (AccountStatus accountStatus : new AccountStatus[]{AccountStatus.SUSPENDED, AccountStatus.BANNED, AccountStatus.DELETED}) {
+            UserEntity user = activeUser("Non-active refresh " + accountStatus);
+            IssuedSession original = issuer.issue(user.getId(), device());
+            user.setAccountStatus(accountStatus, Instant.now());
+            users.saveAndFlush(user);
+            IssuedSession rotated = refresh.refresh(original.rawRefreshToken(), "nonactive-refresh-" + accountStatus);
+            mvc.perform(get("/api/v1/me").header("Authorization", "Bearer " + rotated.accessToken().value()))
+                    .andExpect(status().isUnauthorized());
+            mvc.perform(get("/api/v1/me/security/sessions").header("Authorization", "Bearer " + rotated.accessToken().value()))
+                    .andExpect(status().isUnauthorized());
+        }
+    }
 
     @Test
     void userCannotReadOrMutateAnotherUsersAddressContactOrSession() throws Exception {

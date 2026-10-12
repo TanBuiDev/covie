@@ -2,8 +2,6 @@ package vn.covie.orders;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,9 +21,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.catalog.model.CatalogItemType;
 import vn.covie.checkout.api.dto.CheckoutPreviewRequest;
-import vn.covie.checkout.application.CheckoutCandidate;
-import vn.covie.checkout.application.CheckoutCandidateItem;
-import vn.covie.checkout.application.CheckoutCandidateResolverRegistry;
 import vn.covie.checkout.application.CheckoutCommitService;
 import vn.covie.checkout.application.CheckoutPreviewService;
 import vn.covie.checkout.model.CheckoutSourceType;
@@ -45,13 +42,87 @@ class OrderSnapshotImmutabilityIntegrationTest extends PostgresIntegrationTest {
     @Autowired JdbcTemplate jdbc;
 
     @MockitoBean CurrentActorProvider actors;
-    @MockitoBean CheckoutCandidateResolverRegistry candidates;
+
+    @ParameterizedTest
+    @ValueSource(strings = {"FIXED", "NEGOTIATED"})
+    void shippingChangeBeforeCommitRequiresFreshPreviewWithoutCreatingOrder(String mode) {
+        Fixture fixture = seedFixture();
+        actAs(fixture.buyerId(), SystemRole.USER);
+        var request = new CheckoutPreviewRequest(CheckoutSourceType.DIRECT, null,
+                List.of(new CheckoutPreviewRequest.DirectItem(fixture.productOfferId(), 1)),
+                FulfillmentMethod.SELLER_DELIVERY, fixture.addressId(), PaymentMethod.COD);
+        String token = previews.preview(request).checkoutToken();
+        jdbc.update("delete from shipping_rules where shipping_policy_id=?", fixture.shippingPolicyId());
+        jdbc.update("update shipping_policies set mode=?,base_fee=?,rule_match_mode=null,version=version+1 where id=?",
+                mode, mode.equals("NEGOTIATED") ? null : 5000L, fixture.shippingPolicyId());
+        for (int attempt = 0; attempt < 2; attempt++) {
+            assertThatThrownBy(() -> commits.commit(fixture.buyerId(), token))
+                    .isInstanceOfSatisfying(ApiException.class, exception -> {
+                        assertThat(exception.status()).isEqualTo(HttpStatus.CONFLICT);
+                        assertThat(exception.code()).isEqualTo(ErrorCode.CHECKOUT_CHANGED);
+                        assertThat(exception.details().get("changes").toString()).contains("SHIPPING_CHANGED");
+                    });
+        }
+        assertThat(jdbc.queryForObject("select count(*) from orders where buyer_user_id=?", Long.class,
+                fixture.buyerId())).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from checkout_sessions where user_id=? and consumed_at is not null",
+                Long.class, fixture.buyerId())).isZero();
+        UUID orderId = commits.commit(fixture.buyerId(), previews.preview(request).checkoutToken()).id();
+        var pricing = reads.detail(orderId).pricing();
+        assertThat(pricing.shippingFeeType().name()).isEqualTo(mode);
+        if (mode.equals("NEGOTIATED")) {
+            assertThat(pricing.shippingFee()).isNull();
+            assertThat(pricing.totalAmount()).isNull();
+            assertThat(pricing.knownTotal()).isEqualTo(10_000L);
+        } else {
+            assertThat(pricing.shippingFee()).isEqualTo(5_000L);
+            assertThat(pricing.totalAmount()).isEqualTo(15_000L);
+        }
+        assertThat(jdbc.queryForObject("select count(*) from orders where buyer_user_id=?", Long.class,
+                fixture.buyerId())).isEqualTo(1L);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"FIXED", "CONDITIONAL", "NEGOTIATED"})
+    void deliveryPricingRetainsPaidOrUnknownFeeAfterPolicyChanges(String mode) {
+        Fixture fixture = seedFixture();
+        jdbc.update("delete from shipping_rules where shipping_policy_id=?", fixture.shippingPolicyId());
+        jdbc.update("update shipping_policies set mode=?,base_fee=?,rule_match_mode=? where id=?",
+                mode, mode.equals("NEGOTIATED") ? null : 5000L,
+                mode.equals("CONDITIONAL") ? "ANY" : null, fixture.shippingPolicyId());
+        if (mode.equals("CONDITIONAL")) {
+            jdbc.update("insert into shipping_rules(id,shipping_policy_id,condition_type,operator,threshold_value,"
+                    + "action_type,priority,enabled) values (?,?,'ORDER_AMOUNT_MIN','GTE',20000,'FREE_SHIPPING',0,true)",
+                    UUID.randomUUID(), fixture.shippingPolicyId());
+        }
+        actAs(fixture.buyerId(), SystemRole.USER);
+        UUID orderId = checkout(fixture.productOfferId(), FulfillmentMethod.SELLER_DELIVERY, fixture.addressId());
+        var original = reads.detail(orderId);
+        assertThat(original.pricing().subtotal()).isEqualTo(10_000L);
+        assertThat(original.pricing().shippingFeeType().name()).isEqualTo(mode);
+        if (mode.equals("NEGOTIATED")) {
+            assertThat(original.pricing().shippingFee()).isNull();
+            assertThat(original.pricing().totalAmount()).isNull();
+            assertThat(original.pricing().knownTotal()).isEqualTo(10_000L);
+            assertThat(json(original.fulfillment().shippingPolicy()).path("effectiveShippingFee").isNull()).isTrue();
+        } else {
+            assertThat(original.pricing().shippingFee()).isEqualTo(5_000L);
+            assertThat(original.pricing().totalAmount()).isEqualTo(15_000L);
+            assertThat(original.pricing().knownTotal()).isEqualTo(15_000L);
+            assertThat(json(original.fulfillment().shippingPolicy()).path("effectiveShippingFee").asLong())
+                    .isEqualTo(5_000L);
+        }
+        assertThat(json(original.fulfillment().shippingPolicy()).path("matchedRuleIds")).isEmpty();
+        jdbc.update("update shipping_policies set mode='FIXED',base_fee=99000,rule_match_mode=null,version=version+1 where id=?",
+                fixture.shippingPolicyId());
+        var after = reads.detail(orderId);
+        assertThat(after.pricing()).isEqualTo(original.pricing());
+        assertThat(after.fulfillment().shippingPolicy()).isEqualTo(original.fulfillment().shippingPolicy());
+    }
 
     @Test
     void committedOrdersRetainFulfillmentSnapshotsForEveryAuthorizedRoleAfterSourcesChange() {
         Fixture fixture = seedFixture();
-        when(candidates.resolve(eq(fixture.buyerId()), any(CheckoutPreviewRequest.class)))
-                .thenAnswer(invocation -> candidate(fixture, invocation.getArgument(1)));
         actAs(fixture.buyerId(), SystemRole.USER);
 
         UUID productOrderId = checkout(fixture.productOfferId(), FulfillmentMethod.SELLER_DELIVERY,
@@ -110,18 +181,11 @@ class OrderSnapshotImmutabilityIntegrationTest extends PostgresIntegrationTest {
         return commits.commit(currentActor().userId(), token).id();
     }
 
-    private CheckoutCandidate candidate(Fixture fixture, CheckoutPreviewRequest request) {
-        UUID offerId = request.items().getFirst().locationVariantId();
-        boolean product = offerId.equals(fixture.productOfferId());
-        return new CheckoutCandidate(CheckoutSourceType.DIRECT, fixture.buyerId(), fixture.merchantId(),
-                fixture.locationId(), product ? CatalogItemType.PRODUCT : CatalogItemType.SERVICE,
-                List.of(new CheckoutCandidateItem(offerId,
-                        product ? fixture.productVariantId() : fixture.serviceVariantId(),
-                        product ? fixture.productItemId() : fixture.serviceItemId(), 1)), null,
-                mapper.createObjectNode());
-    }
-
     private void assertProductSnapshots(OrderDetailResponse order, Fixture fixture, int distance) {
+        assertThat(order.pricing().subtotal()).isEqualTo(10_000L);
+        assertThat(order.pricing().shippingFee()).isZero();
+        assertThat(order.pricing().knownTotal()).isEqualTo(10_000L);
+        assertThat(order.pricing().totalAmount()).isEqualTo(10_000L);
         JsonNode item = json(order.items().getFirst().snapshot());
         assertThat(item.path("schemaVersion").asInt()).isEqualTo(1);
         assertThat(item.path("name").asText()).isEqualTo("Original product");

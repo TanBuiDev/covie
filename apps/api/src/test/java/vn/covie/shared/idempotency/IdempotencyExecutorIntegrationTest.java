@@ -27,6 +27,41 @@ class IdempotencyExecutorIntegrationTest extends PostgresIntegrationTest {
     @Autowired
     UserRepository users;
 
+    @Autowired jakarta.persistence.EntityManager entityManager;
+
+    @Test
+    void persistedResponseRetainsAllInstantNanosecondsOnReplay() {
+        UUID actorId = activeUser();
+        Instant instant = Instant.parse("2026-10-11T07:00:00.123456789Z");
+        AtomicInteger executions = new AtomicInteger();
+        TimedResponse first = executor.execute(actorId, "precision.test", "nanosecond-response", Map.of(), 201,
+                TimedResponse.class, () -> new TimedResponse(instant, executions.incrementAndGet()));
+        TimedResponse replay = executor.execute(actorId, "precision.test", "nanosecond-response", Map.of(), 201,
+                TimedResponse.class, () -> new TimedResponse(Instant.EPOCH, executions.incrementAndGet()));
+        assertThat(replay).isEqualTo(first);
+        assertThat(replay.createdAt()).isEqualTo(instant);
+        assertThat(executions).hasValue(1);
+        assertThat(jdbc.queryForObject("select response_body->>'createdAt' from idempotency_records where actor_id=?",
+                String.class, actorId)).isEqualTo(instant.toString());
+    }
+
+    @Test
+    void commandClearingPersistenceContextStillStoresCompletedResponseForReplay() {
+        UUID actorId=activeUser();
+        AtomicInteger executions=new AtomicInteger();
+        StoredResponse first=executor.execute(actorId,"maintenance.test","clearing-command",Map.of(),200,
+                StoredResponse.class,()->{
+                    entityManager.flush();
+                    entityManager.clear();
+                    return new StoredResponse("rebuilt",executions.incrementAndGet());
+                });
+        StoredResponse replay=executor.execute(actorId,"maintenance.test","clearing-command",Map.of(),200,
+                StoredResponse.class,()->new StoredResponse("duplicate",executions.incrementAndGet()));
+        assertThat(replay).isEqualTo(first);
+        assertThat(executions).hasValue(1);
+        assertThat(jdbc.queryForObject("select status from idempotency_records where actor_id=?",String.class,actorId)).isEqualTo("COMPLETED");
+    }
+
     @Test
     void sameActorOperationKeyAndBodyReturnsStoredResultWithoutRunningCommandTwice() {
         UUID actorId = activeUser();
@@ -107,4 +142,5 @@ class IdempotencyExecutorIntegrationTest extends PostgresIntegrationTest {
     }
 
     private record StoredResponse(String id, int executions) {}
+    private record TimedResponse(Instant createdAt, int executions) {}
 }

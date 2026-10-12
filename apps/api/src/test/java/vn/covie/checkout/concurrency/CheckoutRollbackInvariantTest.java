@@ -77,19 +77,20 @@ class CheckoutRollbackInvariantTest extends PostgresIntegrationTest {
         when(previews.revalidate(eq(fixture.buyerId), any())).thenReturn(revalidated);
         when(previews.revalidate(eq(fixture.buyerId), any(), anyMap())).thenReturn(revalidated);
         when(comparison.compare(any(), any())).thenReturn(List.of());
-        org.mockito.Mockito.doThrow(new IllegalStateException("test rollback")).when(hook).afterOrderCreated(any());
-        int orderItemsBefore = count("order_items");
-        int fulfillmentsBefore = count("product_fulfillments");
-        int orderEventsBefore = count("order_events");
-        int outboxBefore = count("outbox_events");
+        var attemptedOrder = new java.util.concurrent.atomic.AtomicReference<UUID>();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            attemptedOrder.set(invocation.<vn.covie.orders.application.CreatedOrder>getArgument(0).id());
+            throw new IllegalStateException("test rollback");
+        }).when(hook).afterOrderCreated(any());
 
         assertThatThrownBy(() -> commits.commit(fixture.buyerId, "token")).isInstanceOf(IllegalStateException.class);
 
         assertCount("orders", "buyer_user_id", fixture.buyerId, 0);
-        assertThat(count("order_items")).isEqualTo(orderItemsBefore);
-        assertThat(count("product_fulfillments")).isEqualTo(fulfillmentsBefore);
-        assertThat(count("order_events")).isEqualTo(orderEventsBefore);
-        assertThat(count("outbox_events")).isEqualTo(outboxBefore);
+        assertThat(attemptedOrder.get()).isNotNull();
+        assertCount("order_items", "order_id", attemptedOrder.get(), 0);
+        assertCount("product_fulfillments", "order_id", attemptedOrder.get(), 0);
+        assertCount("order_events", "order_id", attemptedOrder.get(), 0);
+        assertCount("outbox_events", "aggregate_id", attemptedOrder.get(), 0);
         assertCount("inventory_reservations", "location_variant_id", fixture.offerId, 0);
         assertCount("inventory_movements", "location_variant_id", fixture.offerId, 0);
         assertThat(jdbc.queryForObject("select reserved_quantity from inventory_balances where location_variant_id = ?", Long.class, fixture.offerId)).isZero();
@@ -98,10 +99,6 @@ class CheckoutRollbackInvariantTest extends PostgresIntegrationTest {
 
     private void assertCount(String table, String column, UUID id, int expected) {
         assertThat(jdbc.queryForObject("select count(*) from " + table + " where " + column + " = ?", Integer.class, id)).isEqualTo(expected);
-    }
-
-    private int count(String table) {
-        return jdbc.queryForObject("select count(*) from " + table, Integer.class);
     }
 
     protected Fixture fixture() {
