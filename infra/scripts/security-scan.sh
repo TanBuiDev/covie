@@ -41,8 +41,14 @@ run_trivy fs --offline-scan --timeout 15m --scanners misconfig,secret --severity
 
 if command -v pnpm >/dev/null 2>&1; then
   case "$(uname -s)" in
-    MINGW*|MSYS*) powershell.exe -NoProfile -Command "pnpm audit --prod --audit-level=high" ;;
-    *) pnpm audit --prod --audit-level=high ;;
+    MINGW*|MSYS*)
+      powershell.exe -NoProfile -Command "pnpm audit --prod --audit-level=high"
+      powershell.exe -NoProfile -Command "pnpm audit --audit-level=critical"
+      ;;
+    *)
+      pnpm audit --prod --audit-level=high
+      pnpm audit --audit-level=critical
+      ;;
   esac
 else
   echo "pnpm not installed; Node production audit must run in CI/release job" >&2

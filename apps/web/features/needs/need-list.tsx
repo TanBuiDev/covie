@@ -24,6 +24,11 @@ const filterTabs: Array<{ status: NeedStatus; label: string }> = [
 ];
 
 export function NeedList() {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [status, setStatus] = useState<NeedStatus | "">("ACTIVE");
   const [items, setItems] = useState<NeedSummary[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
@@ -67,7 +72,7 @@ export function NeedList() {
 
 
   function getExpiryText(expiresAtStr: string) {
-    const diffMs = new Date(expiresAtStr).getTime() - Date.now();
+    const diffMs = new Date(expiresAtStr).getTime() - now;
     if (diffMs <= 0) return "Đã hết hạn";
     const diffHours = Math.round(diffMs / (1000 * 60 * 60));
     if (diffHours < 1) {

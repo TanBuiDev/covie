@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { AdSlot } from "./ad-slot";
 import { listActiveAds, trackAdEvent } from "./ad-api";
@@ -13,7 +13,7 @@ beforeEach(() => {
   vi.stubGlobal("IntersectionObserver", class { constructor(callback: typeof observe) { observe = callback; } observe() {} disconnect() {} });
   Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
 });
-afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.clearAllMocks(); Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" }); });
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.clearAllMocks(); Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" }); });
 
 it("keeps video paused when the delivery first mounts in an already hidden tab", async () => {
   vi.mocked(listActiveAds).mockResolvedValue([{ ...first, creativeType: "VIDEO", mediaUrl: "https://media.test/ad.webm" }] as never);
