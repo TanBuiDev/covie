@@ -1,0 +1,53 @@
+rule_files:
+  - ../rules/covie.rules.yml
+evaluation_interval: 1m
+tests:
+  - name: transient saturation clears before five minutes
+    interval: 1m
+    input_series:
+      - series: 'hikaricp_connections_active{job="covie-api",pool="main"}'
+        values: '9 9 9 2 2 2 2'
+      - series: 'hikaricp_connections_max{job="covie-api",pool="main"}'
+        values: '10+0x6'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: CoVieDbPoolSaturation
+        exp_alerts: []
+  - name: distinct pools do not cross-match
+    interval: 1m
+    input_series:
+      - series: 'hikaricp_connections_active{job="covie-api",pool="one"}'
+        values: '9+0x10'
+      - series: 'hikaricp_connections_max{job="covie-api",pool="two"}'
+        values: '10+0x10'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: CoVieDbPoolSaturation
+        exp_alerts: []
+  - name: pool saturation requires five minutes
+    interval: 1m
+    input_series:
+      - series: 'hikaricp_connections_active{job="covie-api",instance="api:9091",pool="main"}'
+        values: '9+0x10'
+      - series: 'hikaricp_connections_max{job="covie-api",instance="api:9091",pool="main"}'
+        values: '10+0x10'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: CoVieDbPoolSaturation
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: CoVieDbPoolSaturation
+        exp_alerts:
+          - exp_labels: { job: covie-api, instance: 'api:9091', pool: main, severity: warn }
+            exp_annotations: { summary: "CoVie database pool is above 80% active connections" }
+  - name: exactly eighty percent remains quiet
+    interval: 1m
+    input_series:
+      - series: 'hikaricp_connections_active{job="covie-api",pool="main"}'
+        values: '8+0x10'
+      - series: 'hikaricp_connections_max{job="covie-api",pool="main"}'
+        values: '10+0x10'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: CoVieDbPoolSaturation
+        exp_alerts: []

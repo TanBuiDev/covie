@@ -1,0 +1,45 @@
+rule_files:
+  - ../rules/covie.rules.yml
+evaluation_interval: 1m
+tests:
+  - name: p95 above one second fires only after ten minutes
+    interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_bucket{job="covie-api",le="1"}'
+        values: '0+0x20'
+      - series: 'http_server_requests_seconds_bucket{job="covie-api",le="2"}'
+        values: '0+100x20'
+      - series: 'http_server_requests_seconds_bucket{job="covie-api",le="+Inf"}'
+        values: '0+100x20'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: CoVieP95LatencyHigh
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: CoVieP95LatencyHigh
+        exp_alerts: []
+      - eval_time: 15m
+        alertname: CoVieP95LatencyHigh
+        exp_alerts:
+          - exp_labels: { severity: warn }
+            exp_annotations: { summary: "CoVie API p95 latency is above one second" }
+  - name: p95 at one second does not fire
+    interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_bucket{job="covie-api",le="1"}'
+        values: '0+95x20'
+      - series: 'http_server_requests_seconds_bucket{job="covie-api",le="2"}'
+        values: '0+100x20'
+      - series: 'http_server_requests_seconds_bucket{job="covie-api",le="+Inf"}'
+        values: '0+100x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: CoVieP95LatencyHigh
+        exp_alerts: []
+  - name: no traffic does not fire
+    interval: 1m
+    input_series: []
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: CoVieP95LatencyHigh
+        exp_alerts: []
