@@ -37,15 +37,29 @@ class HotQueryPlanIntegrationTest {
                 if (sql.isEmpty()) continue;
                 assertFalse(sql.toLowerCase(Locale.ROOT).contains(" offset "), "Hot keyset query must not use OFFSET");
                 String plan = explain(connection, sql);
-                assertFalse(plan.isBlank(), "EXPLAIN JSON must be returned");
-                assertFalse(plan.contains("Seq Scan\"" + ",\"Relation Name\":\"outbox_events"),
-                        "Outbox hot query must not scan all historical rows");
-                assertFalse(plan.contains("Seq Scan\"" + ",\"Relation Name\":\"notifications"),
-                        "Notification hot query must use its user/cursor access path");
+                assertHealthyPlan(plan);
                 executed++;
             }
             assertTrue(executed > 0, "At least one exact hot query must be supplied");
         }
+    }
+
+    static void assertHealthyPlan(String plan) throws Exception {
+        assertFalse(plan.isBlank(), "EXPLAIN JSON must be returned");
+        var root = new com.fasterxml.jackson.databind.ObjectMapper().readTree(plan);
+        assertTrue(root.isArray() && !root.isEmpty() && root.get(0).path("Plan").isObject(),
+                "EXPLAIN JSON must contain a query plan");
+        assertFalse(hasSequentialScan(root, "outbox_events"),
+                "Outbox hot query must not scan all historical rows");
+        assertFalse(hasSequentialScan(root, "notifications"),
+                "Notification hot query must use its user/cursor access path");
+    }
+
+    private static boolean hasSequentialScan(com.fasterxml.jackson.databind.JsonNode node, String relation) {
+        if ("Seq Scan".equals(node.path("Node Type").asText())
+                && relation.equals(node.path("Relation Name").asText())) return true;
+        for (var child : node) if (hasSequentialScan(child, relation)) return true;
+        return false;
     }
 
     private static void assertHighestMigration(Connection connection) throws Exception {

@@ -27,6 +27,31 @@ class NotificationServiceIntegrationTest extends PostgresIntegrationTest {
     @Autowired UserRepository users;
     @Autowired OutboxEventWriter outbox;
     @Autowired OutboxEventRepository outboxEvents;
+    @Autowired org.springframework.transaction.support.TransactionTemplate transactions;
+    @Autowired vn.covie.needs.application.NeedScheduledTransitionService expiration;
+    @Autowired vn.covie.outbox.application.OutboxProcessor processor;
+
+    @Test
+    void committedNeedExpirationDispatchesOnePrivateBuyerNotification() {
+        UUID buyer = UUID.randomUUID(), category = UUID.randomUUID(), need = UUID.randomUUID();
+        Instant now = Instant.now();
+        users.saveAndFlush(UserEntity.active(buyer, "Need expiration buyer", now));
+        jdbc.update("insert into categories(id,name,slug,catalog_type,status,sort_order) values (?,'Need test',?,'PRODUCT','ACTIVE',0)", category, "need-dispatch-" + category);
+        jdbc.update("insert into need_requests(id,buyer_user_id,need_type,category_id,title,query_text,geo_point,location_snapshot,search_radius_meters,request_status,expires_at,created_at,updated_at) values (?,?,'PRODUCT',?,'Need','query',ST_SetSRID(ST_MakePoint(106.7,10.8),4326)::geography,'{}'::jsonb,5000,'ACTIVE',?,?,?)",
+                need, buyer, category, java.sql.Timestamp.from(now.minusSeconds(60)), java.sql.Timestamp.from(now.minusSeconds(3600)), java.sql.Timestamp.from(now.minusSeconds(3600)));
+        transactions.executeWithoutResult(status -> expiration.expireDueBatch(50));
+        UUID eventId = jdbc.queryForObject("select id from outbox_events where aggregate_id=? and event_type='NEED_EXPIRED'", UUID.class, need);
+        for (int attempt = 0; attempt < 100; attempt++) {
+            if (outboxEvents.findById(eventId).orElseThrow().getStatus() == vn.covie.shared.outbox.OutboxEventStatus.PUBLISHED) break;
+            processor.processOne();
+        }
+        assertThat(outboxEvents.findById(eventId).orElseThrow().getStatus()).isEqualTo(vn.covie.shared.outbox.OutboxEventStatus.PUBLISHED);
+        var notification = notifications.findBySourceOutboxEventIdAndUserIdAndNotificationType(eventId, buyer, NotificationType.NEED_EXPIRED).orElseThrow();
+        assertThat(notification.getPayload().get("needRequestId").asText()).isEqualTo(need.toString());
+        assertThat(notification.getPayload().toString()).doesNotContain("latitude", "longitude", "address", "geo");
+        assertThat(jdbc.queryForObject("select count(*) from notifications where source_outbox_event_id=?", Long.class, eventId)).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("select count(*) from notification_deliveries where notification_id=?", Long.class, notification.getId())).isEqualTo(1L);
+    }
 
     @Test @Transactional
     void retryForSameNeedEventCreatesOneNotificationAndOneInAppDeliveryWithoutBuyerLocation() {

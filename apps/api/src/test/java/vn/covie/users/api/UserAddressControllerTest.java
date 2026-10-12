@@ -22,7 +22,7 @@ class UserAddressControllerTest {
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
         mockMvc = MockMvcBuilders.standaloneSetup(new UserAddressController(mock(UserAddressService.class)))
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(new vn.covie.ops.ApiErrorMetrics(new io.micrometer.core.instrument.simple.SimpleMeterRegistry())))
                 .setValidator(validator)
                 .build();
     }
@@ -45,3 +45,4 @@ class UserAddressControllerTest {
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_FAILED"));
     }
 }
+

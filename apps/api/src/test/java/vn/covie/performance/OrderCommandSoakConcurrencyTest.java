@@ -58,6 +58,50 @@ class OrderCommandSoakConcurrencyTest extends PostgresIntegrationTest {
     @MockitoBean CurrentActorProvider actors;
 
     @Test
+    void expirationKeepsFutureOrdersAndClosesAnOverdueOrderOnlyOnce() {
+        RaceFixture fixture = confirmedFixture();
+        jdbc.update("update orders set status='PENDING_CONFIRMATION', confirmation_expires_at=? where id=?",
+                Timestamp.from(Instant.now().plusSeconds(3600)), fixture.orderId());
+        scheduledTransitions.expireOne(fixture.orderId());
+        assertThat(orders.findById(fixture.orderId()).orElseThrow().getStatus()).isEqualTo(OrderStatus.PENDING_CONFIRMATION);
+        assertThat(jdbc.queryForObject("select count(*) from order_events where order_id=?", Integer.class, fixture.orderId())).isZero();
+        jdbc.update("update orders set confirmation_expires_at=? where id=?",
+                Timestamp.from(Instant.now().minusSeconds(3600)), fixture.orderId());
+        scheduledTransitions.expireOne(fixture.orderId());
+        scheduledTransitions.expireOne(fixture.orderId());
+        assertThat(orders.findById(fixture.orderId()).orElseThrow().getStatus()).isEqualTo(OrderStatus.EXPIRED);
+        assertThat(jdbc.queryForObject("select count(*) from order_events where order_id=?", Integer.class, fixture.orderId())).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=?", Integer.class, fixture.orderId())).isEqualTo(1);
+    }
+
+    @Test
+    void issueTimeoutKeepsFutureIssuesAndClosesAnOverdueIssueOnlyOnce() {
+        for (OrderStatus issueStatus : List.of(OrderStatus.DELIVERY_ISSUE_REPORTED,
+                OrderStatus.SERVICE_ISSUE_REPORTED, OrderStatus.NO_SHOW_CONTESTED)) {
+        RaceFixture fixture = confirmedFixture();
+        jdbc.update("update orders set status=? where id=?", issueStatus.name(), fixture.orderId());
+        UUID issueId = UUID.randomUUID();
+        String type = switch(issueStatus) {
+            case DELIVERY_ISSUE_REPORTED -> "DELIVERY_NOT_RECEIVED";
+            case SERVICE_ISSUE_REPORTED -> "SERVICE_NOT_COMPLETED";
+            default -> "BUYER_NO_SHOW_CONTESTED";
+        };
+        jdbc.update("insert into order_issues(id,order_id,issue_type,reported_by_user_id,issue_status,opened_at,close_after_at) values (?,?,?,?,'OPEN',?,?)",
+                issueId, fixture.orderId(), type, fixture.buyerId(), Timestamp.from(Instant.now().minusSeconds(7200)), Timestamp.from(Instant.now().plusSeconds(3600)));
+        scheduledTransitions.closeIssueOne(fixture.orderId());
+        assertThat(orders.findById(fixture.orderId()).orElseThrow().getStatus()).isEqualTo(issueStatus);
+        assertThat(jdbc.queryForObject("select issue_status from order_issues where id=?", String.class, issueId)).isEqualTo("OPEN");
+        jdbc.update("update order_issues set close_after_at=? where id=?", Timestamp.from(Instant.now().minusSeconds(3600)), issueId);
+        scheduledTransitions.closeIssueOne(fixture.orderId());
+        scheduledTransitions.closeIssueOne(fixture.orderId());
+        assertThat(orders.findById(fixture.orderId()).orElseThrow().getStatus()).isEqualTo(OrderStatus.CLOSED_WITH_ISSUE);
+        assertThat(jdbc.queryForObject("select issue_status from order_issues where id=?", String.class, issueId)).isEqualTo("CLOSED_BY_TIMEOUT");
+        assertThat(jdbc.queryForObject("select count(*) from order_events where order_id=?", Integer.class, fixture.orderId())).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=?", Integer.class, fixture.orderId())).isEqualTo(1);
+        }
+    }
+
+    @Test
     void repeatsOverlappingCancellationAcceptAndRejectWithoutDuplicateEvents() throws Exception {
         for (int iteration = 0; iteration < 100; iteration++) {
             RaceFixture fixture = fixture();

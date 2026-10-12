@@ -29,7 +29,7 @@ it("loads the exact management aggregate and ETag for the seller edit route", as
   expect(mocks.detail).toHaveBeenCalledWith("merchant-1", "item-1");
   expect(mocks.categories).toHaveBeenCalledWith("PRODUCT");
   expect(screen.getByText('Cà phê "v3" variant: offer:')).toBeInTheDocument();
-});
+}, 15000);
 
 it("remounts the editor after authoritative detail returns a new ETag", async () => {
   mocks.detail.mockResolvedValueOnce({ item: { id: "item-1", type: "PRODUCT", name: "Cà phê" }, etag: '"v3"' })

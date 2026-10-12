@@ -15,7 +15,7 @@ import { requireUser } from "../../lib/auth/require-user";
 it("preserves a protected destination when the session expires", async () => {
   mocks.get.mockResolvedValue({ response: new Response(null, { status: 401 }) });
   await expect(requireUser("/me")).rejects.toThrow("redirect");
-  expect(mocks.redirect).toHaveBeenCalledWith("/login?returnTo=%2Fme");
+  expect(mocks.redirect).toHaveBeenCalledWith("/api/v1/auth/ssr-refresh?returnTo=%2Fme");
 });
 
 it("keeps backend failures distinct from expired sessions", async () => {
@@ -29,9 +29,15 @@ afterEach(() => {
   mocks.redirect.mockClear();
 });
 
-it.each([401, 403])("redirects an unauthenticated server read with status %i to login", async (status) => {
+it.each([403])("redirects an unauthenticated server read with status %i to login", async (status) => {
   mocks.get.mockResolvedValue({ data: undefined, response: new Response(null, { status }) });
 
   await expect(requireUser()).rejects.toThrow("redirect");
   expect(mocks.redirect).toHaveBeenCalledWith("/login");
+});
+
+it("routes an expired SSR access token through the refresh bridge", async () => {
+  mocks.get.mockResolvedValue({ response: new Response(null, { status: 401 }) });
+  await expect(requireUser()).rejects.toThrow("redirect");
+  expect(mocks.redirect).toHaveBeenCalledWith("/api/v1/auth/ssr-refresh?returnTo=%2F");
 });

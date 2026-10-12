@@ -5,6 +5,40 @@
 .form label { display: grid; font-size: 14px; font-weight: 600; gap: 8px; }
 .form input { background: var(--covie-surface); border: 1px solid var(--covie-border); border-radius: var(--covie-radius); color: var(--covie-text); min-height: 48px; min-width: 0; padding: 10px 12px; width: 100%; }
 .form input[type=file] { font-size: 12px; }
+.avatarLabel { display: flex !important; flex-direction: column; gap: 8px; cursor: pointer; }
+.avatarPickerButton {
+  align-items: center;
+  background: var(--covie-surface);
+  border: 1.5px dashed var(--covie-border);
+  border-radius: var(--covie-radius);
+  color: var(--covie-accent, #047857);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 8px;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  transition: all 0.15s ease;
+  width: fit-content;
+}
+.avatarPickerButton:hover {
+  background: var(--covie-subtle);
+  border-color: var(--covie-accent, #047857);
+}
+.fileInput {
+  height: 1px !important;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0 !important;
+  position: absolute;
+  width: 1px !important;
+}
+.avatarLabel:has(.fileInput:focus-visible) .avatarPickerButton {
+  outline: 2px solid var(--covie-accent, #047857);
+  outline-offset: 2px;
+}
 .form input:disabled { background: var(--covie-subtle); }
 .preview { align-items: center; background: var(--covie-brand-subtle); border-radius: 50%; color: var(--covie-accent); display: flex; font-size: 30px; font-weight: 700; height: 80px; justify-content: center; overflow: hidden; width: 80px; }
 .preview img { height: 80px; object-fit: cover; width: 80px; }

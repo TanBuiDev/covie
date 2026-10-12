@@ -48,6 +48,7 @@ public class MeNeedController {
     }
 
     @PostMapping
+    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.CREATED)
     public ResponseEntity<NeedDetailResponse> create(@RequestHeader(value = "Idempotency-Key", required = false) String key,
             @Valid @RequestBody CreateNeedRequest request) {
         var execution = commands.create(key, request);

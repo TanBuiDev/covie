@@ -57,6 +57,32 @@ class CatalogDiscoveryRepositoryIntegrationTest extends PostgresIntegrationTest 
     @Autowired MerchantLocationHourExceptionRepository exceptions;
 
     @Test
+    void shippingFilterResolvesOnlyLocationsWithAnActiveMatchingPolicy() {
+        Fixture fixture = fixture();
+        UUID farther = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), fixture.merchantId(),
+                "Free shipping", "Far", 10.807, 106.707, NOW)).getId();
+        offers.saveAndFlush(LocationVariantEntity.create(UUID.randomUUID(), farther, fixture.variantId(), 1_000,
+                "VND", true, InventoryMode.UNTRACKED, null, NOW));
+        jdbc.update("insert into shipping_policies(id,merchant_location_id,mode,base_fee,currency_code,policy_status,created_at,updated_at) "
+                + "values (?,?,'FIXED',5000,'VND','ACTIVE',?,?), (?,?,'FREE',null,'VND','ACTIVE',?,?)",
+                UUID.randomUUID(), fixture.nearLocationId(), java.sql.Timestamp.from(NOW), java.sql.Timestamp.from(NOW),
+                UUID.randomUUID(), farther, java.sql.Timestamp.from(NOW), java.sql.Timestamp.from(NOW));
+        var free = new CatalogDiscoveryQuery(null, null, null, fixture.categoryId(), 10.8, 106.7, null,
+                5_000, false, false, null, null, CatalogSort.DISTANCE, 20, null, false,
+                vn.covie.shipping.model.ShippingMode.FREE);
+        var rows = discovery.find(free, context(), null, NOW);
+        assertThat(rows).hasSize(1);
+        assertThat(rows.getFirst().locationId()).isEqualTo(farther);
+        assertThat(rows.getFirst().minPrice()).isEqualTo(1_000);
+        jdbc.update("update shipping_policies set policy_status='INACTIVE' where merchant_location_id=?", farther);
+        assertThat(discovery.find(free, context(), null, NOW)).isEmpty();
+        jdbc.update("update shipping_policies set policy_status='ACTIVE',mode='NEGOTIATED' where merchant_location_id=?", farther);
+        assertThat(discovery.find(free, context(), null, NOW)).isEmpty();
+        assertThat(discovery.find(query(CatalogSort.DISTANCE, 5_000, fixture.categoryId()), context(), null, NOW))
+                .extracting(Row::locationId).containsExactly(fixture.nearLocationId());
+    }
+
+    @Test
     void resolvesTheNearestConcreteLocationBeforePriceSorting() {
         Fixture fixture = fixture();
         UUID fartherLocation = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), fixture.merchantId(),

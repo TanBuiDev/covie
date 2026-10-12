@@ -21,7 +21,8 @@ public class MeReviewController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ReviewResponse create(@Valid @RequestBody CreateReviewRequest request,
-            @RequestHeader(value = "Idempotency-Key") String key) {
+            @io.swagger.v3.oas.annotations.Parameter(required = true)
+            @RequestHeader(value = "Idempotency-Key", required = false) String key) {
         return service.create(request, key);
     }
 }

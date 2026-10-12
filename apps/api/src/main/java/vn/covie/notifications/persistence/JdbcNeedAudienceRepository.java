@@ -19,6 +19,8 @@ public class JdbcNeedAudienceRepository implements NeedAudienceRepository {
             ) select distinct ml.merchant_profile_id, ml.id merchant_location_id,
               st_distance(n.geo_point,ml.geo_point)::bigint distance_meters
             from need_requests n join merchant_locations ml on ml.location_status='ACTIVE' and ml.deleted_at is null
+              join merchant_profiles mp on mp.id=ml.merchant_profile_id and mp.merchant_status='ACTIVE'
+                and mp.moderation_status in ('NOT_REQUIRED','APPROVED') and mp.deleted_at is null
               join location_variants lv on lv.merchant_location_id=ml.id and lv.is_available and lv.deleted_at is null
               join variants v on v.id=lv.variant_id and v.variant_status='ACTIVE' and v.deleted_at is null
               join catalog_items ci on ci.id=v.catalog_item_id and ci.item_type=n.need_type and ci.listing_status='ACTIVE'

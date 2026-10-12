@@ -122,22 +122,22 @@ export function LocationList({
                 key={location.id}
                 href={`${base}/locations/${encodeURIComponent(location.id)}`}
               >
-                <div className="seller-location-card__main">
-                  <div className="seller-location-card__head-row">
-                    <div className="seller-location-card__icon-badge" aria-hidden="true">
-                      <Storefront size={20} weight="duotone" />
-                    </div>
-                    <div className="seller-location-card__copy">
-                      <strong>{location.name ?? "Điểm bán"}</strong>
-                      {location.addressText ? (
-                        <small className="seller-location-card__address">
-                          <MapPin size={13} weight="bold" aria-hidden="true" />
-                          <span>{location.addressText}</span>
-                        </small>
-                      ) : null}
-                    </div>
+                <div className="seller-location-card__head-row">
+                  <div className="seller-location-card__icon-badge" aria-hidden="true">
+                    <Storefront size={20} weight="duotone" />
                   </div>
+                  <div className="seller-location-card__copy">
+                    <strong>{location.name ?? "Điểm bán"}</strong>
+                    {location.addressText ? (
+                      <small className="seller-location-card__address">
+                        <MapPin size={13} weight="bold" aria-hidden="true" />
+                        <span>{location.addressText}</span>
+                      </small>
+                    ) : null}
+                  </div>
+                </div>
 
+                <div className="seller-location-card__center">
                   {capabilities.length ? (
                     <div className="seller-capability-list" aria-label="Hình thức phục vụ">
                       {capabilities.map((capability) => {

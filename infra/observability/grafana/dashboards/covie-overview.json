@@ -1,1 +1,253 @@
-{"annotations":{"list":[]},"editable":false,"panels":[{"type":"timeseries","title":"HTTP request rate","targets":[{"expr":"sum(rate(http_server_requests_seconds_count[5m]))"}],"gridPos":{"h":8,"w":12,"x":0,"y":0}},{"type":"timeseries","title":"HTTP 5xx rate","targets":[{"expr":"sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))"}],"gridPos":{"h":8,"w":12,"x":12,"y":0}},{"type":"stat","title":"Outbox backlog","targets":[{"expr":"covie_outbox_backlog"}],"gridPos":{"h":6,"w":8,"x":0,"y":8}},{"type":"stat","title":"Expired checkout sessions","targets":[{"expr":"covie_checkout_expired_sessions"}],"gridPos":{"h":6,"w":8,"x":8,"y":8}},{"type":"timeseries","title":"Rate limit denied/degraded","targets":[{"expr":"sum by (group,outcome) (rate(covie_ratelimit_requests_total[5m]))"}],"gridPos":{"h":6,"w":8,"x":16,"y":8}}],"schemaVersion":41,"tags":["covie","pilot"],"templating":{"list":[]},"time":{"from":"now-6h","to":"now"},"title":"CoVie Pilot Overview","uid":"covie-pilot-overview","version":1}
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP request rate",
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count[5m]))"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP 5xx rate",
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Outbox backlog",
+      "targets": [
+        {
+          "expr": "covie_outbox_backlog"
+        }
+      ],
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Expired checkout sessions",
+      "targets": [
+        {
+          "expr": "covie_checkout_expired_sessions"
+        }
+      ],
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Rate limit denied/degraded",
+      "targets": [
+        {
+          "expr": "sum by (group,outcome) (rate(covie_ratelimit_requests_total[5m]))"
+        }
+      ],
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      }
+    },
+    {
+      "gridPos": {
+        "y": 14,
+        "h": 6,
+        "w": 8,
+        "x": 0
+      },
+      "title": "Oldest due outbox event (seconds)",
+      "targets": [
+        {
+          "expr": "covie_outbox_oldest_due_seconds{job=\"covie-api\"}"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "gridPos": {
+        "y": 14,
+        "h": 6,
+        "w": 8,
+        "x": 8
+      },
+      "title": "Terminal outbox failures",
+      "targets": [
+        {
+          "expr": "covie_outbox_terminal_failed{job=\"covie-api\"}"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "gridPos": {
+        "y": 14,
+        "h": 6,
+        "w": 8,
+        "x": 16
+      },
+      "title": "Scheduler failures",
+      "targets": [
+        {
+          "legendFormat": "{{exported_job}}",
+          "expr": "sum by (exported_job) (increase(covie_scheduler_failures_total{job=\"covie-api\"}[5m]))"
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "targets": [
+        {
+          "expr": "sum(covie_sse_connections{job=\"covie-api\"})"
+        }
+      ],
+      "type": "stat",
+      "title": "SSE connections",
+      "gridPos": {
+        "w": 8,
+        "x": 0,
+        "y": 20,
+        "h": 6
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "covie_outbox_due{job=\"covie-api\"}"
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 20,
+        "h": 6,
+        "w": 8
+      },
+      "title": "Outbox events due for dispatch"
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (code,status) (rate(covie_api_errors_total{job=\"covie-api\"}[5m]))",
+          "legendFormat": "{{code}} ({{status}})"
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 20,
+        "h": 6,
+        "w": 8
+      },
+      "title": "Mapped API errors by code and status"
+    },
+    {
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{job=\"covie-api\"} / hikaricp_connections_max{job=\"covie-api\"}",
+          "legendFormat": "{{instance}} {{pool}}"
+        }
+      ],
+      "title": "Hikari active / maximum connections",
+      "gridPos": {
+        "x": 0,
+        "h": 6,
+        "w": 8,
+        "y": 26
+      },
+      "type": "timeseries"
+    },
+    {
+      "targets": [
+        {
+          "expr": "process_cpu_usage{job=\"covie-api\"}",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": {
+        "y": 26,
+        "w": 8,
+        "x": 8,
+        "h": 6
+      },
+      "type": "timeseries",
+      "title": "API process CPU usage"
+    },
+    {
+      "targets": [
+        {
+          "expr": "sum by (instance,area) (jvm_memory_used_bytes{job=\"covie-api\"})",
+          "legendFormat": "{{instance}} {{area}}"
+        }
+      ],
+      "gridPos": {
+        "y": 26,
+        "w": 8,
+        "x": 16,
+        "h": 6
+      },
+      "type": "timeseries",
+      "title": "API JVM memory used (bytes)"
+    },
+    {
+      "targets": [
+        {
+          "expr": "disk_free_bytes{job=\"covie-api\"} / disk_total_bytes{job=\"covie-api\"}"
+        }
+      ],
+      "gridPos": {
+        "y": 32,
+        "w": 8,
+        "x": 0,
+        "h": 6
+      },
+      "type": "stat",
+      "title": "API filesystem free ratio"
+    }
+  ],
+  "schemaVersion": 41,
+  "tags": [
+    "covie",
+    "pilot"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "title": "CoVie Pilot Overview",
+  "uid": "covie-pilot-overview",
+  "version": 1
+}

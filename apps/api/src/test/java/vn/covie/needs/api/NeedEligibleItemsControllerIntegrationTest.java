@@ -68,7 +68,102 @@ class NeedEligibleItemsControllerIntegrationTest extends PostgresIntegrationTest
     @Autowired LocationVariantRepository offers;
     @Autowired NeedRequestRepository needs;
     @Autowired JdbcTemplate jdbc;
+    @Autowired vn.covie.notifications.persistence.NeedAudienceRepository audience;
+    @Autowired vn.covie.auth.application.InitialSessionIssuer issuer;
+    @Autowired vn.covie.needs.persistence.NeedResponseRepository responseRepository;
     private MockMvc mockMvc;
+
+    @Test
+    void signedBuyerTraversesResponseTimestampTiesThroughEncodedHttpCursor() throws Exception {
+        var fixture = visibleFixture();
+        UUID buyerId = needs.findById(fixture.needId()).orElseThrow().getBuyerUserId();
+        String bearer = "Bearer " + issuer.issue(buyerId,
+                new vn.covie.auth.model.DeviceMetadata("Buyer browser", "need-pagination")).accessToken().value();
+        var timestamp = Instant.parse("2026-10-01T00:00:00Z");
+        for (int index = 0; index < 5; index++) {
+            var location = locations.saveAndFlush(location(fixture.merchantId(), "Response " + index, true));
+            var response = vn.covie.needs.model.NeedResponseEntity.active(UUID.randomUUID(), fixture.needId(),
+                    fixture.merchantId(), location.getId(), fixture.seller().userId(), null, timestamp);
+            if (index == 4) response.withdraw(timestamp);
+            responseRepository.saveAndFlush(response);
+        }
+        var expected = jdbc.queryForList("select id::text from need_responses where need_request_id=? and response_status='ACTIVE' order by created_at desc,id desc",
+                String.class, fixture.needId());
+        var observed = new java.util.ArrayList<String>();
+        String cursor = null;
+        for (int page = 0; page < 2; page++) {
+            var request = get("/api/v1/me/need-requests/{needId}/responses", fixture.needId())
+                    .header("Authorization", bearer).queryParam("limit", "2");
+            if (cursor != null) request.queryParam("cursor", cursor);
+            var result = mockMvc.perform(request).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.items.length()").value(2))
+                    .andExpect(jsonPath("$.hasMore").value(page == 0)).andReturn();
+            var json = new ObjectMapper().readTree(result.getResponse().getContentAsString());
+            json.path("items").forEach(row -> observed.add(row.path("id").asText()));
+            cursor = json.path("nextCursor").asText(null);
+        }
+        assertThat(observed).containsExactlyElementsOf(expected);
+        assertThat(cursor).isNull();
+    }
+
+    @Test
+    void signedSellerTokenSupportsCandidateAndSelectedLocationResponseRoutes() throws Exception {
+        var fixture = visibleFixture();
+        String bearer = "Bearer " + issuer.issue(fixture.seller().userId(),
+                new vn.covie.auth.model.DeviceMetadata("Need browser", "need-http-test")).accessToken().value();
+        mockMvc.perform(get(path(), fixture.merchantId(), fixture.needId()).header("Authorization", bearer)
+                .queryParam("locationId", fixture.locationId().toString()).queryParam("limit", "20"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1));
+        mockMvc.perform(post("/api/v1/need-requests/{needId}/responses", fixture.needId()).header("Authorization", bearer)
+                .header("Idempotency-Key", UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"merchantLocationId\":\"" + fixture.locationId() + "\",\"locationVariantIds\":[\"" + fixture.offerId() + "\"]}"))
+                .andExpect(status().isCreated());
+        mockMvc.perform(get("/api/v1/merchants/{merchantId}/need-requests/{needId}/response", fixture.merchantId(), fixture.needId())
+                .header("Authorization", bearer).queryParam("locationId", fixture.locationId().toString()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.merchantLocationId").value(fixture.locationId().toString()));
+        UUID buyerId = needs.findById(fixture.needId()).orElseThrow().getBuyerUserId();
+        String buyerBearer = "Bearer " + issuer.issue(buyerId,
+                new vn.covie.auth.model.DeviceMetadata("Buyer browser", "need-http-test")).accessToken().value();
+        mockMvc.perform(get("/api/v1/me/need-requests/{needId}/responses", fixture.needId())
+                .header("Authorization", buyerBearer).queryParam("limit", "1"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.hasMore").value(false))
+                .andExpect(jsonPath("$.items[0].merchantLocationId").value(fixture.locationId().toString()))
+                .andExpect(jsonPath("$.items[0].items[0].locationVariantId").value(fixture.offerId().toString()));
+        var outsider = actor();
+        String outsiderBearer = "Bearer " + issuer.issue(outsider.userId(),
+                new vn.covie.auth.model.DeviceMetadata("Other browser", "need-http-test")).accessToken().value();
+        mockMvc.perform(get("/api/v1/me/need-requests/{needId}/responses", fixture.needId())
+                .header("Authorization", outsiderBearer)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void needReportsRequireAuthorizedVisibleMerchantContextAndReplayOneCase() throws Exception {
+        var json = new ObjectMapper();
+        var fixture = visibleFixture(); var other = visibleFixture(); var outsider = actor();
+        String seller = "Bearer " + issuer.issue(fixture.seller().userId(), new vn.covie.auth.model.DeviceMetadata("Reporter", "need-report")).accessToken().value();
+        String foreign = "Bearer " + issuer.issue(outsider.userId(), new vn.covie.auth.model.DeviceMetadata("Other reporter", "need-report")).accessToken().value();
+        String body = json.writeValueAsString(java.util.Map.of("targetType", "NEED_REQUEST", "targetId", fixture.needId(), "contextMerchantId", fixture.merchantId(), "reasonCode", "AUDIT_TEST"));
+        mockMvc.perform(post("/api/v1/reports").header("Authorization", foreign).header("Idempotency-Key", UUID.randomUUID().toString())
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/v1/reports").header("Authorization", seller).header("Idempotency-Key", UUID.randomUUID().toString())
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of("targetType", "NEED_REQUEST", "targetId", fixture.needId(), "contextMerchantId", other.merchantId(), "reasonCode", "AUDIT_TEST"))))
+                .andExpect(status().isNotFound());
+        String key = UUID.randomUUID().toString(), first = null;
+        for (int attempt = 0; attempt < 2; attempt++) {
+            var result = mockMvc.perform(post("/api/v1/reports").header("Authorization", seller).header("Idempotency-Key", key)
+                    .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated()).andReturn();
+            if (first == null) first = result.getResponse().getContentAsString(); else assertThat(result.getResponse().getContentAsString()).isEqualTo(first);
+        }
+        assertThat(json.readTree(first).properties().stream().map(java.util.Map.Entry::getKey).toList()).containsOnly("caseId", "status");
+        UUID caseId = UUID.fromString(json.readTree(first).path("caseId").asText());
+        jdbc.update("update need_requests set moderation_status='HIDDEN' where id=?", fixture.needId());
+        mockMvc.perform(post("/api/v1/reports").header("Authorization", seller).header("Idempotency-Key", UUID.randomUUID().toString())
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isNotFound());
+        assertThat(jdbc.queryForObject("select count(*) from moderation_cases where target_need_request_id=?", Long.class, fixture.needId())).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("select reporter_user_id from moderation_cases where id=?", UUID.class, caseId)).isEqualTo(fixture.seller().userId());
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=?", Long.class, caseId)).isEqualTo(1L);
+    }
 
     @BeforeEach
     void setUp() {
@@ -193,6 +288,67 @@ class NeedEligibleItemsControllerIntegrationTest extends PostgresIntegrationTest
                         .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"PRODUCT,SUSPENDED", "SERVICE,SUSPENDED", "PRODUCT,HIDDEN", "SERVICE,HIDDEN",
+            "PRODUCT,PENDING", "SERVICE,PENDING", "PRODUCT,DELETED", "SERVICE,DELETED"})
+    void nonTradingMerchantCannotDiscoverNeedsOrReadCandidates(NeedType type, String state) throws Exception {
+        Fixture fixture = visibleFixture(type);
+        mockMvc.perform(get("/api/v1/merchants/{merchantId}/need-requests", fixture.merchantId()).with(fixture.seller().jwt()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1));
+        changeMerchantState(fixture, state);
+        mockMvc.perform(get("/api/v1/merchants/{merchantId}/need-requests", fixture.merchantId()).with(fixture.seller().jwt()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(0));
+        mockMvc.perform(get(path(), fixture.merchantId(), fixture.needId())
+                        .queryParam("locationId", fixture.locationId().toString()).with(fixture.seller().jwt()))
+                .andExpect(status().isNotFound());
+        if (state.equals("SUSPENDED") || state.equals("HIDDEN")) {
+            jdbc.update("update merchant_profiles set merchant_status='ACTIVE', moderation_status='APPROVED' where id=?", fixture.merchantId());
+            mockMvc.perform(get("/api/v1/merchants/{merchantId}/need-requests", fixture.merchantId()).with(fixture.seller().jwt()))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1));
+            mockMvc.perform(get(path(), fixture.merchantId(), fixture.needId())
+                            .queryParam("locationId", fixture.locationId().toString()).with(fixture.seller().jwt()))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1));
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"PRODUCT,SUSPENDED", "SERVICE,SUSPENDED", "PRODUCT,HIDDEN", "SERVICE,HIDDEN",
+            "PRODUCT,PENDING", "SERVICE,PENDING", "PRODUCT,DELETED", "SERVICE,DELETED"})
+    void nonTradingMerchantCannotCreateANeedResponse(NeedType type, String state) throws Exception {
+        Fixture fixture = visibleFixture(type);
+        changeMerchantState(fixture, state);
+        String body = new ObjectMapper().writeValueAsString(java.util.Map.of(
+                "merchantLocationId", fixture.locationId().toString(),
+                "locationVariantIds", List.of(fixture.offerId().toString())));
+        mockMvc.perform(post("/api/v1/need-requests/{needId}/responses", fixture.needId())
+                        .contentType(MediaType.APPLICATION_JSON).content(body)
+                        .header("Idempotency-Key", UUID.randomUUID().toString()).with(fixture.seller().jwt())
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isNotFound()).andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"));
+        assertThat(jdbc.queryForObject("select count(*) from need_responses where need_request_id=?", Long.class, fixture.needId())).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=? and event_type='NEED_RESPONSE_CREATED'", Long.class, fixture.needId())).isZero();
+    }
+
+    private void changeMerchantState(Fixture fixture, String state) {
+        switch (state) {
+            case "SUSPENDED" -> jdbc.update("update merchant_profiles set merchant_status='SUSPENDED' where id=?", fixture.merchantId());
+            case "DELETED" -> jdbc.update("update merchant_profiles set deleted_at=now() where id=?", fixture.merchantId());
+            default -> jdbc.update("update merchant_profiles set moderation_status=? where id=?", state, fixture.merchantId());
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"PRODUCT,SUSPENDED", "SERVICE,SUSPENDED", "PRODUCT,HIDDEN", "SERVICE,HIDDEN",
+            "PRODUCT,PENDING", "SERVICE,PENDING", "PRODUCT,DELETED", "SERVICE,DELETED"})
+    void newNeedNotificationAudienceExcludesNonTradingMerchants(NeedType type, String state) {
+        Fixture fixture = visibleFixture(type);
+        assertThat(audience.findCandidateLocations(fixture.needId(), 500))
+                .anyMatch(candidate -> candidate.merchantLocationId().equals(fixture.locationId()));
+        changeMerchantState(fixture, state);
+        assertThat(audience.findCandidateLocations(fixture.needId(), 500))
+                .noneMatch(candidate -> candidate.merchantLocationId().equals(fixture.locationId()));
     }
 
     @Test
@@ -567,6 +723,116 @@ class NeedEligibleItemsControllerIntegrationTest extends PostgresIntegrationTest
                         .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.error.code").value("NEED_RESPONSE_ITEM_INVALID"));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void needResponseCheckoutRevalidatesSourceAndFulfillsOnlyAfterSellerConfirmation(boolean cancelAfterPreview) throws Exception {
+        Fixture fixture = visibleFixture();
+        UUID buyerId = needs.findById(fixture.needId()).orElseThrow().getBuyerUserId();
+        Actor buyer = new Actor(buyerId, jdbc.queryForObject("select id from auth_sessions where user_id=?", UUID.class, buyerId));
+        String buyerToken = issuer.issue(buyerId, new vn.covie.auth.model.DeviceMetadata("Buyer checkout", "need-checkout-test")).accessToken().value();
+        String sellerToken = issuer.issue(fixture.seller().userId(), new vn.covie.auth.model.DeviceMetadata("Seller checkout", "need-checkout-test")).accessToken().value();
+        ObjectMapper json = new ObjectMapper();
+        String responseBody = mockMvc.perform(post("/api/v1/need-requests/{needId}/responses", fixture.needId())
+                        .header("Authorization", "Bearer " + sellerToken).header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of(
+                                "merchantLocationId", fixture.locationId(), "locationVariantIds", List.of(fixture.offerId())))))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String responseItemId = json.readTree(responseBody).path("items").get(0).path("id").asText();
+        String previewBody = json.writeValueAsString(java.util.Map.of(
+                "source", java.util.Map.of("type", "NEED_REQUEST", "needRequestId", fixture.needId(), "needResponseItemId", responseItemId),
+                "items", List.of(java.util.Map.of("locationVariantId", fixture.offerId(), "quantity", 1)),
+                "fulfillmentMethod", "PICKUP", "paymentMethod", "COD"));
+        var foreignBuyer = actor();
+        String foreignToken = issuer.issue(foreignBuyer.userId(), new vn.covie.auth.model.DeviceMetadata("Foreign checkout", "need-checkout-test")).accessToken().value();
+        mockMvc.perform(post("/api/v1/checkouts/preview").header("Authorization", "Bearer " + foreignToken)
+                .contentType(MediaType.APPLICATION_JSON).content(previewBody))
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.error.code").value("NEED_SOURCE_INVALID"));
+        UUID categoryId = jdbc.queryForObject("select category_id from need_requests where id=?", UUID.class, fixture.needId());
+        UUID otherNeed = needs.saveAndFlush(NeedRequestEntity.create(UUID.randomUUID(), buyerId,
+                NeedType.PRODUCT, categoryId, "Other need", "Cà phê", null, 1L, null, point(),
+                json.createObjectNode(), 5000, Instant.now().plus(1, ChronoUnit.DAYS), Instant.now())).getId();
+        String mismatchedBody = previewBody.replace(fixture.needId().toString(), otherNeed.toString());
+        mockMvc.perform(post("/api/v1/checkouts/preview").header("Authorization", "Bearer " + buyerToken)
+                .contentType(MediaType.APPLICATION_JSON).content(mismatchedBody))
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.error.code").value("NEED_SOURCE_INVALID"));
+        assertThat(jdbc.queryForObject("select count(*) from checkout_sessions where user_id in (?,?)", Long.class, buyerId, foreignBuyer.userId())).isZero();
+        String preview = mockMvc.perform(post("/api/v1/checkouts/preview").header("Authorization", "Bearer " + buyerToken)
+                        .contentType(MediaType.APPLICATION_JSON).content(previewBody))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String commitBody = json.writeValueAsString(java.util.Map.of("checkoutToken", json.readTree(preview).path("checkoutToken").asText()));
+        if (cancelAfterPreview) {
+            var need = needs.findById(fixture.needId()).orElseThrow();
+            need.cancel(Instant.now());
+            needs.saveAndFlush(need);
+            mockMvc.perform(post("/api/v1/checkouts/commit").header("Authorization", "Bearer " + buyerToken)
+                            .header("Idempotency-Key", UUID.randomUUID().toString())
+                            .contentType(MediaType.APPLICATION_JSON).content(commitBody))
+                    .andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("CHECKOUT_CHANGED"));
+            assertThat(jdbc.queryForObject("select count(*) from orders where source_need_request_id=?", Integer.class, fixture.needId())).isZero();
+            return;
+        }
+        String key = UUID.randomUUID().toString();
+        String created = mockMvc.perform(post("/api/v1/checkouts/commit").header("Authorization", "Bearer " + buyerToken)
+                        .header("Idempotency-Key", key).contentType(MediaType.APPLICATION_JSON).content(commitBody))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String orderId = json.readTree(created).path("id").asText();
+        mockMvc.perform(post("/api/v1/checkouts/commit").header("Authorization", "Bearer " + buyerToken).header("Idempotency-Key", key)
+                        .contentType(MediaType.APPLICATION_JSON).content(commitBody))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.id").value(orderId));
+        assertThat(needs.findById(fixture.needId()).orElseThrow().getRequestStatus().name()).isEqualTo("ACTIVE");
+        mockMvc.perform(post("/api/v1/orders/" + orderId + "/confirm").header("Authorization", "Bearer " + sellerToken)
+                        .header("Idempotency-Key", UUID.randomUUID().toString())).andExpect(status().isOk());
+        var fulfilled = needs.findById(fixture.needId()).orElseThrow();
+        assertThat(fulfilled.getRequestStatus().name()).isEqualTo("FULFILLED");
+        assertThat(fulfilled.getFulfilledOrderId()).isEqualTo(UUID.fromString(orderId));
+        assertThat(jdbc.queryForObject("select count(*) from orders where source_need_request_id=?", Integer.class, fixture.needId())).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=? and event_type='NEED_FULFILLED'", Integer.class, fixture.needId())).isEqualTo(1);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"LOCATION_PAUSED,false", "MERCHANT_SUSPENDED,false", "LOCATION_PAUSED,true", "MERCHANT_SUSPENDED,true"})
+    void buyerResponseAvailabilityMatchesCheckoutWhenSellerStopsTrading(String change, boolean commitAfterPreview) throws Exception {
+        Fixture fixture = visibleFixture();
+        UUID buyerId = needs.findById(fixture.needId()).orElseThrow().getBuyerUserId();
+        Actor buyer = new Actor(buyerId, jdbc.queryForObject("select id from auth_sessions where user_id=?", UUID.class, buyerId));
+        ObjectMapper json = new ObjectMapper();
+        String created = mockMvc.perform(post("/api/v1/need-requests/{needId}/responses", fixture.needId())
+                        .with(fixture.seller().jwt()).header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of(
+                                "merchantLocationId", fixture.locationId(), "locationVariantIds", List.of(fixture.offerId())))))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String preview = json.writeValueAsString(java.util.Map.of(
+                "source", java.util.Map.of("type", "NEED_REQUEST", "needRequestId", fixture.needId(), "needResponseItemId", json.readTree(created).path("items").get(0).path("id").asText()),
+                "items", List.of(java.util.Map.of("locationVariantId", fixture.offerId(), "quantity", 1)),
+                "fulfillmentMethod", "PICKUP", "paymentMethod", "COD"));
+        String token = null;
+        if (commitAfterPreview) {
+            String body = mockMvc.perform(post("/api/v1/checkouts/preview").with(buyer.jwt())
+                    .contentType(MediaType.APPLICATION_JSON).content(preview)).andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            token = json.readTree(body).path("checkoutToken").asText();
+        }
+        if (change.equals("LOCATION_PAUSED")) jdbc.update("update merchant_locations set location_status='PAUSED' where id=?", fixture.locationId());
+        else jdbc.update("update merchant_profiles set merchant_status='SUSPENDED' where id=?", fixture.merchantId());
+        if (commitAfterPreview) {
+            mockMvc.perform(post("/api/v1/checkouts/commit").with(buyer.jwt())
+                    .header("Idempotency-Key", UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
+                    .content(json.writeValueAsString(java.util.Map.of("checkoutToken", token))))
+                    .andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("CHECKOUT_CHANGED"));
+            assertThat(jdbc.queryForObject("select count(*) from orders where buyer_user_id=?", Long.class, buyerId)).isZero();
+            assertThat(jdbc.queryForObject("select count(*) from checkout_sessions where user_id=? and consumed_at is not null", Long.class, buyerId)).isZero();
+        }
+        mockMvc.perform(post("/api/v1/checkouts/preview").with(buyer.jwt())
+                        .contentType(MediaType.APPLICATION_JSON).content(preview))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value(change.equals("LOCATION_PAUSED")
+                        ? "CHECKOUT_LOCATION_UNAVAILABLE" : "OFFER_NOT_AVAILABLE"));
+        mockMvc.perform(get("/api/v1/me/need-requests/{needId}/responses", fixture.needId()).with(buyer.jwt()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].items[0].available").value(false))
+                .andExpect(jsonPath("$.items[0].items[0].actionable").value(false));
     }
 
     private Fixture visibleFixture() {

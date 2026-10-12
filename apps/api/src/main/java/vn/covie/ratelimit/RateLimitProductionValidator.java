@@ -1,6 +1,5 @@
 package vn.covie.ratelimit;
 
-import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -19,8 +18,12 @@ public final class RateLimitProductionValidator implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         require(properties.enabled(), "covie.rate-limit.enabled");
-        String key = properties.hmacKey();
-        int bytes = key == null ? 0 : key.getBytes(StandardCharsets.UTF_8).length;
+        int bytes;
+        try {
+            bytes = new RateLimitFingerprintService(properties).keyMaterial().length;
+        } catch (IllegalStateException invalidEncoding) {
+            throw new IllegalStateException("Unsafe production configuration: covie.rate-limit.hmac-key");
+        }
         require(bytes >= 32, "covie.rate-limit.hmac-key");
         require(properties.policies().keySet().containsAll(EnumSet.allOf(RateLimitGroup.class)), "covie.rate-limit.policies");
     }

@@ -32,7 +32,7 @@ class AdminSystemSettingControllerJsonBindingTest {
 
         var mockMvc = MockMvcBuilders
                 .standaloneSetup(new AdminSystemSettingController(service))
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(new vn.covie.ops.ApiErrorMetrics(new io.micrometer.core.instrument.simple.SimpleMeterRegistry())))
                 .build();
 
         mockMvc.perform(patch("/api/v1/admin/settings/review.enabled")
@@ -44,3 +44,4 @@ class AdminSystemSettingControllerJsonBindingTest {
                 .andExpect(jsonPath("$.error.message").value("service reached"));
     }
 }
+

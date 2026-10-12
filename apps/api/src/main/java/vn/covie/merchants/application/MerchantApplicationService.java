@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.covie.audit.AuditLogWriter;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.media.application.MediaAttachmentPolicy;
+import vn.covie.media.application.MediaUrlResolver;
+import vn.covie.media.model.MediaStatus;
+import vn.covie.media.persistence.MediaAssetRepository;
 import vn.covie.merchants.api.dto.CreateMerchantRequest;
 import vn.covie.merchants.api.dto.MerchantManagementResponse;
 import vn.covie.merchants.api.dto.MerchantSummaryResponse;
@@ -42,11 +45,21 @@ public class MerchantApplicationService {
     private final AppClock clock;
     private final AuditLogWriter audit;
     private final RequestIdAccessor requestIds;
+    private final MediaAssetRepository mediaAssets;
+    private final MediaUrlResolver urls;
 
     public MerchantApplicationService(CurrentActorProvider actors, MerchantProfileRepository merchants,
             MerchantMembershipRepository memberships, MerchantSlugService slugs, MerchantAccessPolicy access,
             MediaAttachmentPolicy media, UuidV7Generator ids, AppClock clock, AuditLogWriter audit,
             RequestIdAccessor requestIds) {
+        this(actors, merchants, memberships, slugs, access, media, ids, clock, audit, requestIds, null, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public MerchantApplicationService(CurrentActorProvider actors, MerchantProfileRepository merchants,
+            MerchantMembershipRepository memberships, MerchantSlugService slugs, MerchantAccessPolicy access,
+            MediaAttachmentPolicy media, UuidV7Generator ids, AppClock clock, AuditLogWriter audit,
+            RequestIdAccessor requestIds, MediaAssetRepository mediaAssets, MediaUrlResolver urls) {
         this.actors = actors;
         this.merchants = merchants;
         this.memberships = memberships;
@@ -57,6 +70,8 @@ public class MerchantApplicationService {
         this.clock = clock;
         this.audit = audit;
         this.requestIds = requestIds;
+        this.mediaAssets = mediaAssets;
+        this.urls = urls;
     }
 
     @Transactional
@@ -134,9 +149,19 @@ public class MerchantApplicationService {
                 merchant.getMerchantStatus(), role, merchant.getVersion());
     }
 
-    private static MerchantManagementResponse management(MerchantProfileEntity merchant) {
+    private MerchantManagementResponse management(MerchantProfileEntity merchant) {
+        String logoUrl = merchant.getLogoMediaId() == null || mediaAssets == null || urls == null ? null
+                : mediaAssets.findById(merchant.getLogoMediaId())
+                        .filter(asset -> asset.getMediaStatus() == MediaStatus.READY)
+                        .map(asset -> urls.publicUrl(asset).toString())
+                        .orElse(null);
+        String coverUrl = merchant.getCoverMediaId() == null || mediaAssets == null || urls == null ? null
+                : mediaAssets.findById(merchant.getCoverMediaId())
+                        .filter(asset -> asset.getMediaStatus() == MediaStatus.READY)
+                        .map(asset -> urls.publicUrl(asset).toString())
+                        .orElse(null);
         return new MerchantManagementResponse(merchant.getId(), merchant.getName(), merchant.getSlug(),
                 merchant.getDescription(), merchant.getLogoMediaId(), merchant.getCoverMediaId(),
-                merchant.getMerchantStatus(), merchant.getVersion());
+                merchant.getMerchantStatus(), merchant.getVersion(), logoUrl, coverUrl);
     }
 }

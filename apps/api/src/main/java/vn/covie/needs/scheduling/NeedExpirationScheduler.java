@@ -9,13 +9,15 @@ public class NeedExpirationScheduler {
     private static final int BATCH_SIZE = 50;
 
     private final NeedScheduledTransitionService scheduledTransitionService;
+    private final vn.covie.ops.ScheduledJobMetrics metrics;
 
-    public NeedExpirationScheduler(NeedScheduledTransitionService scheduledTransitionService) {
+    public NeedExpirationScheduler(NeedScheduledTransitionService scheduledTransitionService, vn.covie.ops.ScheduledJobMetrics metrics) {
         this.scheduledTransitionService = scheduledTransitionService;
+        this.metrics = metrics;
     }
 
     @Scheduled(fixedDelayString = "${covie.jobs.need-expiration-delay:PT5S}")
     public void tick() {
-        scheduledTransitionService.expireDueBatch(BATCH_SIZE);
+        metrics.run(vn.covie.ops.ScheduledJobMetrics.Job.NEEDS, () -> scheduledTransitionService.expireDueBatch(BATCH_SIZE));
     }
 }

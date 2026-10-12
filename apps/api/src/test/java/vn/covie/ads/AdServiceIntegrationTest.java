@@ -83,6 +83,37 @@ class AdServiceIntegrationTest extends PostgresIntegrationTest {
   var edited=ads.update(null,campaign.id(),VersionPrecondition.format(campaign.version()),new AdCampaignRequest(source.title(),source.body(),source.ctaLabel(),source.targetUrl(),CreativeType.IMAGE,null,replacement.getId(),source.placement(),source.device(),source.startsAt(),source.endsAt(),true,1000));assertThat(edited.mediaId()).isEqualTo(replacement.getId());
   var retained=ads.update(null,campaign.id(),VersionPrecondition.format(edited.version()),new AdCampaignRequest("Edited title",source.body(),source.ctaLabel(),source.targetUrl(),CreativeType.IMAGE,null,replacement.getId(),source.placement(),source.device(),source.startsAt(),source.endsAt(),true,1000));assertThat(retained.title()).isEqualTo("Edited title");
  }
+ @Test void staleDisabledDeletedAndHiddenTargetDeliveriesCannotRecordTelemetry() {
+  var campaign=ads.create(null,request("/merchants/"+merchant,1000));
+  var delivery=ads.active(Placement.IN_FEED,Device.MOBILE).stream().filter(a->a.id().equals(campaign.id())).findFirst().orElseThrow();
+  jdbc.update("update merchant_profiles set merchant_status='SUSPENDED' where id=?",merchant);
+  assertThat(ads.active(Placement.IN_FEED,Device.MOBILE)).noneMatch(a->a.id().equals(campaign.id()));
+  assertThatThrownBy(()->ads.event(campaign.id(),new AdEventRequest(delivery.deliveryToken(),UUID.randomUUID(),AdEventRequest.Type.CLICK,0))).isInstanceOf(vn.covie.shared.web.ApiException.class);
+  jdbc.update("update merchant_profiles set merchant_status='ACTIVE' where id=?",merchant);
+  var edited=ads.update(null,campaign.id(),VersionPrecondition.format(campaign.version()),request("/merchants/"+merchant,999));
+  assertThatThrownBy(()->ads.event(campaign.id(),new AdEventRequest(delivery.deliveryToken(),UUID.randomUUID(),AdEventRequest.Type.CLICK,0))).isInstanceOf(vn.covie.shared.web.ApiException.class);
+  var fresh=ads.active(Placement.IN_FEED,Device.MOBILE).stream().filter(a->a.id().equals(campaign.id())).findFirst().orElseThrow();
+  ads.event(campaign.id(),new AdEventRequest(fresh.deliveryToken(),UUID.randomUUID(),AdEventRequest.Type.CLICK,0));
+  var source=request("/merchants/"+merchant,999);
+  var disabled=ads.update(null,campaign.id(),VersionPrecondition.format(edited.version()),new AdCampaignRequest(source.title(),source.body(),source.ctaLabel(),source.targetUrl(),source.creativeType(),source.template(),source.mediaId(),source.placement(),source.device(),source.startsAt(),source.endsAt(),false,source.priority()));
+  assertThat(ads.active(Placement.IN_FEED,Device.MOBILE)).noneMatch(a->a.id().equals(campaign.id()));
+  assertThatThrownBy(()->ads.event(campaign.id(),new AdEventRequest(fresh.deliveryToken(),UUID.randomUUID(),AdEventRequest.Type.CLICK,0))).isInstanceOf(vn.covie.shared.web.ApiException.class);
+  var enabled=ads.update(null,campaign.id(),VersionPrecondition.format(disabled.version()),source);
+  var beforeDelete=ads.active(Placement.IN_FEED,Device.MOBILE).stream().filter(a->a.id().equals(campaign.id())).findFirst().orElseThrow();
+  ads.delete(null,campaign.id(),VersionPrecondition.format(enabled.version()));
+  assertThatThrownBy(()->ads.event(campaign.id(),new AdEventRequest(beforeDelete.deliveryToken(),UUID.randomUUID(),AdEventRequest.Type.CLICK,0))).isInstanceOf(vn.covie.shared.web.ApiException.class);
+  assertThat(jdbc.queryForObject("select count(*) from ad_events where campaign_id=?",Long.class,campaign.id())).isEqualTo(1);
+ }
+ @Test void deliveryRequiresElapsedVisibilityAndCannotBeReusedForAnotherCampaign() {
+  var first=ads.create(null,request("/search",1000));var other=ads.create(null,request("/search",999));
+  var delivery=ads.active(Placement.IN_FEED,Device.DESKTOP).stream().filter(a->a.id().equals(first.id())).findFirst().orElseThrow();
+  var impression=new AdEventRequest(delivery.deliveryToken(),UUID.randomUUID(),AdEventRequest.Type.IMPRESSION,1000);
+  assertThatThrownBy(()->ads.event(first.id(),impression)).isInstanceOf(vn.covie.shared.web.ApiException.class);
+  when(clock.now()).thenReturn(now.plusSeconds(1));ads.event(first.id(),impression);
+  assertThatThrownBy(()->ads.event(other.id(),new AdEventRequest(delivery.deliveryToken(),UUID.randomUUID(),AdEventRequest.Type.CLICK,0))).isInstanceOf(vn.covie.shared.web.ApiException.class);
+  assertThat(jdbc.queryForObject("select count(*) from ad_events where campaign_id=?",Long.class,first.id())).isEqualTo(1);
+  assertThat(jdbc.queryForObject("select count(*) from ad_events where campaign_id=?",Long.class,other.id())).isZero();
+ }
  @Test void paginatesBeyondOneHundredWithoutLosingOldCampaigns() {
   var oldest=ads.create(null,request("/search",1));
   for(int n=0;n<101;n++)ads.create(null,request("/search",1));

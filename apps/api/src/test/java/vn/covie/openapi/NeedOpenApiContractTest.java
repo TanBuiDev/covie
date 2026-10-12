@@ -18,6 +18,16 @@ class NeedOpenApiContractTest extends PostgresIntegrationTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
+    void documentsCreatedStatusForNeedAndResponseCreation() throws Exception {
+        var result = mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk()).andReturn();
+        var paths = objectMapper.readTree(result.getResponse().getContentAsString()).path("paths");
+        for (String path : java.util.List.of("/api/v1/me/need-requests", "/api/v1/need-requests/{needRequestId}/responses")) {
+            assertThat(paths.path(path).path("post").path("responses").has("201"))
+                    .as("%s returns ResponseEntity.created and must document 201", path).isTrue();
+        }
+    }
+
+    @Test
     void documentsPlanSixNeedAndCheckoutContracts() throws Exception {
         String json = mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())

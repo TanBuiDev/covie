@@ -1,13 +1,13 @@
 import type { components } from "@covie/api-client";
 import { createApiClient } from "@/lib/api/api-client";
-import { readApiError } from "@/lib/api/api-error";
+import { parsedApiError } from "@/lib/api/api-error";
 
 export type CreateReview = components["schemas"]["CreateReviewRequest"];
 export type PublicReview = components["schemas"]["PublicReviewResponse"];
 
 export async function createReview(input: CreateReview, idempotencyKey: string) {
-  const { data, response } = await createApiClient().POST("/api/v1/me/reviews", { body: input, params: { header: { "Idempotency-Key": idempotencyKey } } });
-  if (!response.ok || !data) throw await readApiError(response);
+  const { data, error, response } = await createApiClient().POST("/api/v1/me/reviews", { body: input, params: { header: { "Idempotency-Key": idempotencyKey } } });
+  if (!response.ok || !data) throw await parsedApiError(response, error);
   return data;
 }
 export async function listCatalogReviews(itemId: string, cursor?: string) {

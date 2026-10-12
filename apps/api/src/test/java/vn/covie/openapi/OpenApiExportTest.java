@@ -40,6 +40,18 @@ class OpenApiExportTest extends PostgresIntegrationTest {
                 "/api/v1/catalog/items",
                 "/api/v1/catalog/items/{itemId}");
         assertThat(json).contains("/api/v1/health");
+        for (String command : new String[] {"ratings", "reputation"}) {
+            JsonNode parameters=paths.path("/api/v1/admin/maintenance/"+command+"/rebuild").path("post").path("parameters");
+            int requiredHeaders=0;
+            for (JsonNode parameter : parameters) {
+                if (parameter.path("name").asText().equals("Idempotency-Key")
+                        || parameter.path("name").asText().equals("X-Admin-Reason")) {
+                    assertThat(parameter.path("required").asBoolean()).as("Maintenance %s header %s",command,parameter.path("name").asText()).isTrue();
+                    requiredHeaders++;
+                }
+            }
+            assertThat(requiredHeaders).isEqualTo(2);
+        }
         assertThat(paths.path("/api/v1/auth/google/status").path("get").isMissingNode()).isFalse();
         String googleStatus = mockMvc.perform(get("/api/v1/auth/google/status"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();

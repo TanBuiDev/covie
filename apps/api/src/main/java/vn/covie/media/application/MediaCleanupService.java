@@ -3,12 +3,10 @@ package vn.covie.media.application;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import vn.covie.media.model.MediaAssetEntity;
-import vn.covie.media.model.MediaStatus;
 import vn.covie.media.persistence.MediaAssetRepository;
 import vn.covie.media.storage.ObjectStorage;
 import vn.covie.shared.time.AppClock;
@@ -32,8 +30,7 @@ public class MediaCleanupService {
     }
     private List<String> claimExpired(int limit) {
         Instant now = clock.now();
-        List<MediaAssetEntity> assets = repository.findByMediaStatusAndCreatedAtBeforeOrderByCreatedAtAscIdAsc(
-                MediaStatus.PENDING_UPLOAD, now.minus(Duration.ofHours(24)), PageRequest.of(0, limit));
+        List<MediaAssetEntity> assets = repository.claimExpiredPending(now.minus(Duration.ofHours(24)), limit);
         assets.forEach(asset -> asset.markDeleted(now));
         repository.flush();
         return assets.stream().map(MediaAssetEntity::getStorageKey).toList();

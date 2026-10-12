@@ -56,6 +56,19 @@ class CatalogCreateServiceIntegrationTest extends PostgresIntegrationTest {
                 .isEqualTo(ErrorCode.CATALOG_ATTRIBUTE_INVALID);
     }
 
+    @Test
+    void rejectsMissingRequiredAndMixedTypedValues() {
+        UUID categoryId = category();
+        attributes.saveAndFlush(CategoryAttributeEntity.create(UUID.randomUUID(), categoryId, "Weight", "weight",
+                CategoryAttributeType.NUMBER, true, true, 0));
+        for (List<AttributeValueRequest> request : List.of(List.<AttributeValueRequest>of(),
+                List.of(new AttributeValueRequest("weight", "not-number", BigDecimal.ONE, null, null)))) {
+            assertThatThrownBy(() -> validator.validate(categoryId, CatalogItemType.PRODUCT, request))
+                    .isInstanceOf(ApiException.class).extracting(error -> ((ApiException) error).code())
+                    .isEqualTo(ErrorCode.CATALOG_ATTRIBUTE_INVALID);
+        }
+    }
+
     private UUID category() {
         return categories.saveAndFlush(CategoryEntity.create(UUID.randomUUID(), null, "Catalog", "catalog-" + UUID.randomUUID(),
                 CategoryCatalogType.PRODUCT, CategoryStatus.ACTIVE, 0)).getId();

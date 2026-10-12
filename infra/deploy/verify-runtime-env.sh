@@ -12,6 +12,8 @@ fi
 
 declare -A cfg=()
 while IFS= read -r line || [[ -n "$line" ]]; do
+  line="${line%$'\r'}"
+  line="${line#$'\xef\xbb\xbf'}"
   [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
   name="${line%%=*}"
   value="${line#*=}"
@@ -39,9 +41,30 @@ done
 [[ "${cfg[COVIE_E2E_SUPPORT_ENABLED]:-false}" == "false" ]] || { echo "Invalid variable: COVIE_E2E_SUPPORT_ENABLED" >&2; exit 1; }
 
 if [[ "$example_mode" != true ]]; then
-  ((${#cfg[COVIE_RATE_LIMIT_HMAC_KEY]} >= 32)) || { echo "Invalid variable: COVIE_RATE_LIMIT_HMAC_KEY" >&2; exit 1; }
+  key="${cfg[COVIE_RATE_LIMIT_HMAC_KEY]}"
+  if [[ "$key" == base64:* ]]; then
+    encoded="${key#base64:}"
+    [[ "$encoded" =~ ^[A-Za-z0-9+/]*={0,2}$ ]] || { echo "Invalid variable: COVIE_RATE_LIMIT_HMAC_KEY" >&2; exit 1; }
+    # Java's Basic Base64 decoder also accepts unpadded input.
+    if [[ "$encoded" != *=* ]]; then
+      case $((${#encoded} % 4)) in
+        2) encoded+='==' ;;
+        3) encoded+='=' ;;
+      esac
+    fi
+    key_bytes="$(printf '%s' "$encoded" | base64 --decode 2>/dev/null | wc -c)" || { echo "Invalid variable: COVIE_RATE_LIMIT_HMAC_KEY" >&2; exit 1; }
+  else
+    key_bytes="$(printf '%s' "$key" | wc -c)"
+  fi
+  (( key_bytes >= 32 )) || { echo "Invalid variable: COVIE_RATE_LIMIT_HMAC_KEY" >&2; exit 1; }
   for name in COVIE_JWT_PRIVATE_KEY_PATH COVIE_JWT_PUBLIC_KEY_PATH; do
-    [[ -r "${cfg[$name]}" ]] || { echo "Unreadable file configured by: $name" >&2; exit 1; }
+    path="${cfg[$name]}"
+    if [[ "$path" == /run/covie-secrets/* ]]; then
+      relative="${path#/run/covie-secrets/}"
+      [[ "/$relative/" != */../* ]] || { echo "Invalid variable: $name" >&2; exit 1; }
+      path="${COVIE_JWT_SECRET_DIR:-/etc/covie/secrets}/$relative"
+    fi
+    [[ -r "$path" ]] || { echo "Unreadable file configured by: $name" >&2; exit 1; }
   done
 fi
 

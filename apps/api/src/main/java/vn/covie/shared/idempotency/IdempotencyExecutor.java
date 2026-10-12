@@ -32,7 +32,8 @@ public class IdempotencyExecutor {
         this.jdbc = jdbc;
         this.repository = repository;
         this.hasher = hasher;
-        this.mapper = mapper;
+        // Numeric JSON timestamps can lose nanoseconds when persisted and replayed.
+        this.mapper = mapper.copy().disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         this.ids = ids;
         this.clock = clock;
     }
@@ -93,6 +94,8 @@ public class IdempotencyExecutor {
 
         StoredResponse<T> result = command.get();
         record.complete(result.status(), mapper.valueToTree(result.response()));
+        // Paged maintenance commands can clear the persistence context before returning.
+        repository.save(record);
         return new Execution<>(result.response(), false);
     }
 

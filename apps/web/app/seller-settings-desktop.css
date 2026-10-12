@@ -35,7 +35,8 @@
   .seller-settings-page,
   .seller-locations-page {
     gap: 20px;
-    max-width: 1128px;
+    max-width: 1560px;
+    width: 100%;
   }
 
   .seller-settings-page .seller-merchant-form {
@@ -94,34 +95,31 @@
 
   .seller-locations-page .seller-location-list {
     display: grid;
-    gap: 12px;
+    gap: 14px;
     grid-template-columns: 1fr;
   }
 
+  /* Desktop (>= 1200px): 3-Zone Grid */
   .seller-locations-page .seller-location-card {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(280px, 1.3fr) minmax(180px, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
     gap: 20px;
-    padding: 16px 20px;
+    padding: 18px 24px;
     min-height: 84px;
   }
 
-  .seller-locations-page .seller-location-card__main {
+  .seller-locations-page .seller-location-card__head-row {
     display: flex;
     align-items: center;
-    gap: 24px;
-    flex: 1;
+    gap: 14px;
     min-width: 0;
-  }
-
-  .seller-locations-page .seller-location-card__head-row {
-    flex: 1;
-    min-width: 240px;
+    text-align: left;
   }
 
   .seller-locations-page .seller-location-card__copy {
     overflow: hidden;
+    min-width: 0;
   }
 
   .seller-locations-page .seller-location-card__copy strong,
@@ -130,15 +128,25 @@
     text-overflow: ellipsis;
   }
 
+  .seller-locations-page .seller-location-card__center {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
   .seller-locations-page .seller-capability-list {
     align-items: center;
     min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .seller-locations-page .seller-location-card__footer {
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: flex-end;
+    gap: 14px;
     padding-top: 0;
     border-top: none;
     flex-shrink: 0;
@@ -147,12 +155,16 @@
   /* Branch Studio Create 2-column */
   .seller-location-create-layout {
     grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+    max-width: 1560px;
+    width: 100%;
   }
 
   /* Location Detail Grid 2-column */
   .seller-location-detail-grid {
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
     align-items: start;
+    max-width: 1560px;
+    width: 100%;
   }
 
   .seller-location-form {
@@ -182,7 +194,40 @@
 
 @media (min-width: 1024px) and (max-width: 1199px) {
   .seller-locations-page .seller-location-card {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 14px 20px;
+    padding: 16px 20px;
+  }
+
+  .seller-locations-page .seller-location-card__head-row {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+  }
+
+  .seller-locations-page .seller-location-card__footer {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .seller-locations-page .seller-location-card__center {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
   }
 
   .seller-location-create-layout {

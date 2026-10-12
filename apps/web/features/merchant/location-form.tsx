@@ -13,6 +13,7 @@ import {
   Truck,
 } from "@phosphor-icons/react";
 import { CovieApiError } from "@/lib/api/api-error";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import type { Etagged } from "./merchant-api";
 import { createLocation, updateLocation } from "./merchant-api";
 
@@ -91,7 +92,9 @@ export function LocationForm({ merchantId, location, onSaved, onReload }: {
         </div>
 
         <label>
-          Tên điểm bán <span aria-hidden="true">*</span>
+          <span className="seller-field-title">
+            Tên điểm bán <span className="seller-required-star" aria-hidden="true">*</span>
+          </span>
           <input
             name="name"
             required
@@ -103,7 +106,9 @@ export function LocationForm({ merchantId, location, onSaved, onReload }: {
           <small>Tên giúp bạn phân biệt điểm bán này</small>
         </label>
         <label>
-          Địa chỉ <span aria-hidden="true">*</span>
+          <span className="seller-field-title">
+            Địa chỉ <span className="seller-required-star" aria-hidden="true">*</span>
+          </span>
           <input
             name="addressText"
             required
@@ -115,10 +120,21 @@ export function LocationForm({ merchantId, location, onSaved, onReload }: {
           <small>Mỗi điểm bán được quản lý riêng.</small>
         </label>
         <label>
-          Múi giờ <span aria-hidden="true">*</span>
-          <select name="timezone" required disabled={pending} defaultValue={location?.data.timezone ?? "Asia/Ho_Chi_Minh"}>
-            <option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh</option>
-          </select>
+          <span className="seller-field-title">
+            Múi giờ <span className="seller-required-star" aria-hidden="true">*</span>
+          </span>
+          <SelectDropdown<string>
+            name="timezone"
+            aria-label="Múi giờ"
+            required
+            disabled={pending}
+            defaultValue={location?.data.timezone ?? "Asia/Ho_Chi_Minh"}
+            radius="md"
+            size="md"
+            options={[
+              { value: "Asia/Ho_Chi_Minh", label: "Asia/Ho_Chi_Minh" },
+            ]}
+          />
           <small>Dùng cho giờ vận hành và thời hạn xử lý</small>
         </label>
       </div>
@@ -177,11 +193,15 @@ export function LocationForm({ merchantId, location, onSaved, onReload }: {
         <p className="seller-muted">Phiên bản hiện tại cần vĩ độ và kinh độ để lưu điểm bán. Chỉ nhập tọa độ đã xác minh; không dùng giá trị ước lượng.</p>
         <div className="seller-grid seller-grid--two">
           <label>
-            Vĩ độ
+            <span className="seller-field-title">
+              Vĩ độ <span className="seller-required-star" aria-hidden="true">*</span>
+            </span>
             <input name="latitude" type="number" step="any" inputMode="decimal" required disabled={pending} defaultValue={location?.data.latitude ?? ""} />
           </label>
           <label>
-            Kinh độ
+            <span className="seller-field-title">
+              Kinh độ <span className="seller-required-star" aria-hidden="true">*</span>
+            </span>
             <input name="longitude" type="number" step="any" inputMode="decimal" required disabled={pending} defaultValue={location?.data.longitude ?? ""} />
           </label>
         </div>

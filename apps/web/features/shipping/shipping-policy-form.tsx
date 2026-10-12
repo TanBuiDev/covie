@@ -4,6 +4,7 @@ import type { components } from "@covie/api-client";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { CovieApiError } from "@/lib/api/api-error";
 import {
   createShippingPolicy,
@@ -230,17 +231,20 @@ export function ShippingPolicyForm({
           <div className="seller-shipping-mode-container">
             <label>
               Loại phí giao
-              <select
+              <SelectDropdown<ShippingMode>
                 aria-label="Loại phí giao"
                 disabled={pending}
                 value={mode}
-                onChange={(event) => setMode(event.target.value as ShippingMode)}
-              >
-                <option value="FREE">Freeship</option>
-                <option value="FIXED">Cố định</option>
-                <option value="CONDITIONAL">Theo điều kiện</option>
-                <option value="NEGOTIATED">Thỏa thuận</option>
-              </select>
+                radius="md"
+                size="md"
+                options={[
+                  { value: "FREE", label: "Freeship" },
+                  { value: "FIXED", label: "Cố định" },
+                  { value: "CONDITIONAL", label: "Theo điều kiện" },
+                  { value: "NEGOTIATED", label: "Thỏa thuận" },
+                ]}
+                onChange={(val) => setMode(val)}
+              />
               <small className="field-hint">Freeship · Cố định · Theo điều kiện · Thỏa thuận</small>
             </label>
 
@@ -366,19 +370,30 @@ export function ShippingPolicyForm({
                     </label>
                     {knownCondition ? (
                       <div className="seller-shipping-condition__editor">
-                        <select
+                        <SelectDropdown<NonNullable<ShippingRule["conditionType"]>>
                           aria-label={`Loại điều kiện ${index + 1}`}
                           disabled={pending}
-                          value={rule.conditionType}
-                          onChange={(event) => setRules((current) => current.map((item, ruleIndex) => ruleIndex === index ? {
-                            ...item,
-                            conditionType: event.target.value as ShippingRule["conditionType"],
-                            operator: event.target.value === "DISTANCE_MAX" ? "LTE" : "GTE",
-                          } : item))}
-                        >
-                          <option value="DISTANCE_MAX">Khoảng cách tối đa</option>
-                          <option value="ORDER_AMOUNT_MIN">Đơn tối thiểu</option>
-                        </select>
+                          value={rule.conditionType ?? "DISTANCE_MAX"}
+                          radius="md"
+                          size="md"
+                          options={[
+                            { value: "DISTANCE_MAX", label: "Khoảng cách tối đa" },
+                            { value: "ORDER_AMOUNT_MIN", label: "Đơn tối thiểu" },
+                          ]}
+                          onChange={(val) =>
+                            setRules((current) =>
+                              current.map((item, ruleIndex) =>
+                                ruleIndex === index
+                                  ? {
+                                      ...item,
+                                      conditionType: val,
+                                      operator: val === "DISTANCE_MAX" ? "LTE" : "GTE",
+                                    }
+                                  : item
+                              )
+                            )
+                          }
+                        />
                         <label>
                           Ngưỡng ({conditionUnit(rule)})
                           <input

@@ -35,6 +35,13 @@ public class OrderAccessPolicy {
         }
     }
 
+    public OrderAccess requireAdminVisible(OrderEntity order) {
+        CurrentActor actor = actors.currentActor();
+        if (!actor.globalRoles().contains(SystemRole.ADMIN)) throw new ApiException(
+                ErrorCode.ADMIN_ROLE_REQUIRED, HttpStatus.FORBIDDEN, "Administrator role is required.");
+        return access(actor.userId(), OrderActorType.ADMIN, order);
+    }
+
     public OrderAccess requireBuyer(OrderEntity order) {
         OrderAccess access = requireVisible(order);
         if (access.actorType() != OrderActorType.BUYER) throw actionNotAllowed();

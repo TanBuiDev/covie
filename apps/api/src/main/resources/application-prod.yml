@@ -18,6 +18,10 @@ server:
   forward-headers-strategy: framework
 
 management:
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
   server:
     port: 9091
   endpoints:

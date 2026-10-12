@@ -115,7 +115,9 @@ public class NeedResponseReadService {
                     if (offer != null && offer.isAvailable()) {
                         var variant = variants.findById(offer.getVariantId()).orElse(null);
                         var catalog = variant == null ? null : catalogItems.findById(variant.getCatalogItemId()).orElse(null);
-                        available = variant != null && variant.getDeletedAt() == null
+                        available = vn.covie.checkout.application.CheckoutTradingPolicy.merchantVisible(merchant)
+                                && vn.covie.checkout.application.CheckoutTradingPolicy.locationActive(location)
+                                && variant != null && variant.getDeletedAt() == null
                                 && variant.getVariantStatus() == VariantStatus.ACTIVE
                                 && catalog != null && catalog.getDeletedAt() == null
                                 && catalog.getListingStatus() == ListingStatus.ACTIVE

@@ -277,8 +277,8 @@ export function SellerOrderDetail({ order, merchantId, error, refresh }: { order
       <header className="surface-header seller-order-detail__hero">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
           <p className="eyebrow" style={{ margin: 0 }}>Đơn {order.orderCode ?? order.id ?? ""}</p>
-          <Link href={`/seller/${encodeURIComponent(merchantId)}/orders`} className="seller-order-back-link" style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "600", color: "var(--seller-brand, #047857)", textDecoration: "none" }}>
-            <ArrowLeft size={14} weight="bold" />
+          <Link href={`/seller/${encodeURIComponent(merchantId)}/orders`} className="seller-back-link">
+            <ArrowLeft size={16} weight="bold" aria-hidden="true" />
             <span>Quay lại danh sách đơn</span>
           </Link>
         </div>

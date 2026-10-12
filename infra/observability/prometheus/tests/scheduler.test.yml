@@ -1,0 +1,30 @@
+rule_files:
+  - ../rules/covie.rules.yml
+evaluation_interval: 1m
+tests:
+  - name: scheduler counter increase fires and clears after the window
+    interval: 1m
+    input_series:
+      - series: 'covie_scheduler_failures_total{job="covie-api",exported_job="orders"}'
+        values: '0 0 1 1 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: CoVieSchedulerFailures
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: CoVieSchedulerFailures
+        exp_alerts:
+          - exp_labels: { job: covie-api, exported_job: orders, severity: warn }
+            exp_annotations: { summary: "A CoVie scheduler has failed in the last five minutes" }
+      - eval_time: 7m
+        alertname: CoVieSchedulerFailures
+        exp_alerts: []
+  - name: unchanged counters remain quiet
+    interval: 1m
+    input_series:
+      - series: 'covie_scheduler_failures_total{job="covie-api",exported_job="needs"}'
+        values: '3+0x10'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: CoVieSchedulerFailures
+        exp_alerts: []

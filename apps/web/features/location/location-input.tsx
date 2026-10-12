@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import type { DiscoveryLocation } from "./location-context";
 
 export function LocationInput({ value, onChange }: { value?: DiscoveryLocation; onChange: (location: DiscoveryLocation) => void }) {
@@ -28,10 +29,23 @@ export function LocationInput({ value, onChange }: { value?: DiscoveryLocation; 
   }
 
   return <form onSubmit={submit} aria-label="Ngữ cảnh vị trí khám phá">
-    <label>Định vị theo <select value={kind} onChange={(event) => { setKind(event.target.value as DiscoveryLocation["kind"]); setMessage(undefined); }}>
-      <option value="coordinates">Tọa độ hiện tại</option>
-      <option value="saved-address">Địa chỉ đã lưu</option>
-    </select></label>
+    <label>
+      Định vị theo
+      <SelectDropdown<DiscoveryLocation["kind"]>
+        aria-label="Định vị theo"
+        value={kind}
+        radius="md"
+        size="md"
+        options={[
+          { value: "coordinates", label: "Tọa độ hiện tại" },
+          { value: "saved-address", label: "Địa chỉ đã lưu" },
+        ]}
+        onChange={(val) => {
+          setKind(val);
+          setMessage(undefined);
+        }}
+      />
+    </label>
     {kind === "coordinates" ? <>
       <label>Vĩ độ <input name="lat" inputMode="decimal" value={lat} onChange={(event) => setLat(event.target.value)} /></label>
       <label>Kinh độ <input name="lng" inputMode="decimal" value={lng} onChange={(event) => setLng(event.target.value)} /></label>

@@ -25,10 +25,11 @@ public class ModerationBulkItemExecutor {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public BulkModerationItemResult execute(UUID actorId, UUID caseId, BulkModerationRequest request, String batchKey) {
         ModerationActionRequest command = new ModerationActionRequest(request.reasonCode(), request.note());
-        return idempotency.execute(actorId, "MODERATION_BULK_ACTION_ITEM", batchKey + ":" + caseId, command,
+        String operation = "moderation.bulk." + request.action().name().toLowerCase(java.util.Locale.ROOT) + ":" + caseId;
+        return idempotency.execute(actorId, operation, batchKey + ":" + caseId, command,
                 200, BulkModerationItemResult.class, () -> {
                     try {
-                        ModerationCommandResult result = commands.executeWithoutIdempotency(caseId, request.action(), command);
+                        ModerationCommandResult result = commands.executeForBulk(caseId, request.action(), command);
                         return BulkModerationItemResult.success(caseId, result.status());
                     } catch (ApiException exception) {
                         if (isExpectedItemFailure(exception.code())) {

@@ -43,6 +43,31 @@ class MerchantAccessPolicyIntegrationTest extends PostgresIntegrationTest {
     @Autowired MerchantMemberLocationRepository memberLocations;
     @Autowired MerchantLocationRepository locations;
     @Autowired UuidV7Generator ids;
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
+
+    @Test
+    void removingStaffAssignmentBetweenChecksNeverGrantsUnrestrictedOrderScope() {
+        Fixture fixture = fixture(MerchantRole.STAFF);
+        MerchantLocationEntity assigned = locations.saveAndFlush(location(fixture.merchantId(), "Assigned"));
+        memberLocations.saveAndFlush(fixture.membership().assignTo(ids, assigned.getId(), NOW));
+        MerchantMemberLocationRepository interleaved = mock(MerchantMemberLocationRepository.class);
+        when(interleaved.existsActiveLocationAssignment(fixture.membership().getId())).thenAnswer(invocation -> {
+            boolean existed = memberLocations.existsActiveLocationAssignment(fixture.membership().getId());
+            // Simulates completed assignment revocation between the policy's two database reads.
+            new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status -> {
+                memberLocations.deleteAllByMembershipId(fixture.membership().getId());
+                memberLocations.flush();
+            });
+            return existed;
+        });
+        when(interleaved.findAllByMembershipId(fixture.membership().getId()))
+                .thenAnswer(invocation -> memberLocations.findAllByMembershipId(fixture.membership().getId()));
+        CurrentActorProvider actors = mock(CurrentActorProvider.class);
+        when(actors.currentActor()).thenReturn(new CurrentActor(fixture.membership().getUserId(), Set.of(SystemRole.USER), UUID.randomUUID()));
+        var policy = new MerchantAccessPolicy(actors, memberships, interleaved, locations);
+        assertNotFound(() -> policy.readableOrderLocations(fixture.merchantId()));
+        assertThat(memberLocations.findAllByMembershipId(fixture.membership().getId())).isEmpty();
+    }
 
     @Test
     void ownerCanEditProfile() {

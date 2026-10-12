@@ -66,7 +66,7 @@ public class AdminAuditController {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        Page<AdminAuditLogResponse> result = audit.findAll(spec, PageRequest.of(page, size, Sort.by(direction, "createdAt")))
+        Page<AdminAuditLogResponse> result = audit.findAll(spec, PageRequest.of(page, size, Sort.by(direction, "createdAt", "id")))
                 .map(a -> new AdminAuditLogResponse(a.getId(), a.getActorUserId(), a.getActorType(), a.getEventCategory(),
                         a.getAction(), a.getEntityType(), a.getEntityId(), vn.covie.shared.json.JsonValues.unwrap(a.getAfterSnapshot()), a.getRequestId(), a.getCreatedAt()));
         return ResponseEntity.ok().header("Cache-Control", "private, no-store").body(result);

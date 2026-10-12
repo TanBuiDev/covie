@@ -48,6 +48,17 @@ public class ModerationCommandService {
 
     @Transactional
     public ModerationCommandResult executeWithoutIdempotency(UUID caseId, ModerationActionType action, ModerationActionRequest request) {
+        return execute(caseId, action, request);
+    }
+
+    // The item executor stores known pre-mutation failures as individual bulk results.
+    // Uncaught failures still reach the outer item transaction and roll it back.
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY, noRollbackFor = ApiException.class)
+    public ModerationCommandResult executeForBulk(UUID caseId, ModerationActionType action, ModerationActionRequest request) {
+        return execute(caseId, action, request);
+    }
+
+    private ModerationCommandResult execute(UUID caseId, ModerationActionType action, ModerationActionRequest request) {
         CurrentActor actor = access.requireAdmin();
         requireReason(action, request);
         ModerationCaseEntity moderationCase = cases.findByIdForUpdate(caseId).orElseThrow(ModerationCommandService::notFound);

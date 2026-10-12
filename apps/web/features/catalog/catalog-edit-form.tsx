@@ -2,7 +2,7 @@
 
 import type { components } from "@covie/api-client";
 import Image from "next/image";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Archive,
@@ -16,9 +16,11 @@ import {
   PlusCircle,
   Storefront,
   Trash,
+  UploadSimple,
   Wrench,
 } from "@phosphor-icons/react";
 import { CovieApiError } from "@/lib/api/api-error";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import {
   createCatalogVariant,
@@ -145,6 +147,12 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
   const [stale, setStale] = useState(false);
   const [message, setMessage] = useState<string>();
   const [files, setFiles] = useState<File[]>([]);
+  const previewUrls = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
   const [categoryDetail, setCategoryDetail] = useState<CategoryDetail>();
   const [categoryStatus, setCategoryStatus] = useState<"loading" | "ready" | "error">("loading");
   const [categoryAttempt, setCategoryAttempt] = useState(0);
@@ -268,23 +276,25 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
         {itemActions.has("UPDATE") ? (
           <form className="seller-catalog-form" onSubmit={submitItem}>
             <label>
-              Tên
+              <span className="seller-field-title">
+                Tên <span className="seller-required-star" aria-hidden="true">*</span>
+              </span>
               <input name="name" defaultValue={item.name} maxLength={240} required disabled={pending || stale} />
             </label>
 
             <label>
-              Danh mục
+              <span className="seller-field-title">Danh mục</span>
               <input readOnly value={categoryName} />
             </label>
             <p className="seller-contract-note">Đổi danh mục cần xác nhận lại thuộc tính; phiên bản này giữ danh mục hiện tại khi chỉnh sửa.</p>
 
             <label>
-              Mô tả
+              <span className="seller-field-title">Mô tả chi tiết</span>
               <textarea name="description" defaultValue={item.description} maxLength={4000} disabled={pending || stale} />
             </label>
 
             <label>
-              Thẻ
+              <span className="seller-field-title">Thẻ tìm kiếm (Tags)</span>
               <input name="tags" defaultValue={(item.tags ?? []).join(", ")} disabled={pending || stale} />
             </label>
 
@@ -317,28 +327,39 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
 
                   if (definition.dataType === "SINGLE_SELECT") {
                     return (
-                      <label key={definition.id ?? attributeKey}>
-                        {label}
-                        <select name={name} defaultValue={current?.optionId ?? ""}>
-                          <option value="">{definition.required ? "Chọn một giá trị" : "Không chọn"}</option>
-                          {(definition.options ?? []).map((option) => option.id ? (
-                            <option key={option.id} value={option.id}>{option.value}</option>
-                          ) : null)}
-                        </select>
-                      </label>
+                      <SelectDropdown<string>
+                        key={definition.id ?? attributeKey}
+                        label={label}
+                        name={name}
+                        defaultValue={current?.optionId ?? ""}
+                        radius="md"
+                        size="md"
+                        options={[
+                          { value: "", label: definition.required ? "Chọn một giá trị" : "Không chọn" },
+                          ...(definition.options ?? []).filter((opt) => Boolean(opt.id)).map((opt) => ({
+                            value: opt.id!,
+                            label: opt.value ?? "Giá trị",
+                          })),
+                        ]}
+                      />
                     );
                   }
 
                   if (definition.dataType === "BOOLEAN") {
                     return (
-                      <label key={definition.id ?? attributeKey}>
-                        {label}
-                        <select name={name} defaultValue={current?.valueBoolean != null ? String(current.valueBoolean) : ""}>
-                          <option value="">{definition.required ? "Chọn một giá trị" : "Không chọn"}</option>
-                          <option value="true">Có</option>
-                          <option value="false">Không</option>
-                        </select>
-                      </label>
+                      <SelectDropdown<string>
+                        key={definition.id ?? attributeKey}
+                        label={label}
+                        name={name}
+                        defaultValue={current?.valueBoolean != null ? String(current.valueBoolean) : ""}
+                        radius="md"
+                        size="md"
+                        options={[
+                          { value: "", label: definition.required ? "Chọn một giá trị" : "Không chọn" },
+                          { value: "true", label: "Có" },
+                          { value: "false", label: "Không" },
+                        ]}
+                      />
                     );
                   }
 
@@ -374,16 +395,55 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
               <p className="seller-muted">Đang tải thuộc tính danh mục…</p>
             )}
 
-            <label>
-              Thêm ảnh
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                disabled={pending || stale}
-                onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
-              />
-            </label>
+            <div style={{ marginTop: "16px", marginBottom: "16px" }}>
+              <label className="seller-catalog-upload-zone">
+                <UploadSimple size={24} weight="bold" color="#047857" aria-hidden="true" />
+                <div>
+                  <span className="seller-media-btn" style={{ display: "inline-flex" }}>
+                    <UploadSimple size={16} weight="bold" aria-hidden="true" />
+                    <span>Thêm ảnh vào catalog</span>
+                  </span>
+                  <p className="seller-muted" style={{ margin: "4px 0 0" }}>JPEG, PNG hoặc WebP; tối đa 10 MB mỗi ảnh. Hỗ trợ chọn nhiều ảnh.</p>
+                </div>
+                <input
+                  type="file"
+                  aria-label="Thêm ảnh"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  disabled={pending || stale}
+                  onChange={(event) => {
+                    const newFiles = Array.from(event.target.files ?? []);
+                    setFiles((prev) => [...prev, ...newFiles]);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
+
+              {files.length ? (
+                <div style={{ marginTop: "10px" }}>
+                  <p role="status" style={{ fontSize: "12px", fontWeight: 600, color: "#047857", marginBottom: "6px" }}>
+                    Sẽ bổ sung {files.length} ảnh mới sau khi lưu:
+                  </p>
+                  <div className="seller-catalog-staged-grid">
+                    {files.map((file, idx) => (
+                      <div key={`${file.name}-${idx}`} className="seller-catalog-staged-item">
+                        {previewUrls[idx] ? (
+                          <img src={previewUrls[idx]} alt={file.name} />
+                        ) : null}
+                        <button
+                          type="button"
+                          className="seller-catalog-staged-item__remove"
+                          aria-label={`Xoá ảnh ${file.name}`}
+                          onClick={() => setFiles((prev) => prev.filter((_, i) => i !== idx))}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
 
             <button type="submit" disabled={pending || stale} className="seller-button seller-button--primary">
               <FloppyDisk size={16} weight="bold" aria-hidden="true" />
@@ -475,13 +535,18 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
                 <input name="sku" defaultValue={variant.sku} disabled={pending || stale || !(variant.allowedActions ?? []).includes("UPDATE")} />
               </label>
 
-              <label>
-                Trạng thái biến thể
-                <select name="variantStatus" defaultValue={variant.status} disabled={pending || stale || !(variant.allowedActions ?? []).includes("UPDATE")}>
-                  <option value="ACTIVE">Hoạt động</option>
-                  <option value="PAUSED">Tạm ngưng</option>
-                </select>
-              </label>
+              <SelectDropdown<"ACTIVE" | "PAUSED">
+                label="Trạng thái biến thể"
+                name="variantStatus"
+                defaultValue={variant.status as "ACTIVE" | "PAUSED"}
+                disabled={pending || stale || !(variant.allowedActions ?? []).includes("UPDATE")}
+                radius="md"
+                size="md"
+                options={[
+                  { value: "ACTIVE", label: "Hoạt động" },
+                  { value: "PAUSED", label: "Tạm ngưng" },
+                ]}
+              />
 
               <div className="seller-catalog-resource__actions">
                 {(variant.allowedActions ?? []).includes("UPDATE") ? (
@@ -531,16 +596,27 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
               SKU mới
               <input name="newSku" disabled={pending || stale} />
             </label>
-            {(item.optionGroups ?? []).map((group, index) => (
-              <label key={group.id}>
-                {group.name}
-                <select name={`newOption:${index}`} required disabled={pending || stale}>
-                  {(group.values ?? []).map((value) => value.id ? (
-                    <option key={value.id} value={value.id}>{value.value}</option>
-                  ) : null)}
-                </select>
-              </label>
-            ))}
+            {(item.optionGroups ?? []).map((group, index) => {
+              const options = (group.values ?? [])
+                .filter((value) => Boolean(value.id))
+                .map((value) => ({
+                  value: value.id!,
+                  label: value.value ?? "Giá trị",
+                }));
+              return (
+                <SelectDropdown<string>
+                  key={group.id}
+                  label={group.name}
+                  name={`newOption:${index}`}
+                  required
+                  defaultValue={options[0]?.value}
+                  disabled={pending || stale}
+                  radius="md"
+                  size="md"
+                  options={options}
+                />
+              );
+            })}
             <button type="submit" disabled={pending || stale} className="seller-button seller-button--primary">
               <PlusCircle size={15} weight="bold" aria-hidden="true" />
               <span>Thêm biến thể</span>
@@ -618,17 +694,18 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
               </label>
 
               {item.type === "PRODUCT" ? (
-                <label>
-                  Quản lý tồn kho
-                  <select
-                    name="inventoryMode"
-                    defaultValue={offer.inventoryMode}
-                    disabled={pending || stale || !(offer.allowedActions ?? []).includes("UPDATE")}
-                  >
-                    <option value="UNTRACKED">Không theo dõi</option>
-                    <option value="TRACKED">Theo dõi tồn kho</option>
-                  </select>
-                </label>
+                <SelectDropdown<"UNTRACKED" | "TRACKED">
+                  label="Quản lý tồn kho"
+                  name="inventoryMode"
+                  defaultValue={offer.inventoryMode as "UNTRACKED" | "TRACKED"}
+                  disabled={pending || stale || !(offer.allowedActions ?? []).includes("UPDATE")}
+                  radius="md"
+                  size="md"
+                  options={[
+                    { value: "UNTRACKED", label: "Không theo dõi" },
+                    { value: "TRACKED", label: "Theo dõi tồn kho" },
+                  ]}
+                />
               ) : null}
 
               {(offer.allowedActions ?? []).includes("UPDATE") ? (

@@ -23,9 +23,11 @@ public class OrderCompletionService {
     private final OrderTransitionService transitions; private final OrderAccessPolicy access;
     private final InventoryReservationService inventory; private final OrderEventService events;
     private final OutboxEventWriter outbox; private final vn.covie.shared.time.AppClock clock;
+    private final vn.covie.orders.persistence.OrderIssueRepository issues;
     public OrderCompletionService(OrderTransitionService transitions, OrderAccessPolicy access, InventoryReservationService inventory,
-            OrderEventService events, OutboxEventWriter outbox, vn.covie.shared.time.AppClock clock) {
+            OrderEventService events, OutboxEventWriter outbox, vn.covie.shared.time.AppClock clock, vn.covie.orders.persistence.OrderIssueRepository issues) {
         this.transitions=transitions;this.access=access;this.inventory=inventory;this.events=events;this.outbox=outbox;this.clock=clock;
+        this.issues=issues;
     }
     @Transactional public void confirmReceived(UUID orderId) { completeAsBuyer(orderId,OrderEventType.BUYER_CONFIRMED_RECEIVED); }
     @Transactional public void confirmCompleted(UUID orderId) { completeAsBuyer(orderId,OrderEventType.BUYER_CONFIRMED_SERVICE_COMPLETED); }
@@ -34,6 +36,8 @@ public class OrderCompletionService {
         OrderEntity order=transitions.lock(orderId).order(); UUID actor=access.requireBuyer(order).actorUserId();
         if(order.getOrderType()==OrderType.PRODUCT) transitions.requireStatus(order,OrderStatus.CONFIRMED,OrderStatus.OUT_FOR_DELIVERY,OrderStatus.READY_FOR_PICKUP,OrderStatus.AWAITING_BUYER_CONFIRMATION,OrderStatus.DELIVERY_ISSUE_REPORTED,OrderStatus.NO_SHOW_CONTESTED);
         else transitions.requireStatus(order,OrderStatus.CONFIRMED,OrderStatus.AWAITING_BUYER_CONFIRMATION,OrderStatus.SERVICE_ISSUE_REPORTED);
+        if(order.getStatus()==OrderStatus.DELIVERY_ISSUE_REPORTED||order.getStatus()==OrderStatus.SERVICE_ISSUE_REPORTED||order.getStatus()==OrderStatus.NO_SHOW_CONTESTED)
+            issues.lockOpenByOrderId(orderId).ifPresent(issue -> issue.resolveByParties(clock.now()));
         complete(order,actor,OrderActorContext.BUYER,eventType);
     }
     private void complete(OrderEntity order,UUID actor,OrderActorContext context,OrderEventType eventType) {

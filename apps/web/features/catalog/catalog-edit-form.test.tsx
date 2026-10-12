@@ -54,7 +54,7 @@ describe("catalog edit form", () => {
     expect(screen.getByText("origin: Đà Lạt")).toBeInTheDocument();
     expect(screen.getByAltText("Cà phê hạt — ảnh 1")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Tên"), { target: { value: "Cà phê mới" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Tên" }), { target: { value: "Cà phê mới" } });
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledWith("merchant-1", "item-1", '"v4"', expect.objectContaining({ name: "Cà phê mới" })));
 
@@ -102,10 +102,10 @@ describe("catalog edit form", () => {
   it("keeps ordinary failures retryable without clearing the seller's input", async () => {
     api.updateCatalogItem.mockRejectedValueOnce(new Error("Kết nối bị gián đoạn"));
     render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[]} />);
-    fireEvent.change(screen.getByLabelText("Tên"), { target: { value: "Tên chưa lưu" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Tên" }), { target: { value: "Tên chưa lưu" } });
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await screen.findByText("Kết nối bị gián đoạn");
-    expect(screen.getByLabelText("Tên")).toHaveValue("Tên chưa lưu");
+    expect(screen.getByRole("textbox", { name: "Tên" })).toHaveValue("Tên chưa lưu");
     expect(screen.getByRole("button", { name: "Lưu thông tin" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledTimes(2));
@@ -115,10 +115,10 @@ describe("catalog edit form", () => {
   it("keeps unsaved input and blocks mutations after a version conflict until reload", async () => {
     api.updateCatalogItem.mockRejectedValueOnce(new CovieApiError(409, "RESOURCE_VERSION_CONFLICT", "stale"));
     render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[]} />);
-    fireEvent.change(screen.getByLabelText("Tên"), { target: { value: "Tên chưa lưu" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Tên" }), { target: { value: "Tên chưa lưu" } });
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await screen.findByText(/đã thay đổi ở nơi khác/i);
-    expect(screen.getByLabelText("Tên")).toHaveValue("Tên chưa lưu");
+    expect(screen.getByRole("textbox", { name: "Tên" })).toHaveValue("Tên chưa lưu");
     expect(screen.getByRole("button", { name: "Lưu thông tin" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Tải dữ liệu mới" }));
     expect(router.refresh).toHaveBeenCalledTimes(1);
@@ -126,7 +126,7 @@ describe("catalog edit form", () => {
 
   it("does not replace unchanged media and attributes when only the name changes", async () => {
     render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, media: [{ ...item.media![0]!, status: "PENDING_UPLOAD", url: undefined }] }} etag={'"v4"'} categories={[{ id: "category-1", name: "Đồ uống", catalogType: "PRODUCT" }]} />);
-    fireEvent.change(screen.getByLabelText("Tên"), { target: { value: "Cà phê mới" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Tên" }), { target: { value: "Cà phê mới" } });
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledTimes(1));
     const patch = api.updateCatalogItem.mock.calls[0]?.[3];
@@ -167,7 +167,7 @@ describe("catalog edit form", () => {
       { id: "attribute-bool", name: "Hữu cơ", attributeKey: "organic", dataType: "BOOLEAN", required: false, options: [] },
     ] });
     render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, attributes: [booleanAttribute] }} etag={'"v4"'} categories={[]} />);
-    fireEvent.change(screen.getByLabelText("Tên"), { target: { value: "Cà phê mới" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Tên" }), { target: { value: "Cà phê mới" } });
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledTimes(1));
     expect(api.updateCatalogItem.mock.calls[0]?.[3]).not.toHaveProperty("attributes");
@@ -244,9 +244,10 @@ describe("catalog edit form", () => {
       { id: "attribute-organic", name: "Hữu cơ", attributeKey: "organic", dataType: "BOOLEAN", required: false, options: [] },
     ] });
     render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, attributes: [] }} etag={'"v4"'} categories={[]} />);
-    const select = await screen.findByLabelText("Hữu cơ");
-    expect(select).toHaveValue("");
-    fireEvent.change(select, { target: { value: "true" } });
+    const select = await screen.findByRole("combobox", { name: "Hữu cơ" });
+    expect(select).toHaveTextContent("Không chọn");
+    fireEvent.click(select);
+    fireEvent.click(screen.getByRole("option", { name: /^Có$/ }));
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledTimes(1));
     expect(api.updateCatalogItem.mock.calls[0]?.[3]).toHaveProperty("attributes", [
@@ -258,7 +259,7 @@ describe("catalog edit form", () => {
     api.getCategoryDetail.mockRejectedValue(new Error("network offline"));
     render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[]} />);
     await screen.findByText(/không tải được định nghĩa thuộc tính/i);
-    fireEvent.change(screen.getByLabelText("Tên"), { target: { value: "Cà phê mới" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Tên" }), { target: { value: "Cà phê mới" } });
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledTimes(1));
     expect(api.updateCatalogItem.mock.calls[0]?.[3]).not.toHaveProperty("attributes");
@@ -270,7 +271,7 @@ describe("catalog edit form", () => {
     ] });
     render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, attributes: [] }} etag={'"v4"'} categories={[]} />);
     await screen.findByLabelText("Thương hiệu");
-    fireEvent.change(screen.getByLabelText("Tên"), { target: { value: "Cà phê mới" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Tên" }), { target: { value: "Cà phê mới" } });
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledTimes(1));
     expect(api.updateCatalogItem.mock.calls[0]?.[3]).toMatchObject({ name: "Cà phê mới" });
@@ -282,11 +283,11 @@ describe("catalog edit form", () => {
       { id: "attribute-brand", name: "Thương hiệu", attributeKey: "brand", dataType: "TEXT", required: false, options: [] },
     ] });
     render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, attributes: [] }} etag={'"v4"'} categories={[]} />);
-    fireEvent.change(screen.getByLabelText("Tên"), { target: { value: "Tên chưa lưu" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Tên" }), { target: { value: "Tên chưa lưu" } });
     const retry = await screen.findByRole("button", { name: "Thử tải lại thuộc tính" });
     fireEvent.click(retry);
     expect(await screen.findByLabelText("Thương hiệu")).toBeInTheDocument();
-    expect(screen.getByLabelText("Tên")).toHaveValue("Tên chưa lưu");
+    expect(screen.getByRole("textbox", { name: "Tên" })).toHaveValue("Tên chưa lưu");
     expect(api.getCategoryDetail).toHaveBeenCalledTimes(2);
   });
 

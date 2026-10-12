@@ -22,7 +22,7 @@ final class PerformanceFixtureBuilder {
         MINIMUM_ROWS.put("merchant_profiles", 1_000L);
         MINIMUM_ROWS.put("merchant_locations", 2_000L);
         MINIMUM_ROWS.put("catalog_items", 20_000L);
-        MINIMUM_ROWS.put("catalog_variants", 30_000L);
+        MINIMUM_ROWS.put("variants", 30_000L);
         MINIMUM_ROWS.put("location_variants", 40_000L);
         MINIMUM_ROWS.put("need_requests", 10_000L);
         MINIMUM_ROWS.put("orders", 50_000L);

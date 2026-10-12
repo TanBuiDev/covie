@@ -652,6 +652,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/barcodes/{gtin}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getByGtin"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalog/items": {
         parameters: {
             query?: never;
@@ -2464,6 +2480,22 @@ export interface components {
             /** Format: date-time */
             lastUsedAt?: string;
         };
+        BarcodeReferenceResponse: {
+            attributionNotice?: string;
+            brand?: string;
+            categoryLabel?: string;
+            gtin?: string;
+            gtin14?: string;
+            licenseId?: string;
+            marketCountry?: string;
+            marketSignal?: string;
+            needsReview?: boolean;
+            productName?: string;
+            qualityStatus?: string;
+            quantity?: string;
+            source?: string;
+            sourceRecordUrl?: string;
+        };
         BulkModerationItemResult: {
             /** Format: uuid */
             caseId?: string;
@@ -3167,11 +3199,13 @@ export interface components {
         MerchantManagementResponse: {
             /** Format: uuid */
             coverMediaId?: string;
+            coverUrl?: string;
             description?: string;
             /** Format: uuid */
             id?: string;
             /** Format: uuid */
             logoMediaId?: string;
+            logoUrl?: string;
             name?: string;
             slug?: string;
             /** @enum {string} */
@@ -5251,6 +5285,28 @@ export interface operations {
             };
         };
     };
+    getByGtin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gtin: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BarcodeReferenceResponse"];
+                };
+            };
+        };
+    };
     discover_1: {
         parameters: {
             query?: {
@@ -6015,8 +6071,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7722,8 +7778,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -29,6 +29,7 @@ public class OrderIssueEntity {
         issue.reportedByUserId=reporter;issue.reasonText=reason;issue.issueStatus=OrderIssueStatus.OPEN;
         issue.openedAt=now;issue.closeAfterAt=closeAfterAt;return issue;
     }
+    public void resolveByParties(Instant now){if(issueStatus==OrderIssueStatus.OPEN){issueStatus=OrderIssueStatus.RESOLVED_BY_PARTIES;resolvedAt=now;}}
     public void closeByTimeout(Instant now){if(issueStatus==OrderIssueStatus.OPEN){issueStatus=OrderIssueStatus.CLOSED_BY_TIMEOUT;closedAt=now;}}
     public UUID getId(){return id;} public UUID getOrderId(){return orderId;} public OrderIssueType getIssueType(){return issueType;}
     public OrderIssueStatus getIssueStatus(){return issueStatus;} public Instant getCloseAfterAt(){return closeAfterAt;}

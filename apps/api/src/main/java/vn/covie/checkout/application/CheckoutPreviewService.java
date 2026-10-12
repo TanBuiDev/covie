@@ -54,6 +54,7 @@ public class CheckoutPreviewService {
     private final CatalogItemRepository catalogItems; private final VariantRepository variants;
     private final MerchantContactMethodRepository merchantContacts; private final CheckoutSnapshotFactory snapshots;
     private final ShippingPolicySnapshotFactory shippingSnapshots;
+    private final CheckoutTradingPolicy trading;
 
     public CheckoutPreviewService(CurrentActorProvider actors, CheckoutCandidateResolverRegistry candidates,
             LocationVariantRepository offers, MerchantLocationRepository locations, InventoryBalanceRepository balances,
@@ -61,10 +62,11 @@ public class CheckoutPreviewService {
             CheckoutSessionService sessions, ObjectMapper mapper, UserAddressRepository addresses,
             DeliveryCoverageEvaluator coverage, CatalogItemRepository catalogItems, VariantRepository variants,
             MerchantContactMethodRepository merchantContacts, CheckoutSnapshotFactory snapshots,
-            ShippingPolicySnapshotFactory shippingSnapshots) {
+            ShippingPolicySnapshotFactory shippingSnapshots, CheckoutTradingPolicy trading) {
         this.actors=actors;this.candidates=candidates;this.offers=offers;this.locations=locations;this.balances=balances;
         this.policies=policies;this.rules=rules;this.shipping=shipping;this.sessions=sessions;this.mapper=mapper;this.addresses=addresses;this.coverage=coverage;
         this.catalogItems=catalogItems;this.variants=variants;this.merchantContacts=merchantContacts;this.snapshots=snapshots;this.shippingSnapshots=shippingSnapshots;
+        this.trading=trading;
     }
 
     @Transactional public CheckoutPreviewResponse preview(CheckoutPreviewRequest request) {
@@ -83,6 +85,7 @@ public class CheckoutPreviewService {
     public CheckoutRevalidation revalidate(UUID user,CheckoutPreviewRequest request,Map<UUID,vn.covie.inventory.model.InventoryBalanceEntity> lockedBalances){
         CheckoutCandidate candidate=candidates.resolve(user,request);
         MerchantLocationEntity location=locations.findById(candidate.merchantLocationId()).orElseThrow(()->error(ErrorCode.CHECKOUT_LOCATION_UNAVAILABLE,"Location unavailable."));
+        trading.requireTrading(candidate.merchantProfileId(), location);
         validateFulfillmentCapability(request.fulfillmentMethod(),request.addressId(),location);
         UserAddressEntity buyerAddress=request.addressId()==null?null:addresses.findByIdAndUserIdAndStatus(request.addressId(),user,"ACTIVE")
                 .orElseThrow(()->error(ErrorCode.CHECKOUT_FULFILLMENT_NOT_SUPPORTED,"Delivery address is unavailable."));

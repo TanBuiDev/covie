@@ -45,10 +45,12 @@
 }
 
 .quickTags {
+  align-items: center;
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 6px 4px 6px;
+  margin: -4px -4px -2px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -64,6 +66,7 @@
   border-radius: 20px;
   color: var(--covie-text);
   display: inline-flex;
+  flex-shrink: 0;
   font-size: 12px;
   font-weight: 500;
   gap: 6px;
@@ -78,6 +81,7 @@
   border-color: var(--covie-accent);
   color: var(--covie-accent);
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(4, 120, 87, 0.08);
 }
 
 .contextBanner {
@@ -386,10 +390,12 @@
 }
 
 .discoveryShortcuts {
+  align-items: center;
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 6px 4px 6px;
+  margin: -4px -4px -2px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -405,6 +411,7 @@
   border-radius: 20px;
   color: var(--covie-text);
   display: inline-flex;
+  flex-shrink: 0;
   font-size: 13px;
   font-weight: 600;
   gap: 6px;
@@ -418,6 +425,8 @@
   background: var(--covie-brand-subtle);
   border-color: var(--covie-accent);
   color: var(--covie-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(4, 120, 87, 0.08);
 }
 
 .cardCarousel {

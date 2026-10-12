@@ -13,6 +13,9 @@ import org.springframework.data.repository.query.Param;
 import vn.covie.reviews.model.ReviewEntity;
 
 public interface ReviewRepository extends JpaRepository<ReviewEntity, UUID> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from ReviewEntity r where r.id = :id and r.deletedAt is null")
+    Optional<ReviewEntity> findByIdForUpdate(@Param("id") UUID id);
     Optional<ReviewEntity> findByOrderItemId(UUID orderItemId);
     boolean existsByOrderItemId(UUID orderItemId);
 

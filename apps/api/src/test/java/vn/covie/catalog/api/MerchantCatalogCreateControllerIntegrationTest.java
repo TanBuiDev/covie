@@ -65,6 +65,7 @@ class MerchantCatalogCreateControllerIntegrationTest extends PostgresIntegration
     @Autowired VariantRepository variants;
     @Autowired VariantOptionValueRepository variantOptionValues;
     @Autowired JdbcTemplate jdbc;
+    @Autowired vn.covie.auth.application.InitialSessionIssuer issuer;
     private MockMvc mockMvc;
 
     @BeforeEach void setUp() { mockMvc = MockMvcBuilders.webAppContextSetup(web).apply(springSecurity()).build(); }
@@ -140,21 +141,28 @@ class MerchantCatalogCreateControllerIntegrationTest extends PostgresIntegration
     @Test
     void rejectsMissingRequiredAttributeAndIdempotencyBodyMismatch() throws Exception {
         Actor owner = actor(); UUID merchantId = merchant(owner);
+        String bearer = "Bearer " + issuer.issue(owner.userId(), new vn.covie.auth.model.DeviceMetadata("Catalog test", "catalog-test")).accessToken().value();
         UUID locationId = locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(), merchantId,
                 "Main", "1 CoVie", 10.8, 106.7, NOW)).getId();
         UUID categoryId = category(CategoryCatalogType.PRODUCT);
         categoryAttributes.saveAndFlush(CategoryAttributeEntity.create(UUID.randomUUID(), categoryId, "Brand", "brand",
                 CategoryAttributeType.TEXT, true, false, 0));
         String withoutAttribute = productBody(categoryId, locationId, "Coffee", "UNTRACKED");
-        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt())
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).header("Authorization", bearer)
                         .header("Idempotency-Key", "required-attribute").contentType(MediaType.APPLICATION_JSON).content(withoutAttribute))
                 .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.error.code").value("CATALOG_ATTRIBUTE_INVALID"));
+        assertThat(jdbc.queryForObject("select count(*) from catalog_items where merchant_profile_id=?", Long.class, merchantId)).isZero();
         UUID plainCategory = category(CategoryCatalogType.PRODUCT);
         String first = productBody(plainCategory, locationId, "Tea", "UNTRACKED");
-        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt())
+        String created = mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).header("Authorization", bearer)
                         .header("Idempotency-Key", "reused").contentType(MediaType.APPLICATION_JSON).content(first))
-                .andExpect(status().isCreated());
-        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).with(owner.jwt())
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String replay = mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).header("Authorization", bearer)
+                        .header("Idempotency-Key", "reused").contentType(MediaType.APPLICATION_JSON).content(first))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        assertThat(replay).isEqualTo(created);
+        assertThat(jdbc.queryForObject("select count(*) from catalog_items where merchant_profile_id=?", Long.class, merchantId)).isEqualTo(1);
+        mockMvc.perform(post("/api/v1/merchants/{merchantId}/catalog-items", merchantId).header("Authorization", bearer)
                         .header("Idempotency-Key", "reused").contentType(MediaType.APPLICATION_JSON)
                         .content(productBody(plainCategory, locationId, "Other tea", "UNTRACKED")))
                 .andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_REQUEST"));
@@ -327,3 +335,4 @@ class MerchantCatalogCreateControllerIntegrationTest extends PostgresIntegration
         }
     }
 }
+

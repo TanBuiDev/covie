@@ -29,6 +29,7 @@ import {
   ListDashes,
 } from "@phosphor-icons/react";
 import type { components } from "@covie/api-client";
+import { SelectDropdown, type DropdownOption } from "@/components/ui/select-dropdown";
 import styles from "./search-results.module.css";
 import categoryStyles from "./category-state.module.css";
 
@@ -37,6 +38,14 @@ type Item = components["schemas"]["CatalogItemSummaryResponse"];
 type SearchType = "" | "PRODUCT" | "SERVICE";
 type ListingKind = "" | "RESALE";
 type SearchSort = NonNullable<CatalogDiscoveryFilters["sort"]>;
+
+const SORT_OPTIONS: DropdownOption<SearchSort>[] = [
+  { value: "RELEVANCE", label: "Phù hợp nhất" },
+  { value: "DISTANCE", label: "Gần nhất" },
+  { value: "PRICE_ASC", label: "Giá thấp nhất" },
+  { value: "PRICE_DESC", label: "Giá cao nhất" },
+  { value: "NEWEST", label: "Mới nhất" },
+];
 export type SearchInitialFilters = {
   q?: string;
   type?: SearchType;
@@ -993,20 +1002,18 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
                   </button>
                 </div>
 
-                <label className={`${styles.sort} ${categoryMode ? categoryStyles.categorySort : ""}`}>
-                  Sắp xếp
-                  <select
+                <div className={`${styles.sort} ${categoryMode ? categoryStyles.categorySort : ""}`}>
+                  <span>Sắp xếp</span>
+                  <SelectDropdown<SearchSort>
                     aria-label="Sắp xếp"
                     value={filters.sort ?? "RELEVANCE"}
-                    onChange={(e) => update({ ...filters, sort: e.target.value as SearchSort })}
-                  >
-                    <option value="RELEVANCE">Phù hợp nhất</option>
-                    <option value="DISTANCE">Gần nhất</option>
-                    <option value="PRICE_ASC">Giá thấp nhất</option>
-                    <option value="PRICE_DESC">Giá cao nhất</option>
-                    <option value="NEWEST">Mới nhất</option>
-                  </select>
-                </label>
+                    options={SORT_OPTIONS}
+                    onChange={(val) => update({ ...filters, sort: val })}
+                    radius="md"
+                    size="sm"
+                    className={styles.sortDropdown}
+                  />
+                </div>
               </div>
             </div>
 
@@ -1154,23 +1161,27 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
             <div className={styles.sheetBody}>
               <label>
                 Danh mục
-                <select
+                <SelectDropdown<string>
                   aria-label="Danh mục"
                   value={draftFilter.categoryId ?? ""}
-                  onChange={(event) =>
+                  radius="md"
+                  size="md"
+                  options={[
+                    { value: "", label: "Tất cả danh mục" },
+                    ...categories
+                      .filter((category) => Boolean(category.id))
+                      .map((category) => ({
+                        value: category.id!,
+                        label: category.name ?? "Danh mục",
+                      })),
+                  ]}
+                  onChange={(val) =>
                     setDraftFilter({
                       ...draftFilter,
-                      categoryId: event.target.value || undefined,
+                      categoryId: val || undefined,
                     })
                   }
-                >
-                  <option value="">Tất cả danh mục</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
               {categoryError && (
                 <p role="alert">Không thể tải danh mục. Đóng bộ lọc và tải lại trang để thử lại.</p>
@@ -1178,50 +1189,65 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
 
               <label>
                 Loại
-                <select
+                <SelectDropdown<string>
                   aria-label="Loại"
                   value={draftFilter.type ?? ""}
-                  onChange={(e) =>
-                    setDraftFilter({ ...draftFilter, type: e.target.value as SearchType })
+                  radius="md"
+                  size="md"
+                  options={[
+                    { value: "", label: "Tất cả" },
+                    { value: "PRODUCT", label: "Sản phẩm" },
+                    { value: "SERVICE", label: "Dịch vụ" },
+                  ]}
+                  onChange={(val) =>
+                    setDraftFilter({
+                      ...draftFilter,
+                      type: (val || undefined) as SearchType | undefined,
+                    })
                   }
-                >
-                  <option value="">Tất cả</option>
-                  <option value="PRODUCT">Sản phẩm</option>
-                  <option value="SERVICE">Dịch vụ</option>
-                </select>
+                />
               </label>
 
               <label>
                 Loại tin
-                <select
+                <SelectDropdown<string>
                   aria-label="Loại tin"
                   value={draftFilter.listingKind ?? ""}
-                  onChange={(e) =>
-                    setDraftFilter({ ...draftFilter, listingKind: e.target.value as ListingKind })
+                  radius="md"
+                  size="md"
+                  options={[
+                    { value: "", label: "Tất cả" },
+                    { value: "RESALE", label: "Thanh lý" },
+                  ]}
+                  onChange={(val) =>
+                    setDraftFilter({
+                      ...draftFilter,
+                      listingKind: (val || undefined) as ListingKind | undefined,
+                    })
                   }
-                >
-                  <option value="">Tất cả</option>
-                  <option value="RESALE">Thanh lý</option>
-                </select>
+                />
               </label>
 
               <label>
                 Khoảng cách
-                <select
+                <SelectDropdown<string>
                   aria-label="Khoảng cách"
-                  value={draftFilter.radiusMeters ?? ""}
-                  onChange={(e) =>
+                  value={draftFilter.radiusMeters ? String(draftFilter.radiusMeters) : ""}
+                  radius="md"
+                  size="md"
+                  options={[
+                    { value: "", label: "Mọi khoảng cách" },
+                    { value: "1000", label: "1 km" },
+                    { value: "5000", label: "5 km" },
+                    { value: "10000", label: "10 km" },
+                  ]}
+                  onChange={(val) =>
                     setDraftFilter({
                       ...draftFilter,
-                      radiusMeters: Number(e.target.value) || undefined,
+                      radiusMeters: Number(val) || undefined,
                     })
                   }
-                >
-                  <option value="">Mọi khoảng cách</option>
-                  <option value="1000">1 km</option>
-                  <option value="5000">5 km</option>
-                  <option value="10000">10 km</option>
-                </select>
+                />
               </label>
 
               <fieldset className={styles.filterGroup}>

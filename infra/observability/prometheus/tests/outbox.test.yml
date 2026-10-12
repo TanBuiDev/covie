@@ -1,0 +1,50 @@
+rule_files:
+  - ../rules/covie.rules.yml
+evaluation_interval: 1m
+tests:
+  - name: oldest due event must remain old for five minutes
+    interval: 1m
+    input_series:
+      - series: 'covie_outbox_oldest_due_seconds{job="covie-api"}'
+        values: '0+20x15'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: CoVieOutboxBacklogOld
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: CoVieOutboxBacklogOld
+        exp_alerts:
+          - exp_labels: { job: covie-api, severity: warn }
+            exp_annotations: { summary: "The oldest due outbox event is over one minute old" }
+  - name: age at sixty seconds is below alert threshold
+    interval: 1m
+    input_series:
+      - series: 'covie_outbox_oldest_due_seconds{job="covie-api"}'
+        values: '60+0x15'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CoVieOutboxBacklogOld
+        exp_alerts: []
+  - name: terminal failure persists for one minute
+    interval: 1m
+    input_series:
+      - series: 'covie_outbox_terminal_failed{job="covie-api"}'
+        values: '0+1x5'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: CoVieOutboxTerminalFailure
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: CoVieOutboxTerminalFailure
+        exp_alerts:
+          - exp_labels: { job: covie-api, severity: page }
+            exp_annotations: { summary: "Outbox events have failed with no retry scheduled" }
+  - name: zero terminal failures remain quiet
+    interval: 1m
+    input_series:
+      - series: 'covie_outbox_terminal_failed{job="covie-api"}'
+        values: '0+0x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: CoVieOutboxTerminalFailure
+        exp_alerts: []

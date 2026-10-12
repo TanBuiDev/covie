@@ -19,6 +19,7 @@ import {
 } from "@phosphor-icons/react";
 import { discoverMerchantNeeds, getMerchantNeedResponse, listEligibleNeedItems, type MerchantNeedMatch, type NeedEligibleItemPage, type NeedResponse } from "./need-api";
 import { MerchantNeedResponseForm } from "./merchant-need-response-form";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 
 type Location = components["schemas"]["MerchantLocationResponse"];
 
@@ -221,13 +222,24 @@ export function MerchantNeedList({ merchantId, locations }: { merchantId: string
 
   return (
     <section className="seller-stack" aria-label="Nhu cầu phù hợp">
-      <label className="seller-need-location-filter">
-        Điểm bán đang phản hồi
-        <select aria-label="Điểm bán đang phản hồi" required value={locationId} onChange={(event) => selectLocation(event.target.value)}>
-          {locations.map((location) => location.id ? <option key={location.id} value={location.id}>{location.name ?? "Điểm bán"}</option> : null)}
-        </select>
+      <div className="seller-need-location-filter">
+        <SelectDropdown<string>
+          label="Điểm bán đang phản hồi"
+          aria-label="Điểm bán đang phản hồi"
+          required
+          value={locationId}
+          radius="md"
+          size="md"
+          options={locations
+            .filter((location) => Boolean(location.id))
+            .map((location) => ({
+              value: location.id!,
+              label: location.name ?? "Điểm bán",
+            }))}
+          onChange={(val) => selectLocation(val)}
+        />
         <small>Chỉ dùng nội dung đang bán tại điểm bán này</small>
-      </label>
+      </div>
 
       {items && items.length > 0 ? (
         <div className="seller-need-metrics-bar" role="region" aria-label="Tổng quan nhu cầu">

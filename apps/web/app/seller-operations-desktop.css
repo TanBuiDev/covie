@@ -8,12 +8,14 @@
   }
 
   .seller-order-kpi-bar {
-    max-width: 920px;
+    max-width: 1560px;
+    width: 100%;
     grid-template-columns: repeat(4, 1fr);
   }
 
   .seller-order-filter-toolbar {
-    max-width: 920px;
+    max-width: 1560px;
+    width: 100%;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
@@ -26,7 +28,8 @@
   .seller-order-list-block {
     display: grid;
     gap: 12px;
-    max-width: 920px;
+    max-width: 1560px;
+    width: 100%;
   }
 
   .seller-order-list-block > h2 {
@@ -85,8 +88,9 @@
     align-items: start;
     display: grid;
     gap: 16px;
-    grid-template-columns: minmax(0, 690px) minmax(320px, 422px);
-    max-width: 1128px;
+    grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.85fr);
+    max-width: 1560px;
+    width: 100%;
   }
 
   .seller-order-detail__hero {
@@ -101,7 +105,8 @@
 
   .seller-order-detail:has(.dialog-backdrop--seller-page) {
     display: block;
-    max-width: 1128px;
+    max-width: 1560px;
+    width: 100%;
   }
 
   .seller-order-detail__actions,
@@ -130,7 +135,8 @@
   }
 
   .seller-order-action {
-    max-width: 1128px;
+    max-width: 1560px;
+    width: 100%;
   }
 
   .seller-order-action__body {
@@ -156,7 +162,8 @@
 
   .seller-need-feed,
   .seller-need-detail {
-    max-width: 1128px;
+    max-width: 1560px;
+    width: 100%;
   }
 
   .seller-need-feed {
@@ -205,7 +212,8 @@
   .seller-need-workspace {
     align-items: start;
     grid-template-columns: minmax(0, 548px) minmax(0, 564px);
-    max-width: 1128px;
+    max-width: 1560px;
+    width: 100%;
   }
 
   .seller-need-workspace > .seller-need-list {

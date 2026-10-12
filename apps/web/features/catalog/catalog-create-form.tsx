@@ -5,7 +5,20 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { CovieApiError } from "@/lib/api/api-error";
-import { CheckCircle, Clock, Package, Sparkle, Wrench } from "@phosphor-icons/react";
+import {
+  CheckCircle,
+  Clock,
+  CurrencyDollar,
+  Images,
+  Package,
+  PlusCircle,
+  SlidersHorizontal,
+  Sparkle,
+  Tag,
+  UploadSimple,
+  Wrench,
+} from "@phosphor-icons/react";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { createCatalogItem, getCategoryDetail } from "./catalog-api";
 
 type Category = components["schemas"]["CategorySummary"];
@@ -90,26 +103,35 @@ function CategoryAttributeFields({ definitions, pending }: { definitions: Attrib
         if (!attributeKey || !definition.dataType) return null;
         const name = attributeFieldName(attributeKey);
         const label = definition.name?.trim() || `Thuộc tính ${index + 1}`;
-        const requiredMark = definition.required ? <span aria-hidden="true"> *</span> : null;
+        const requiredMark = definition.required ? <span className="seller-required-star" aria-hidden="true"> *</span> : null;
 
         if (definition.dataType === "SINGLE_SELECT") {
           return (
-            <label key={attributeKey}>
-              {label}{requiredMark}
-              <select name={name} required={definition.required} defaultValue="">
-                <option value="">{definition.required ? "Chọn một giá trị" : "Không chọn"}</option>
-                {(definition.options ?? []).map((option) => option.id ? (
-                  <option key={option.id} value={option.id}>{option.value ?? "Giá trị"}</option>
-                ) : null)}
-              </select>
-            </label>
+            <SelectDropdown<string>
+              key={attributeKey}
+              label={label}
+              name={name}
+              required={definition.required}
+              defaultValue=""
+              radius="md"
+              size="md"
+              options={[
+                { value: "", label: definition.required ? "Chọn một giá trị" : "Không chọn" },
+                ...(definition.options ?? [])
+                  .filter((opt) => Boolean(opt.id))
+                  .map((opt) => ({
+                    value: opt.id!,
+                    label: opt.value ?? "Giá trị",
+                  })),
+              ]}
+            />
           );
         }
 
         if (definition.dataType === "MULTI_SELECT") {
           return (
             <fieldset className="seller-attribute-options" key={attributeKey}>
-              <legend>{label}{requiredMark}</legend>
+              <legend><span className="seller-field-title">{label}{requiredMark}</span></legend>
               {(definition.options ?? []).map((option) => option.id ? (
                 <label className="seller-check-row" key={option.id}>
                   <input type="checkbox" name={name} value={option.id} />
@@ -122,20 +144,28 @@ function CategoryAttributeFields({ definitions, pending }: { definitions: Attrib
 
         if (definition.dataType === "BOOLEAN") {
           return (
-            <label key={attributeKey}>
-              {label}{requiredMark}
-              <select name={name} required={definition.required} defaultValue="">
-                <option value="">{definition.required ? "Chọn một giá trị" : "Không chọn"}</option>
-                <option value="true">Có</option>
-                <option value="false">Không</option>
-              </select>
-            </label>
+            <SelectDropdown<string>
+              key={attributeKey}
+              label={label}
+              name={name}
+              required={definition.required}
+              defaultValue=""
+              radius="md"
+              size="md"
+              options={[
+                { value: "", label: definition.required ? "Chọn một giá trị" : "Không chọn" },
+                { value: "true", label: "Có" },
+                { value: "false", label: "Không" },
+              ]}
+            />
           );
         }
 
         return (
           <label key={attributeKey}>
-            {label}{requiredMark}
+            <span className="seller-field-title">
+              {label}{requiredMark}
+            </span>
             <input
               name={name}
               type={definition.dataType === "NUMBER" ? "number" : "text"}
@@ -171,6 +201,12 @@ export function CatalogCreateForm({
   const [withOptions, setWithOptions] = useState(false);
   const [optionValuesInput, setOptionValuesInput] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const previewUrls = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string>();
   const [progress, setProgress] = useState<string>();
@@ -346,139 +382,305 @@ export function CatalogCreateForm({
             <p className="seller-muted">Tạo sản phẩm, dịch vụ hoặc hàng thanh lý từ danh mục và điểm bán hiện có.</p>
           </header>
 
-          <fieldset disabled={pending}>
-            <legend>Loại nội dung</legend>
-            <label>
-              Loại
-              <select
+          {/* CARD 1: PHÂN LOẠI & NGÀNH HÀNG */}
+          <section className="seller-studio-card" aria-label="Phân loại nội dung">
+            <div className="seller-studio-card__header">
+              <Tag size={20} weight="duotone" className="seller-studio-card__icon" aria-hidden="true" />
+              <div>
+                <h3>1. Phân loại nội dung</h3>
+                <p>Chọn hình thức kinh doanh và danh mục niêm yết phù hợp trên CoVie</p>
+              </div>
+            </div>
+
+            <div className="seller-studio-grid-2">
+              <SelectDropdown<CatalogType>
+                label="Loại"
                 name="type"
                 value={type}
-                onChange={(event) => {
-                  const next = event.target.value as CatalogType;
+                radius="md"
+                size="md"
+                options={[
+                  { value: "PRODUCT", label: "Sản phẩm" },
+                  { value: "SERVICE", label: "Dịch vụ" },
+                ]}
+                onChange={(next) => {
                   setType(next);
                   resetCategorySelection();
                   if (next === "SERVICE") setListingKind("STANDARD");
                 }}
-              >
-                <option value="PRODUCT">Sản phẩm</option>
-                <option value="SERVICE">Dịch vụ</option>
-              </select>
-            </label>
-            {type === "PRODUCT" ? (
-              <label>
-                Loại sản phẩm
-                <select name="listingKind" value={listingKind} onChange={(event) => setListingKind(event.target.value as ListingKind)}>
-                  <option value="STANDARD">Sản phẩm tiêu chuẩn</option>
-                  <option value="RESALE">Thanh lý</option>
-                </select>
-              </label>
-            ) : null}
-          </fieldset>
+              />
+              {type === "PRODUCT" ? (
+                <SelectDropdown<ListingKind>
+                  label="Loại sản phẩm"
+                  name="listingKind"
+                  value={listingKind}
+                  radius="md"
+                  size="md"
+                  options={[
+                    { value: "STANDARD", label: "Sản phẩm tiêu chuẩn" },
+                    { value: "RESALE", label: "Thanh lý" },
+                  ]}
+                  onChange={(val) => setListingKind(val)}
+                />
+              ) : null}
+            </div>
 
-          <label>
-            Tên
-            <input
-              name="name"
-              autoComplete="off"
-              maxLength={240}
-              required
-              onChange={(e) => setPreviewName(e.target.value)}
-            />
-          </label>
-          <label>
-            Danh mục
-            <select
+            <SelectDropdown<string>
+              label="Danh mục"
               name="categoryId"
+              placeholder="Chọn danh mục"
               required
               value={selectedCategoryId}
-              onChange={(event) => selectCategory(event.target.value)}
-            >
-              <option value="" disabled>Chọn danh mục</option>
-              {compatibleCategories.map((category) => category.id ? <option key={category.id} value={category.id}>{category.name ?? "Danh mục"}</option> : null)}
-            </select>
-          </label>
-          {!compatibleCategories.length ? <p className="warning-banner" role="status">Chưa có danh mục phù hợp với loại nội dung này.</p> : null}
-          {categoryLoading ? <p className="seller-muted" role="status">Đang tải thuộc tính danh mục…</p> : null}
-          {categoryError ? <p className="seller-contract-note" role="alert">{categoryError}</p> : null}
-          {categoryDetail ? <CategoryAttributeFields definitions={categoryDetail.attributes ?? []} pending={pending} /> : null}
-          {listingKind === "RESALE" && categoryDetail && !(categoryDetail.attributes ?? []).length ? (
-            <p className="seller-contract-note" role="status">Danh mục này chưa có tùy chọn tình trạng để chọn.</p>
-          ) : null}
+              radius="md"
+              size="md"
+              options={[
+                { value: "", label: "Chọn danh mục" },
+                ...compatibleCategories
+                  .filter((category) => Boolean(category.id))
+                  .map((category) => ({
+                    value: category.id!,
+                    label: category.name ?? "Danh mục",
+                  })),
+              ]}
+              onChange={(val) => selectCategory(val)}
+            />
+            {!compatibleCategories.length ? <p className="warning-banner" role="status">Chưa có danh mục phù hợp với loại nội dung này.</p> : null}
+            {categoryLoading ? <p className="seller-muted" role="status">Đang tải thuộc tính danh mục…</p> : null}
+            {categoryError ? <p className="seller-contract-note" role="alert">{categoryError}</p> : null}
+            {categoryDetail ? <CategoryAttributeFields definitions={categoryDetail.attributes ?? []} pending={pending} /> : null}
+            {listingKind === "RESALE" && categoryDetail && !(categoryDetail.attributes ?? []).length ? (
+              <p className="seller-contract-note" role="status">Danh mục này chưa có tùy chọn tình trạng để chọn.</p>
+            ) : null}
+          </section>
 
-          <label>
-            Mô tả
-            <textarea name="description" maxLength={4000} />
-          </label>
-          <label>
-            Thẻ
-            <input name="tags" placeholder="ví dụ: handmade, giao nhanh" />
-          </label>
+          {/* CARD 2: THÔNG TIN SẢN PHẨM / DỊCH VỤ */}
+          <section className="seller-studio-card" aria-label="Thông tin cơ bản">
+            <div className="seller-studio-card__header">
+              <Package size={20} weight="duotone" className="seller-studio-card__icon" aria-hidden="true" />
+              <div>
+                <h3>2. Thông tin cơ bản</h3>
+                <p>Tên gọi, mô tả chi tiết và từ khóa tìm kiếm cho cư dân</p>
+              </div>
+            </div>
 
-          <fieldset disabled={pending}>
-            <legend>Điểm bán & giá</legend>
             <label>
-              Điểm bán
-              <select name="locationId" required defaultValue="">
-                <option value="" disabled>Chọn điểm bán</option>
-                {compatibleLocations.map((location) => location.id ? (
-                  <option key={location.id} value={location.id}>{location.name ?? "Điểm bán"}{location.addressText ? ` — ${location.addressText}` : ""}</option>
-                ) : null)}
-              </select>
+              <span className="seller-field-title">
+                Tên <span className="seller-required-star" aria-hidden="true">*</span>
+              </span>
+              <input
+                aria-label="Tên"
+                name="name"
+                autoComplete="off"
+                maxLength={240}
+                required
+                placeholder="Ví dụ: Cà phê muối 500ml, Bánh mì chảo, Vệ sinh máy lạnh..."
+                onChange={(e) => setPreviewName(e.target.value)}
+              />
             </label>
+
+            <label>
+              <span className="seller-field-title">Mô tả chi tiết</span>
+              <textarea
+                aria-label="Mô tả"
+                name="description"
+                maxLength={4000}
+                placeholder="Mô tả định lượng, thành phần, hương vị hoặc các lưu ý khi đặt món/dịch vụ..."
+              />
+            </label>
+
+            <label>
+              <span className="seller-field-title">Thẻ tìm kiếm (Tags)</span>
+              <input
+                aria-label="Thẻ"
+                name="tags"
+                placeholder="ví dụ: handmade, giao nhanh, nóng hổi"
+              />
+            </label>
+          </section>
+
+          {/* CARD 3: HÌNH ẢNH NIÊM YẾT */}
+          <section className="seller-studio-card" aria-label="Hình ảnh">
+            <div className="seller-studio-card__header">
+              <Images size={20} weight="duotone" className="seller-studio-card__icon" aria-hidden="true" />
+              <div>
+                <h3>3. Hình ảnh niêm yết</h3>
+                <p>Ảnh chụp thực tế, sắc nét giúp thu hút cư dân đặt hàng nhanh hơn</p>
+              </div>
+            </div>
+
+            <label className="seller-catalog-upload-zone">
+              <UploadSimple size={28} weight="bold" color="#047857" aria-hidden="true" />
+              <div>
+                <span className="seller-media-btn" style={{ display: "inline-flex" }}>
+                  <UploadSimple size={16} weight="bold" aria-hidden="true" />
+                  <span>Chọn ảnh sản phẩm / dịch vụ</span>
+                </span>
+                <p className="seller-muted" style={{ margin: "6px 0 0" }}>JPEG, PNG hoặc WebP; tối đa 10 MB mỗi ảnh. Hỗ trợ chọn nhiều ảnh cùng lúc.</p>
+              </div>
+              <input
+                type="file"
+                aria-label="Ảnh catalog"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                onChange={(event) => {
+                  const newFiles = Array.from(event.target.files ?? []);
+                  setFiles((prev) => [...prev, ...newFiles]);
+                  idempotencyKeyRef.current = undefined;
+                  event.target.value = "";
+                }}
+              />
+            </label>
+
+            {files.length ? (
+              <div style={{ marginTop: "4px" }}>
+                <p role="status" style={{ fontSize: "13px", fontWeight: 600, color: "#047857", marginBottom: "8px" }}>
+                  Đã chọn {files.length} ảnh (Ảnh đầu tiên sẽ là ảnh chính):
+                </p>
+                <div className="seller-catalog-staged-grid">
+                  {files.map((file, idx) => (
+                    <div key={`${file.name}-${idx}`} className="seller-catalog-staged-item">
+                      {previewUrls[idx] ? (
+                        <img src={previewUrls[idx]} alt={file.name} />
+                      ) : null}
+                      {idx === 0 ? <span className="seller-catalog-staged-item__badge">Chính</span> : null}
+                      <button
+                        type="button"
+                        className="seller-catalog-staged-item__remove"
+                        aria-label={`Xoá ảnh ${file.name}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFiles((prev) => prev.filter((_, i) => i !== idx));
+                          idempotencyKeyRef.current = undefined;
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </section>
+
+          {/* CARD 4: GIÁ BÁN & VẬN HÀNH */}
+          <section className="seller-studio-card" aria-label="Giá bán và điểm phục vụ">
+            <div className="seller-studio-card__header">
+              <CurrencyDollar size={20} weight="duotone" className="seller-studio-card__icon" aria-hidden="true" />
+              <div>
+                <h3>4. Giá bán & Vận hành</h3>
+                <p>Thiết lập giá và điểm nhận đơn cho cư dân trong khu căn hộ</p>
+              </div>
+            </div>
+
+            <div className="seller-studio-grid-2">
+              <SelectDropdown<string>
+                label="Điểm bán"
+                name="locationId"
+                placeholder="Chọn điểm bán"
+                required
+                defaultValue=""
+                radius="md"
+                size="md"
+                options={[
+                  { value: "", label: "Chọn điểm bán" },
+                  ...compatibleLocations
+                    .filter((location) => Boolean(location.id))
+                    .map((location) => ({
+                      value: location.id!,
+                      label: `${location.name ?? "Điểm bán"}${location.addressText ? ` — ${location.addressText}` : ""}`,
+                    })),
+                ]}
+              />
+              {type === "PRODUCT" ? (
+                <SelectDropdown<InventoryMode>
+                  label="Quản lý tồn kho"
+                  name="inventoryMode"
+                  value={inventoryMode}
+                  radius="md"
+                  size="md"
+                  options={[
+                    { value: "UNTRACKED", label: "Không theo dõi số lượng" },
+                    { value: "TRACKED", label: "Theo dõi tồn kho" },
+                  ]}
+                  onChange={(val) => setInventoryMode(val)}
+                />
+              ) : null}
+            </div>
             {!compatibleLocations.length ? <p className="warning-banner" role="status">Chưa có điểm bán phù hợp. Với dịch vụ, hãy bật phục vụ dịch vụ tại ít nhất một điểm bán.</p> : null}
-            {!serviceVariantOffers ? (
+
+            <div className="seller-studio-grid-2">
+              {!serviceVariantOffers ? (
+                <label>
+                  <span className="seller-field-title">
+                    Giá chính xác (VND) <span className="seller-required-star" aria-hidden="true">*</span>
+                  </span>
+                  <input
+                    aria-label="Giá chính xác (VND)"
+                    name="price"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    step="1"
+                    required
+                    placeholder="ví dụ: 25000"
+                    onChange={(e) => setPreviewPrice(Number(e.target.value) || undefined)}
+                  />
+                </label>
+              ) : <p className="seller-muted">Mỗi gói dịch vụ có giá và trạng thái nhận đơn riêng bên dưới.</p>}
+
               <label>
-                Giá chính xác (VND)
+                <span className="seller-field-title">
+                  Thời gian chuẩn bị (phút) <span className="seller-required-star" aria-hidden="true">*</span>
+                </span>
                 <input
-                  name="price"
+                  aria-label="Thời gian chuẩn bị (phút)"
+                  name="preparationTimeMinutes"
                   type="number"
                   inputMode="numeric"
                   min="0"
                   step="1"
+                  defaultValue="0"
                   required
-                  onChange={(e) => setPreviewPrice(Number(e.target.value) || undefined)}
+                  onChange={(e) => setPreviewPrepTime(Number(e.target.value) || 0)}
                 />
               </label>
-            ) : <p className="seller-muted">Mỗi gói dịch vụ có giá và trạng thái nhận đơn riêng bên dưới.</p>}
-            <label>
-              Thời gian chuẩn bị (phút)
-              <input
-                name="preparationTimeMinutes"
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                defaultValue="0"
-                required
-                onChange={(e) => setPreviewPrepTime(Number(e.target.value) || 0)}
-              />
-            </label>
-            {type === "PRODUCT" ? (
-              <label>
-                Quản lý tồn kho
-                <select name="inventoryMode" value={inventoryMode} onChange={(event) => setInventoryMode(event.target.value as InventoryMode)}>
-                  <option value="UNTRACKED">Không theo dõi số lượng</option>
-                  <option value="TRACKED">Theo dõi tồn kho</option>
-                </select>
-              </label>
-            ) : null}
-          </fieldset>
+            </div>
+          </section>
 
-          <fieldset disabled={pending}>
-            <legend>{type === "SERVICE" ? "Gói dịch vụ" : "Biến thể"}</legend>
+          {/* CARD 5: TÙY CHỌN & BIẾN THỂ */}
+          <section className="seller-studio-card" aria-label="Biến thể và gói tùy chọn">
+            <div className="seller-studio-card__header">
+              <SlidersHorizontal size={20} weight="duotone" className="seller-studio-card__icon" aria-hidden="true" />
+              <div>
+                <h3>5. Tùy chọn & Biến thể</h3>
+                <p>{type === "SERVICE" ? "Tạo các gói dịch vụ khác nhau theo nhu cầu khách" : "Nội dung có nhiều lựa chọn như kích cỡ, hương vị hoặc đóng gói"}</p>
+              </div>
+            </div>
+
             <label className="seller-check-row">
               <input type="checkbox" checked={withOptions} onChange={(event) => setWithOptions(event.target.checked)} />
-              <span>{type === "SERVICE" ? "Dịch vụ có nhiều gói" : "Nội dung có lựa chọn / biến thể"}</span>
+              <span style={{ fontWeight: 600, color: "#0f172a" }}>{type === "SERVICE" ? "Dịch vụ có nhiều gói" : "Nội dung có lựa chọn / biến thể"}</span>
             </label>
+
             {withOptions ? (
-              <div className="seller-grid">
+              <div className="seller-studio-grid-2" style={{ marginTop: "4px" }}>
                 <label>
-                  Tên lựa chọn
-                  <input name="optionName" placeholder={type === "SERVICE" ? "Ví dụ: Số máy" : "Ví dụ: Kích cỡ"} required />
+                  <span className="seller-field-title">
+                    Tên lựa chọn <span className="seller-required-star" aria-hidden="true">*</span>
+                  </span>
+                  <input
+                    aria-label="Tên lựa chọn"
+                    name="optionName"
+                    placeholder={type === "SERVICE" ? "Ví dụ: Số máy" : "Ví dụ: Kích cỡ"}
+                    required
+                  />
                 </label>
                 <label>
-                  Các giá trị
+                  <span className="seller-field-title">
+                    Các giá trị <span className="seller-required-star" aria-hidden="true">*</span>
+                  </span>
                   <input
+                    aria-label="Các giá trị"
                     name="optionValues"
                     value={optionValuesInput}
                     onChange={(event) => setOptionValuesInput(event.target.value)}
@@ -486,9 +688,9 @@ export function CatalogCreateForm({
                     required
                   />
                 </label>
-                {type !== "SERVICE" ? <p className="seller-muted">Mỗi giá trị tạo một biến thể và dùng chung giá cùng điểm bán trong lần tạo này.</p> : null}
+                {type !== "SERVICE" ? <p className="seller-muted" style={{ gridColumn: "1 / -1", margin: 0 }}>Mỗi giá trị tạo một biến thể và dùng chung giá cùng điểm bán trong lần tạo này.</p> : null}
               </div>
-            ) : <p className="seller-muted">Không có lựa chọn: nội dung sẽ dùng một phiên bản mặc định.</p>}
+            ) : <p className="seller-muted" style={{ margin: 0 }}>Không có lựa chọn: nội dung sẽ dùng một phiên bản mặc định với giá đã đặt ở mục 4.</p>}
 
             {serviceVariantOffers ? (
               <div className="seller-service-variant-grid" aria-label="Giá các gói dịch vụ">
@@ -496,8 +698,18 @@ export function CatalogCreateForm({
                   <section className="seller-service-variant-card" key={`${value}-${index}`}>
                     <strong>{value}</strong>
                     <label>
-                      Giá chính xác (VND) <span aria-hidden="true">*</span>
-                      <input name={`variantPrice:${index}`} type="number" inputMode="numeric" min="0" step="1" required />
+                      <span className="seller-field-title">
+                        Giá chính xác (VND) <span className="seller-required-star" aria-hidden="true">*</span>
+                      </span>
+                      <input
+                        aria-label="Giá chính xác (VND)"
+                        name={`variantPrice:${index}`}
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        step="1"
+                        required
+                      />
                       <small>Giá của gói này tại điểm phục vụ</small>
                     </label>
                     <label className="seller-switch-row">
@@ -509,29 +721,22 @@ export function CatalogCreateForm({
                 <p className="seller-muted">Mỗi gói có giá và trạng thái nhận đơn riêng tại điểm bán. Nội dung đã tạo hiện chưa hỗ trợ chỉnh cấu trúc gói.</p>
               </div>
             ) : null}
-          </fieldset>
+          </section>
 
-          <fieldset disabled={pending}>
-            <legend>Ảnh</legend>
-            <label>
-              Ảnh catalog
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                onChange={(event) => {
-                  setFiles(Array.from(event.target.files ?? []));
-                  idempotencyKeyRef.current = undefined;
-                }}
-              />
-            </label>
-            <p className="seller-muted">JPEG, PNG hoặc WebP; tối đa 10 MB mỗi ảnh.</p>
-            {files.length ? <p role="status">Đã chọn {files.length} ảnh.</p> : null}
-          </fieldset>
-
-          {progress ? <p role="status" aria-live="polite">{progress}</p> : null}
-          {message ? <p role="alert">{message}</p> : null}
-          <button type="submit" disabled={pending || !canSubmit}>{pending ? "Đang lưu…" : "Tạo nội dung"}</button>
+          {/* ACTION SUBMIT BAR */}
+          <div className="seller-studio-card" style={{ padding: "20px" }}>
+            {progress ? <p role="status" aria-live="polite" style={{ margin: "0 0 10px", color: "#047857", fontWeight: 600 }}>{progress}</p> : null}
+            {message ? <p role="alert" className="warning-banner" style={{ margin: "0 0 12px" }}>{message}</p> : null}
+            <button
+              type="submit"
+              disabled={pending || !canSubmit}
+              className="seller-studio-submit-btn"
+              style={{ width: "fit-content", minWidth: "200px" }}
+            >
+              <PlusCircle size={18} weight="bold" aria-hidden="true" />
+              <span>{pending ? "Đang lưu…" : "Tạo nội dung"}</span>
+            </button>
+          </div>
         </form>
       </div>
 
@@ -543,17 +748,23 @@ export function CatalogCreateForm({
             <span>Xem trước hiển thị với cư dân</span>
           </div>
           <div className="seller-product-preview-card">
-            <div className="seller-product-preview-card__media">
-              {type === "SERVICE" ? (
+            <div className="seller-product-preview-card__image-box">
+              {previewUrls[0] ? (
+                <img
+                  src={previewUrls[0]}
+                  alt="Xem trước ảnh sản phẩm"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : type === "SERVICE" ? (
                 <Wrench size={44} weight="duotone" />
               ) : (
                 <Package size={44} weight="duotone" />
               )}
-            </div>
-            <div className="seller-product-preview-card__content">
               <span className="seller-product-preview-card__badge">
                 {currentCategoryName || (type === "SERVICE" ? "Dịch vụ cư dân" : "Món ăn & Hàng hóa")}
               </span>
+            </div>
+            <div className="seller-product-preview-card__content">
               <strong className="seller-product-preview-card__title">
                 {previewName.trim() || "Tên món hoặc sản phẩm"}
               </strong>
@@ -583,15 +794,15 @@ export function CatalogCreateForm({
           </div>
           <ul className="seller-create-tips-list">
             <li>
-              <strong>Tên món kèm định lượng:</strong>
+              <strong>Tên món kèm định lượng: </strong>
               <span>Ví dụ: &quot;Bánh mì chảo - Phần đặc biệt&quot; hoặc &quot;Cà phê muối 500ml&quot; giúp cư dân dễ chọn mua.</span>
             </li>
             <li>
-              <strong>Thời gian chuẩn bị chính xác:</strong>
+              <strong>Thời gian chuẩn bị chính xác: </strong>
               <span>Giúp hàng xóm chủ động canh giờ xuống sảnh thang máy nhận món nóng hổi.</span>
             </li>
             <li>
-              <strong>Ghim đúng điểm bán:</strong>
+              <strong>Ghim đúng điểm bán: </strong>
               <span>Cư dân trong cùng toà nhà sẽ được hiển thị ưu tiên hàng đầu và freeship.</span>
             </li>
           </ul>

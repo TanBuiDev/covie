@@ -1,5 +1,5 @@
 import { readApiError } from "../../lib/api/api-error";
-import { getCsrfToken, invalidateCsrfToken } from "./csrf";
+import { invalidateCsrfToken } from "./csrf";
 
 let refreshPromise: Promise<void> | null = null;
 
@@ -7,11 +7,10 @@ export async function refreshSession(): Promise<void> {
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
-    const csrf = await getCsrfToken();
-    const response = await fetch("/api/v1/auth/refresh", {
-      method: "POST",
+    // Share rotation with SSR; the same-origin bridge performs the backend CSRF exchange.
+    const response = await fetch("/api/v1/auth/ssr-refresh?client=1", {
       credentials: "include",
-      headers: { [csrf.headerName]: csrf.token },
+      cache: "no-store",
     });
     if (!response.ok) throw await readApiError(response);
     invalidateCsrfToken();

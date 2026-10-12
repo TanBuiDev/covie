@@ -27,6 +27,7 @@ import { formatMoney } from "@/lib/format/money";
 import { CovieApiError } from "@/lib/api/api-error";
 import { merchantOrders, myOrders, type OrderSummary } from "./order-api";
 import { OrderStatusLabel } from "./order-status";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import styles from "./order-list-mobile.module.css";
 
 function getItemVisual(name?: string | null, orderType?: string | null) {
@@ -464,13 +465,26 @@ export function OrderList({
   return (
     <section className="seller-stack" aria-label="Danh sách đơn hàng">
       {merchantId && locations.length ? (
-        <label className="seller-order-location-filter">Điểm bán
-          <select value={locationId} onChange={(event) => changeLocation(event.target.value)}>
-            <option value="">Tất cả điểm bán được phân công</option>
-            {locations.map((location) => location.id ? <option value={location.id} key={location.id}>{location.name ?? "Điểm bán"}</option> : null)}
-          </select>
+        <div className="seller-order-location-filter">
+          <SelectDropdown<string>
+            label="Điểm bán"
+            aria-label="Điểm bán"
+            value={locationId}
+            radius="md"
+            size="md"
+            options={[
+              { value: "", label: "Tất cả điểm bán được phân công" },
+              ...locations
+                .filter((location) => Boolean(location.id))
+                .map((location) => ({
+                  value: location.id!,
+                  label: location.name ?? "Điểm bán",
+                })),
+            ]}
+            onChange={(val) => changeLocation(val)}
+          />
           <small>Có thể lọc theo một điểm bán cụ thể</small>
-        </label>
+        </div>
       ) : null}
 
       {allOrders.length > 0 ? (

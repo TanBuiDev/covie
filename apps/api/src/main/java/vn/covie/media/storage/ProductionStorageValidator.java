@@ -24,13 +24,26 @@ public final class ProductionStorageValidator implements ApplicationRunner {
     static void validate(StorageProperties p) {
         require(StringUtils.hasText(p.bucket()), "covie.storage.bucket");
         require(StringUtils.hasText(p.region()), "covie.storage.region");
-        require(p.publicBaseUrl() != null && "https".equalsIgnoreCase(p.publicBaseUrl().getScheme()), "covie.storage.public-base-url");
+        require(p.publicBaseUrl() != null && "https".equalsIgnoreCase(p.publicBaseUrl().getScheme())
+                && StringUtils.hasText(p.publicBaseUrl().getHost()), "covie.storage.public-base-url");
         require(p.uploadUrlTtl() != null && !p.uploadUrlTtl().isNegative() && !p.uploadUrlTtl().isZero() && p.uploadUrlTtl().compareTo(Duration.ofMinutes(10)) <= 0, "covie.storage.upload-url-ttl");
         require(p.maxImageBytes() > 0 && p.maxImageBytes() <= 10L * 1024 * 1024, "covie.storage.max-image-bytes");
         if (p.endpoint() != null) {
             String host = p.endpoint().getHost();
             require("https".equalsIgnoreCase(p.endpoint().getScheme()), "covie.storage.endpoint");
-            require(host != null && !host.equalsIgnoreCase("localhost") && !host.equals("127.0.0.1") && !host.equals("::1"), "covie.storage.endpoint");
+            require(host != null && !host.equalsIgnoreCase("localhost") && !host.equals("127.0.0.1")
+                    && !ipv6Loopback(host), "covie.storage.endpoint");
+        }
+    }
+
+    private static boolean ipv6Loopback(String host) {
+        if (!host.contains(":")) return false;
+        // URI.getHost retains brackets for IPv6 literals; parsing a literal does not perform DNS lookup.
+        String literal = host.startsWith("[") && host.endsWith("]") ? host.substring(1, host.length() - 1) : host;
+        try {
+            return java.net.InetAddress.getByName(literal).isLoopbackAddress();
+        } catch (java.net.UnknownHostException invalidLiteral) {
+            return true;
         }
     }
 

@@ -29,7 +29,7 @@ class OrderCompletionServiceTest {
         OrderTransitionService transitions=mock(OrderTransitionService.class); when(transitions.lock(orderId)).thenReturn(new LockedOrder(order));
         OrderAccessPolicy access=mock(OrderAccessPolicy.class); when(access.requireBuyer(order)).thenReturn(new OrderAccess(buyer,OrderActorType.BUYER,orderId,order.getMerchantProfileId(),order.getMerchantLocationId()));
         InventoryReservationService inventory=mock(InventoryReservationService.class);
-        OrderCompletionService service=new OrderCompletionService(transitions,access,inventory,mock(OrderEventService.class),mock(OutboxEventWriter.class),()->Instant.parse("2026-08-22T01:00:00Z"));
+        OrderCompletionService service=new OrderCompletionService(transitions,access,inventory,mock(OrderEventService.class),mock(OutboxEventWriter.class),()->Instant.parse("2026-08-22T01:00:00Z"),mock(vn.covie.orders.persistence.OrderIssueRepository.class));
 
         service.confirmReceived(orderId);
 

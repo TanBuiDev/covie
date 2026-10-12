@@ -28,6 +28,9 @@ export default async function MerchantSellerLayout({
     <SellerShell
       merchantId={merchantId}
       merchantStatus={merchant.data.status}
+      merchantName={merchant.data.name}
+      logoUrl={merchant.data.logoUrl}
+      coverUrl={merchant.data.coverUrl}
       switcher={<MerchantSwitcher merchants={merchants} currentMerchantId={merchantId} />}
     >
       {children}

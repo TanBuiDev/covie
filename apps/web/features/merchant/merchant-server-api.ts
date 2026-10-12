@@ -17,7 +17,21 @@ export async function listMyMerchantsForServer() {
 export async function getMerchantForServer(merchantId: string): Promise<Etagged<components["schemas"]["MerchantManagementResponse"]>> {
   const client = await createServerReadClient();
   const { data, response } = await client.GET("/api/v1/merchants/{merchantId}", { params: { path: { merchantId } } });
-  return { data: await requireData(response, data), etag: response.headers.get("etag") ?? "" };
+  const merchantData = await requireData(response, data);
+  if (!merchantData.logoUrl || !merchantData.coverUrl) {
+    try {
+      const publicData = await getPublicMerchantForServer(merchantId);
+      if (!merchantData.logoUrl && publicData.logo?.url) {
+        merchantData.logoUrl = publicData.logo.url;
+      }
+      if (!merchantData.coverUrl && publicData.cover?.url) {
+        merchantData.coverUrl = publicData.cover.url;
+      }
+    } catch {
+      // ignore public data fetch failures
+    }
+  }
+  return { data: merchantData, etag: response.headers.get("etag") ?? "" };
 }
 
 export async function getPublicMerchantForServer(merchantId: string) {

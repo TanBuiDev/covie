@@ -74,8 +74,11 @@ public final class MerchantAccessPolicy {
     public Set<UUID> readableOrderLocations(UUID merchantId) {
         MerchantAccess access = require(merchantId, MerchantCapability.VIEW_ORDERS);
         if (access.role() != MerchantRole.STAFF) return Set.of();
-        return memberLocations.findAllByMembershipId(access.membershipId()).stream()
+        Set<UUID> assignedLocations = memberLocations.findAllByMembershipId(access.membershipId()).stream()
                 .map(MerchantMemberLocationEntity::getMerchantLocationId).collect(java.util.stream.Collectors.toUnmodifiableSet());
+        // A revoked last assignment must not become the unrestricted-scope sentinel.
+        if (assignedLocations.isEmpty()) throw notFound();
+        return assignedLocations;
     }
 
     public static boolean allows(MerchantRole role, MerchantCapability capability) {

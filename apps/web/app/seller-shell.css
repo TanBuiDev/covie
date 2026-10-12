@@ -256,8 +256,8 @@
   }
 
   .seller-shell__main {
-    margin: 0;
-    max-width: 1400px;
+    margin: 0 auto;
+    max-width: 1680px;
     padding: 28px clamp(20px, 2.5vw, 40px) 64px;
     width: 100%;
   }

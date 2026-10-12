@@ -1,6 +1,6 @@
 import type { components } from "@covie/api-client";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CatalogCreateForm } from "./catalog-create-form";
 
 type Category = components["schemas"]["CategorySummary"];
@@ -76,6 +76,8 @@ beforeEach(() => {
   mocks.createCatalogItem.mockResolvedValue({});
   mocks.uploadImage.mockResolvedValue({ mediaId: "media-1" });
 });
+
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("CatalogCreateForm Seller Mobile contracts", () => {
   it("creates one independently priced and available location offer per service variant", async () => {
@@ -251,6 +253,7 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
     fillBaseFields({ categoryId: "cat-resale", name: "Nồi chiên giữ nguyên" });
     await waitFor(() => expect(mocks.getCategoryDetail).toHaveBeenCalledWith("cat-resale"));
     fireEvent.change(screen.getByLabelText("Giá chính xác (VND)"), { target: { value: "500000" } });
+    vi.stubGlobal("URL", class extends URL { static override createObjectURL = vi.fn(() => "blob:test-preview"); static override revokeObjectURL = vi.fn(); });
     const file = new File(["image"], "catalog.png", { type: "image/png" });
     fireEvent.change(screen.getByLabelText("Ảnh catalog"), { target: { files: [file] } });
 
@@ -258,7 +261,7 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Không thể tải ảnh lên. Thông tin đã nhập được giữ lại; hãy thử lại.");
     expect(screen.getByLabelText("Tên")).toHaveValue("Nồi chiên giữ nguyên");
-    expect(screen.getByText("Đã chọn 1 ảnh.")).toBeInTheDocument();
+    expect((screen.getByLabelText("Ảnh catalog") as HTMLInputElement).files).toHaveLength(1);
     expect(mocks.createCatalogItem).not.toHaveBeenCalled();
   });
 });
