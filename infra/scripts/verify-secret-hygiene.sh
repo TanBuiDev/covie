@@ -13,13 +13,19 @@ check_tracked_paths() {
 
   local scanner_status="${statuses[0]}"
   local grep_status="${statuses[2]}"
-  if [[ "$scanner_status" -ne 0 ]]; then
-    echo "Secret-hygiene path scanner failed with status $scanner_status." >&2
-    return "$scanner_status"
+  # A downstream error can close the pipe and give upstream writers SIGPIPE.
+  # Report the matcher/filter error rather than the consequential SIGPIPE.
+  if [[ "$grep_status" -gt 1 ]]; then
+    echo "Secret-hygiene path matcher failed with status $grep_status." >&2
+    return "$grep_status"
   fi
   if [[ "${statuses[1]}" -gt 1 ]]; then
     echo "Secret-hygiene template filter failed." >&2
     return "${statuses[1]}"
+  fi
+  if [[ "$scanner_status" -ne 0 ]]; then
+    echo "Secret-hygiene path scanner failed with status $scanner_status." >&2
+    return "$scanner_status"
   fi
   if [[ "$grep_status" -eq 0 ]]; then
     echo "Tracked secret-like path detected." >&2

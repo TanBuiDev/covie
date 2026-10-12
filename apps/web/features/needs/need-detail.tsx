@@ -22,6 +22,11 @@ export function NeedDetail({ needId }: { needId: string }) {
 }
 
 function NeedDetailContent({ needId }: { needId: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [need, setNeed] = useState<NeedDetailModel | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAuthError, setIsAuthError] = useState(false);
@@ -70,7 +75,7 @@ function NeedDetailContent({ needId }: { needId: string }) {
   }
 
   function getExpiryBadge(expiresAtStr: string) {
-    const diffMs = new Date(expiresAtStr).getTime() - Date.now();
+    const diffMs = new Date(expiresAtStr).getTime() - now;
     if (diffMs <= 0) return "Đã hết hạn";
     const diffHours = Math.round(diffMs / (1000 * 60 * 60));
     if (diffHours < 1) {
