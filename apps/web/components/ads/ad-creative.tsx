@@ -5,20 +5,6 @@ import { ArrowUpRight, Lightning, MapPin, ShoppingBag, Storefront } from "@phosp
 import type { PublicAd } from "@/features/ads/ad-api";
 import styles from "./ad-creative.module.css";
 
-export function safeMediaUrl(url?: string): string | undefined {
-  if (!url || /[\\\s\u0000-\u001f]/.test(url)) return undefined;
-  if (url.startsWith("blob:") || (url.startsWith("/") && !url.startsWith("//"))) return url;
-  try {
-    const parsed = new URL(url);
-    if ((parsed.protocol === "https:" || parsed.protocol === "http:") && !parsed.username && !parsed.password) {
-      return url;
-    }
-  } catch {
-    return undefined;
-  }
-  return undefined;
-}
-
 export function AdCreative({ ad, paused = true, onClick, onMediaFailure }: { ad: PublicAd; paused?: boolean; onClick?: () => void; onMediaFailure?: () => void }) {
   const video = useRef<HTMLVideoElement>(null);
   const [mediaFailed, setMediaFailed] = useState(false);
@@ -44,14 +30,13 @@ export function AdCreative({ ad, paused = true, onClick, onMediaFailure }: { ad:
     <span className={styles.cta}>{ad.ctaLabel || "Xem ngay"}<ArrowUpRight size={16} aria-hidden="true" /></span>
   </a>;
   if (mediaFailed) return null;
-  const mediaSrc = safeMediaUrl(ad.mediaUrl);
   return <div className={`${styles.mediaCreative} ${vertical ? styles.vertical : ""}`}>
     <span className={styles.label}>Quảng cáo</span>
-    {ad.creativeType === "VIDEO" ? <video ref={video} src={mediaSrc} muted playsInline controls loop preload="metadata" aria-label={ad.title} onError={() => { setMediaFailed(true); onMediaFailure?.(); }} /> :
+    {ad.creativeType === "VIDEO" ? <video ref={video} src={ad.mediaUrl} muted playsInline controls loop preload="metadata" aria-label={ad.title} onError={() => { setMediaFailed(true); onMediaFailure?.(); }} /> :
       <a href={ad.targetUrl} aria-label={label} onClick={onClick}>
         {/* Uploaded verified media has dynamic origins and dimensions. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={mediaSrc} alt={ad.title ?? "Quảng cáo"} loading="lazy" onError={() => { setMediaFailed(true); onMediaFailure?.(); }} />
+        <img src={ad.mediaUrl} alt={ad.title ?? "Quảng cáo"} loading="lazy" onError={() => { setMediaFailed(true); onMediaFailure?.(); }} />
       </a>}
     <a className={styles.mediaCopy} href={ad.targetUrl} aria-label={label} onClick={onClick}>
       <strong>{ad.title}</strong>{ad.body && <p>{ad.body}</p>}<span className={styles.cta}>{ad.ctaLabel || "Xem ngay"}<ArrowUpRight size={16} aria-hidden="true" /></span>
