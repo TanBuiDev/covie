@@ -31,7 +31,7 @@ highest="$(value HIGHEST_FLYWAY)"
 
 command -v docker >/dev/null 2>&1 || { echo "docker is required" >&2; exit 2; }
 docker compose version >/dev/null
-"$repo_root/infra/deploy/verify-runtime-env.sh" "$env_file"
+COVIE_JWT_SECRET_DIR="$jwt_dir" "$repo_root/infra/deploy/verify-runtime-env.sh" "$env_file"
 "$repo_root/infra/scripts/verify-nginx-prod.sh"
 [[ -r "$tls_dir/fullchain.pem" && -r "$tls_dir/privkey.pem" ]] || { echo "TLS certificate/key missing" >&2; exit 1; }
 
@@ -43,6 +43,8 @@ latest_backup="$(find "$backup_dir" -maxdepth 1 -type f -name '*.dump' -printf '
 backup_epoch="${latest_backup%% *}"; backup_epoch="${backup_epoch%.*}"
 age="$(( $(date +%s) - backup_epoch ))"
 (( age <= 93600 )) || { echo "Deployment blocked: latest backup is older than 26h" >&2; exit 1; }
+backup_file="${latest_backup#* }"
+bash "$repo_root/infra/backup/verify-dump.sh" "$backup_file"
 
 mkdir -p "$state_dir"
 current="$state_dir/current.env"

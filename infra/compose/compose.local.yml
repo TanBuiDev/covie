@@ -17,7 +17,9 @@ services:
 
   redis:
     image: redis:8-alpine
-    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "always", "--save", "", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - covie_redis:/data
     ports:
       - "6379:6379"
     healthcheck:
@@ -51,5 +53,6 @@ services:
       "
 
 volumes:
+  covie_redis:
   covie_postgres:
   covie_minio:

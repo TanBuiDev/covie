@@ -18,6 +18,7 @@ required=(
   infra/deploy/rollback.sh
   infra/backup/postgres-backup.sh
   infra/backup/postgres-restore.sh
+  infra/backup/verify-dump.sh
   infra/scripts/security-scan.sh
   infra/scripts/generate-sbom.sh
   infra/scripts/create-release-manifest.sh
@@ -27,9 +28,9 @@ for file in "${required[@]}"; do
   [[ -f "$file" ]] || { echo "Missing production artifact: $file" >&2; exit 1; }
 done
 
-bash -n infra/deploy/*.sh
-bash -n infra/backup/*.sh
-bash -n infra/scripts/*.sh
+for script in infra/deploy/*.sh infra/backup/*.sh infra/scripts/*.sh; do
+  bash -n "$script"
+done
 node infra/perf/run-load.mjs --help >/dev/null
 
 highest="$(find apps/api/src/main/resources/db/migration -maxdepth 1 -type f -name 'V*.sql' -exec basename {} \; \
