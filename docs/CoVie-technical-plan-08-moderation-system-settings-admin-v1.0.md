@@ -4,6 +4,12 @@
 
 **Status:** Closed — locally verified
 
+> **Audit repair — 2026-10-09 (Need lifecycle):** Controlled actualDB/JWT/HTTP approval vs buyer cancellation reproduced both200 but final request_statusACTIVE overwriting committedCANCELLED. Need moderation apply now acquires the existing Need rowlock before reading/mutating moderation state; business lifecycle rules remain unchanged. Focused45tests pass, including finalCANCELLED+APPROVED/closedAt/onecancelevent. The coordinated repository double uses real managed ORM reads/locks; its scope and full verification are documented in `docs/backend-audit-2026-10-09.md`.
+
+> **Audit repair — 2026-10-09 (target races):** Different Merchant cases could produce500 when HIDE encountered an already hidden target; Merchant handler now locks target and returns409/MODERATION_TARGET_STATE_CONFLICT. Different Review cases could both readACTIVE and the second failed500 on the unchanged nonnegative rating guard; Review handler now locks target and validates transition before projection. SignedJWT/HTTP samecase two-Admin Need approve/reject race already passes200+409/oneaction/event without production changes. Focused17tests pass; full/post-repair evidence and remaining limits are tracked in `docs/backend-audit-2026-10-09.md`.
+
+> **Audit repair — 2026-10-09 (bulk moderation):** Actual JWT/HTTP mixed batch exposed rollback-only500 for a known CLOSED-case failure; a separate MANDATORY/noRollbackFor ApiException command entry preserves per-item outcomes while uncaught item errors still roll back. Actual HIDE→CLOSE with the same batch key also replayed the wrong action; the item operation now uses the action/case namespace specified in Task9. Fresh focused15tests pass, including replay counts, configured cap, duplicate/unsupported validation and single-vs-bulk same-case race. Catalog preapproval revalidation passes without production changes. Full gate after these repairs is tracked in `docs/backend-audit-2026-10-09.md`; no deployed/runtime verification is claimed here.
+
 > **Execution closure — 2026-08-25:** Implemented and locally verified by fresh backend regression, authorization and API contract coverage. The task checklist below is retained as the original implementation specification, not a live completion tracker. See `docs/CoVie-plan-closure-audit-2026-08-24.md`.
 
 **Goal:** Implement CoVie V1 runtime business settings, moderation/report workflows, admin operations/read models, safe suspension, maintenance diagnostics, and the policy adapters that replace bootstrap configuration from Plans 03–07 without introducing Admin Order force-state or dispute arbitration.
@@ -858,6 +864,8 @@ write AuditLog + SYSTEM_SETTING_CHANGED Outbox in same transaction
 
 A concurrent create losing the unique constraint maps to `409 SYSTEM_SETTING_OVERRIDE_ALREADY_EXISTS`.
 
+Verified repair (2026-10-09): `SystemSettingService` translates only PostgreSQL unique violations of the four override indexes during creation. Actual HTTP/database concurrent-create regression confirms one 201, one specified 409, and only one history/audit/outbox record. Scope precedence and competing same-version updates are covered by `AdminSettingAcceptanceTest`; evidence is recorded in `backend-audit-2026-10-09.md`.
+
 - [ ] **Step 4: Implement effective read diagnostics**
 
 ```http
@@ -1297,6 +1305,8 @@ n.moderation_status in ('NOT_REQUIRED','APPROVED')
 ```
 
 Plan 07 `NEED_CREATED` notification audience must use the same visibility requirement after Task 16 updates handlers.
+
+Verified repair (2026-10-09): Need creation flushes its new PENDING target inside the existing transaction before the JDBC pre-approval case insert, preventing a foreign-key failure. Actual configuration→buyer-create→Admin-approve acceptance verifies replay, one case/action, preserved ACTIVE need lifecycle and moderation notification dispatch. See `backend-audit-2026-10-09.md`.
 
 - [ ] **Step 8: Run tests and commit**
 
@@ -1814,6 +1824,8 @@ target has ADMIN and is the last ACTIVE ADMIN -> 409 LAST_ADMIN_CANNOT_BE_SUSPEN
 
 Repository query counts ADMIN role assignments joined to `users.account_status='ACTIVE'`.
 
+Implementation verification (2026-10-09): suspensions of ADMIN targets acquire a shared PostgreSQL transaction advisory lock before locking the target row and checking the count. This prevents concurrent commands against different targets from both observing two active administrators and suspending both. `AdminUserSafetyIntegrationTest` verifies the competing commands, winning transaction side effects, and restoration without reactivating old sessions; detailed evidence is recorded in `backend-audit-2026-10-09.md`.
+
 - [ ] **Step 4: Revoke sessions atomically on suspend**
 
 After locking/suspending user:
@@ -2010,6 +2022,8 @@ GET /api/v1/admin/orders/{orderId}/events
 ```
 
 Detail delegates to the existing authorization-aware Order read model using ADMIN actor semantics. List uses a dedicated page/count query.
+
+Verification (2026-10-09): Admin detail checks the global ADMIN role before looking up the order and uses an explicit ADMIN read context even when that administrator is also the buyer. The ordinary order detail keeps Buyer/Merchant behavior. Real JWT/session acceptance covers these boundaries and absence of Admin lifecycle mutation routes; see `backend-audit-2026-10-09.md`.
 
 - [ ] **Step 5: Prove forbidden Admin Order mutations do not exist**
 

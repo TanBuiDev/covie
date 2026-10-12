@@ -21,6 +21,7 @@ infra/secrets/
 infra/releases/
 backups/
 build/
+outputs/
 
 # Node
 node_modules/

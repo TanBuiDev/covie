@@ -2152,6 +2152,8 @@ Do not include original filename in storage key.
 
 - [ ] **Step 4: Enforce upload quota before presigning**
 
+Audit repair2026-10-09: controlled PostgreSQL concurrency regression showed two requests could both observe19pending/max20 and succeed. MediaUploadService.createUpload now holds the existing owneruser rowlock in a transaction covering count/presign/persist; configured limit and validation unchanged. Focused17tests pass onequotaerror/final20pending plus realMinio pipeline. Fullgate, fixture limits and remaining media scope are recorded in `docs/backend-audit-2026-10-09.md`.
+
 Repository method:
 
 ```java
@@ -2242,6 +2244,8 @@ public URI publicUrl(MediaAssetEntity media) {
 Public DTOs get URL only; they do not get bucket name, storage provider credentials or presigned PUT data.
 
 - [ ] **Step 9: Implement orphan cleanup use case for the later scheduler**
+
+Audit repair2026-10-09: realPostgres completion-vs-cleanup race reproduced successfulREADY media overwrittenDELETED by stalecleanup. Cleanup now claims bounded PENDING rows with FORUPDATE SKIPLOCKED, preserving the existing createdAt/id ordering,24hcutoff/limit andaftercommitbesteffortdelete semantics. Focused14tests pass; currentfullgate and remaininglimits are recorded in `docs/backend-audit-2026-10-09.md`. No scheduler or retry feature is introduced by this repair.
 
 `MediaCleanupService.cleanupExpiredPending(int limit)` selects PENDING rows older than 24 hours in UUID order, marks them DELETED in a short transaction, then calls `ObjectStorage.deleteIfExists(storageKey)` for each claimed row. The method is callable but is not annotated `@Scheduled`; the cross-cutting scheduled-job runner is wired in the later scheduled-jobs/hardening work.
 

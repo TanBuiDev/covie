@@ -18,7 +18,9 @@ Run `pnpm dev` from the repository root. The launcher imports the ignored root `
 
 Press **Ctrl+C** to stop the managed API/web process trees and run the same Compose configuration's `stop`. A lightweight hidden watchdog checks the foreground owner's identity every two seconds; if the owner disappears after its terminal is closed, the watchdog invokes the same cleanup and then exits. `pnpm dev:stop` can also stop the session from another terminal. Closing Windows abruptly or losing power cannot guarantee immediate cleanup; Docker Desktop's own shutdown handles its containers in that case.
 
-Cleanup retains containers, PostgreSQL/MinIO volumes and data. Docker Desktop itself is not stopped, and other projects' services are not included in this Compose invocation. Docker must already be available; the launcher does not install/start the Docker Desktop application.
+Cleanup retains containers, PostgreSQL/MinIO/Redis volumes and data. Docker Desktop itself is not stopped, and other projects' services are not included in this Compose invocation. Docker must already be available; the launcher does not install/start the Docker Desktop application.
+
+SSR refresh now requires the root `.env.local` `REDIS_URL` for shared coordination. Compose Redis uses the named `covie_redis` volume, AOF with `appendfsync always` and `noeviction`; the normal `pnpm dev` Compose startup applies this configuration when recreating the service. Preserve that volume during ordinary maintenance. Web checks these settings before rotating tokens and fails with503 if Redis is unavailable/unsafe; no RAM fallback. Details and recovery limits: [SSR refresh coordination](ssr-refresh-coordination.md).
 
 The first transition from the old detached launcher requires stopping the old API terminal with Ctrl+C and running `pnpm dev:stop` to stop the old recorded web/Compose services. Then run `pnpm dev`. Occupied API/web ports are rejected before startup rather than adopting an independently started process. Subsequent starts need only `pnpm dev`.
 
