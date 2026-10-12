@@ -268,7 +268,7 @@ export function LocationForm({ merchantId, location, onSaved, onReload }: {
               <span>Mẹo vận hành chi nhánh</span>
             </h4>
             <ul className="seller-tips-list">
-              <li><strong>Tên chi nhánh:</strong> Nên kèm tên đường hoặc quận (ví dụ: "Chi nhánh Quận 1 - Nguyễn Huệ") để khách hàng dễ chọn.</li>
+              <li><strong>Tên chi nhánh:</strong> Nên kèm tên đường hoặc quận (ví dụ: &quot;Chi nhánh Quận 1 - Nguyễn Huệ&quot;) để khách hàng dễ chọn.</li>
               <li><strong>Hình thức phục vụ:</strong> Bật nhận tại chỗ nếu khách có thể ghé lấy trực tiếp, giúp tiết kiệm phí vận chuyển.</li>
               <li><strong>Tọa độ vĩ độ/kinh độ:</strong> Cần nhập chính xác để CoVie tính khoảng cách và định tuyến phí giao hàng chuẩn xác.</li>
             </ul>
