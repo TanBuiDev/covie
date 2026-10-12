@@ -29,7 +29,7 @@ export async function addCartItem(input: components["schemas"]["AddCartItemReque
 export async function updateCartItem(cartId: string, itemId: string, version: number,
   input: components["schemas"]["UpdateCartItemRequest"]) {
   const { data, error, response } = await createApiClient().PATCH("/api/v1/me/carts/{cartId}/items/{itemId}", {
-    params: { path: { cartId, itemId }, header: { "If-Match": String(version) } }, body: input,
+    params: { path: { cartId, itemId }, header: { "If-Match": `"v${version}"` } }, body: input,
   });
   const result = await dataOrThrow(response, data, error);
   if (typeof window !== "undefined") {
@@ -40,10 +40,11 @@ export async function updateCartItem(cartId: string, itemId: string, version: nu
 
 export async function removeCartItem(cartId: string, itemId: string, version: number) {
   const { error, response } = await createApiClient().DELETE("/api/v1/me/carts/{cartId}/items/{itemId}", {
-    params: { path: { cartId, itemId }, header: { "If-Match": String(version) } },
+    params: { path: { cartId, itemId }, header: { "If-Match": `"v${version}"` } },
   });
   if (!response.ok) throw await parsedApiError(response, error);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("covie:cart-updated"));
   }
 }
+

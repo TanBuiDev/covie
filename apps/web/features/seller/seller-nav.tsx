@@ -57,7 +57,17 @@ function sectionIsActive(key: SellerSectionKey, pathname: string, base: string, 
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SellerNavLinks({ merchantId, scrollActiveIntoView = false, includeAds = false }: { merchantId: string; scrollActiveIntoView?: boolean; includeAds?: boolean }) {
+export function SellerNavLinks({
+  merchantId,
+  scrollActiveIntoView = false,
+  includeAds = false,
+  collapsed = false,
+}: {
+  merchantId: string;
+  scrollActiveIntoView?: boolean;
+  includeAds?: boolean;
+  collapsed?: boolean;
+}) {
   const base = sellerBasePath(merchantId);
   const pathname = usePathname() ?? base;
   const activeLinkRef = useRef<HTMLAnchorElement | null>(null);
@@ -69,16 +79,66 @@ export function SellerNavLinks({ merchantId, scrollActiveIntoView = false, inclu
     activeLink.scrollIntoView({ block: "nearest", inline: "nearest" });
   }, [pathname, scrollActiveIntoView]);
 
+  const items = sections.filter((section) => includeAds || section.key !== "ads");
+
+  if (scrollActiveIntoView) {
+    return (
+      <nav className="seller-nav-links" aria-label="Điều hướng Seller Center">
+        {items.map((section) => {
+          const href = section.segment ? `${base}/${section.segment}` : base;
+          const active = sectionIsActive(section.key, pathname, base, true);
+          return (
+            <Link key={section.key} href={href} aria-current={active ? "page" : undefined} ref={active ? activeLinkRef : undefined}>
+              <span className="seller-nav-indicator" aria-hidden="true" />
+              <span className="seller-nav-icon"><SellerNavIcon section={section.key} /></span>
+              <span className="seller-nav-label">{section.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    );
+  }
+
+  const opItems = items.filter((s) => s.key === "overview" || s.key === "orders" || s.key === "catalog");
+  const configItems = items.filter((s) => s.key === "locations" || s.key === "ads" || s.key === "settings");
+
   return (
     <nav className="seller-nav-links" aria-label="Điều hướng Seller Center">
-      {sections.filter(section => includeAds || section.key !== "ads").map((section) => {
+      {!collapsed ? <div className="seller-nav-group-header">VẬN HÀNH</div> : null}
+      {opItems.map((section) => {
         const href = section.segment ? `${base}/${section.segment}` : base;
-        const active = sectionIsActive(section.key, pathname, base, scrollActiveIntoView);
+        const active = sectionIsActive(section.key, pathname, base, false);
         return (
-          <Link key={section.key} href={href} aria-current={active ? "page" : undefined} ref={active && scrollActiveIntoView ? activeLinkRef : undefined}>
+          <Link
+            key={section.key}
+            href={href}
+            aria-current={active ? "page" : undefined}
+            title={collapsed ? section.label : undefined}
+          >
             <span className="seller-nav-indicator" aria-hidden="true" />
             <span className="seller-nav-icon"><SellerNavIcon section={section.key} /></span>
             <span className="seller-nav-label">{section.label}</span>
+          </Link>
+        );
+      })}
+
+      {!collapsed ? <div className="seller-nav-group-header">KÊNH & CÀI ĐẶT</div> : null}
+      {configItems.map((section) => {
+        const href = section.segment ? `${base}/${section.segment}` : base;
+        const active = sectionIsActive(section.key, pathname, base, false);
+        return (
+          <Link
+            key={section.key}
+            href={href}
+            aria-current={active ? "page" : undefined}
+            title={collapsed ? section.label : undefined}
+          >
+            <span className="seller-nav-indicator" aria-hidden="true" />
+            <span className="seller-nav-icon"><SellerNavIcon section={section.key} /></span>
+            <span className="seller-nav-label">{section.label}</span>
+            {section.key === "ads" && !collapsed ? (
+              <span className="seller-nav-badge" aria-hidden="true" />
+            ) : null}
           </Link>
         );
       })}

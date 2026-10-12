@@ -2,7 +2,8 @@
   .seller-desktop-heading {
     display: grid;
     gap: 4px;
-    max-width: 1128px;
+    max-width: 1560px;
+    width: 100%;
   }
 
   .seller-desktop-heading .eyebrow,
@@ -30,7 +31,8 @@
     display: grid;
     gap: 16px;
     grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
-    max-width: 1128px;
+    max-width: 1560px;
+    width: 100%;
   }
 
   .seller-catalog-management .seller-segmented {
@@ -52,7 +54,7 @@
   .seller-catalog-list {
     gap: 12px;
     grid-template-columns: 1fr;
-    max-width: 920px;
+    max-width: 100%;
   }
 
   .seller-catalog-card {
@@ -80,30 +82,24 @@
   }
 
   .seller-catalog-form {
-    align-items: start;
-    display: grid;
-    gap: 16px 24px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: 1128px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 100%;
+    width: 100%;
   }
 
   .seller-catalog-form > header {
-    grid-column: 1 / -1;
+    margin-bottom: 4px;
   }
 
-  .seller-catalog-form > fieldset,
-  .seller-catalog-form > label {
-    align-self: start;
-    min-width: 0;
-  }
-
-  .seller-catalog-form > fieldset {
-    min-height: 100%;
+  .seller-catalog-form > .seller-studio-card {
+    width: 100%;
   }
 
   .seller-catalog-form .seller-attribute-fields,
   .seller-catalog-form .seller-service-variant-grid {
-    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .seller-catalog-form > button[type="submit"] {
@@ -114,7 +110,7 @@
   .seller-inventory-list {
     gap: 12px;
     grid-template-columns: 1fr;
-    max-width: 1128px;
+    max-width: 100%;
   }
 
   .seller-inventory-card {
@@ -162,20 +158,32 @@
   /* CREATE STUDIO LAYOUT */
   .seller-catalog-create-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.85fr);
-    gap: 28px;
+    grid-template-columns: minmax(0, 1.4fr) minmax(340px, 0.85fr);
+    gap: 32px;
     align-items: start;
-    max-width: 1128px;
+    max-width: 1560px;
+    width: 100%;
+  }
+
+  .seller-catalog-create-aside {
+    position: sticky;
+    top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
   .seller-live-preview-box {
-    position: sticky;
-    top: 24px;
+    position: static;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   /* INVENTORY DESKTOP */
   .seller-inventory-wrapper {
-    max-width: 1128px;
+    max-width: 1560px;
+    width: 100%;
     display: grid;
     gap: 16px;
   }

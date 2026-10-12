@@ -7,5 +7,5 @@ import "./admin.css";
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
   if (!user.globalRoles?.includes("ADMIN")) notFound();
-  return <AdminShell>{children}</AdminShell>;
+  return <AdminShell user={user}>{children}</AdminShell>;
 }

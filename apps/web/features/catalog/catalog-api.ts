@@ -1,6 +1,6 @@
 import type { components, paths } from "@covie/api-client";
 import { createApiClient } from "@/lib/api/api-client";
-import { readApiError } from "@/lib/api/api-error";
+import { parsedApiError, readApiError } from "@/lib/api/api-error";
 import { locationToQuery, type DiscoveryLocation } from "@/features/location/location-context";
 
 async function requireData<T>(response: Response, data: T | undefined): Promise<T> {
@@ -8,8 +8,8 @@ async function requireData<T>(response: Response, data: T | undefined): Promise<
   return data;
 }
 
-async function requireOk(response: Response) {
-  if (!response.ok) throw await readApiError(response);
+async function requireOk(response: Response, error?: unknown) {
+  if (!response.ok) throw await parsedApiError(response, error);
 }
 
 function versionEtag(version: number) {
@@ -65,45 +65,45 @@ export async function getCatalogItem(itemId: string, location?: DiscoveryLocatio
 export async function updateCatalogItem(merchantId: string, itemId: string, etag: string,
   input: components["schemas"]["UpdateCatalogItemRequest"]) {
   const client = createApiClient();
-  const { response } = await client.PATCH("/api/v1/merchants/{merchantId}/catalog-items/{itemId}", {
+  const { error, response } = await client.PATCH("/api/v1/merchants/{merchantId}/catalog-items/{itemId}", {
     params: { path: { merchantId, itemId }, header: { "If-Match": etag } }, body: input,
   });
-  await requireOk(response);
+  await requireOk(response, error);
 }
 
 export async function updateCatalogVariant(merchantId: string, itemId: string, variantId: string, version: number,
   input: components["schemas"]["UpdateVariantRequest"]) {
   const client = createApiClient();
-  const { response } = await client.PATCH("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/variants/{variantId}", {
+  const { error, response } = await client.PATCH("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/variants/{variantId}", {
     params: { path: { merchantId, itemId, variantId }, header: { "If-Match": versionEtag(version) } }, body: input,
   });
-  await requireOk(response);
+  await requireOk(response, error);
 }
 
 export async function createCatalogVariant(merchantId: string, itemId: string,
   input: components["schemas"]["CreateVariantRequest"]) {
   const client = createApiClient();
-  const { response } = await client.POST("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/variants", {
+  const { error, response } = await client.POST("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/variants", {
     params: { path: { merchantId, itemId } }, body: input,
   });
-  await requireOk(response);
+  await requireOk(response, error);
 }
 
 export async function deleteCatalogVariant(merchantId: string, itemId: string, variantId: string, version: number) {
   const client = createApiClient();
-  const { response } = await client.DELETE("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/variants/{variantId}", {
+  const { error, response } = await client.DELETE("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/variants/{variantId}", {
     params: { path: { merchantId, itemId, variantId }, header: { "If-Match": versionEtag(version) } },
   });
-  await requireOk(response);
+  await requireOk(response, error);
 }
 
 export async function updateCatalogLocationOffer(merchantId: string, itemId: string, offerId: string, version: number,
   input: components["schemas"]["UpdateLocationOfferRequest"]) {
   const client = createApiClient();
-  const { response } = await client.PATCH("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/location-offers/{locationVariantId}", {
+  const { error, response } = await client.PATCH("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/location-offers/{locationVariantId}", {
     params: { path: { merchantId, itemId, locationVariantId: offerId }, header: { "If-Match": versionEtag(version) } }, body: input,
   });
-  await requireOk(response);
+  await requireOk(response, error);
 }
 
 export type CatalogLifecycleAction = "PUBLISH" | "PAUSE" | "ACTIVATE" | "ARCHIVE";
@@ -112,12 +112,13 @@ export async function runCatalogLifecycleAction(merchantId: string, itemId: stri
   etag: string) {
   const client = createApiClient();
   const params = { params: { path: { merchantId, itemId }, header: { "If-Match": etag } } };
-  const { response } = action === "PUBLISH"
+  const { error, response } = action === "PUBLISH"
     ? await client.POST("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/publish", params)
     : action === "PAUSE"
       ? await client.POST("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/pause", params)
       : action === "ACTIVATE"
         ? await client.POST("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/activate", params)
         : await client.POST("/api/v1/merchants/{merchantId}/catalog-items/{itemId}/archive", params);
-  await requireOk(response);
+  await requireOk(response, error);
 }
+

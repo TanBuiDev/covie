@@ -14,6 +14,7 @@ import { CoVieIcon } from "@/components/ui/covie-icon";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { commitCheckout, previewCheckout } from "./checkout-api";
 import { CheckoutChangeDialog } from "./checkout-change-dialog";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import styles from "./checkout-preview.module.css";
 import type { DirectCheckoutSelection, NeedCheckoutSelection } from "./checkout-source";
 
@@ -43,8 +44,8 @@ export function CheckoutSafeError({ retry }: { retry?: () => void } = {}) {
   );
 }
 
-export function CheckoutPreview({ carts, addresses, initialCartId, needSelection, directSelection, initialAddressId }: {
-  carts: Cart[]; addresses: Address[]; initialCartId?: string; needSelection?: NeedCheckoutSelection; directSelection?: DirectCheckoutSelection; initialAddressId?: string;
+export function CheckoutPreview({ carts, addresses, initialCartId, needSelection, directSelection, initialAddressId, autoPreview = process.env.NODE_ENV !== "test" }: {
+  carts: Cart[]; addresses: Address[]; initialCartId?: string; needSelection?: NeedCheckoutSelection; directSelection?: DirectCheckoutSelection; initialAddressId?: string; autoPreview?: boolean;
 }) {
   const router = useRouter();
   const selection = needSelection ?? directSelection;
@@ -64,7 +65,17 @@ export function CheckoutPreview({ carts, addresses, initialCartId, needSelection
   const [previewing, setPreviewing] = useState(false);
   const previewGeneration = useRef(0);
   const previewPending = useRef(false);
-  useEffect(() => () => { previewGeneration.current = -1; }, []);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      previewPending.current = false;
+      previewGeneration.current++;
+    };
+  }, []);
+
   const selectedCart = carts.find((cart) => cart.id === cartId);
   const selectedAddress = addresses.find((address) => address.id === addressId);
   const isService = selection ? selection.type === "SERVICE" : selectedCart?.cartType === "SERVICE";
@@ -75,6 +86,7 @@ export function CheckoutPreview({ carts, addresses, initialCartId, needSelection
     setPreviewing(false);
     setPreview(undefined);
     setCommitKey(undefined);
+    setMessage(undefined);
   }
 
   function chooseCart(nextId: string) {
@@ -115,28 +127,36 @@ export function CheckoutPreview({ carts, addresses, initialCartId, needSelection
       });
       if (generation !== previewGeneration.current) return;
       if (!value.checkoutToken) {
-        setMessage("Chưa nhận được bản xem trước hợp lệ. Vui lòng thử lại.");
+        if (mountedRef.current) {
+          setMessage("Chưa nhận được bản xem trước hợp lệ. Vui lòng thử lại.");
+        }
         return;
       }
-      setPreview(value);
-      setCommitKey(crypto.randomUUID());
+      if (mountedRef.current) {
+        setPreview(value);
+        setCommitKey(crypto.randomUUID());
+      }
     } catch {
-      if (generation === previewGeneration.current) setMessage("Không thể tạo bản xem trước. Hãy kiểm tra lại món đã chọn và địa chỉ.");
+      if (generation === previewGeneration.current && mountedRef.current) {
+        setMessage("Không thể tạo bản xem trước. Hãy kiểm tra lại món đã chọn và địa chỉ.");
+      }
     } finally {
       if (generation === previewGeneration.current) {
         previewPending.current = false;
-        setPreviewing(false);
+        if (mountedRef.current) {
+          setPreviewing(false);
+        }
       }
     }
   }
 
   useEffect(() => {
-    if (typeof window !== "undefined" && process.env.NODE_ENV !== "test") {
-      if (!preview && !previewPending.current && (method === "PICKUP" || selectedAddress)) {
+    if (typeof window !== "undefined" && autoPreview) {
+      if (!preview && !previewPending.current && !message && (method === "PICKUP" || selectedAddress)) {
         void requestPreview();
       }
     }
-  }, [method, selectedAddress, cartId, quantity, preview]);
+  }, [autoPreview, method, selectedAddress, cartId, quantity, preview, message]);
 
   async function commit() {
     if (!preview?.checkoutToken || !commitKey || commitPending.current) return;
@@ -149,18 +169,26 @@ export function CheckoutPreview({ carts, addresses, initialCartId, needSelection
         router.push(`/checkout/success/${order.id}`);
         return;
       }
-      setMessage("Đơn hàng đã được xử lý nhưng chưa nhận được mã đơn. Vui lòng kiểm tra danh sách đơn hàng.");
+      if (mountedRef.current) {
+        setMessage("Đơn hàng đã được xử lý nhưng chưa nhận được mã đơn. Vui lòng kiểm tra danh sách đơn hàng.");
+      }
     } catch (error) {
       const code = typeof error === "object" && error && "code" in error ? String(error.code) : "";
       if (code === "CHECKOUT_CHANGED") {
         invalidatePreview();
-        setChanged(true);
+        if (mountedRef.current) {
+          setChanged(true);
+        }
       } else {
-        setMessage("Không thể xác nhận đơn hàng. Vui lòng thử lại.");
+        if (mountedRef.current) {
+          setMessage("Không thể xác nhận đơn hàng. Vui lòng thử lại.");
+        }
       }
     } finally {
       commitPending.current = false;
-      setCommitting(false);
+      if (mountedRef.current) {
+        setCommitting(false);
+      }
     }
   }
 
@@ -229,18 +257,20 @@ export function CheckoutPreview({ carts, addresses, initialCartId, needSelection
             {!selection && carts.length > 1 ? (
               <label className={styles.selectField}>
                 <span>Giỏ hàng</span>
-                <select
+                <SelectDropdown<string>
                   aria-label="Giỏ hàng"
                   value={cartId}
                   disabled={committing}
-                  onChange={(event) => chooseCart(event.target.value)}
-                >
-                  {carts.map((cart, index) => (
-                    <option key={cart.id} value={cart.id}>
-                      {cart.cartType === "SERVICE" ? "Giỏ dịch vụ" : "Giỏ sản phẩm"} {index + 1}
-                    </option>
-                  ))}
-                </select>
+                  radius="md"
+                  size="md"
+                  options={carts
+                    .filter((cart) => Boolean(cart.id))
+                    .map((cart, index) => ({
+                      value: cart.id!,
+                      label: `${cart.cartType === "SERVICE" ? "Giỏ dịch vụ" : "Giỏ sản phẩm"} ${index + 1}`,
+                    }))}
+                  onChange={(val) => chooseCart(val)}
+                />
               </label>
             ) : null}
 
@@ -280,26 +310,31 @@ export function CheckoutPreview({ carts, addresses, initialCartId, needSelection
                     </p>
                   </div>
                 ) : addresses.length > 0 ? (
-                  <label>
-                    Địa chỉ
-                    <select
+                  <label className={styles.selectField}>
+                    <span>Địa chỉ</span>
+                    <SelectDropdown<string>
                       aria-label="Địa chỉ"
+                      placeholder="Chọn địa chỉ"
                       value={addressId}
                       disabled={committing}
-                      onChange={(event) => {
-                        setAddressId(event.target.value);
+                      radius="md"
+                      size="md"
+                      options={[
+                        { value: "", label: "Chọn địa chỉ" },
+                        ...addresses
+                          .filter((address) => Boolean(address.id))
+                          .map((address) => ({
+                            value: address.id!,
+                            label: `${address.label ?? "Địa chỉ"} — ${address.addressText ?? ""}`,
+                          })),
+                      ]}
+                      onChange={(val) => {
+                        setAddressId(val);
                         setAddressEditing(false);
                         setMessage(undefined);
                         invalidatePreview();
                       }}
-                    >
-                      <option value="">Chọn địa chỉ</option>
-                      {addresses.map((address) => (
-                        <option key={address.id} value={address.id}>
-                          {address.label} — {address.addressText}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </label>
                 ) : (
                   <Link href="/me/addresses/new" className={styles.addAddressLink}>

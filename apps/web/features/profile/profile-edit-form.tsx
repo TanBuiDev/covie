@@ -2,6 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { UploadSimple } from "@phosphor-icons/react";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { CovieApiError } from "@/lib/api/api-error";
 import { updateProfile, type Profile, type ProfileUpdate } from "./profile-client-api";
@@ -60,7 +61,22 @@ export function ProfileEditForm({ user, onSaved, onCancel }: { user: Profile; on
     {error && <p role="alert" className={styles.error}>{error}</p>}
     <div className={styles.preview}>{avatarUrl && !avatarBroken ? <Image src={avatarUrl} alt="Xem trước ảnh đại diện" width={80} height={80} unoptimized onError={() => setAvatarBroken(true)} /> : <span aria-label="Chưa có ảnh đại diện">{name.trim().charAt(0).toUpperCase() || "C"}</span>}</div>
     <fieldset disabled={busy}><legend className="sr-only">Thông tin cá nhân</legend>
-      <label>Ảnh đại diện<input type="file" aria-describedby="avatar-upload-hint" accept="image/png,image/jpeg,image/webp" onChange={e => { void upload(e.target.files?.[0]); e.target.value = ""; }} /></label><small id="avatar-upload-hint">PNG, JPG hoặc WebP · tối đa 10 MB</small>
+      <label className={styles.avatarLabel}>
+        <span>Ảnh đại diện</span>
+        <span className={styles.avatarPickerButton}>
+          <UploadSimple size={16} weight="bold" aria-hidden="true" />
+          <span>{avatarUrl ? "Đổi ảnh đại diện" : "Chọn ảnh đại diện"}</span>
+        </span>
+        <input
+          type="file"
+          className={styles.fileInput}
+          aria-label="Ảnh đại diện"
+          aria-describedby="avatar-upload-hint"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={e => { void upload(e.target.files?.[0]); e.target.value = ""; }}
+        />
+      </label>
+      <small id="avatar-upload-hint">PNG, JPG hoặc WebP · tối đa 10 MB</small>
       {avatarId && <button type="button" className="button-link" onClick={() => { setAvatarId(null); setAvatarUrl(""); setAvatarBroken(false); }}>Xóa ảnh đại diện</button>}
       <label>Tên hiển thị<input ref={nameInput} autoComplete="name" required maxLength={120} value={name} onChange={e => setName(e.target.value)} /></label>
       <label>Số điện thoại<input type="tel" aria-describedby="profile-phone-hint" autoComplete="tel" maxLength={30} value={phone} onChange={e => setPhone(e.target.value)} /></label><small id="profile-phone-hint">Để trống nếu bạn muốn xóa số điện thoại đã lưu.</small>

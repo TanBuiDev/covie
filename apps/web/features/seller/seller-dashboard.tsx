@@ -41,6 +41,8 @@ export function SellerDashboard({
   merchantId,
   merchantName,
   merchantStatus,
+  logoUrl,
+  coverUrl,
   orders,
   needMatches,
   locations,
@@ -48,6 +50,8 @@ export function SellerDashboard({
   merchantId: string;
   merchantName?: string;
   merchantStatus?: MerchantStatus;
+  logoUrl?: string | null;
+  coverUrl?: string | null;
   orders: OrderSummary[];
   needMatches: NeedMatch[];
   locations: MerchantLocation[];
@@ -66,6 +70,10 @@ export function SellerDashboard({
             <p>{merchantName ? `${merchantName} · Trung tâm bán hàng` : "Trung tâm bán hàng"}</p>
           </div>
           <div className="seller-dashboard__header-actions">
+            <Link className="seller-btn-header seller-btn-header--brand" href={`${base}/catalog`}>
+              <Storefront size={16} weight="bold" />
+              <span>Xem gian hàng</span>
+            </Link>
             <Link className="seller-btn-header" href={`${base}/settings`}>
               <Gear size={16} weight="bold" />
               <span>Cài đặt gian hàng</span>
@@ -75,10 +83,27 @@ export function SellerDashboard({
       </header>
 
       {/* SHOP PROFILE BANNER */}
-      <section className="seller-shop-banner" aria-label="Hồ sơ gian hàng">
+      <section
+        className="seller-shop-banner"
+        aria-label="Hồ sơ gian hàng"
+        style={coverUrl ? {
+          backgroundImage: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%), url(${coverUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        } : undefined}
+      >
         <div className="seller-shop-banner__left">
           <div className="seller-shop-banner__avatar" aria-hidden="true">
-            <Storefront size={34} weight="duotone" />
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt={merchantName ?? "Logo"}
+                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "14px" }}
+              />
+            ) : (
+              <Storefront size={34} weight="duotone" />
+            )}
           </div>
           <div className="seller-shop-banner__details">
             <div className="seller-shop-banner__title-row">

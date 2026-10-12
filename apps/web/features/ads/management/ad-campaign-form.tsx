@@ -14,6 +14,7 @@ import {
 import { AdCreative } from "@/components/ads/ad-creative";
 import { uploadAdMedia } from "@/features/media/direct-ad-upload";
 import { CovieApiError } from "@/lib/api/api-error";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import type { AdCampaign, AdCampaignInput } from "../ad-api";
 import styles from "./management.module.css";
 
@@ -201,31 +202,39 @@ export function AdCampaignForm({
             </label>
             <label>
               Loại nội dung
-              <select
+              <SelectDropdown<AdCampaignInput["creativeType"]>
+                aria-label="Loại nội dung"
                 value={input.creativeType}
-                onChange={e => {
-                  change("creativeType", e.target.value as AdCampaignInput["creativeType"]);
+                radius="md"
+                size="md"
+                options={[
+                  { value: "IMAGE", label: "Ảnh" },
+                  { value: "VIDEO", label: "Video" },
+                  { value: "CSS", label: "Mẫu động" },
+                ]}
+                onChange={val => {
+                  change("creativeType", val);
                   change("mediaId", undefined);
                   setPreview("");
                 }}
-              >
-                <option value="IMAGE">Ảnh</option>
-                <option value="VIDEO">Video</option>
-                <option value="CSS">Mẫu động</option>
-              </select>
+              />
             </label>
             {input.creativeType === "CSS" && (
               <label style={{ gridColumn: "1 / -1" }}>
                 Mẫu trình bày
-                <select
-                  value={input.template}
-                  onChange={e => change("template", e.target.value as AdCampaignInput["template"])}
-                >
-                  <option value="FLASH">Ưu đãi nhanh</option>
-                  <option value="NEARBY">Gần bạn</option>
-                  <option value="SPOTLIGHT">Nổi bật</option>
-                  <option value="HERO">Tiêu điểm</option>
-                </select>
+                <SelectDropdown<string>
+                  aria-label="Mẫu trình bày"
+                  value={input.template ?? "HERO"}
+                  radius="md"
+                  size="md"
+                  options={[
+                    { value: "FLASH", label: "Ưu đãi nhanh" },
+                    { value: "NEARBY", label: "Gần bạn" },
+                    { value: "SPOTLIGHT", label: "Nổi bật" },
+                    { value: "HERO", label: "Tiêu điểm" },
+                  ]}
+                  onChange={val => change("template", val as AdCampaignInput["template"])}
+                />
               </label>
             )}
           </div>
@@ -240,26 +249,34 @@ export function AdCampaignForm({
           <div className={styles.fields}>
             <label>
               Vị trí
-              <select
+              <SelectDropdown<AdCampaignInput["placement"]>
+                aria-label="Vị trí"
                 value={input.placement}
-                onChange={e => change("placement", e.target.value as AdCampaignInput["placement"])}
-              >
-                <option value="SIDEBAR_LEFT">Banner trái · trang chủ / tìm kiếm</option>
-                <option value="HOME_HERO">Banner trang chủ</option>
-                <option value="IN_FEED">Trong danh sách</option>
-                <option value="ITEM_DETAIL">Dưới chi tiết sản phẩm</option>
-              </select>
+                radius="md"
+                size="md"
+                options={[
+                  { value: "SIDEBAR_LEFT", label: "Banner trái · trang chủ / tìm kiếm" },
+                  { value: "HOME_HERO", label: "Banner trang chủ" },
+                  { value: "IN_FEED", label: "Trong danh sách" },
+                  { value: "ITEM_DETAIL", label: "Dưới chi tiết sản phẩm" },
+                ]}
+                onChange={val => change("placement", val)}
+              />
             </label>
             <label>
               Thiết bị
-              <select
+              <SelectDropdown<AdCampaignInput["device"]>
+                aria-label="Thiết bị"
                 value={input.device}
-                onChange={e => change("device", e.target.value as AdCampaignInput["device"])}
-              >
-                <option value="ALL">Mọi thiết bị</option>
-                <option value="DESKTOP">Máy tính</option>
-                <option value="MOBILE">Di động</option>
-              </select>
+                radius="md"
+                size="md"
+                options={[
+                  { value: "ALL", label: "Mọi thiết bị" },
+                  { value: "DESKTOP", label: "Máy tính" },
+                  { value: "MOBILE", label: "Di động" },
+                ]}
+                onChange={val => change("device", val)}
+              />
             </label>
             <label>
               Độ ưu tiên
@@ -274,13 +291,17 @@ export function AdCampaignForm({
             </label>
             <label>
               Hiển thị
-              <select
+              <SelectDropdown<string>
+                aria-label="Hiển thị"
                 value={input.enabled ? "yes" : "no"}
-                onChange={e => change("enabled", e.target.value === "yes")}
-              >
-                <option value="no">Tắt</option>
-                <option value="yes">Bật khi đủ điều kiện</option>
-              </select>
+                radius="md"
+                size="md"
+                options={[
+                  { value: "no", label: "Tắt" },
+                  { value: "yes", label: "Bật khi đủ điều kiện" },
+                ]}
+                onChange={val => change("enabled", val === "yes")}
+              />
             </label>
           </div>
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
@@ -9,7 +10,16 @@ import {
   ShieldWarning,
   Storefront,
   User,
-} from "@phosphor-icons/react";
+  Copy,
+  Check,
+  CalendarBlank,
+  Clock,
+  ArrowSquareOut,
+  ArrowRight,
+  Scroll,
+  Package,
+  Fingerprint,
+} from "@phosphor-icons/react/dist/ssr";
 import { AdminSuspensionAction } from "./admin-suspension-action";
 import {
   AdminPageHeader,
@@ -19,8 +29,9 @@ import {
   presentAccountStatus,
   presentModerationStatus,
 } from "./admin-ui";
+import styles from "./admin-entity-table.module.css";
 
-type Row = Record<string, unknown> & { id: string; status: string };
+type Row = Record<string, unknown> & { id: string; status: string; globalRoles?: string[] };
 type PagePayload = { items?: Row[]; total?: number; page?: number; size?: number };
 
 const PAGE_SIZE = 50;
@@ -46,7 +57,7 @@ export function AdminEntityTable({
 }: {
   type: "users" | "merchants";
   title: string;
-  columns: string[]
+  columns: string[];
 }) {
   const [items, setItems] = useState<Row[]>([]);
   const [selectedId, setSelectedId] = useState<string>();
@@ -56,6 +67,13 @@ export function AdminEntityTable({
   const [total, setTotal] = useState(0);
   const [filterText, setFilterText] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [copiedId, setCopiedId] = useState(false);
+
+  const handleCopyId = (id: string) => {
+    void navigator.clipboard.writeText(id);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
+  };
 
   const load = useCallback(async (isActive: () => boolean = () => true) => {
     try {
@@ -199,7 +217,7 @@ export function AdminEntityTable({
                                 {column === "status" ? (
                                   <AdminStatusChip label={status.label} tone={status.tone} />
                                 ) : column === "moderationStatus" ? (() => {
-                                  const moderation = presentModerationStatus(item.moderationStatus);
+                                  const moderation = presentModerationStatus(item.moderationStatus as string);
                                   return <AdminStatusChip label={moderation.label} tone={moderation.tone} />;
                                 })() : (
                                   displayValue(item, column)
@@ -220,63 +238,186 @@ export function AdminEntityTable({
               </AdminSurface>
 
               {selected ? (
-                <AdminSurface className="admin-entity-summary">
-                  <div className="admin-entity-summary__top" style={{ alignItems: "center", display: "flex", gap: "12px" }}>
-                    <div
-                      className="admin-entity-avatar"
-                      style={{
-                        background: type === "users" ? "rgba(4, 120, 87, 0.08)" : "rgba(37, 99, 235, 0.08)",
-                        color: type === "users" ? "#047857" : "#2563eb",
-                      }}
-                    >
-                      {type === "users" ? <User size={22} weight="duotone" /> : <Storefront size={22} weight="duotone" />}
-                    </div>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <strong style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {String(selected.displayName ?? selected.name ?? selected.id)}
-                      </strong>
-                      <small style={{ color: "var(--admin-text-tertiary, #64748b)" }}>{type === "users" ? "Tài khoản cư dân" : "Đối tác cung cấp"}</small>
-                    </div>
-                    <AdminStatusChip label={presentAccountStatus(selected.status).label} tone={presentAccountStatus(selected.status).tone} />
-                  </div>
-
-                  <dl style={{ marginTop: "12px" }}>
-                    <div>
-                      <dt>Trạng thái</dt>
-                      <dd>{presentAccountStatus(selected.status).label}</dd>
-                    </div>
-                    {type === "merchants" ? (
-                      <div>
-                        <dt>Kiểm duyệt</dt>
-                        <dd>{presentModerationStatus(selected.moderationStatus).label}</dd>
+                <div className={styles.inspectorCard}>
+                  {/* PROFILE HEADER */}
+                  <div className={styles.inspectorHeader}>
+                    <div className={styles.profileRow}>
+                      <div
+                        className={`${styles.avatar} ${
+                          type === "users" ? styles.avatarUser : styles.avatarMerchant
+                        }`}
+                      >
+                        {type === "users" ? (
+                          <User size={26} weight="bold" />
+                        ) : (
+                          <Storefront size={26} weight="bold" />
+                        )}
                       </div>
-                    ) : null}
-                    <div>
-                      <dt>ID định danh</dt>
-                      <dd style={{ fontFamily: "monospace", fontSize: "12px" }}>{selected.id}</dd>
+                      <div className={styles.profileInfo}>
+                        <span
+                          className={styles.displayName}
+                          title={String(selected.displayName ?? selected.name ?? selected.id)}
+                        >
+                          {String(selected.displayName ?? selected.name ?? selected.id)}
+                        </span>
+                        <div className={styles.roleSubtitle}>
+                          {type === "users" ? (
+                            Array.isArray(selected.globalRoles) &&
+                            (selected.globalRoles as string[]).includes("ADMIN") ? (
+                              <span className={`${styles.roleBadge} ${styles.roleBadgeAdmin}`}>
+                                Quản trị viên sàn
+                              </span>
+                            ) : (
+                              <span className={styles.roleBadge}>Cư dân CoVie</span>
+                            )
+                          ) : (
+                            <span className={styles.roleBadge}>Đối tác kinh doanh</span>
+                          )}
+                          {type === "merchants" && selected.slug ? (
+                            <span className="admin-caption" style={{ fontFamily: "monospace" }}>
+                              @{String(selected.slug)}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <dt>Cập nhật</dt>
-                      <dd>{formatAdminDate(selected.updatedAt ?? selected.createdAt)}</dd>
-                    </div>
-                  </dl>
 
-                  {type === "merchants" ? (
-                    <div style={{ marginTop: "10px", padding: "10px 12px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                      <strong style={{ fontSize: "12px", color: "var(--admin-text, #0f172a)", display: "block" }}>Nguyên tắc đối tác CoVie</strong>
-                      <p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--admin-text-secondary, #64748b)", lineHeight: "16px" }}>
-                        Chỉ gian hàng được duyệt mới hiển thị trên chợ cư dân. Đình chỉ sẽ vô hiệu hóa nhận đơn ngay lập tức.
-                      </p>
+                    <div className={styles.statusBanner}>
+                      <span className={styles.statusBannerLabel}>Trạng thái tài khoản</span>
+                      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                        <AdminStatusChip
+                          label={presentAccountStatus(selected.status).label}
+                          tone={presentAccountStatus(selected.status).tone}
+                        />
+                        {type === "merchants" && selected.moderationStatus ? (
+                          <AdminStatusChip
+                            label={presentModerationStatus(selected.moderationStatus as string).label}
+                            tone={presentModerationStatus(selected.moderationStatus as string).tone}
+                          />
+                        ) : null}
+                      </div>
                     </div>
-                  ) : null}
-
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", borderTop: "1px solid #f1f5f9", paddingTop: "10px", marginTop: "4px" }}>
-                    <ShieldCheck size={16} weight="fill" style={{ color: "#047857", flexShrink: 0 }} />
-                    <p className="admin-caption" style={{ margin: 0 }}>
-                      Dữ liệu xác thực qua Spring Security Admin Scope.
-                    </p>
                   </div>
-                </AdminSurface>
+
+                  {/* IDENTIFIERS & ATTRIBUTES */}
+                  <div className={styles.sectionBlock}>
+                    <div className={styles.sectionTitle}>Thông tin chi tiết</div>
+                    <div className={styles.detailsList}>
+                      <div className={styles.detailRow}>
+                        <span className={styles.detailLabel}>
+                          <Fingerprint size={14} weight="bold" />
+                          <span>Mã định danh</span>
+                        </span>
+                        <button
+                          type="button"
+                          className={`${styles.idCopyBadge} ${copiedId ? styles.idCopiedSuccess : ""}`}
+                          onClick={() => handleCopyId(selected.id)}
+                          title="Bấm để sao chép toàn bộ UUID"
+                        >
+                          {copiedId ? <Check size={12} weight="bold" /> : <Copy size={12} />}
+                          <span>{copiedId ? "Đã sao chép" : `${selected.id.slice(0, 8)}…${selected.id.slice(-4)}`}</span>
+                        </button>
+                      </div>
+
+                      {type === "users" && Array.isArray(selected.globalRoles) ? (
+                        <div className={styles.detailRow}>
+                          <span className={styles.detailLabel}>
+                            <ShieldCheck size={14} weight="bold" />
+                            <span>Quyền hệ thống</span>
+                          </span>
+                          <span className={styles.detailValue}>
+                            {(selected.globalRoles as string[]).join(", ") || "USER"}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      {selected.createdAt ? (
+                        <div className={styles.detailRow}>
+                          <span className={styles.detailLabel}>
+                            <CalendarBlank size={14} weight="bold" />
+                            <span>Ngày tham gia</span>
+                          </span>
+                          <span className={styles.detailValue}>
+                            {formatAdminDate(selected.createdAt as string)}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      {selected.updatedAt ? (
+                        <div className={styles.detailRow}>
+                          <span className={styles.detailLabel}>
+                            <Clock size={14} weight="bold" />
+                            <span>Cập nhật gần nhất</span>
+                          </span>
+                          <span className={styles.detailValue}>
+                            {formatAdminDate(selected.updatedAt as string)}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* ACTIONS CARD (SUSPEND / RESTORE) */}
+                  <div className={styles.actionBox}>
+                    <div className={styles.actionBoxHeader}>
+                      <ShieldWarning size={18} weight="duotone" style={{ color: "#ea580c" }} />
+                      <span>Tác vụ tài khoản</span>
+                    </div>
+                    <p className={styles.actionNote}>
+                      {type === "users"
+                        ? "Đình chỉ sẽ khóa quyền đặt hàng và phiên đăng nhập của người dùng ngay lập tức."
+                        : "Đình chỉ sẽ tạm ẩn gian hàng và ngừng nhận đơn mới trên toàn sàn."}
+                    </p>
+                    <AdminSuspensionAction
+                      status={selected.status}
+                      onSubmit={(operation, reason) => mutate(selected.id, operation, reason)}
+                    />
+                  </div>
+
+                  {/* QUICK SHORTCUTS */}
+                  <div className={styles.quickLinks}>
+                    <div className={styles.sectionTitle}>Lối tắt liên quan</div>
+                    <Link
+                      href={`/admin/audit?q=${encodeURIComponent(selected.id)}`}
+                      className={styles.quickLinkItem}
+                      title="Xem nhật ký kiểm toán liên quan đến đối tượng này"
+                    >
+                      <div className={styles.quickLinkLeft}>
+                        <Scroll size={14} weight="bold" />
+                        <span>Nhật ký kiểm toán</span>
+                      </div>
+                      <ArrowRight size={12} weight="bold" />
+                    </Link>
+
+                    <Link
+                      href="/admin/orders"
+                      className={styles.quickLinkItem}
+                      title="Xem danh sách đơn hàng toàn sàn"
+                    >
+                      <div className={styles.quickLinkLeft}>
+                        <Package size={14} weight="bold" />
+                        <span>Đơn hàng toàn sàn</span>
+                      </div>
+                      <ArrowRight size={12} weight="bold" />
+                    </Link>
+
+                    {type === "merchants" ? (
+                      <Link
+                        href={`/merchants/${selected.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.quickLinkItem}
+                        title="Xem trang gian hàng công khai trên chợ cư dân"
+                      >
+                        <div className={styles.quickLinkLeft}>
+                          <Storefront size={14} weight="bold" />
+                          <span>Xem gian hàng công khai</span>
+                        </div>
+                        <ArrowSquareOut size={12} weight="bold" />
+                      </Link>
+                    ) : null}
+                  </div>
+                </div>
               ) : null}
             </div>
           )}
@@ -301,19 +442,6 @@ export function AdminEntityTable({
                 </button>
               </div>
             </div>
-          ) : null}
-
-          {selected ? (
-            <AdminSurface className="admin-safety-card">
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <ShieldWarning size={20} weight="duotone" style={{ color: "#ea580c" }} />
-                <h2 style={{ margin: 0 }}>Tạm ngưng / khôi phục tài khoản</h2>
-              </div>
-              <p>
-                Mọi thao tác có tác động đến tài khoản đều yêu cầu xác nhận. Trạng thái được quyết định bởi hệ thống; màn hình này không cung cấp trường sửa trạng thái trực tiếp.
-              </p>
-              <AdminSuspensionAction status={selected.status} onSubmit={(operation, reason) => mutate(selected.id, operation, reason)} />
-            </AdminSurface>
           ) : null}
         </>
       ) : null}

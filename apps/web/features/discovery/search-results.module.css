@@ -683,6 +683,11 @@
   cursor: pointer;
 }
 
+.sortDropdown {
+  width: 152px;
+  min-width: 142px;
+}
+
 /* Product Cards Grid & List */
 .list {
   display: grid;

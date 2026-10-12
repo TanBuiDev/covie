@@ -4,6 +4,7 @@ import type { components } from "@covie/api-client";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { CovieApiError } from "@/lib/api/api-error";
 import {
   createDeliveryCoverage,
@@ -226,18 +227,25 @@ export function CoverageForm({
             <div className="seller-coverage-radius-section">
               <label>
                 Bán kính
-                <select
+                <SelectDropdown<string>
+                  aria-label="Bán kính"
                   value={radiusPreset}
                   disabled={pending}
-                  onChange={(event) => {
-                    if (event.target.value !== "CUSTOM") setRadiusMeters(event.target.value);
+                  radius="md"
+                  size="md"
+                  options={[
+                    ...RADIUS_PRESETS.map((preset) => ({
+                      value: String(preset),
+                      label: radiusLabel(preset),
+                    })),
+                    { value: "CUSTOM", label: "Tùy chỉnh" },
+                  ]}
+                  onChange={(val) => {
+                    if (val !== "CUSTOM") setRadiusMeters(val);
                     else if (radiusPreset !== "CUSTOM") setRadiusMeters("");
                     setRadiusEnabled(true);
                   }}
-                >
-                  {RADIUS_PRESETS.map((preset) => <option value={preset} key={preset}>{radiusLabel(preset)}</option>)}
-                  <option value="CUSTOM">Tùy chỉnh</option>
-                </select>
+                />
                 <small className="field-hint">500 m · 1 · 2 · 3 · 5 · 10 km hoặc tùy chỉnh</small>
               </label>
 
@@ -325,11 +333,21 @@ export function CoverageForm({
             <summary>Thông tin bổ sung</summary>
             <label>
               Áp dụng cho
-              <select disabled={pending || editing} value={coverageType} onChange={(event) => setCoverageType(event.target.value as CoverageType)} required>
-                <option value="">Chọn mục đích phạm vi</option>
-                <option value="PRODUCT_DELIVERY">Giao sản phẩm</option>
-                <option value="SERVICE_AREA">Khu vực dịch vụ</option>
-              </select>
+              <SelectDropdown<CoverageType | "">
+                aria-label="Áp dụng cho"
+                disabled={pending || editing}
+                placeholder="Chọn mục đích phạm vi"
+                value={coverageType}
+                radius="md"
+                size="md"
+                required
+                options={[
+                  { value: "", label: "Chọn mục đích phạm vi" },
+                  { value: "PRODUCT_DELIVERY", label: "Giao sản phẩm" },
+                  { value: "SERVICE_AREA", label: "Khu vực dịch vụ" },
+                ]}
+                onChange={(val) => setCoverageType(val)}
+              />
             </label>
             {editing ? <p className="field-hint">Mục đích áp dụng không thể đổi khi sửa. Tạo cấu hình mới nếu cần dùng mục đích khác.</p> : null}
             {editing ? <p className="field-hint">Trạng thái hiện tại: {coverage?.status ?? "không xác định"}.</p> : null}

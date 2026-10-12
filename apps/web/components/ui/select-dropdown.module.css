@@ -1,0 +1,288 @@
+.dropdownContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  width: 100%;
+}
+
+.dropdownContainer .label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.requiredStar {
+  color: #dc2626;
+  font-weight: 700;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Trigger Button */
+.trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  user-select: none;
+}
+
+/* Radius Variants matching CoVie design tokens */
+.radiusMd {
+  border-radius: 12px; /* Standard CoVie button/input radius */
+}
+
+.radiusLg {
+  border-radius: 16px; /* High radius */
+}
+
+.radiusFull {
+  border-radius: 9999px; /* Pill capsule style */
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+
+/* Size Variants */
+.sizeSm {
+  height: 38px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sizeMd {
+  height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.sizeLg {
+  height: 50px;
+  padding: 0 16px;
+  font-size: 15px;
+}
+
+/* Hover & Focus states */
+.trigger:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background: #fcfdfe;
+}
+
+.trigger:focus-visible {
+  border-color: #047857;
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.15);
+}
+
+.isOpen {
+  border-color: #047857 !important;
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.12) !important;
+}
+
+.hasError {
+  border-color: #ef4444 !important;
+}
+
+.hasError:focus-visible,
+.hasError.isOpen {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.trigger:disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+/* Content Left */
+.contentLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.itemIcon {
+  display: flex;
+  align-items: center;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.valueText {
+  color: #0f172a;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholderText {
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Caret Icon */
+.caretIcon {
+  color: #64748b;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s ease;
+}
+
+.caretIconOpen {
+  transform: rotate(180deg);
+  color: #047857;
+}
+
+/* Dropdown Menu Panel */
+.menuPanel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 10px 24px -3px rgba(15, 23, 42, 0.1);
+  z-index: 100;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.menuPanelOpen {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.menuPanelClosed {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px) scale(0.99);
+  max-height: 0;
+  padding: 0;
+  border-width: 0;
+  overflow: hidden;
+}
+
+/* Menu items */
+.menuItem {
+  all: unset;
+  box-sizing: border-box;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-height: unset !important;
+  height: auto !important;
+  padding: 9px 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #1e293b !important;
+  font-family: inherit !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+  outline: none !important;
+}
+
+.menuItem:hover:not(:disabled) {
+  background: #f1f5f9 !important;
+  border-color: transparent !important;
+  color: #0f172a !important;
+}
+
+.menuItemFocused {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.menuItemSelected {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+  font-weight: 600 !important;
+}
+
+.menuItem:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.menuItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.menuItemLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuItemHint {
+  font-size: 11.5px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.checkIcon {
+  color: #047857;
+  flex-shrink: 0;
+}
+
+/* Error message */
+.errorMessage {
+  font-size: 12px;
+  color: #dc2626;
+  margin: 0;
+}
+
+/* Hidden accessible synchronized select */
+.hiddenSelect {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}

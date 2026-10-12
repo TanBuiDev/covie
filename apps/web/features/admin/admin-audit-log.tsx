@@ -15,6 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { AdminPageHeader, AdminStatusChip, AdminSurface, formatAdminDate } from "./admin-ui";
 
 type AuditRow = {
@@ -274,16 +275,20 @@ export function AdminAuditLog() {
                 onChange={event => setDraft(current => ({ ...current, createdTo: event.target.value }))}
               />
             </label>
-            <label className="admin-field">
-              <span>Sắp xếp</span>
-              <select
+            <div className="admin-field">
+              <SelectDropdown<string>
+                label="Sắp xếp"
+                aria-label="Sắp xếp"
                 value={draft.sort}
-                onChange={event => setDraft(current => ({ ...current, sort: event.target.value }))}
-              >
-                <option value="CREATED_DESC">Mới nhất trước</option>
-                <option value="CREATED_ASC">Cũ nhất trước</option>
-              </select>
-            </label>
+                radius="md"
+                size="md"
+                options={[
+                  { value: "CREATED_DESC", label: "Mới nhất trước" },
+                  { value: "CREATED_ASC", label: "Cũ nhất trước" },
+                ]}
+                onChange={val => setDraft(current => ({ ...current, sort: val }))}
+              />
+            </div>
           </div>
           <div className="admin-filter-actions" style={{ display: "flex", gap: "8px", marginTop: "14px" }}>
             <button

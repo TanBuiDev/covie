@@ -3,7 +3,7 @@ import { getCsrfToken, invalidateCsrfToken } from "../../features/auth/csrf";
 import { readApiError } from "./api-error";
 import { refreshSession } from "../../features/auth/auth-session";
 
-export function createApiClient(baseUrl = "") {
+export function createApiClient(baseUrl = "", observeResponse?: (response: Response) => void) {
   const client = createCovieClient(baseUrl || (typeof window === "undefined" ? "" : window.location.origin));
   const unsafe = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -20,6 +20,8 @@ export function createApiClient(baseUrl = "") {
         const error = await readApiError(response.clone());
         if (error.code === "CSRF_INVALID") invalidateCsrfToken();
       }
+      // Response middleware runs in reverse order: observe the final response after refresh/retry.
+      observeResponse?.(response);
       return response;
     },
   });
@@ -58,16 +60,12 @@ type BrowserApiClient = {
 
 /** Sends an ungenerated endpoint through the same CSRF-aware browser client. */
 export async function requestBrowserApi(method: string, path: string, body?: unknown, headers?: HeadersInit): Promise<Response> {
-  const client = createApiClient() as unknown as BrowserApiClient;
   let rawResponse: Response | undefined;
+  const client = createApiClient("", response => { rawResponse = response.clone(); }) as unknown as BrowserApiClient;
   await client.request(method, path, {
     body,
     headers,
     credentials: "include",
-    fetch: async (request) => {
-      rawResponse = await fetch(request);
-      return rawResponse.clone();
-    },
   });
   if (!rawResponse) throw new Error("Browser API request did not return a response");
   return rawResponse;

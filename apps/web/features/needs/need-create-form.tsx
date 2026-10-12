@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CovieApiError } from "@/lib/api/api-error";
+import { SelectDropdown, type DropdownOption } from "@/components/ui/select-dropdown";
 import {
   createNeed,
   listNeedAddresses,
@@ -14,6 +15,13 @@ import {
 } from "./need-api";
 import { Clock, Eye, Lightbulb, MapPin, Package, Tag, Wrench } from "@phosphor-icons/react";
 import styles from "./buyer-needs-mobile.module.css";
+
+const RADIUS_OPTIONS: DropdownOption[] = [
+  { value: "1000", label: "1 km · Cùng tòa & đi bộ" },
+  { value: "3000", label: "3 km · Nội khu dân cư" },
+  { value: "5000", label: "5 km · Lân cận khu vực (Phổ biến)" },
+  { value: "10000", label: "10 km · Toàn khu vực mở rộng" },
+];
 
 function getInitialQueryText(): string {
   if (typeof window !== "undefined" && window.location?.search) {
@@ -44,6 +52,24 @@ export function NeedCreateForm() {
   const [isAuthError, setIsAuthError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const ready = readyType === type && !loadError;
+
+  const categoryOptions = useMemo<DropdownOption[]>(() => {
+    return categories
+      .filter((category) => Boolean(category.id))
+      .map((category) => ({
+        value: category.id!,
+        label: category.name ?? "Danh mục",
+      }));
+  }, [categories]);
+
+  const addressOptions = useMemo<DropdownOption[]>(() => {
+    return addresses
+      .filter((address) => Boolean(address.id))
+      .map((address) => ({
+        value: address.id!,
+        label: `${address.label ? `${address.label} · ` : ""}${address.addressText ?? "Địa chỉ đã lưu"}`,
+      }));
+  }, [addresses]);
 
   function changeType(nextType: NeedType) {
     if (nextType === type || submitting) return;
@@ -210,14 +236,21 @@ export function NeedCreateForm() {
               <small className={styles.help}>Chọn tìm sản phẩm hoặc đặt dịch vụ</small>
             </div>
 
-            <label className="need-form__category-field">
-              <span>Danh mục</span>
-              <select required disabled={!ready || submitting} value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
-                <option value="" disabled>Chọn danh mục</option>
-                {categories.map((category) => category.id ? <option key={category.id} value={category.id}>{category.name ?? "Danh mục"}</option> : null)}
-              </select>
+            <div className="need-form__category-field">
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>Danh mục</span>
+              <SelectDropdown
+                aria-label="Danh mục"
+                placeholder="Chọn danh mục"
+                required
+                disabled={!ready || submitting}
+                value={categoryId}
+                options={categoryOptions}
+                onChange={(val) => setCategoryId(String(val))}
+                radius="md"
+                size="md"
+              />
               <small className={styles.help}>Chọn danh mục phù hợp</small>
-            </label>
+            </div>
           </div>
 
           <div className="need-form__field-group">
@@ -260,28 +293,35 @@ export function NeedCreateForm() {
               </label>
             ) : null}
 
-            <label className="need-form__radius-field">
-              <span>Phạm vi tìm</span>
-              <select value={radiusMeters} onChange={(event) => setRadiusMeters(event.target.value)}>
-                <option value="1000">1 km · Cùng tòa & đi bộ</option>
-                <option value="3000">3 km · Nội khu dân cư</option>
-                <option value="5000">5 km · Lân cận khu vực (Phổ biến)</option>
-                <option value="10000">10 km · Toàn khu vực mở rộng</option>
-              </select>
+            <div className="need-form__radius-field">
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>Phạm vi tìm</span>
+              <SelectDropdown
+                aria-label="Phạm vi tìm"
+                value={radiusMeters}
+                options={RADIUS_OPTIONS}
+                onChange={(val) => setRadiusMeters(String(val))}
+                radius="md"
+                size="md"
+              />
               <small className={styles.help}>Khoảng cách tối đa từ vị trí đã chọn</small>
-            </label>
+            </div>
           </div>
 
-          <label>
-            <span>Vị trí</span>
-            <select required disabled={!ready || submitting} value={addressId} onChange={(event) => setAddressId(event.target.value)}>
-              <option value="" disabled>Chọn địa chỉ đã lưu</option>
-              {addresses.map((address) => address.id ? (
-                <option key={address.id} value={address.id}>{address.label ? `${address.label} · ` : ""}{address.addressText ?? "Địa chỉ đã lưu"}</option>
-              ) : null)}
-            </select>
+          <div>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>Vị trí</span>
+            <SelectDropdown
+              aria-label="Vị trí"
+              placeholder="Chọn địa chỉ đã lưu"
+              required
+              disabled={!ready || submitting}
+              value={addressId}
+              options={addressOptions}
+              onChange={(val) => setAddressId(String(val))}
+              radius="md"
+              size="md"
+            />
             <small className={styles.help}>Địa chỉ đã lưu của bạn</small>
-          </label>
+          </div>
           {ready && !addresses.length ? <p className={`need-form__help ${styles.help}`}>Bạn cần một địa chỉ đã lưu. <Link href="/me/addresses">Quản lý địa chỉ</Link></p> : null}
 
           <div className="need-form__expiry-group">

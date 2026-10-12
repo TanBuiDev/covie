@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { CoVieIcon } from "@/components/ui/covie-icon";
 import { CovieApiError } from "@/lib/api/api-error";
 import { createReport, type ReportTargetType } from "./report-api";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import styles from "./report-button.module.css";
 
 const reasons = [
@@ -104,9 +105,17 @@ export function ReportButton({
                 ) : null}
                 <label>
                   <span>Lý do báo cáo</span>
-                  <select value={reasonCode} onChange={(event) => setReasonCode(event.target.value as (typeof reasons)[number][0])}>
-                    {reasons.map(([value, text]) => <option key={value} value={value}>{text}</option>)}
-                  </select>
+                  <SelectDropdown<(typeof reasons)[number][0]>
+                    aria-label="Lý do báo cáo"
+                    value={reasonCode}
+                    radius="md"
+                    size="md"
+                    options={reasons.map(([value, text]) => ({
+                      value,
+                      label: text,
+                    }))}
+                    onChange={(val) => setReasonCode(val)}
+                  />
                   <small className={styles.helper}>Chọn lý do phù hợp nhất.</small>
                 </label>
                 <label>

@@ -1,3 +1,4 @@
+import { StrictMode } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { CovieApiError } from "@/lib/api/api-error";
@@ -179,3 +180,32 @@ it("discards a changed checkout token and requires a fresh preview", async () =>
   expect(screen.getByRole("button", { name: "Kiểm tra giá/thông tin mới" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Đặt hàng" })).not.toBeInTheDocument();
 });
+
+it("auto-previews on initial mount when enabled and activates commit button", async () => {
+  previewCheckout.mockResolvedValueOnce({ checkoutToken: "auto-token", subtotal: 100_000, shippingFee: 0, total: 100_000, currency: "VND", fulfillmentMethod: "PICKUP" });
+  render(<CheckoutPreview carts={carts} addresses={[]} autoPreview={true} />);
+  await waitFor(() => expect(screen.getAllByRole("button", { name: "Đặt hàng" })).toHaveLength(2));
+  expect(previewCheckout).toHaveBeenCalledTimes(1);
+});
+
+it("handles React StrictMode double-mounting during auto-preview without deadlock", async () => {
+  previewCheckout.mockImplementation(() => new Promise((resolve) => {
+    setTimeout(() => resolve({ checkoutToken: "strict-token", subtotal: 100_000, shippingFee: 0, total: 100_000, currency: "VND", fulfillmentMethod: "PICKUP" }), 20);
+  }));
+  render(
+    <StrictMode>
+      <CheckoutPreview carts={carts} addresses={[]} autoPreview={true} />
+    </StrictMode>
+  );
+  await waitFor(() => expect(screen.getAllByRole("button", { name: "Đặt hàng" })).toHaveLength(2), { timeout: 3000 });
+  expect(screen.queryByText("Đang kiểm tra…")).not.toBeInTheDocument();
+});
+
+it("re-enables preview button and displays error on preview failure instead of looping", async () => {
+  previewCheckout.mockRejectedValue(new Error("Network failure"));
+  render(<CheckoutPreview carts={carts} addresses={[]} autoPreview={true} />);
+  await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Không thể tạo bản xem trước. Hãy kiểm tra lại món đã chọn và địa chỉ."));
+  expect(screen.getByRole("button", { name: "Xem trước" })).toBeEnabled();
+  expect(previewCheckout).toHaveBeenCalledTimes(1);
+});
+

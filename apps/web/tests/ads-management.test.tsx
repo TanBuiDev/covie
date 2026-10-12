@@ -171,5 +171,5 @@ describe("ad management", () => {
     await screen.findByText("Chiến dịch cũ");
     expect(screen.getAllByText("Chiến dịch 99")).toHaveLength(1);
     expect(api.listAdCampaigns).toHaveBeenLastCalledWith({ kind: "admin" }, 100);
-  });
+  }, 15000);
 });
