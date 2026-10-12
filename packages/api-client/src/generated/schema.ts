@@ -4117,7 +4117,9 @@ export interface components {
             version?: number;
         };
         TimeIntervalRequest: {
+            /** Format: time-local */
             closeTime: string;
+            /** Format: time-local */
             openTime: string;
         };
         UpdateCartItemRequest: {

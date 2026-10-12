@@ -32,15 +32,15 @@ jobs:
       GOOGLE_OAUTH_REDIRECT_URI: http://localhost:3000/api/v1/auth/google/callback/google
       JAVA_TOOL_OPTIONS: -Dcovie.test.minio-image=cgr.dev/chainguard/minio@sha256:a05a4497e8dce3cb7a7a1bf1872ba5d30ea988f1e8c22c9e0920503761c4b5f1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '25'
           cache: maven
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
       - name: Install pnpm
@@ -72,7 +72,7 @@ jobs:
       api_image: ${{ steps.images.outputs.api_image }}
       web_image: ${{ steps.images.outputs.web_image }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Registry login
@@ -95,14 +95,14 @@ jobs:
           [[ "$web_digest" =~ @sha256:[0-9a-f]{64}$ ]]
           echo "api_image=$api_digest" >> "$GITHUB_OUTPUT"
           echo "web_image=$web_digest" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
       - name: Install pnpm
         run: npm install --global pnpm@10
       - name: Install workspace for OpenAPI generation
         run: pnpm install --frozen-lockfile
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '25'
@@ -122,7 +122,7 @@ jobs:
           COVIE_WEB_IMAGE: ${{ steps.images.outputs.web_image }}
           GIT_SHA: ${{ github.sha }}
         run: ./infra/scripts/create-release-manifest.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: covie-release-${{ github.sha }}
           path: |
@@ -138,8 +138,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: covie-release-${{ github.sha }}
           path: build/release-artifact
@@ -167,7 +167,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: covie-release-${{ github.sha }}
           path: build/release-artifact
