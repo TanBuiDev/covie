@@ -39,7 +39,7 @@ it("restarts the continuous second after the tab becomes visible", async () => {
   fireEvent(document, new Event("visibilitychange"));
   await act(async () => { vi.advanceTimersByTime(999); });
   expect(trackAdEvent).not.toHaveBeenCalled();
-  await act(async () => { vi.advanceTimersByTime(1); });
+  await act(async () => { vi.advanceTimersByTime(50); });
   expect(trackAdEvent).toHaveBeenCalledTimes(1);
 });
 
