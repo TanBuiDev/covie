@@ -584,7 +584,7 @@ export function CatalogCreateForm({
           <ul className="seller-create-tips-list">
             <li>
               <strong>Tên món kèm định lượng:</strong>
-              <span>Ví dụ: "Bánh mì chảo - Phần đặc biệt" hoặc "Cà phê muối 500ml" giúp cư dân dễ chọn mua.</span>
+              <span>Ví dụ: &quot;Bánh mì chảo - Phần đặc biệt&quot; hoặc &quot;Cà phê muối 500ml&quot; giúp cư dân dễ chọn mua.</span>
             </li>
             <li>
               <strong>Thời gian chuẩn bị chính xác:</strong>

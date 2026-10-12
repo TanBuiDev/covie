@@ -114,7 +114,7 @@ export function CatalogManagementList({ merchantId, items }: { merchantId: strin
         </div>
       ) : !filtered.length ? (
         <div className="seller-catalog-empty-search">
-          <p>Không tìm thấy mặt hàng nào khớp với từ khóa "{searchQuery}".</p>
+          <p>Không tìm thấy mặt hàng nào khớp với từ khóa &quot;{searchQuery}&quot;.</p>
         </div>
       ) : (
         <ul className="seller-catalog-list">
