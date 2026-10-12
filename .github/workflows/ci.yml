@@ -22,7 +22,7 @@ jobs:
       run:
         working-directory: apps/api
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Restore Maven wrapper executable bit
         run: chmod +x mvnw
       - uses: actions/setup-java@v6
@@ -36,7 +36,7 @@ jobs:
   frontend-and-contract:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Restore Maven wrapper executable bit
         run: chmod +x apps/api/mvnw
       - uses: actions/setup-java@v6
@@ -77,7 +77,7 @@ jobs:
   release-security-source:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
@@ -93,7 +93,7 @@ jobs:
   secret-history:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Scan every fetched branch and tag for secrets
