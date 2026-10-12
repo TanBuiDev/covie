@@ -70,7 +70,33 @@ class OpenApiExportTest extends PostgresIntegrationTest {
         String output = System.getProperty("covie.openapi.output", "target/openapi/openapi.json");
         Path outputPath = Path.of(output).toAbsolutePath().normalize();
         Files.createDirectories(outputPath.getParent());
-        Files.writeString(outputPath, json);
+        Files.writeString(outputPath, objectMapper.writeValueAsString(canonicalize(document)));
+    }
+
+    // Reflection can enumerate Spring Page fields differently across JVMs.
+    // Sort object keys only: array ordering and all schema values are preserved.
+    private JsonNode canonicalize(JsonNode node) {
+        if (node.isObject()) {
+            var result = objectMapper.createObjectNode();
+            var names = new java.util.ArrayList<String>();
+            node.fieldNames().forEachRemaining(names::add);
+            names.sort(String::compareTo);
+            names.forEach(name -> result.set(name, canonicalize(node.get(name))));
+            return result;
+        }
+        if (node.isArray()) {
+            var result = objectMapper.createArrayNode();
+            node.forEach(value -> result.add(canonicalize(value)));
+            return result;
+        }
+        return node;
+    }
+
+    @Test
+    void canonicalExportSortsNestedKeysAndPreservesArrayOrder() throws Exception {
+        var input = objectMapper.readTree("{\"z\":[{\"z\":1,\"a\":2},3,1],\"a\":true}");
+        assertThat(objectMapper.writeValueAsString(canonicalize(input)))
+                .isEqualTo("{\"a\":true,\"z\":[{\"a\":2,\"z\":1},3,1]}");
     }
 
     private void assertHeaderParameter(JsonNode paths, String path, String method, String headerName) {
