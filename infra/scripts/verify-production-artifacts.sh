@@ -16,6 +16,7 @@ required=(
   infra/deploy/deploy.sh
   infra/deploy/smoke.sh
   infra/deploy/rollback.sh
+  infra/deploy/rehearse-release.sh
   infra/backup/postgres-backup.sh
   infra/backup/postgres-restore.sh
   infra/backup/verify-dump.sh
@@ -31,6 +32,7 @@ done
 for script in infra/deploy/*.sh infra/backup/*.sh infra/scripts/*.sh; do
   bash -n "$script"
 done
+bash infra/scripts/tests/release-rehearsal-gate.sh
 node infra/perf/run-load.mjs --help >/dev/null
 
 highest="$(find apps/api/src/main/resources/db/migration -maxdepth 1 -type f -name 'V*.sql' -exec basename {} \; \

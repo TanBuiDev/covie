@@ -35,7 +35,7 @@ Before approval, the operator must additionally verify host clock, DNS, database
 sudo /opt/covie/current/infra/deploy/rollback.sh
 ```
 
-Rollback pulls `previous.env`, restarts API/Web with those digests, waits for health, runs smoke and swaps release-state files only after success. It does **not** revert Flyway, drop schema objects or restore a database.
+Rollback validates the runtime environment (including the internal API URL and readable JWT keys) and TLS files before pulling the digests in `previous.env`. It restarts API/Web with those digests, waits for health, runs smoke and swaps release-state files only after success. It does **not** revert Flyway, drop schema objects or restore a database.
 
 If the previous application cannot run against the candidate database schema, the release violates the pilot forward-compatible migration strategy and must not be approved. Redesign the migration/release rather than adding an automatic down migration.
 

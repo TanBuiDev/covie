@@ -30,6 +30,9 @@ web_image="$(value WEB_IMAGE)"
 export COVIE_API_IMAGE="$api_image" COVIE_WEB_IMAGE="$web_image"
 export COVIE_ENV_FILE="$env_file" COVIE_JWT_SECRET_DIR="$jwt_dir" COVIE_TLS_CERT_DIR="$tls_dir"
 
+"$repo_root/infra/deploy/verify-runtime-env.sh" "$env_file"
+[[ -r "$tls_dir/fullchain.pem" && -r "$tls_dir/privkey.pem" ]] || { echo "TLS certificate/key missing" >&2; exit 1; }
+
 docker pull "$COVIE_API_IMAGE"
 docker pull "$COVIE_WEB_IMAGE"
 docker compose -f "$compose" config >/dev/null
