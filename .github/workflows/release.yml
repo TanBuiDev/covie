@@ -161,6 +161,13 @@ jobs:
           scp build/release-artifact/release-manifest.env "$USER@$HOST:/tmp/covie-release-manifest.env"
           ssh "$USER@$HOST" 'sudo /opt/covie/current/infra/deploy/deploy.sh /tmp/covie-release-manifest.env'
 
+      - name: Rehearse the exact staging release before production promotion
+        env:
+          HOST: ${{ secrets.STAGING_DEPLOY_HOST }}
+          USER: ${{ secrets.STAGING_DEPLOY_USER }}
+        run: |
+          ssh "$USER@$HOST" 'sudo bash /opt/covie/current/infra/deploy/rehearse-release.sh /tmp/covie-release-manifest.env /etc/covie/staging-rehearsal.env'
+
   deploy-production:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_production && inputs.deploy_staging }}
     needs: [build-release, deploy-staging]

@@ -24,6 +24,8 @@ The disposable staging data must give the Buyer at least one saved address and g
 
 ## Full gate
 
+The release workflow now runs `infra/deploy/rehearse-release.sh` after staging deployment, before its production dependency can succeed. The wrapper reads the operator-managed `/etc/covie/staging-rehearsal.env` shell configuration, invokes the committed rehearsal and checks that `current.env` matches the candidate manifest both before and after the rollback drill. Keep that configuration root-owned, readable only by the operator/root, outside the repository; it must contain the staging-only variables, confirmation and hooks below. Missing configuration or failed rehearsal blocks promotion. Manifest comparison checks release-state consistency; runtime health and business checks come from the rehearsal itself.
+
 Set staging-only connection variables plus the following command hooks:
 
 ```text
