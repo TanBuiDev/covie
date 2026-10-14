@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   addSocialComment: vi.fn(),
   removeSocialComment: vi.fn(),
   isSignInRequired: vi.fn(() => false),
+  socialErrorMessage: vi.fn(() => "Không thể thực hiện. Kiểm tra kết nối và thử lại."),
 }));
 vi.mock("@/features/marketplace-view/social-api", () => api);
 
@@ -47,7 +48,7 @@ describe("Phase 2 social card", () => {
       .toHaveAttribute("aria-pressed", "true"));
   });
 
-  it("loads comments only after user opens and requests them", async () => {
+  it("lazily loads comments immediately after opening", async () => {
     api.fetchSocialSummaries.mockResolvedValue({
       [item.id!]: { itemId: item.id, likes: 0, comments: 1, liked: false, saved: false },
     });
@@ -58,9 +59,28 @@ describe("Phase 2 social card", () => {
     mount();
     expect(api.fetchSocialComments).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Bình luận Bánh mì CoVie" }));
-    fireEvent.click(screen.getByRole("button", { name: "Xem bình luận" }));
     expect(await screen.findByText("Còn hàng không?")).toBeInTheDocument();
     expect(api.fetchSocialComments).toHaveBeenCalledTimes(1);
+  });
+
+  it("synchronizes server-confirmed state across independent card sections", async () => {
+    api.fetchSocialSummaries.mockResolvedValue({
+      [item.id!]: { itemId: item.id, likes: 4, comments: 0, liked: false, saved: false },
+    });
+    api.changeSocialReaction.mockResolvedValue({ itemId: item.id,
+      likes: 5, comments: 0, liked: true, saved: false });
+    render(<>
+      <SocialFeedProvider itemIds={[item.id!]} enabled>
+        <MarketplaceProductCard item={item} mode="social" />
+      </SocialFeedProvider>
+      <SocialFeedProvider itemIds={[item.id!]} enabled>
+        <MarketplaceProductCard item={item} mode="social" />
+      </SocialFeedProvider>
+    </>);
+    const buttons = await screen.findAllByRole("button", { name: "Thích Bánh mì CoVie" });
+    await waitFor(() => expect(buttons.every((button) => !button.hasAttribute("disabled"))).toBe(true));
+    fireEvent.click(buttons[0]);
+    await waitFor(() => expect(screen.getAllByRole("button", { name: "Bỏ thích Bánh mì CoVie" })).toHaveLength(2));
   });
 
   it("does not fabricate likes after an unsuccessful server mutation", async () => {
@@ -72,7 +92,7 @@ describe("Phase 2 social card", () => {
     const like = await screen.findByRole("button", { name: "Thích Bánh mì CoVie" });
     await waitFor(() => expect(like).not.toBeDisabled());
     fireEvent.click(like);
-    expect(await screen.findByText("Không thể cập nhật. Hãy thử lại.")).toBeInTheDocument();
+    expect(await screen.findByText("Không thể thực hiện. Kiểm tra kết nối và thử lại.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Thích Bánh mì CoVie" }))
       .toHaveAttribute("aria-pressed", "false");
   });
