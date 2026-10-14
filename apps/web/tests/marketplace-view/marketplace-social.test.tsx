@@ -80,7 +80,8 @@ describe("Phase 2 social card", () => {
     </>);
     const buttons = await screen.findAllByRole("button", { name: "Thích Bánh mì CoVie" });
     await waitFor(() => expect(buttons.every((button) => !button.hasAttribute("disabled"))).toBe(true));
-    fireEvent.click(buttons[0]);
+    expect(buttons[0]).toBeDefined();
+    fireEvent.click(buttons[0]!);
     await waitFor(() => expect(screen.getAllByRole("button", { name: "Bỏ thích Bánh mì CoVie" })).toHaveLength(2));
   });
 
