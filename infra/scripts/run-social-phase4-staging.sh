@@ -10,6 +10,12 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${COVIE_SOCIAL_E2E_SEARCH_PATH:?Set a staging /search URL path with filters/location}"
 : "${COVIE_SOCIAL_E2E_ITEM_NAME:?Set the exact published catalog fixture name}"
 : "${COVIE_SOCIAL_LOAD_ITEM_IDS:?Set 1 to 40 visible item UUIDs for perf}"
+for key in STAGING_BUYER_EMAIL STAGING_BUYER_PASSWORD STAGING_SELLER_EMAIL STAGING_SELLER_PASSWORD STAGING_ADMIN_EMAIL STAGING_ADMIN_PASSWORD; do
+  [[ -n "${!key:-}" ]] || { echo "Missing required staging test identity field: $key" >&2; exit 2; }
+done
+[[ "${COVIE_SOCIAL_E2E_MUTATIONS_OK:-}" == "1" ]] || {
+  echo "Full acceptance requires COVIE_SOCIAL_E2E_MUTATIONS_OK=1 on disposable staging" >&2; exit 2;
+}
 [[ "$COVIE_STAGING_BASE_URL" == https://* ]] || {
   echo "Non-HTTPS origin is forbidden" >&2; exit 2;
 }

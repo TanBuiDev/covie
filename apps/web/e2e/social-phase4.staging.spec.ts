@@ -1,4 +1,4 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   loginStagingRole, readStagingAuthConfig, stagingAuthIsConfigured,
 } from "./fixtures/staging-auth-fixture";
