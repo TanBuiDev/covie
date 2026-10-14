@@ -64,6 +64,15 @@ export async function removeSocialComment(itemId: string, commentId: string): Pr
     "/api/v1/me/catalog/items/" + encodeURIComponent(itemId) + "/comments/" + encodeURIComponent(commentId));
   if (!response.ok) throw await readApiError(response);
 }
+export async function reportSocialComment(commentId: string): Promise<void> {
+  // Uses the existing, audited moderation-case endpoint and CSRF bridge.
+  const response = await requestBrowserApi("POST", "/api/v1/reports", {
+    targetType: "SOCIAL_COMMENT",
+    targetId: commentId,
+    reasonCode: "SPAM",
+  }, { "Idempotency-Key": crypto.randomUUID() });
+  if (!response.ok) throw await readApiError(response);
+}
 export function isSignInRequired(error: unknown): boolean {
   if (typeof error !== "object" || error === null) return false;
   const data = error as Partial<CovieApiError>;

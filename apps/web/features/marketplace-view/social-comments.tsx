@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
-  addSocialComment, fetchSocialComments, isSignInRequired, removeSocialComment,
+  addSocialComment, fetchSocialComments, isSignInRequired, removeSocialComment, reportSocialComment,
   socialErrorMessage, type SocialComment,
 } from "./social-api";
 import { useSocialFeed } from "./social-feed";
@@ -87,6 +87,20 @@ export function SocialComments({ itemId, onClose }: { itemId: string; onClose: (
     } finally { setBusy(false); }
   }
 
+  async function report(commentId: string) {
+    if (busy) return;
+    setBusy(true);
+    setMessage("");
+    setRequiresLogin(false);
+    try {
+      await reportSocialComment(commentId);
+      setMessage("Đã gửi báo cáo bình luận tới đội ngũ kiểm duyệt.");
+    } catch (error) {
+      setMessage(socialErrorMessage(error));
+      setRequiresLogin(isSignInRequired(error));
+    } finally { setBusy(false); }
+  }
+
   async function remove(commentId: string) {
     if (busy) return;
     setBusy(true);
@@ -126,8 +140,11 @@ export function SocialComments({ itemId, onClose }: { itemId: string; onClose: (
                 <time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleDateString("vi-VN")}</time>
               </div>
               <p>{comment.body}</p>
-              {comment.own && <button type="button" disabled={busy}
-                onClick={() => void remove(comment.id)} aria-label="Xóa bình luận của bạn">Xóa</button>}
+              {comment.own
+                ? <button type="button" disabled={busy} onClick={() => void remove(comment.id)}
+                    aria-label="Xóa bình luận của bạn">Xóa</button>
+                : <button type="button" disabled={busy} onClick={() => void report(comment.id)}
+                    aria-label="Báo cáo bình luận">Báo cáo</button>}
             </div>
           ))}
           {cursor && <button type="button" disabled={loadingMore} onClick={() => void loadMore()}>
