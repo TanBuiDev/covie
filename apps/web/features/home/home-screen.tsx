@@ -30,6 +30,7 @@ import { useBrowseLocation } from "@/features/location/use-browse-location";
 import { locationToSearchParams, toDiscoveryLocation } from "@/features/location/location-context";
 import { HOME_SECTIONS, homeDiscoveryFilters, type HomeSectionDefinition, type HomeSectionKey } from "./home-data";
 import { MarketplaceProductCard } from "@/features/marketplace-view/marketplace-product-card";
+import { SocialFeedProvider } from "@/features/marketplace-view/social-feed";
 import { MarketplaceViewToggle } from "@/features/marketplace-view/marketplace-view-toggle";
 import { useMarketplaceView } from "@/features/marketplace-view/use-marketplace-view";
 import type { MarketplaceViewMode } from "@/features/marketplace-view/marketplace-view-preference";
@@ -100,9 +101,11 @@ function ProductSection({ definition, state, retry, mode }: {
       )}
       {state.status === "ready" && state.items.length === 0 && <p className={styles.emptyState}>{definition.emptyMessage}</p>}
       {state.status === "ready" && state.items.length > 0 && (
+        <SocialFeedProvider itemIds={state.items.flatMap((item) => item.id ? [item.id] : [])} enabled={mode === "social"}>
         <div className={`${viewStyles.grid} ${mode === "social" ? viewStyles.gridSocial : viewStyles.gridCatalog}`}>
           {state.items.map((item) => <MarketplaceProductCard key={item.id} item={item} mode={mode} href={`/items/${item.id}${itemSuffix}`} />)}
         </div>
+        </SocialFeedProvider>
       )}
     </section>
   );

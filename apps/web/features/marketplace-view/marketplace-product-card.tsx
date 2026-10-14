@@ -6,6 +6,9 @@ import { useState } from "react";
 import { BookmarkSimple, ChatCircle, Heart, MapPin, Package, ShareNetwork, Storefront, Tag, Wrench } from "@phosphor-icons/react";
 import type { components } from "@covie/api-client";
 import type { MarketplaceViewMode } from "./marketplace-view-preference";
+import { changeSocialReaction, isSignInRequired } from "./social-api";
+import { useSocialFeed } from "./social-feed";
+import { SocialComments } from "./social-comments";
 import styles from "./marketplace-view.module.css";
 
 type Item = components["schemas"]["CatalogItemSummaryResponse"];
@@ -31,6 +34,12 @@ export function MarketplaceProductCard({
   href?: string;
 }) {
   const [shareMessage, setShareMessage] = useState<string>();
+  const [socialError, setSocialError] = useState("");
+  const [signIn, setSignIn] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const { summaries, loading: socialLoading, failed: socialFailed, updateSummary, retry } = useSocialFeed();
+  const social = item.id ? summaries[item.id] : undefined;
   const service = item.type === "SERVICE";
   const resale = item.listingKind === "RESALE";
   const kind = service ? "Dịch vụ" : resale ? "Thanh lý" : "Sản phẩm";
@@ -56,6 +65,20 @@ export function MarketplaceProductCard({
       // Rejected share or clipboard permission: do not claim success.
     }
     setShareMessage("Không thể chia sẻ tự động. Mở trang chi tiết để sao chép đường dẫn.");
+  }
+
+  async function react(kind: "likes" | "saves", selected: boolean) {
+    if (!item.id || busy || !social) return;
+    setBusy(true);
+    setSocialError("");
+    setSignIn(false);
+    try {
+      updateSummary(await changeSocialReaction(item.id, kind, !selected));
+    } catch (error) {
+      setSignIn(isSignInRequired(error));
+      setSocialError(isSignInRequired(error)
+        ? "Đăng nhập để tương tác với sản phẩm." : "Không thể cập nhật. Hãy thử lại.");
+    } finally { setBusy(false); }
   }
 
   return (
@@ -93,22 +116,42 @@ export function MarketplaceProductCard({
           <span>{item.resolvedLocation?.name ?? "Chưa xác định vị trí"}{distance ? " · " + distance : ""}</span>
         </p>
         {mode === "social" && (
-          <div className={styles.interactions} aria-label="Tương tác cộng đồng sắp ra mắt">
-            <button type="button" disabled title="Chức năng thích sẽ được triển khai sau" aria-label="Thích — chưa khả dụng">
-              <Heart size={20} aria-hidden="true" />
-            </button>
-            <button type="button" disabled title="Bình luận sẽ được triển khai sau" aria-label="Bình luận — chưa khả dụng">
-              <ChatCircle size={20} aria-hidden="true" />
-            </button>
-            <button type="button" onClick={() => void share()} aria-label={"Chia sẻ " + name}>
-              <ShareNetwork size={20} aria-hidden="true" />
-            </button>
-            <button type="button" disabled title="Lưu sẽ được triển khai sau" aria-label="Lưu — chưa khả dụng">
-              <BookmarkSimple size={20} aria-hidden="true" />
-            </button>
-          </div>
+          <>
+            <div className={styles.interactions} aria-label="Tương tác cộng đồng">
+              <button type="button" disabled={busy || !social || socialLoading}
+                aria-pressed={social?.liked ?? false}
+                title={social?.liked ? "Bỏ thích" : "Thích"}
+                aria-label={(social?.liked ? "Bỏ thích " : "Thích ") + name}
+                onClick={() => void react("likes", social?.liked ?? false)}>
+                <Heart size={20} weight={social?.liked ? "fill" : "regular"} aria-hidden="true" />
+                {social && <span>{social.likes}</span>}
+              </button>
+              <button type="button" disabled={!item.id}
+                aria-expanded={commentsOpen} aria-label={"Bình luận " + name}
+                onClick={() => setCommentsOpen((old) => !old)}>
+                <ChatCircle size={20} aria-hidden="true" />
+                {social && <span>{social.comments}</span>}
+              </button>
+              <button type="button" onClick={() => void share()} aria-label={"Chia sẻ " + name}>
+                <ShareNetwork size={20} aria-hidden="true" />
+              </button>
+              <button type="button" disabled={busy || !social || socialLoading}
+                aria-pressed={social?.saved ?? false}
+                title={social?.saved ? "Bỏ lưu" : "Lưu"}
+                aria-label={(social?.saved ? "Bỏ lưu " : "Lưu ") + name}
+                onClick={() => void react("saves", social?.saved ?? false)}>
+                <BookmarkSimple size={20} weight={social?.saved ? "fill" : "regular"} aria-hidden="true" />
+              </button>
+            </div>
+            {socialFailed && <div className={styles.socialError} role="alert">
+              Không tải được tương tác. <button type="button" onClick={retry}>Thử lại</button>
+            </div>}
+            {socialError && <p className={styles.socialError} role="alert">{socialError}
+              {signIn && <> <Link href="/login">Đăng nhập</Link></>}
+            </p>}
+            {commentsOpen && item.id && <SocialComments key={item.id} itemId={item.id} onClose={() => setCommentsOpen(false)} />}
+          </>
         )}
-        {mode === "social" && <small className={styles.comingSoon}>Like, bình luận và lưu sẽ được bổ sung sau.</small>}
         {shareMessage && <p className={styles.shareMessage} role="status">{shareMessage}</p>}
         <Link href={url} className={styles.cta}>
           {service ? "Xem dịch vụ" : resale ? "Xem món đồ" : "Xem & Đặt"}

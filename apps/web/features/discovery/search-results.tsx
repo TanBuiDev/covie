@@ -29,6 +29,7 @@ import { SelectDropdown, type DropdownOption } from "@/components/ui/select-drop
 import styles from "./search-results.module.css";
 import categoryStyles from "./category-state.module.css";
 import { MarketplaceProductCard } from "@/features/marketplace-view/marketplace-product-card";
+import { SocialFeedProvider } from "@/features/marketplace-view/social-feed";
 import { MarketplaceViewToggle } from "@/features/marketplace-view/marketplace-view-toggle";
 import { useMarketplaceView } from "@/features/marketplace-view/use-marketplace-view";
 import viewStyles from "@/features/marketplace-view/marketplace-view.module.css";
@@ -1000,6 +1001,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
             )}
 
             {!loading && !error && (
+              <SocialFeedProvider itemIds={(page?.items ?? []).flatMap((item) => item.id ? [item.id] : [])} enabled={viewMode === "social"}>
               <div
                 className={`${viewStyles.grid} ${viewMode === "social" ? viewStyles.gridSocial : viewStyles.gridCatalog}`}
               >
@@ -1010,6 +1012,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
                   </Fragment>
                 ))}
               </div>
+              </SocialFeedProvider>
             )}
 
             {moreError && <p role="alert">Không thể tải thêm kết quả.</p>}
