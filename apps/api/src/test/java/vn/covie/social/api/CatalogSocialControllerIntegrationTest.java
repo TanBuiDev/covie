@@ -172,13 +172,17 @@ class CatalogSocialControllerIntegrationTest extends PostgresIntegrationTest {
         mvc.perform(put(likes).header("Authorization",actor))
                 .andExpect(status().isNotFound());
 
-        merchant.restoreVisibility(NOW);
-        merchant.suspend(NOW);
-        merchants.saveAndFlush(merchant);
-        mvc.perform(get(summary).param("itemIds",itemId.toString()))
+        // Use an independent persisted fixture: MockMvc requests are executed in
+        // separate transactions and can invalidate a previously loaded JPA version.
+        UUID suspendedItemId = item(true);
+        UUID suspendedMerchantId = items.findById(suspendedItemId).orElseThrow().getMerchantProfileId();
+        var suspendedMerchant = merchants.findById(suspendedMerchantId).orElseThrow();
+        suspendedMerchant.suspend(NOW);
+        merchants.saveAndFlush(suspendedMerchant);
+        mvc.perform(get(summary).param("itemIds",suspendedItemId.toString()))
                 .andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
-        mvc.perform(put(likes).header("Authorization",actor))
-                .andExpect(status().isNotFound());
+        mvc.perform(put("/api/v1/me/catalog/items/" + suspendedItemId + "/likes")
+                .header("Authorization",actor)).andExpect(status().isNotFound());
     }
 
 }
