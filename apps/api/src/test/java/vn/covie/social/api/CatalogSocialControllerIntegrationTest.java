@@ -1,6 +1,7 @@
 package vn.covie.social.api;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -61,7 +62,7 @@ class CatalogSocialControllerIntegrationTest extends PostgresIntegrationTest {
         String token = user("Social viewer");
         mvc.perform(get("/api/v1/catalog/social-summary").param("itemIds",itemId.toString()))
                 .andExpect(status().isOk()).andExpect(jsonPath("$['" + itemId + "'].likes").value(0));
-        mvc.perform(put(route + "/likes")).andExpect(status().isUnauthorized());
+        mvc.perform(put(route + "/likes").with(csrf())).andExpect(status().isUnauthorized());
         mvc.perform(put(route + "/likes").header("Authorization",token))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.likes").value(1))
                 .andExpect(jsonPath("$.liked").value(true));

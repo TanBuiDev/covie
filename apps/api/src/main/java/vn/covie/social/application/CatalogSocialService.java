@@ -117,7 +117,7 @@ public class CatalogSocialService {
                    (c.author_user_id=:viewer) own
               from catalog_social_comments c join users u on u.id=c.author_user_id
              where c.catalog_item_id=:itemId and c.status='ACTIVE'
-               and (:before is null or (c.created_at,c.id) <
+               and (cast(:before as uuid) is null or (c.created_at,c.id) <
                   (select older.created_at,older.id from catalog_social_comments older
                    where older.id=:before and older.catalog_item_id=:itemId and older.status='ACTIVE'))
              order by c.created_at desc,c.id desc limit :limit

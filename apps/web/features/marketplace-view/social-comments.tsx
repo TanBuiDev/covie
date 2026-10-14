@@ -43,10 +43,6 @@ export function SocialComments({ itemId, onClose }: { itemId: string; onClose: (
   }
 
   // Mounts only after the user opens the comment drawer (lazy, no feed N+1).
-  const [initialized, setInitialized] = useState(false);
-  if (!initialized) {
-    // Render a deliberate load control instead of causing a state change during render.
-  }
 
   async function submit() {
     const body = text.trim();
@@ -57,6 +53,7 @@ export function SocialComments({ itemId, onClose }: { itemId: string; onClose: (
     try {
       const comment = await addSocialComment(itemId, body);
       setComments((old) => [comment, ...old]);
+      setLoaded(true);
       const summary = summaries[itemId];
       if (summary) updateSummary({ ...summary, comments: summary.comments + 1 });
       setText("");
@@ -87,7 +84,7 @@ export function SocialComments({ itemId, onClose }: { itemId: string; onClose: (
         <strong>Bình luận</strong>
         <button type="button" onClick={onClose}>Đóng</button>
       </div>
-      {!loaded && <button type="button" disabled={loading} onClick={() => { setInitialized(true); void load(); }}>
+      {!loaded && <button type="button" disabled={loading} onClick={() => void load()}>
         {loading ? "Đang tải…" : "Xem bình luận"}
       </button>}
       {loaded && comments.length === 0 && <p className={styles.commentHint}>Chưa có bình luận nào.</p>}
