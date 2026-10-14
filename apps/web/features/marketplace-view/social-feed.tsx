@@ -12,7 +12,8 @@ type Context = {
 };
 
 const SocialContext = createContext<Context>({
-  summaries: {}, loading: false, failed: false, updateSummary: () => undefined, retry: () => undefined,
+  summaries: {}, loading: false, failed: false,
+  updateSummary: () => undefined, retry: () => undefined,
 });
 
 export function SocialFeedProvider({ itemIds, enabled, children }: {
@@ -21,30 +22,42 @@ export function SocialFeedProvider({ itemIds, enabled, children }: {
   children: ReactNode;
 }) {
   const key = itemIds.filter(Boolean).join(",");
-  const [summaries, setSummaries] = useState<Record<string, SocialSummary>>({});
-  const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const stamp = key + "|" + attempt;
+  const [result, setResult] = useState<{
+    stamp: string;
+    summaries: Record<string, SocialSummary>;
+    failed: boolean;
+  }>({ stamp: "", summaries: {}, failed: false });
+
   useEffect(() => {
-    if (!enabled || !key) { setSummaries({}); setLoading(false); setFailed(false); return; }
+    if (!enabled || !key) return;
     let live = true;
-    setLoading(true);
-    setFailed(false);
-    // The backend caps each request at 40; results can include more from cursor pagination.
+    // Changing item IDs invalidates data without a synchronous effect state update.
     const ids = key.split(",");
     Promise.all(Array.from({ length: Math.ceil(ids.length / 40) }, (_, index) =>
       fetchSocialSummaries(ids.slice(index * 40, (index + 1) * 40))))
-      .then((chunks) => { if (live) setSummaries(Object.assign({}, ...chunks)); })
-      .catch(() => { if (live) { setFailed(true); setSummaries({}); } })
-      .finally(() => { if (live) setLoading(false); });
+      .then((chunks) => {
+        if (live) setResult({ stamp, summaries: Object.assign({}, ...chunks), failed: false });
+      })
+      .catch(() => {
+        if (live) setResult({ stamp, summaries: {}, failed: true });
+      });
     return () => { live = false; };
-  }, [enabled, key, attempt]);
+  }, [enabled, key, stamp]);
+
+  const ready = enabled && Boolean(key) && result.stamp === stamp;
+  const summaries = ready ? result.summaries : {};
+  const loading = enabled && Boolean(key) && !ready;
+  const failed = ready && result.failed;
 
   const value = useMemo<Context>(() => ({
     summaries, loading, failed,
-    updateSummary: (summary) => setSummaries((old) => ({ ...old, [summary.itemId]: summary })),
+    updateSummary: (summary) => setResult((old) => old.stamp === stamp
+      ? { ...old, summaries: { ...old.summaries, [summary.itemId]: summary } } : old),
     retry: () => setAttempt((n) => n + 1),
-  }), [summaries, loading, failed]);
+  }), [summaries, loading, failed, stamp]);
+
   return <SocialContext.Provider value={value}>{children}</SocialContext.Provider>;
 }
 
