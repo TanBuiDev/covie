@@ -26,7 +26,6 @@ import { CategoryBadge } from "@/components/ui/category-icon";
 import { CoVieIcon } from "@/components/ui/covie-icon";
 import { discoverCatalogItems, listPublicCategories } from "@/features/catalog/catalog-api";
 import { LocationChooser } from "@/features/location/location-chooser";
-import { toDiscoveryLocation } from "@/features/location/location-context";
 import { useBrowseLocation } from "@/features/location/use-browse-location";
 import { HOME_SECTIONS, homeDiscoveryFilters, type HomeSectionDefinition, type HomeSectionKey } from "./home-data";
 import { MarketplaceProductCard } from "@/features/marketplace-view/marketplace-product-card";

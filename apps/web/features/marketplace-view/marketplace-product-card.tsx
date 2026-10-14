@@ -111,7 +111,7 @@ export function MarketplaceProductCard({
         {mode === "social" && <small className={styles.comingSoon}>Like, bình luận và lưu sẽ được bổ sung sau.</small>}
         {shareMessage && <p className={styles.shareMessage} role="status">{shareMessage}</p>}
         <Link href={url} className={styles.cta}>
-          {service ? "Xem dịch vụ" : resale ? "Xem món đồ" : "Xem sản phẩm"}
+          {service ? "Xem dịch vụ" : resale ? "Xem món đồ" : "Xem & Đặt"}
         </Link>
       </div>
     </article>

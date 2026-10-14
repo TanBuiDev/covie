@@ -24,7 +24,6 @@ import {
   Sparkle,
   Package,
   Wrench,
-  SquaresFour,
 } from "@phosphor-icons/react";
 import type { components } from "@covie/api-client";
 import { SelectDropdown, type DropdownOption } from "@/components/ui/select-dropdown";
