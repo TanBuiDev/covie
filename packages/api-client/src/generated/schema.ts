@@ -2878,7 +2878,7 @@ export interface components {
             /** Format: uuid */
             targetId: string;
             /** @enum {string} */
-            targetType: "USER" | "MERCHANT" | "CATALOG_ITEM" | "NEED_REQUEST" | "REVIEW";
+            targetType: "USER" | "MERCHANT" | "CATALOG_ITEM" | "NEED_REQUEST" | "REVIEW" | "SOCIAL_COMMENT";
         };
         CreateReviewRequest: {
             comment?: string;
@@ -3295,7 +3295,7 @@ export interface components {
             /** Format: uuid */
             targetId?: string;
             /** @enum {string} */
-            targetType?: "USER" | "MERCHANT" | "CATALOG_ITEM" | "NEED_REQUEST" | "REVIEW";
+            targetType?: "USER" | "MERCHANT" | "CATALOG_ITEM" | "NEED_REQUEST" | "REVIEW" | "SOCIAL_COMMENT";
         };
         ModerationCommandResult: {
             /** @enum {string} */
