@@ -32,9 +32,9 @@ class PopulatedMigrationUpgradeTest {
             String fulfillmentColumns="order_id,service_address_id,service_address_snapshot::text,provider_location_snapshot::text,buyer_contact_snapshot::text,merchant_contact_snapshot::text,created_at,provider_marked_performed_at,awaiting_buyer_confirmation_at,auto_complete_at";
             var beforeFulfillment=jdbc.queryForMap("select "+fulfillmentColumns+" from service_fulfillments where order_id=?",order);
             var latest=Flyway.configure().dataSource(source).locations("classpath:db/migration").load();
-            assertThat(latest.migrate().migrationsExecuted).isEqualTo(4);
+            assertThat(latest.migrate().migrationsExecuted).isEqualTo(5);
             latest.validate();
-            assertThat(latest.info().current().getVersion().toString()).isEqualTo("017");
+            assertThat(latest.info().current().getVersion().toString()).isEqualTo("018");
             assertThat(jdbc.queryForMap("select id,display_name,account_status,created_at,updated_at,version from users where id=?",user)).isEqualTo(beforeUser);
             assertThat(jdbc.queryForObject("select phone from users where id=?",String.class,user)).isNull();
             assertThat(jdbc.queryForMap("select id,user_id,label,recipient_name,phone,address_text,ST_AsText(geo_point::geometry) as point,pin_source,is_default,status,created_at,updated_at,version from user_addresses where id=?",address)).isEqualTo(beforeAddress);

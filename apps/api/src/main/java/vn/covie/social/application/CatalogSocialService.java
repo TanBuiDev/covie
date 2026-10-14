@@ -59,7 +59,7 @@ public class CatalogSocialService {
 
     @Transactional(readOnly = true)
     public Map<UUID, SocialItemSummary> summaries(List<UUID> rawIds) {
-        if (rawIds == null || rawIds.isEmpty() || rawIds.size() > 40 || rawIds.contains(null)) {
+        if (rawIds == null || rawIds.isEmpty() || rawIds.size() > 40 || rawIds.stream().anyMatch(java.util.Objects::isNull)) {
             throw new ApiException(ErrorCode.VALIDATION_FAILED, HttpStatus.UNPROCESSABLE_ENTITY,
                     "Supply between 1 and 40 catalog item IDs.");
         }
