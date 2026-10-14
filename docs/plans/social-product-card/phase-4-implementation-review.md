@@ -1,46 +1,50 @@
-# CoVie Social Product Card — Phase 4 execution and release gate
+# CoVie — Social Product Card Phase 4 acceptance and controlled rollout
 
-Implementation branch: `feature/social-product-card-phase2`, PR #28.
+PR: https://github.com/TanBuiDev/covie/pull/28
+Branch: `feature/social-product-card-phase2`
 
-## Delivered automation
+## Implementation shipped to the PR branch
 
-- `apps/web/e2e/social-phase4.staging.spec.ts`: Playwright browser test at 360/768/1280/1440; Social/Catalog toggle; keyboard Escape, lazy comments and no premature comment reads; opt-in authenticated Like/Save/Comment CRUD with best-effort cleanup.
-- `infra/perf/scenarios.mjs`: bounded public-social-summary and public-social-comments load scenarios, with provisional p95 target 400ms and request error ratio less than 1%. `infra/perf/social-scenarios.test.mjs` checks paths, UUID validation and the 40-ID API limit.
-- `infra/scripts/social-phase4-smoke.sh`: read-only HTTPS staging checks for public social JSON response, anonymous viewer flags, comments and protected mutation/admin preview endpoints.
-- `infra/scripts/run-social-phase4-staging.sh`: operator-controlled end-to-end staging runner that emits manifest, logs, perf JSON and Playwright output; **never run on production**.
-- Existing `infra/deploy/rehearse-release.sh`, `infra/deploy/rollback.sh`, `infra/scripts/run-staging-rehearsal.sh` remain the canonical release/migration/rollback machinery. This phase intentionally does not invent a separate deployment engine.
+- `apps/web/e2e/social-phase4.staging.spec.ts`: four browser widths (360/768/1280/1440), Social/Catalog toggles, focus/Escape, comment lazy fetch and opt-in authenticated Like/Save/Comment CRUD.
+- `infra/perf/scenarios.mjs`: bounded Social Summary and Comment read-load scenarios. `infra/perf/social-scenarios.test.mjs`: scenario contract checks.
+- `infra/scripts/social-phase4-smoke.sh`: non-mutating public JSON and security checks against an explicit HTTPS staging origin.
+- `infra/scripts/run-social-phase4-staging.sh`: fail-closed staging verification with evidence manifest, social smoke, performance measurements and Playwright output.
+- Existing `infra/deploy/rehearse-release.sh`, `infra/deploy/rollback.sh` and `infra/scripts/run-staging-rehearsal.sh` remain canonical for disaster recovery. No parallel deployment engine was added.
 
-## How to execute
+## Reproducible staging acceptance
 
-1. Deploy the candidate **from a reviewed SHA** to isolated staging with V018 and V019 applied. Record the image digest release manifest and restore point.
-2. Populate test data: published item and active merchant, known discovery search path including location, independent buyer/seller/admin staging accounts. Never commit real credentials.
-3. Set `COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST` to the reviewed immutable candidate release manifest, and `COVIE_SOCIAL_PHASE4_ACTIVE_MANIFEST` to the manifest retrieved from the running staging host. The script requires byte-identical manifests, digest-pinned images, V019, and GIT_SHA equal to the local checkout. File equality relies on an operator-trusted staging manifest capture; independently review the deployment source.\n4. Set `COVIE_STAGING_BASE_URL` (HTTPS staging only), `COVIE_SOCIAL_PHASE4_ITEM_ID`, `COVIE_SOCIAL_LOAD_ITEM_IDS`, `COVIE_SOCIAL_E2E_ITEM_NAME`, `COVIE_SOCIAL_E2E_SEARCH_PATH` and the 6 staging authentication variables described in `apps/web/e2e/fixtures/staging-auth-fixture.ts`.
-5. Set `COVIE_SOCIAL_E2E_MUTATIONS_OK=1` only for disposable staging test accounts and `COVIE_SOCIAL_PHASE4_CONFIRM=STAGING_ONLY`. Then run:
+1. Review the PR commit and deploy its immutable digest-pinned API/Web images to isolated staging. Back up staging and apply Flyway V018/V019.
+2. Seed a published catalog item under an active merchant and an exact search URL path with valid location; create independent buyer, seller and admin test accounts.
+3. Supply `COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST` (candidate immutable manifest) and `COVIE_SOCIAL_PHASE4_ACTIVE_MANIFEST` (operator-trusted capture from deployed staging). The runner checks byte equality, GIT_SHA against checkout, API/Web image digests and V019.
+4. Supply `COVIE_STAGING_BASE_URL` (HTTPS staging, never production), `COVIE_SOCIAL_PHASE4_ITEM_ID`, `COVIE_SOCIAL_LOAD_ITEM_IDS` (1–40 distinct public UUIDs), `COVIE_SOCIAL_E2E_ITEM_NAME`, `COVIE_SOCIAL_E2E_SEARCH_PATH`, plus `STAGING_BUYER_EMAIL/PASSWORD`, `STAGING_SELLER_EMAIL/PASSWORD` and `STAGING_ADMIN_EMAIL/PASSWORD` via the runner environment, not committed files.
+5. Use disposable test identities. Explicitly set `COVIE_SOCIAL_PHASE4_CONFIRM=STAGING_ONLY` and `COVIE_SOCIAL_E2E_MUTATIONS_OK=1`, then run:
 
-```sh
+```bash
 bash infra/scripts/run-social-phase4-staging.sh
 ```
 
-6. Review the emitted manifest, performance JSON, browser screenshots and Playwright traces. Ensure every test actually executed; a skip is not a PASS. Do not change the environment and claim older results represent a newer head.
-7. In admin staging, manually exercise report -> moderation case -> HIDE -> public comment removal/count decrease -> audit/outbox/notification -> RESTORE -> count recovery. Protect admin access and verify anonymous/non-admin rejection.
-9. Run existing `pnpm --filter @covie/web test:e2e:staging` P0 buyer/seller/admin order regression suite. Record PASS evidence.
-8. Run existing `infra/deploy/rehearse-release.sh` staging restore/digest rollback drill with an operator-provided staging config and immutable manifest. Confirm that rolling back application code **does not remove V018/V019 tables, user comments or reports**.
-10. Confirm CodeQL, Trivy, Gitleaks, Maven, frontend/contract all green against the same PR head; review monitoring and release rollback owner; only then mark merge eligible.
+6. Verify the output `manifest.txt`, load JSON, security smoke logs, Playwright screenshots/traces and test execution count. Skips, missing credentials, release SHA mismatch or missing evidence are **not PASS**.
+7. Manually validate admin report -> HIDE -> audit/outbox -> public comment count and visibility -> RESTORE, using the existing moderation case UI.
+8. Execute the existing `pnpm --filter @covie/web test:e2e:staging` end-to-end buyer/seller/admin regression suite to cover cart, checkout, needs, merchant operations and reviews.
+9. Perform the existing staging backup/restore and rollback drill with `infra/deploy/rehearse-release.sh`. Record the restore operator, evidence and immutable image digests. Do not destructively roll back V018/V019 or delete user-submitted social data.
+10. Confirm all required GitHub backend, frontend/contract, CodeQL, source scanner and secret checks are green **for the same PR head SHA**. Obtain release owner sign-off before marking the PR mergeable.
 
-## Production rollout strategy
+## Performance targets and production ramp
 
-- Prepare immutable digest-pinned app manifests. Confirm backup, migration and rollback prerequisites first.
-- Prefer staging -> guarded low-traffic rollout -> full traffic after error/latency and moderation health are verified. If traffic splitting is unsupported by the currently deployed platform, use a normal controlled deployment with immediate rollback access rather than pretending a canary is present.
-- Measure health checks, social API 5xx/429 ratio, p95 latency, DB pool and social table growth. **No fabricated performance result is acceptable.** The provisional 400ms targets are not approved SLOs until a production-like baseline is captured.
-- Revert to previous application image manifests on regression; Flyway V018/V019 are additive, forward-only, and should not be destructively reverted.
-- Never execute load tests on production without a separate explicit authorization and rate limit.
+The Phase 4 public social read scenarios initially use a provisional **p95 <= 400 ms** and **error ratio < 1%**, based on existing repository load patterns, *not* a measured CoVie baseline. Calibrate with production-like staging data before calling them approved SLOs. Review query plans and database pool pressure; don't infer production readiness from low-volume tests.
 
-## Evidence status
+Use staging first. If the deployment infrastructure supports canary traffic, apply a small, monitored rollout; otherwise use a normal low-traffic deploy with immediately available digest rollback. Watch 5xx, 429 rates, p95, moderation throughput, DB saturation and social-table growth. Revert application manifests when required, leaving additive V018/V019 schema intact.
 
-- GitHub CI: must be checked again on latest PR head.
-- Playwright real staging run: **PENDING** until screenshots/traces or authenticated runner logs exist.
-- API load measurements: **PENDING** until representative staging JSON outputs exist.
-- Manual moderation + rollback rehearsal + checkout regression: **PENDING** until recorded.
-- Merge main: **BLOCKED while any required gate remains pending or failing**.
+## Outstanding evidence — do not merge while any item is pending
 
-This phase builds the verification tools, but it does **not** claim staging measurements, manual browser review or deployment without actual evidence. The original 702-line plan was not attached in this workspace; any more specific numeric limits must be reconciled with that source before the final sign-off.
+| Gate | Status |
+| --- | --- |
+| Latest commit CI | PENDING latest head confirmation |
+| Real staging Playwright at all four viewports | PENDING |
+| Social API baseline load results | PENDING |
+| Manual admin/CSRF/ownership and moderation workflow | PENDING |
+| Staging P0 buyer/seller/admin regression | PENDING |
+| Backup, restore and app rollback rehearsal | PENDING |
+| Release owner sign-off | PENDING |
+
+The original 702-line plan was not attached here. Reconcile its exact numerical SLOs and release restrictions with this evidence before final sign-off.
