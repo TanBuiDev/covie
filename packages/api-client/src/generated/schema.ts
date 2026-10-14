@@ -700,6 +700,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/items/{itemId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["comments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalog/items/{itemId}/reviews": {
         parameters: {
             query?: never;
@@ -740,6 +756,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["merchantItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/social-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["summary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -980,6 +1012,70 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update_9"];
+        trace?: never;
+    };
+    "/api/v1/me/catalog/items/{itemId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["comment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/catalog/items/{itemId}/comments/{commentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteComment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/catalog/items/{itemId}/likes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["like"];
+        post?: never;
+        delete: operations["unlike"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/catalog/items/{itemId}/saves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["save"];
+        post?: never;
+        delete: operations["unsave"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/me/contact-methods": {
@@ -2878,7 +2974,7 @@ export interface components {
             /** Format: uuid */
             targetId: string;
             /** @enum {string} */
-            targetType: "USER" | "MERCHANT" | "CATALOG_ITEM" | "NEED_REQUEST" | "REVIEW";
+            targetType: "USER" | "MERCHANT" | "CATALOG_ITEM" | "NEED_REQUEST" | "REVIEW" | "SOCIAL_COMMENT";
         };
         CreateReviewRequest: {
             comment?: string;
@@ -2886,6 +2982,9 @@ export interface components {
             orderItemId: string;
             /** Format: int32 */
             rating?: number;
+        };
+        CreateSocialCommentRequest: {
+            body: string;
         };
         CreateUserAddressRequest: {
             addressText: string;
@@ -3295,7 +3394,7 @@ export interface components {
             /** Format: uuid */
             targetId?: string;
             /** @enum {string} */
-            targetType?: "USER" | "MERCHANT" | "CATALOG_ITEM" | "NEED_REQUEST" | "REVIEW";
+            targetType?: "USER" | "MERCHANT" | "CATALOG_ITEM" | "NEED_REQUEST" | "REVIEW" | "SOCIAL_COMMENT";
         };
         ModerationCommandResult: {
             /** @enum {string} */
@@ -4027,6 +4126,32 @@ export interface components {
             priority?: number;
             /** Format: int64 */
             thresholdValue?: number;
+        };
+        SocialComment: {
+            authorName?: string;
+            body?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            itemId?: string;
+            own?: boolean;
+        };
+        SocialCommentPage: {
+            items?: components["schemas"]["SocialComment"][];
+            /** Format: uuid */
+            nextCursor?: string;
+        };
+        SocialItemSummary: {
+            /** Format: int64 */
+            comments?: number;
+            /** Format: uuid */
+            itemId?: string;
+            liked?: boolean;
+            /** Format: int64 */
+            likes?: number;
+            saved?: boolean;
         };
         SortObject: {
             empty?: boolean;
@@ -5372,6 +5497,31 @@ export interface operations {
             };
         };
     };
+    comments: {
+        parameters: {
+            query?: {
+                limit?: number;
+                before?: string;
+            };
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SocialCommentPage"];
+                };
+            };
+        };
+    };
     catalog: {
         parameters: {
             query?: {
@@ -5440,6 +5590,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PublicMerchantCatalogResponse"];
+                };
+            };
+        };
+    };
+    summary: {
+        parameters: {
+            query: {
+                itemIds: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: components["schemas"]["SocialItemSummary"];
+                    };
                 };
             };
         };
@@ -5874,6 +6048,141 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CartResponse"];
+                };
+            };
+        };
+    };
+    comment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSocialCommentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SocialComment"];
+                };
+            };
+        };
+    };
+    deleteComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    like: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SocialItemSummary"];
+                };
+            };
+        };
+    };
+    unlike: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SocialItemSummary"];
+                };
+            };
+        };
+    };
+    save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SocialItemSummary"];
+                };
+            };
+        };
+    };
+    unsave: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SocialItemSummary"];
                 };
             };
         };

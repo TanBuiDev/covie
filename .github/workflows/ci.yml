@@ -57,6 +57,14 @@ jobs:
         run: ./infra/scripts/export-openapi.sh
       - name: Generate typed API client
         run: pnpm api-client:generate
+      - name: Archive generated API contract for drift debugging
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-api-contract
+          path: |
+            packages/api-client/openapi/openapi.json
+            packages/api-client/src/generated/schema.ts
+          retention-days: 1
       - name: Check generated contract drift
         run: git diff --exit-code -- packages/api-client/openapi/openapi.json packages/api-client/src/generated/schema.ts
       - name: Typecheck API client
@@ -69,6 +77,8 @@ jobs:
         run: pnpm --filter @covie/web test
       - name: Build web
         run: pnpm --filter @covie/web build
+      - name: Validate social performance scenario contracts
+        run: node --test infra/perf/social-scenarios.test.mjs
       - name: Test secret-hygiene status handling
         run: ./infra/scripts/test-secret-hygiene.sh
       - name: Reject tracked secrets

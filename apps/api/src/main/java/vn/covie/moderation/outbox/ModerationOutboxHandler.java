@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import org.springframework.jdbc.core.JdbcTemplate;
 import vn.covie.catalog.persistence.CatalogItemRepository;
 import vn.covie.merchants.persistence.MerchantMembershipRepository;
 import vn.covie.moderation.model.ModerationTargetType;
@@ -19,6 +20,7 @@ import vn.covie.reviews.persistence.ReviewRepository;
 @Component
 public class ModerationOutboxHandler implements OutboxEventHandler {
     private final ModerationCaseRepository cases;
+    private final JdbcTemplate jdbc;
     private final CatalogItemRepository catalog;
     private final NeedRequestRepository needs;
     private final ReviewRepository reviews;
@@ -26,9 +28,9 @@ public class ModerationOutboxHandler implements OutboxEventHandler {
     private final NotificationService notifications;
 
     public ModerationOutboxHandler(ModerationCaseRepository cases, CatalogItemRepository catalog, NeedRequestRepository needs,
-            ReviewRepository reviews, MerchantMembershipRepository memberships, NotificationService notifications) {
+            ReviewRepository reviews, MerchantMembershipRepository memberships, NotificationService notifications, JdbcTemplate jdbc) {
         this.cases = cases; this.catalog = catalog; this.needs = needs; this.reviews = reviews;
-        this.memberships = memberships; this.notifications = notifications;
+        this.memberships = memberships; this.notifications = notifications; this.jdbc = jdbc;
     }
 
     @Override public boolean supports(String type) { return "MODERATION_ACTION_APPLIED".equals(type); }
@@ -49,6 +51,8 @@ public class ModerationOutboxHandler implements OutboxEventHandler {
             case CATALOG_ITEM -> catalog.findById(targetId).map(item -> memberships.findActiveOwnerAndManagerUserIds(item.getMerchantProfileId())).orElse(List.of());
             case NEED_REQUEST -> needs.findById(targetId).map(need -> List.of(need.getBuyerUserId())).orElse(List.of());
             case REVIEW -> reviews.findById(targetId).map(review -> List.of(review.getBuyerUserId())).orElse(List.of());
+            case SOCIAL_COMMENT -> jdbc.query("select author_user_id from catalog_social_comments where id=?",
+                    (rs,row) -> rs.getObject(1,UUID.class),targetId);
             case MERCHANT -> memberships.findActiveOwnerAndManagerUserIds(targetId);
             case USER -> List.of(targetId);
         };

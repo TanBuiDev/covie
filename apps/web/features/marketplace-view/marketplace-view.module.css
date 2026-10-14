@@ -177,3 +177,38 @@
 @media (prefers-reduced-motion: reduce) {
   .toggleButton, .card { transition: none; }
 }
+
+/* Phase 2: Server-backed social interactions and lazy comment thread */
+.interactions button { gap: 5px; width: auto; min-width: 44px; padding: 5px 9px; font-size: 12px; font-weight: 700; }
+.interactions button[aria-pressed="true"] { color: #047857; background: #ecfdf5; }
+.socialError, .commentError { color: #b91c1c; font-size: 12px; margin: 0; line-height: 1.5; }
+.socialError button, .commentHeader button, .commentList button, .commentPanel > button { color: #047857; background: transparent; border: 0; cursor: pointer; font-weight: 700; }
+.commentPanel { display: grid; gap: 11px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+.commentHeader, .commentMeta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.commentHeader strong { font-size: 14px; }
+.commentList { display: grid; gap: 10px; max-height: 330px; overflow: auto; }
+.comment { background: #f8fafc; padding: 10px; border-radius: 9px; overflow-wrap: anywhere; }
+.comment p { white-space: pre-wrap; margin: 6px 0; font-size: 13px; line-height: 1.5; }
+.commentMeta strong { font-size: 12px; }
+.commentMeta time { font-size: 11px; color: #64748b; }
+.commentForm { display: grid; gap: 6px; }
+.commentForm label { font-size: 12px; font-weight: 700; }
+.commentForm textarea { resize: vertical; width: 100%; min-height: 70px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px; color: inherit; background: #fff; font: inherit; font-size: 13px; }
+.commentForm textarea:focus-visible { outline: 3px solid #059669; outline-offset: 2px; }
+.commentForm button { justify-self: end; border: 0; border-radius: 8px; background: #059669; color: white; font-weight: 700; font-size: 12px; padding: 9px 14px; cursor: pointer; min-height: 44px; }
+.commentForm button:disabled { opacity: .5; cursor: not-allowed; }
+.commentHint { font-size: 13px; color: #64748b; margin: 0; }
+
+/* Phase 3: loading, feedback and touch targets */
+.socialLoading { color: #64748b; font-size: 12px; margin: 0; }
+.commentError button { text-decoration: underline; border: 0; padding: 4px; background: transparent; color: #047857; cursor: pointer; }
+.commentFormActions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.commentFormActions small { color: #64748b; font-size: 11px; }
+.commentHeader button, .commentList button, .commentError button { min-height: 44px; min-width: 44px; }
+.commentPanel button:focus-visible { outline: 3px solid #059669; outline-offset: 2px; }
+.commentPanel a { color: #047857; text-underline-offset: 3px; }
+.commentList { overscroll-behavior: contain; }
+@media (max-width: 359px) {
+  .interactions { gap: 2px; }
+  .interactions button { min-width: 42px; padding: 5px 6px; }
+}
