@@ -82,6 +82,10 @@ describe("PUB-001 Home", () => {
     expect(await screen.findByText("Bánh mì chả lụa")).toBeInTheDocument();
     expect(screen.getByText("Sửa máy lạnh tại nhà")).toBeInTheDocument();
     expect(screen.getByText("Bàn học gỗ còn mới")).toBeInTheDocument();
+    // New shared cards retain the old home product deep-link location context.
+    expect(screen.getByRole("link", { name: "Xem & Đặt" })).toHaveAttribute(
+      "href", "/items/PRODUCT-STANDARD?lat=10.84&lng=106.81"
+    );
 
     expect(within(screen.getByRole("region", {name:"Dịch vụ gần bạn"})).getByRole("link", {name:"Xem tất cả"}))
       .toHaveAttribute("href", "/search?type=SERVICE&sort=DISTANCE");

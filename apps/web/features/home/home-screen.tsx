@@ -27,6 +27,7 @@ import { CoVieIcon } from "@/components/ui/covie-icon";
 import { discoverCatalogItems, listPublicCategories } from "@/features/catalog/catalog-api";
 import { LocationChooser } from "@/features/location/location-chooser";
 import { useBrowseLocation } from "@/features/location/use-browse-location";
+import { locationToSearchParams, toDiscoveryLocation } from "@/features/location/location-context";
 import { HOME_SECTIONS, homeDiscoveryFilters, type HomeSectionDefinition, type HomeSectionKey } from "./home-data";
 import { MarketplaceProductCard } from "@/features/marketplace-view/marketplace-product-card";
 import { MarketplaceViewToggle } from "@/features/marketplace-view/marketplace-view-toggle";
@@ -70,6 +71,10 @@ function ProductSection({ definition, state, retry, mode }: {
   if (definition.filters.type) searchParams.set("type", definition.filters.type);
   if (definition.filters.listingKind === "RESALE") searchParams.set("listingKind", "RESALE");
   searchParams.set("sort", "DISTANCE");
+  // Item links must retain the previously supported location context.
+  const { location } = useBrowseLocation();
+  const itemLocationParams = locationToSearchParams(toDiscoveryLocation(location));
+  const itemSuffix = itemLocationParams.size ? `?${itemLocationParams}` : "";
   return (
     <section className={styles.marketSection} aria-labelledby={`${definition.key}-title`}>
       <div className={styles.sectionHeading}>
@@ -96,7 +101,7 @@ function ProductSection({ definition, state, retry, mode }: {
       {state.status === "ready" && state.items.length === 0 && <p className={styles.emptyState}>{definition.emptyMessage}</p>}
       {state.status === "ready" && state.items.length > 0 && (
         <div className={`${viewStyles.grid} ${mode === "social" ? viewStyles.gridSocial : viewStyles.gridCatalog}`}>
-          {state.items.map((item) => <MarketplaceProductCard key={item.id} item={item} mode={mode} />)}
+          {state.items.map((item) => <MarketplaceProductCard key={item.id} item={item} mode={mode} href={`/items/${item.id}${itemSuffix}`} />)}
         </div>
       )}
     </section>

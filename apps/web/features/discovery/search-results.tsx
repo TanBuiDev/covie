@@ -16,7 +16,6 @@ import {
   X,
   CaretDown,
   Check,
-  Storefront,
   Tag,
   Bicycle,
   Clock,
