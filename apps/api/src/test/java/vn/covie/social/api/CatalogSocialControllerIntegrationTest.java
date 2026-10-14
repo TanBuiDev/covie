@@ -113,17 +113,18 @@ class CatalogSocialControllerIntegrationTest extends PostgresIntegrationTest {
         UUID itemId = item(true);
         String owner = user("Comment writer");
         String reporter = user("Report viewer");
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var posted = mvc.perform(post("/api/v1/me/catalog/items/" + itemId + "/comments")
                 .header("Authorization",owner).contentType("application/json")
-                .content("{\\"body\\":\\"Suspicious advertisement\\\"}"))
+                .content(mapper.writeValueAsString(java.util.Map.of("body","Suspicious advertisement"))))
                 .andExpect(status().isCreated()).andReturn();
-        UUID commentId = UUID.fromString(new com.fasterxml.jackson.databind.ObjectMapper()
-                .readTree(posted.getResponse().getContentAsString()).path("id").asText());
+        UUID commentId = UUID.fromString(mapper.readTree(
+                posted.getResponse().getContentAsString()).path("id").asText());
         mvc.perform(post("/api/v1/reports").header("Authorization",reporter)
                 .header("Idempotency-Key",UUID.randomUUID().toString())
                 .contentType("application/json")
-                .content("{\\"targetType\\":\\"SOCIAL_COMMENT\\",\\"targetId\\":\\"" + commentId +
-                        "\\",\\"reasonCode\\":\\"SPAM\\"}"))
+                .content(mapper.writeValueAsString(java.util.Map.of("targetType","SOCIAL_COMMENT",
+                        "targetId",commentId.toString(),"reasonCode","SPAM"))))
                 .andExpect(status().isCreated());
         Integer total = jdbc.queryForObject("""
             select count(*) from moderation_cases where target_type='SOCIAL_COMMENT'
