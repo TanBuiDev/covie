@@ -31,6 +31,8 @@ class CatalogSocialControllerIntegrationTest extends PostgresIntegrationTest {
     @Autowired CategoryRepository categories;
     @Autowired CatalogItemRepository items;
     @Autowired InitialSessionIssuer issuer;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
+    @Autowired vn.covie.moderation.application.SocialCommentModerationTargetHandler commentModeration;
     private MockMvc mvc;
 
     @BeforeEach void setup() { mvc = MockMvcBuilders.webAppContextSetup(web).apply(springSecurity()).build(); }
@@ -107,4 +109,35 @@ class CatalogSocialControllerIntegrationTest extends PostgresIntegrationTest {
         mvc.perform(get("/api/v1/catalog/social-summary").param("itemIds",id.toString()))
                 .andExpect(jsonPath("$['" + id + "'].comments").value(0));
     }
+    @Test void reportsAndModeratesIndividualCommentsWithoutHidingProducts() throws Exception {
+        UUID itemId = item(true);
+        String owner = user("Comment writer");
+        String reporter = user("Report viewer");
+        var posted = mvc.perform(post("/api/v1/me/catalog/items/" + itemId + "/comments")
+                .header("Authorization",owner).contentType("application/json")
+                .content("{\\"body\\":\\"Suspicious advertisement\\\"}"))
+                .andExpect(status().isCreated()).andReturn();
+        UUID commentId = UUID.fromString(new com.fasterxml.jackson.databind.ObjectMapper()
+                .readTree(posted.getResponse().getContentAsString()).path("id").asText());
+        mvc.perform(post("/api/v1/reports").header("Authorization",reporter)
+                .header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType("application/json")
+                .content("{\\"targetType\\":\\"SOCIAL_COMMENT\\",\\"targetId\\":\\"" + commentId +
+                        "\\",\\"reasonCode\\":\\"SPAM\\"}"))
+                .andExpect(status().isCreated());
+        Integer total = jdbc.queryForObject("""
+            select count(*) from moderation_cases where target_type='SOCIAL_COMMENT'
+            and target_social_comment_id=? and case_type='USER_REPORT'
+            """,Integer.class,commentId);
+        org.assertj.core.api.Assertions.assertThat(total).isEqualTo(1);
+        commentModeration.apply(commentId,vn.covie.moderation.model.ModerationActionType.HIDE,NOW);
+        mvc.perform(get("/api/v1/catalog/social-summary").param("itemIds",itemId.toString()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$['" + itemId + "'].comments").value(0));
+        mvc.perform(get("/api/v1/catalog/items/" + itemId + "/comments"))
+                .andExpect(jsonPath("$.items").isEmpty());
+        commentModeration.apply(commentId,vn.covie.moderation.model.ModerationActionType.RESTORE,NOW);
+        mvc.perform(get("/api/v1/catalog/social-summary").param("itemIds",itemId.toString()))
+                .andExpect(jsonPath("$['" + itemId + "'].comments").value(1));
+    }
+
 }
