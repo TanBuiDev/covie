@@ -1,0 +1,179 @@
+.toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--covie-border, #d6e2dc);
+  background: var(--covie-surface, #fff);
+  border-radius: 12px;
+}
+.toggleButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--covie-text, #0f172a);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.toggleButton:hover { background: #f0fdf4; }
+.toggleButton:focus-visible, .interactions button:focus-visible, .cta:focus-visible {
+  outline: 3px solid #059669;
+  outline-offset: 2px;
+}
+.toggleActive { color: #047857; background: #ecfdf5; }
+.grid {
+  display: grid;
+  align-items: stretch;
+  gap: 14px;
+  min-width: 0;
+}
+.gridSocial { grid-template-columns: minmax(0, 1fr); }
+.gridCatalog { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--covie-border, #e2e8f0);
+  border-radius: 14px;
+  background: var(--covie-surface, #fff);
+  box-shadow: 0 2px 8px rgb(15 23 42 / 5%);
+  color: var(--covie-text, #0f172a);
+}
+.author {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.authorName {
+  font-weight: 700;
+  font-size: 14px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.author small { margin-left: auto; flex-shrink: 0; color: #64748b; }
+.media {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+.catalog .media { aspect-ratio: 1 / 1; }
+.media img { object-fit: cover; }
+.mediaFallback {
+  height: 100%;
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 12px;
+}
+.kind {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  background: rgb(255 255 255 / 94%);
+  color: #047857;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  min-width: 0;
+}
+.social .body { padding: 16px; gap: 10px; }
+.title { margin: 0; font-size: 14px; line-height: 1.45; font-weight: 700; overflow-wrap: anywhere; }
+.social .title { font-size: 18px; }
+.title a { color: inherit; text-decoration: none; }
+.title a:hover { color: #047857; }
+.price { color: #047857; font-size: 16px; }
+.social .price { font-size: 19px; }
+.merchant {
+  font-size: 12px;
+  color: #475569;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.location {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.location svg { flex-shrink: 0; }
+.location span { min-width: 0; overflow-wrap: anywhere; }
+.cta {
+  display: block;
+  margin-top: auto;
+  background: #059669;
+  color: #fff;
+  padding: 11px 9px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 10px;
+  text-align: center;
+  text-decoration: none;
+}
+.cta:hover { background: #047857; }
+.interactions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 9px;
+}
+.interactions button {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #334155;
+  cursor: pointer;
+}
+.interactions button:hover:not(:disabled) { background: #ecfdf5; color: #047857; }
+.interactions button:disabled { opacity: .45; cursor: not-allowed; }
+.comingSoon { font-size: 11px; color: #64748b; }
+.shareMessage { margin: 0; font-size: 12px; color: #047857; }
+@media (min-width: 640px) {
+  .gridCatalog { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .gridSocial { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gridCatalog { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1440px) {
+  .gridCatalog { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toggleButton, .card { transition: none; }
+}

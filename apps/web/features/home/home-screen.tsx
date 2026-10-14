@@ -26,9 +26,14 @@ import { CategoryBadge } from "@/components/ui/category-icon";
 import { CoVieIcon } from "@/components/ui/covie-icon";
 import { discoverCatalogItems, listPublicCategories } from "@/features/catalog/catalog-api";
 import { LocationChooser } from "@/features/location/location-chooser";
-import { toDiscoveryLocation } from "@/features/location/location-context";
 import { useBrowseLocation } from "@/features/location/use-browse-location";
+import { locationToSearchParams, toDiscoveryLocation } from "@/features/location/location-context";
 import { HOME_SECTIONS, homeDiscoveryFilters, type HomeSectionDefinition, type HomeSectionKey } from "./home-data";
+import { MarketplaceProductCard } from "@/features/marketplace-view/marketplace-product-card";
+import { MarketplaceViewToggle } from "@/features/marketplace-view/marketplace-view-toggle";
+import { useMarketplaceView } from "@/features/marketplace-view/use-marketplace-view";
+import type { MarketplaceViewMode } from "@/features/marketplace-view/marketplace-view-preference";
+import viewStyles from "@/features/marketplace-view/marketplace-view.module.css";
 import styles from "./home-screen.module.css";
 
 type Category = components["schemas"]["CategorySummary"];
@@ -51,105 +56,25 @@ const DISCOVERY_SHORTCUTS = [
   { label: "Dịch vụ tại nhà", icon: Wrench, href: "/search?type=SERVICE&sort=DISTANCE" },
 ];
 
-function formatPrice(item: CatalogItem) {
-  if (item.priceFrom?.amount == null) return "Giá liên hệ";
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: item.priceFrom.currency ?? "VND",
-    maximumFractionDigits: 0,
-  }).format(item.priceFrom.amount);
-}
-
 function formatDistance(distance?: number) {
   if (distance == null) return null;
   return distance < 1_000 ? `${Math.round(distance)} m` : `${(distance / 1_000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} km`;
 }
 
-function ProductCard({ item }: { item: CatalogItem }) {
-  const { location } = useBrowseLocation();
-  const discoveryLocation = toDiscoveryLocation(location);
-  const params = new URLSearchParams();
-  if (discoveryLocation?.kind === "coordinates") {
-    params.set("lat", String(discoveryLocation.lat));
-    params.set("lng", String(discoveryLocation.lng));
-  } else if (discoveryLocation?.kind === "saved-address") {
-    params.set("addressId", discoveryLocation.addressId);
-  }
-  const suffix = params.size ? `?${params.toString()}` : "";
-  const distance = formatDistance(item.resolvedLocation?.distanceMeters);
-  const isService = item.type === "SERVICE";
-  const isResale = item.listingKind === "RESALE";
-
-  return (
-    <article className={styles.card}>
-      <Link className={styles.cardMedia} href={`/items/${item.id}${suffix}`} tabIndex={-1} aria-hidden="true">
-        {item.primaryMedia?.url ? (
-          <span
-            className={styles.mediaImage}
-            style={{ backgroundImage: `url(${JSON.stringify(item.primaryMedia.url)})` }}
-            role="img"
-            aria-label={item.name ? `Hình ảnh ${item.name}` : "Hình ảnh sản phẩm"}
-          />
-        ) : (
-          <span className={styles.mediaPlaceholder} aria-hidden="true">CoVie</span>
-        )}
-        <div className={styles.cardBadges}>
-          {isService && <span className={`${styles.badge} ${styles.serviceBadge}`}>Dịch vụ</span>}
-          {isResale && <span className={`${styles.badge} ${styles.resaleBadge}`}>Thanh lý</span>}
-          {!isService && !isResale && (
-            <span className={`${styles.badge} ${styles.fastBadge}`}>
-              <Lightning size={12} weight="fill" aria-hidden="true" /> Giao ngay
-            </span>
-          )}
-        </div>
-        {distance && (
-          <span className={styles.distanceBadge}>
-            <MapPin size={12} weight="duotone" aria-hidden="true" /> {distance}
-          </span>
-        )}
-      </Link>
-      <div className={styles.cardBody}>
-        <h3><Link href={`/items/${item.id}${suffix}`}>{item.name ?? "Sản phẩm"}</Link></h3>
-        <p className={styles.price}>{formatPrice(item)}</p>
-        <p className={styles.merchant}>{item.merchant?.name ?? "Người bán địa phương"}</p>
-        <p className={styles.locationLine}>
-          <span aria-hidden="true">●</span>
-          {item.resolvedLocation?.name ?? "Chưa xác định vị trí"}{distance ? ` · ${distance}` : ""}
-        </p>
-        <div className={styles.cardActions}>
-          <Link href={`/items/${item.id}${suffix}`} className={styles.cardBtn}>
-            {isService ? "Đặt thợ ngay" : isResale ? "Xem món đồ" : "Xem & Đặt"}
-            <span aria-hidden="true"> &rsaquo;</span>
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function ProductSection({ definition, state, retry }: {
+function ProductSection({ definition, state, retry, mode }: {
   definition: HomeSectionDefinition;
   state: SectionState;
   retry: () => void;
+  mode: MarketplaceViewMode;
 }) {
   const searchParams = new URLSearchParams();
   if (definition.filters.type) searchParams.set("type", definition.filters.type);
   if (definition.filters.listingKind === "RESALE") searchParams.set("listingKind", "RESALE");
   searchParams.set("sort", "DISTANCE");
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -260, behavior: "smooth" });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 260, behavior: "smooth" });
-    }
-  };
-
+  // Item links must retain the previously supported location context.
+  const { location } = useBrowseLocation();
+  const itemLocationParams = locationToSearchParams(toDiscoveryLocation(location));
+  const itemSuffix = itemLocationParams.size ? `?${itemLocationParams}` : "";
   return (
     <section className={styles.marketSection} aria-labelledby={`${definition.key}-title`}>
       <div className={styles.sectionHeading}>
@@ -163,16 +88,7 @@ function ProductSection({ definition, state, retry }: {
           {state.status === "ready" && state.items.length > 0 && (
             <Link href={`/search?${searchParams}`}>Xem tất cả</Link>
           )}
-          {state.status === "ready" && state.items.length > 2 && (
-            <div className={styles.scrollControls} aria-hidden="true">
-              <button type="button" onClick={scrollLeft} className={styles.scrollBtn} aria-label="Cuộn sang trái">
-                <CaretLeft size={16} weight="bold" />
-              </button>
-              <button type="button" onClick={scrollRight} className={styles.scrollBtn} aria-label="Cuộn sang phải">
-                <CaretRight size={16} weight="bold" />
-              </button>
-            </div>
-          )}
+
         </div>
       </div>
       {state.status === "loading" && <div className={styles.skeletonGrid} aria-label={`Đang tải ${definition.title.toLocaleLowerCase("vi-VN")}`}><i /><i /></div>}
@@ -184,8 +100,8 @@ function ProductSection({ definition, state, retry }: {
       )}
       {state.status === "ready" && state.items.length === 0 && <p className={styles.emptyState}>{definition.emptyMessage}</p>}
       {state.status === "ready" && state.items.length > 0 && (
-        <div ref={scrollRef} className={styles.cardCarousel}>
-          {state.items.map((item) => <ProductCard key={item.id} item={item} />)}
+        <div className={`${viewStyles.grid} ${mode === "social" ? viewStyles.gridSocial : viewStyles.gridCatalog}`}>
+          {state.items.map((item) => <MarketplaceProductCard key={item.id} item={item} mode={mode} href={`/items/${item.id}${itemSuffix}`} />)}
         </div>
       )}
     </section>
@@ -282,6 +198,7 @@ function FeaturedMerchantsSection({ merchants }: { merchants: FeaturedMerchant[]
 
 export function HomeScreen() {
   const { hydrated, location } = useBrowseLocation();
+  const { mode: viewMode, changeMode: setViewMode } = useMarketplaceView("social");
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesStatus, setCategoriesStatus] = useState<"loading" | "ready" | "error">("loading");
   const [showLocationChooser, setShowLocationChooser] = useState(false);
@@ -467,6 +384,12 @@ export function HomeScreen() {
         </div>
       )}
 
+      {hydrated && location && (
+        <div className={styles.marketplaceModeToolbar}>
+          <span>Hiển thị sản phẩm</span>
+          <MarketplaceViewToggle mode={viewMode} onModeChange={setViewMode} />
+        </div>
+      )}
       <AdSlot placement="HOME_HERO" />
       {!hydrated && <div className={styles.pageLoading} aria-label="Đang tải trang chủ" />}
       {hydrated && !location && (
@@ -487,7 +410,7 @@ export function HomeScreen() {
       )}
 
       {hydrated && location && nearbyDef && (
-        <ProductSection definition={nearbyDef} state={sections[nearbyDef.key]} retry={() => {
+        <ProductSection definition={nearbyDef} state={sections[nearbyDef.key]} mode={viewMode} retry={() => {
           setSections((current) => ({ ...current, [nearbyDef.key]: { status: "loading", items: [] } }));
           void loadSection(nearbyDef);
         }} />
@@ -558,14 +481,14 @@ export function HomeScreen() {
       )}
 
       {hydrated && location && servicesDef && (
-        <ProductSection definition={servicesDef} state={sections[servicesDef.key]} retry={() => {
+        <ProductSection definition={servicesDef} state={sections[servicesDef.key]} mode={viewMode} retry={() => {
           setSections((current) => ({ ...current, [servicesDef.key]: { status: "loading", items: [] } }));
           void loadSection(servicesDef);
         }} />
       )}
 
       {hydrated && location && resaleDef && (
-        <ProductSection definition={resaleDef} state={sections[resaleDef.key]} retry={() => {
+        <ProductSection definition={resaleDef} state={sections[resaleDef.key]} mode={viewMode} retry={() => {
           setSections((current) => ({ ...current, [resaleDef.key]: { status: "loading", items: [] } }));
           void loadSection(resaleDef);
         }} />

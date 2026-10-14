@@ -1294,3 +1294,7 @@
   .skeletonGrid i,
   .pageLoading { animation: none; }
 }
+
+/* Shared social/catalog view controller: do not modify existing marketplace sections. */
+.marketplaceModeToolbar { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.marketplaceModeToolbar > span { font-size: 14px; font-weight: 700; color: var(--covie-text); }
