@@ -6,7 +6,7 @@ import { useState } from "react";
 import { BookmarkSimple, ChatCircle, Heart, MapPin, Package, ShareNetwork, Storefront, Tag, Wrench } from "@phosphor-icons/react";
 import type { components } from "@covie/api-client";
 import type { MarketplaceViewMode } from "./marketplace-view-preference";
-import { changeSocialReaction, isSignInRequired } from "./social-api";
+import { changeSocialReaction, isSignInRequired, socialErrorMessage } from "./social-api";
 import { useSocialFeed } from "./social-feed";
 import { SocialComments } from "./social-comments";
 import styles from "./marketplace-view.module.css";
@@ -73,11 +73,11 @@ export function MarketplaceProductCard({
     setSocialError("");
     setSignIn(false);
     try {
-      updateSummary(await changeSocialReaction(item.id, kind, !selected));
+      const confirmed = await changeSocialReaction(item.id, kind, !selected);
+      if (confirmed) updateSummary(confirmed);
     } catch (error) {
       setSignIn(isSignInRequired(error));
-      setSocialError(isSignInRequired(error)
-        ? "Đăng nhập để tương tác với sản phẩm." : "Không thể cập nhật. Hãy thử lại.");
+      setSocialError(socialErrorMessage(error));
     } finally { setBusy(false); }
   }
 
@@ -143,6 +143,7 @@ export function MarketplaceProductCard({
                 <BookmarkSimple size={20} weight={social?.saved ? "fill" : "regular"} aria-hidden="true" />
               </button>
             </div>
+            {socialLoading && <p className={styles.socialLoading} role="status">Đang đồng bộ tương tác…</p>}
             {socialFailed && <div className={styles.socialError} role="alert">
               Không tải được tương tác. <button type="button" onClick={retry}>Thử lại</button>
             </div>}

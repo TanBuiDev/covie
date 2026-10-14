@@ -198,3 +198,17 @@
 .commentForm button { justify-self: end; border: 0; border-radius: 8px; background: #059669; color: white; font-weight: 700; font-size: 12px; padding: 9px 14px; cursor: pointer; min-height: 44px; }
 .commentForm button:disabled { opacity: .5; cursor: not-allowed; }
 .commentHint { font-size: 13px; color: #64748b; margin: 0; }
+
+/* Phase 3: loading, feedback and touch targets */
+.socialLoading { color: #64748b; font-size: 12px; margin: 0; }
+.commentError button { text-decoration: underline; border: 0; padding: 4px; background: transparent; color: #047857; cursor: pointer; }
+.commentFormActions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.commentFormActions small { color: #64748b; font-size: 11px; }
+.commentHeader button, .commentList button, .commentError button { min-height: 44px; min-width: 44px; }
+.commentPanel button:focus-visible { outline: 3px solid #059669; outline-offset: 2px; }
+.commentPanel a { color: #047857; text-underline-offset: 3px; }
+.commentList { overscroll-behavior: contain; }
+@media (max-width: 359px) {
+  .interactions { gap: 2px; }
+  .interactions button { min-width: 42px; padding: 5px 6px; }
+}
