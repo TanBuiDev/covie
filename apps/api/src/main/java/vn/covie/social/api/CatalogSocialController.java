@@ -1,6 +1,5 @@
 package vn.covie.social.api;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -21,11 +20,7 @@ import vn.covie.social.api.dto.SocialCommentPage;
 import vn.covie.social.api.dto.SocialItemSummary;
 import vn.covie.social.application.CatalogSocialService;
 
-/**
- * Phase 2 beta routes. Kept outside generated OpenAPI until the versioned
- * social API contract is approved; contract is documented in docs/plans.
- */
-@Hidden
+/** Public catalog-social API. Authorization and CSRF are enforced by the existing security chain. */
 @RestController
 public class CatalogSocialController {
     private final CatalogSocialService service;
