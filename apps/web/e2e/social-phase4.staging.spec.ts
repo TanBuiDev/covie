@@ -91,8 +91,7 @@ test("authenticated Like, Save and comment CRUD respect server state", async ({ 
     await comments.getByRole("textbox", { name: "Viết bình luận" }).fill(stamp);
     await comments.getByRole("button", { name: "Gửi bình luận" }).click();
     await expect(comments.getByText(stamp, { exact: true })).toBeVisible();
-    const mine = comments.locator("div").filter({ has: comments.getByText(stamp, { exact: true }) })
-      .filter({ has: comments.getByRole("button", { name: "Xóa bình luận của bạn" }) }).last();
+    const mine = comments.getByText(stamp, { exact: true }).locator("..");
     await mine.getByRole("button", { name: "Xóa bình luận của bạn" }).click();
     await expect(comments.getByText(stamp, { exact: true })).toHaveCount(0);
     await page.reload();

@@ -44,7 +44,12 @@ done
 
 # The staging fixture refuses the production origin and uses cookie-based role login.
 # Set COVIE_SOCIAL_E2E_MUTATIONS_OK=1 only in a disposable staging account.
-pnpm --dir "$repo_root/apps/web" exec playwright test   e2e/social-phase4.staging.spec.ts --project=chromium --workers=1   | tee "$evidence/playwright.log"
+pnpm --dir "$repo_root/apps/web" exec playwright test e2e/social-phase4.staging.spec.ts \
+  --project=chromium --workers=1 --reporter=list | tee "$evidence/playwright.log"
+if grep -Eq '[0-9]+ skipped|[0-9]+ did not run' "$evidence/playwright.log"; then
+  echo "Playwright skipped tests: acceptance is incomplete" >&2
+  exit 1
+fi
 printf 'phase=4\nhead=%s\nstaging_origin=%s\ncompleted_utc=%s\nstatus=AUTOMATED_PASS\n'   "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
 echo "Automated staging gate passed. Manual visual, moderation and rollback evidence remains mandatory."
 echo "Evidence path: $evidence"
