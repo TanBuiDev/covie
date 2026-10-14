@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { AdSlot } from "@/features/ads/ad-slot";
@@ -26,15 +25,17 @@ import {
   Package,
   Wrench,
   SquaresFour,
-  ListDashes,
 } from "@phosphor-icons/react";
 import type { components } from "@covie/api-client";
 import { SelectDropdown, type DropdownOption } from "@/components/ui/select-dropdown";
 import styles from "./search-results.module.css";
 import categoryStyles from "./category-state.module.css";
+import { MarketplaceProductCard } from "@/features/marketplace-view/marketplace-product-card";
+import { MarketplaceViewToggle } from "@/features/marketplace-view/marketplace-view-toggle";
+import { useMarketplaceView } from "@/features/marketplace-view/use-marketplace-view";
+import viewStyles from "@/features/marketplace-view/marketplace-view.module.css";
 
 type Page = components["schemas"]["CursorPageResponseCatalogItemSummaryResponse"];
-type Item = components["schemas"]["CatalogItemSummaryResponse"];
 type SearchType = "" | "PRODUCT" | "SERVICE";
 type ListingKind = "" | "RESALE";
 type SearchSort = NonNullable<CatalogDiscoveryFilters["sort"]>;
@@ -76,73 +77,6 @@ const hasIntent = (f: SearchInitialFilters) =>
       f.shipping,
   );
 
-const price = (item: Item) =>
-  item.priceFrom?.amount == null
-    ? "Giá liên hệ"
-    : `${new Intl.NumberFormat("vi-VN").format(item.priceFrom.amount)} ₫`;
-
-function ResultCard({ item, viewMode }: { item: Item; viewMode: "grid" | "list" }) {
-  const isService = item.type === "SERVICE";
-  const isResale = item.listingKind === "RESALE";
-  const distance =
-    item.resolvedLocation?.distanceMeters != null
-      ? `${Math.round(item.resolvedLocation.distanceMeters)} m · `
-      : "";
-  const locationName = item.resolvedLocation?.name ?? "Chưa xác định vị trí";
-
-  return (
-    <article className={`${styles.card} ${viewMode === "list" ? styles.cardList : styles.cardGrid}`}>
-      <Link
-        className={styles.media}
-        href={`/items/${item.id}`}
-        aria-label={`Xem ${item.name ?? "sản phẩm"}`}
-      >
-        {item.primaryMedia?.url ? (
-          <Image
-            src={item.primaryMedia.url}
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 160px, 112px"
-            unoptimized
-          />
-        ) : (
-          <div className={styles.mediaPlaceholder}>
-            {isService ? (
-              <Wrench size={30} weight="duotone" />
-            ) : isResale ? (
-              <Tag size={30} weight="duotone" />
-            ) : (
-              <Package size={30} weight="duotone" />
-            )}
-            <span aria-hidden="true">CoVie</span>
-          </div>
-        )}
-        <small
-          className={`${styles.typeBadge} ${
-            isService ? styles.typeService : isResale ? styles.typeResale : styles.typeProduct
-          }`}
-        >
-          {isService ? "Dịch vụ" : isResale ? "Thanh lý" : "Sản phẩm"}
-        </small>
-      </Link>
-      <div className={styles.cardBody}>
-        <h2>
-          <Link href={`/items/${item.id}`}>{item.name ?? "Sản phẩm"}</Link>
-        </h2>
-        <strong className={styles.cardPrice}>{price(item)}</strong>
-        <p className={styles.locationLine} title={`${distance}${locationName}`}>
-          <MapPin size={13} weight="duotone" className={styles.metaIcon} />
-          <span>● {distance}{locationName}</span>
-        </p>
-        <p className={styles.merchantLine} title={item.merchant?.name ?? "Người bán CoVie"}>
-          <Storefront size={13} weight="duotone" className={styles.metaIcon} />
-          <span>● {item.merchant?.name ?? "Người bán CoVie"}</span>
-        </p>
-      </div>
-    </article>
-  );
-}
-
 export function SearchResults({ initial }: { initial: SearchInitialFilters }) {
   const queryKey = JSON.stringify([
     initial.q ?? "",
@@ -175,7 +109,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreError, setMoreError] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const { mode: viewMode, changeMode: setViewMode } = useMarketplaceView("catalog");
   const requestGeneration = useRef(0);
   const dialogRef = useRef<HTMLElement>(null);
   const [categoryName, setCategoryName] = useState("Danh mục");
@@ -980,27 +914,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
                 )}
               </div>
               <div className={styles.toolbarRight}>
-                {/* View Switcher: Grid vs List */}
-                <div className={styles.viewSwitcher} aria-label="Chế độ hiển thị">
-                  <button
-                    type="button"
-                    className={`${styles.viewBtn} ${viewMode === "grid" ? styles.viewBtnActive : ""}`}
-                    onClick={() => setViewMode("grid")}
-                    aria-label="Xem dạng lưới"
-                    title="Xem dạng lưới"
-                  >
-                    <SquaresFour size={18} weight={viewMode === "grid" ? "fill" : "duotone"} />
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.viewBtn} ${viewMode === "list" ? styles.viewBtnActive : ""}`}
-                    onClick={() => setViewMode("list")}
-                    aria-label="Xem dạng danh sách"
-                    title="Xem dạng danh sách"
-                  >
-                    <ListDashes size={18} weight={viewMode === "list" ? "fill" : "duotone"} />
-                  </button>
-                </div>
+                <MarketplaceViewToggle mode={viewMode} onModeChange={setViewMode} />
 
                 <div className={`${styles.sort} ${categoryMode ? categoryStyles.categorySort : ""}`}>
                   <span>Sắp xếp</span>
@@ -1089,11 +1003,11 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
 
             {!loading && !error && (
               <div
-                className={`${styles.list} ${viewMode === "list" ? styles.listColumn : styles.listGrid}`}
+                className={`${viewStyles.grid} ${viewMode === "social" ? viewStyles.gridSocial : viewStyles.gridCatalog}`}
               >
                 {page?.items?.map((item, index, items) => (
                   <Fragment key={item.id}>
-                    <ResultCard item={item} viewMode={viewMode} />
+                    <MarketplaceProductCard item={item} mode={viewMode} />
                     {index === Math.min(5, items.length - 1) && <div className={styles.adFeed}><AdSlot placement="IN_FEED" /></div>}
                   </Fragment>
                 ))}
