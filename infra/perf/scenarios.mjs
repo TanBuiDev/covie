@@ -1,3 +1,14 @@
+function socialIds() {
+  const raw = process.env.COVIE_SOCIAL_LOAD_ITEM_IDS ?? "";
+  const ids = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (ids.length < 1 || ids.length > 40 || ids.some((id) => !uuid.test(id)) ||
+      new Set(ids).size !== ids.length) {
+    throw new Error("COVIE_SOCIAL_LOAD_ITEM_IDS requires 1–40 distinct UUIDs.");
+  }
+  return ids;
+}
+
 export const scenarios = {
   "public-search": {
     method: "GET",
@@ -15,6 +26,22 @@ export const scenarios = {
     p95Ms: 300,
     maxErrorRatio: 0.01,
   },
+  // Provisional Phase 4 targets; calibrate against production-like baseline before acceptance.
+  "public-social-summary": {
+    method: "GET",
+    pathFactory: () => "/api/v1/catalog/social-summary?" +
+      new URLSearchParams(socialIds().map((id) => ["itemIds", id])).toString(),
+    expected: [200],
+    p95Ms: 400,
+    maxErrorRatio: 0.01,
+  },
+  "public-social-comments": {
+    method: "GET",
+    pathFactory: () => "/api/v1/catalog/items/" + socialIds()[0] + "/comments?limit=5",
+    expected: [200],
+    p95Ms: 400,
+    maxErrorRatio: 0.01,
+  },
   "order-list": {
     method: "GET",
     path: "/api/v1/me/orders?limit=20",
@@ -30,7 +57,7 @@ export function resolveScenario(name) {
   if (!scenario) {
     throw new Error(`Unknown scenario '${name}'. Available: ${Object.keys(scenarios).join(", ")}`);
   }
-  const path = scenario.path ?? process.env[scenario.pathEnv];
+  const path = scenario.pathFactory?.() ?? scenario.path ?? process.env[scenario.pathEnv];
   if (!path || !path.startsWith("/")) {
     throw new Error(`Scenario '${name}' requires ${scenario.pathEnv} to be an absolute API path`);
   }
