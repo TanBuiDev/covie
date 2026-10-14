@@ -141,4 +141,44 @@ class CatalogSocialControllerIntegrationTest extends PostgresIntegrationTest {
                 .andExpect(jsonPath("$['" + itemId + "'].comments").value(1));
     }
 
+    @Test void rejectsGuestAndNonAdminAccessToModeratorOnlyCommentPreview() throws Exception {
+        UUID itemId = item(true);
+        String owner = user("Moderation preview author");
+        String route = "/api/v1/me/catalog/items/" + itemId + "/comments";
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        var created = mvc.perform(post(route).header("Authorization",owner)
+                .contentType("application/json")
+                .content(mapper.writeValueAsString(java.util.Map.of("body","Visible to moderator only"))))
+                .andExpect(status().isCreated()).andReturn();
+        String commentId = mapper.readTree(created.getResponse().getContentAsString()).path("id").asText();
+        String adminPath = "/api/v1/admin/catalog-social/comments/" + commentId;
+        mvc.perform(get(adminPath)).andExpect(status().isUnauthorized());
+        mvc.perform(get(adminPath).header("Authorization",owner)).andExpect(status().isForbidden());
+    }
+
+    @Test void blocksPublicSocialActivityForHiddenOrSuspendedMerchants() throws Exception {
+        UUID itemId = item(true);
+        String actor = user("Merchant visibility viewer");
+        UUID merchantId = items.findById(itemId).orElseThrow().getMerchantProfileId();
+        var merchant = merchants.findById(merchantId).orElseThrow();
+        merchant.hide(NOW);
+        merchants.saveAndFlush(merchant);
+        String summary = "/api/v1/catalog/social-summary";
+        String likes = "/api/v1/me/catalog/items/" + itemId + "/likes";
+        mvc.perform(get(summary).param("itemIds",itemId.toString()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
+        mvc.perform(get("/api/v1/catalog/items/" + itemId + "/comments"))
+                .andExpect(status().isNotFound());
+        mvc.perform(put(likes).header("Authorization",actor))
+                .andExpect(status().isNotFound());
+
+        merchant.restoreVisibility(NOW);
+        merchant.suspend(NOW);
+        merchants.saveAndFlush(merchant);
+        mvc.perform(get(summary).param("itemIds",itemId.toString()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
+        mvc.perform(put(likes).header("Authorization",actor))
+                .andExpect(status().isNotFound());
+    }
+
 }
