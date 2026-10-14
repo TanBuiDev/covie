@@ -50,9 +50,12 @@ public class CatalogSocialService {
 
     private void requireVisible(UUID itemId) {
         Integer visible = jdbc.queryForObject("""
-            select count(*) from catalog_items
-            where id=? and deleted_at is null and listing_status='ACTIVE'
-              and moderation_status in ('NOT_REQUIRED','APPROVED')
+            select count(*) from catalog_items i
+            join merchant_profiles m on m.id=i.merchant_profile_id
+            where i.id=? and i.deleted_at is null and i.listing_status='ACTIVE'
+              and i.moderation_status in ('NOT_REQUIRED','APPROVED')
+              and m.deleted_at is null and m.merchant_status='ACTIVE'
+              and m.moderation_status in ('NOT_REQUIRED','APPROVED')
             """, Integer.class, itemId);
         if (visible == null || visible == 0) throw notFound();
     }
@@ -74,9 +77,13 @@ public class CatalogSocialService {
                      and r.kind='LIKE' and r.user_id=:viewer) liked,
               exists(select 1 from catalog_social_reactions r where r.catalog_item_id=i.id
                      and r.kind='SAVE' and r.user_id=:viewer) saved
-            from catalog_items i where i.id in (:ids)
+            from catalog_items i
+            join merchant_profiles m on m.id=i.merchant_profile_id
+            where i.id in (:ids)
               and i.deleted_at is null and i.listing_status='ACTIVE'
               and i.moderation_status in ('NOT_REQUIRED','APPROVED')
+              and m.deleted_at is null and m.merchant_status='ACTIVE'
+              and m.moderation_status in ('NOT_REQUIRED','APPROVED')
             """, params, (rs,n) -> new SocialItemSummary(rs.getObject("id",UUID.class),
                         rs.getLong("likes"),rs.getLong("comments"),rs.getBoolean("liked"),rs.getBoolean("saved")));
         Map<UUID, SocialItemSummary> result = new LinkedHashMap<>();
