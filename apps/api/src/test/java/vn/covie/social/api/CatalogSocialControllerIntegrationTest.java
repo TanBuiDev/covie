@@ -90,7 +90,7 @@ class CatalogSocialControllerIntegrationTest extends PostgresIntegrationTest {
         mvc.perform(get("/api/v1/catalog/social-summary").param("itemIds",hidden.toString()))
                 .andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
         mvc.perform(post(post).header("Authorization",owner).contentType("application/json")
-                .content("{\"body\":\"   \"}")).andExpect(status().isBadRequest());
+                .content("{\"body\":\"   \"}")).andExpect(status().isUnprocessableEntity());
         var response = mvc.perform(post(post).header("Authorization",owner).contentType("application/json")
                 .content("{\"body\":\"Is this still available?\"}"))
                 .andExpect(status().isCreated()).andExpect(jsonPath("$.own").value(true))
