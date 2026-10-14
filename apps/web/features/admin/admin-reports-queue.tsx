@@ -35,6 +35,7 @@ function targetLabel(type: unknown) {
     case "USER": return "Người dùng";
     case "NEED_REQUEST": return "Cần mua";
     case "REVIEW": return "Đánh giá";
+    case "SOCIAL_COMMENT": return "Bình luận sản phẩm";
     default: return "Đối tượng";
   }
 }
@@ -59,6 +60,7 @@ function TargetIcon({ type }: { type: unknown }) {
     case "NEED_REQUEST":
       return <Flag size={18} weight="duotone" />;
     case "REVIEW":
+    case "SOCIAL_COMMENT":
       return <ChatCenteredText size={18} weight="duotone" />;
     default:
       return <ShieldWarning size={18} weight="duotone" />;

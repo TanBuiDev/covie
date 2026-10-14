@@ -28,8 +28,10 @@ import {
 type CaseSummary = { id: string; caseType?: string; status?: string; targetType?: string; targetId?: string; reasonCode?: string; openedAt?: string; resolvedAt?: string };
 type CaseAction = { id?: string; action?: string; actorAdminUserId?: string; reasonCode?: string; note?: string; createdAt?: string };
 type CaseDetail = { moderationCase: CaseSummary; actions?: CaseAction[] };
+type ReportedComment = { id: string; catalogItemId: string; listingTitle: string;
+  authorName: string; body: string; status: string; createdAt: string };
 
-const contentTargets = new Set(["CATALOG_ITEM", "NEED_REQUEST", "REVIEW"]);
+const contentTargets = new Set(["CATALOG_ITEM", "NEED_REQUEST", "REVIEW", "SOCIAL_COMMENT"]);
 
 function availableActions(detail: CaseDetail | undefined): ModerationActionKind[] {
   if (!detail) return [];
@@ -60,6 +62,7 @@ function targetLabel(type: unknown) {
     case "USER": return "Người dùng";
     case "NEED_REQUEST": return "Cần mua";
     case "REVIEW": return "Đánh giá";
+    case "SOCIAL_COMMENT": return "Bình luận sản phẩm";
     default: return "Đối tượng";
   }
 }
@@ -79,6 +82,8 @@ export function AdminModerationDetail({ caseId }: { caseId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [conflict, setConflict] = useState<string>();
+  const [reportedComment, setReportedComment] = useState<ReportedComment>();
+  const [commentError, setCommentError] = useState<string>();
 
   const load = useCallback(async (isActive: () => boolean = () => true) => {
     try {
@@ -100,6 +105,21 @@ export function AdminModerationDetail({ caseId }: { caseId: string }) {
     Promise.resolve().then(() => { if (active) void load(() => active); });
     return () => { active = false; };
   }, [load]);
+
+  // Admin-only context preview; never fetch the full comment body on the public feed.
+  useEffect(() => {
+    const current = detail?.moderationCase;
+    if (current?.targetType !== "SOCIAL_COMMENT" || !current.targetId) return;
+    let active = true;
+    void requestBrowserApi("GET", "/api/v1/admin/catalog-social/comments/" + encodeURIComponent(current.targetId))
+      .then(async (response) => {
+        if (!response.ok) throw await readApiError(response);
+        return response.json() as Promise<ReportedComment>;
+      })
+      .then((data) => { if (active) { setReportedComment(data); setCommentError(undefined); } })
+      .catch(() => { if (active) setCommentError("Không thể tải nội dung bình luận để thẩm định."); });
+    return () => { active = false; };
+  }, [detail?.moderationCase.targetId, detail?.moderationCase.targetType]);
 
   function reload() {
     setLoading(true);
@@ -162,6 +182,23 @@ export function AdminModerationDetail({ caseId }: { caseId: string }) {
 
       {!loading && !error && detail ? (
         <>
+          {detail.moderationCase.targetType === "SOCIAL_COMMENT" && (
+            <AdminSurface>
+              <h2 style={{ marginTop: 0 }}>Nội dung bình luận cần kiểm duyệt</h2>
+              {commentError && <p role="alert" className="admin-error">{commentError}</p>}
+              {!reportedComment && !commentError && <p className="admin-muted">Đang tải bình luận…</p>}
+              {reportedComment && (
+                <>
+                  <p><strong>{reportedComment.authorName}</strong> · {formatAdminDate(reportedComment.createdAt)}</p>
+                  <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{reportedComment.body}</p>
+                  <p className="admin-caption">Sản phẩm: {reportedComment.listingTitle} · Trạng thái: {reportedComment.status}</p>
+                  <Link className="admin-inline-link" href={`/items/${encodeURIComponent(reportedComment.catalogItemId)}`}>
+                    Xem sản phẩm liên quan
+                  </Link>
+                </>
+              )}
+            </AdminSurface>
+          )}
           <div className="admin-moderation-grid">
             <AdminSurface className="admin-entity-summary">
               <div className="admin-entity-summary__top" style={{ alignItems: "center", display: "flex", gap: "10px" }}>
