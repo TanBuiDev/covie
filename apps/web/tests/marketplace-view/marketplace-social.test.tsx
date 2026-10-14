@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
   fetchSocialComments: vi.fn(),
   addSocialComment: vi.fn(),
   removeSocialComment: vi.fn(),
+  reportSocialComment: vi.fn(),
   isSignInRequired: vi.fn(() => false),
   socialErrorMessage: vi.fn(() => "Không thể thực hiện. Kiểm tra kết nối và thử lại."),
 }));
@@ -81,6 +82,24 @@ describe("Phase 2 social card", () => {
     await waitFor(() => expect(buttons.every((button) => !button.hasAttribute("disabled"))).toBe(true));
     fireEvent.click(buttons[0]);
     await waitFor(() => expect(screen.getAllByRole("button", { name: "Bỏ thích Bánh mì CoVie" })).toHaveLength(2));
+  });
+
+  it("allows reporting a foreign comment only after the server confirms the report", async () => {
+    api.fetchSocialSummaries.mockResolvedValue({
+      [item.id!]: { itemId: item.id, likes: 0, comments: 1, liked: false, saved: false },
+    });
+    api.fetchSocialComments.mockResolvedValue({
+      items: [{ id: "comment-report", itemId: item.id, authorName: "Người dùng",
+        body: "Không hợp lệ", createdAt: "2026-10-14T12:00:00Z", own: false }], nextCursor: null,
+    });
+    api.reportSocialComment.mockResolvedValue(undefined);
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: "Bình luận Bánh mì CoVie" }));
+    const report = await screen.findByRole("button", { name: "Báo cáo bình luận" });
+    fireEvent.click(report);
+    expect(await screen.findByText("Đã gửi báo cáo bình luận tới đội ngũ kiểm duyệt."))
+      .toBeInTheDocument();
+    expect(api.reportSocialComment).toHaveBeenCalledWith("comment-report");
   });
 
   it("does not fabricate likes after an unsuccessful server mutation", async () => {
