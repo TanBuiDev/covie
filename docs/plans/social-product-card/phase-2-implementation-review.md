@@ -2,7 +2,7 @@
 
 Implementation branch: `feature/social-product-card-phase2`. Base: merged Phase 1 at `ffb23d3932382230f96382e3f269a5bf729731a5`.
 
-## Contract (beta, deliberately excluded from the generated OpenAPI until public versioning is approved)
+## Contract (versioned /api/v1 endpoints)
 
 - Public `GET /api/v1/catalog/social-summary?itemIds=<uuid>&itemIds=<uuid>`, 1–40 UUIDs. Returns an object keyed by listing UUID. Only ACTIVE and non-hidden catalog items appear. Each entry has `itemId, likes, comments, liked, saved`, with viewer booleans false when anonymous.
 - Public `GET /api/v1/catalog/items/{itemId}/comments?limit=5&before=<uuid>` (limit 1–20, keyset pagination). Response `{ items:[{id,itemId,authorName,body,createdAt,own}], nextCursor }`.
@@ -22,6 +22,10 @@ Implementation branch: `feature/social-product-card-phase2`. Base: merged Phase 
 ## Remaining production gates
 
 - Backend and frontend unit/integration tests; CI typecheck/lint/test/build; staging UI visual QA on 360/768/1280/1440; abuse/security review.
-- Admin comment moderation UI and report-to-moderator action are NOT added in this slice. Database status HIDDEN is ready for an audited moderator workflow; don't expose an unreviewed admin write path.
-- Social beta endpoints are documented here but `@Hidden` from generated OpenAPI until contract is approved. Remove the annotation and regenerate both OpenAPI + typed client together as the explicit contract-publication step.
+- Comment reporting is implemented using the existing audited `/api/v1/reports` with target SOCIAL_COMMENT (migration V019); the existing admin moderation case HIDE / RESTORE actions modify individual comment visibility, with audit and outbox. Admin UI still needs staging verification.
+- Social controller is now visible to OpenAPI. Generate and commit both the exported JSON and typed client with zero drift before merging.
 - Do not merge/deploy until CI and manual checks complete.
+
+## Phase 3 and release
+
+See `phase-3-implementation-review.md`. V018 and V019 are additive, forward-only Flyway migrations. Do not drop submitted social data during a rollback.
