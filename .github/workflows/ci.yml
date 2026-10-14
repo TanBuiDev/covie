@@ -77,6 +77,8 @@ jobs:
         run: pnpm --filter @covie/web test
       - name: Build web
         run: pnpm --filter @covie/web build
+      - name: Validate social performance scenario contracts
+        run: node --test infra/perf/social-scenarios.test.mjs
       - name: Test secret-hygiene status handling
         run: ./infra/scripts/test-secret-hygiene.sh
       - name: Reject tracked secrets
