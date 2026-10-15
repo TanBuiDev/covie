@@ -1,28 +1,30 @@
-# Seller Billing — Implementation checkpoint (2026-10-15)
+# Seller Billing & payOS implementation checkpoint — 2026-10-15
 
-**Branch:** \`feat/seller-billing-subscription\`. **Status:** PARTIAL, NOT TESTED. Billing enforcement defaults OFF and payment is not connected. No live charges, no deployment.
+**Branch:** `feat/seller-billing-subscription`. **Status:** WIP. No production payment, no merge/deployment, no entitlement enforcement enabled.
 
-## Implemented on branch
-- Flyway \`V020__seller_billing_foundation.sql\`: versioned price/policy, subscriptions, invoice, payment attempts, entitlement grants, webhook inbox, 10,000 VND initial published price.
-- \`BillingCatalogService\`: read current published plan/policy, publish next immutable price/policy version with Admin authorization, audit/outbox. Future version must have future effective time.
-- \`BillingEntitlementService\`: server-side eligibility/read-only evaluation from grant table, all shops allowed while enforcement is off.
-- Read API: \`GET /api/v1/billing/plans\`, seller-scoped billing summary, Admin policy, Admin publish version API. Public plan route opened at security config.
-- System flags: \`billing.enforcement_enabled=false\`, \`billing.seller_registration_enabled=true\`, \`billing.reminders_enabled=false\`.
-- Deployment approval guard: turning on \`billing.enforcement_enabled\` needs \`COVIE_BILLING_RELEASE_APPROVED=true\` in server environment; do **not** configure until acceptance complete.
-- Unit test source for month-end date arithmetic.
+## Implemented in source
 
-## NOT implemented; mandatory before marking complete
-- Invoice issue/renewal transactional service; quote TTL and idempotency; provider payment intent/QR; webhook authentication and durable reconciliation; refunds/ledger; schedulers and notifications.
-- Seller UI / Admin UI / generated OpenAPI client. These require exact Figma production frame and project UI instructions.
-- Merchant write-side enforcement across catalog, checkout at commit, discovery/Need/ads, existing merchant grants and migration.
-- Admin fine-grained billing permissions (currently legacy Admin role).
-- End-to-end tests, local Java 25/Maven build, PostgreSQL Flyway migration tests, browser tests, sandbox verification, legal/PSP selection.
+- V020–V022 Flyway migrations: plan/policy revisions, merchant subscriptions, immutable invoice snapshots, payment attempts, payOS order numbers, webhook inbox and entitlement grants.
+- Admin-owned versioned pricing/policies and billing setting flags, security-gated Admin API, audit/outbox for publishing versions.
+- payOS hosted checkout gateway using backend-only environment credentials and HMAC signature.
+- Seller-only invoice creation with OWNER permission, per-merchant idempotency and prevention of simultaneous active payment links.
+- Signed webhook entry point with exact invoice, amount, currency and payment-link ID checks; idempotent granting with transaction-scoped locks; callback does not rely on returnUrl.
+- Seller billing page with plans, payment links, polling, invoice history; Admin billing settings page; safe return route; nav links added.
+- Public plan, Seller billing summary, invoice history, invoice status; migration and payOS signature unit-test sources.
+- OpenAPI client schema regenerated from CI artifact and committed (contract matches the new backend at observed CI run).
+- Billing enforcement flag OFF; payment creation flag `PAYOS_PAYMENT_ENABLED=false`.
 
-## Known technical checks for next implementation session
-1. Obtain current branch/PR SHA, re-read root/closest AGENTS & RULES, detect upstream changes and verify SQL migration order.
-2. Run Java 25 Maven compile/Flyway against a disposable PostgreSQL DB; resolve any errors with actual logs.
-3. Prioritize invoice/settlement correctness, idempotency and state transitions before accepting real funds.
-4. Do not enable enforcement or payment until seller legacy migration and consumer behavior are safe.
-5. Do not interpret this PR as release-ready.
+## Tests and gaps
 
-**Prohibition:** Do not merge this branch or enable collection of real money without review, tests and PSP contract/security verification.
+- GitHub CI at earlier commit: backend compiled and **921 tests ran, 1 failure** due to outdated migration assertion (V019 vs V022). Test updated in subsequent commit. New CI recheck required.
+- Frontend contract drift detected at older commit and subsequently corrected by committing regenerated OpenAPI/client. New CI recheck required.
+- CI secret-history scanner reported one match while scanning full Git history. **Do not dismiss.** Inspect sensitive details only in a private security workflow, determine historical/current scope and rotate any real exposed credential if applicable. Never put secret value into discussions.
+- payOS officially **has no separate sandbox**; avoid real-money testing until approved. See `payos-setup-and-local-acceptance.md`.
+
+**Incomplete:** provider reconciliation and refund workflow; rate limiting, seller registration gating, trial/grace scheduler; backend enforcement across catalog/checkout/Need/discovery/ads; legacy merchant migration; fully audited Admin finance RBAC; contract-level verification with payOS test transfer; Figma/responsive/UI validation; complete end-to-end tests and security release approval. These are release blockers.
+
+## Resume instruction
+
+Continue on this branch without force push or resetting local work. Read AGENTS/RULES and latest main before editing. First inspect current CI errors and resolve focused regressions. Then implement reconciliation, retention/upgrade safety and entitlement enforcement with feature flag OFF; write tests. Do not enable live payments or buyer-side fees.
+
+**Never claim this feature complete solely because a branch compiles, CI passes or admin pages render.**

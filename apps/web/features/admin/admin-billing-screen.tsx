@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminPageHeader, AdminSurface, formatAdminMoney } from "./admin-ui";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
+import type { components } from "@covie/api-client";
 
-type Plan = { id: string; code: string; name: string; revision: number; priceVnd: number; cycleMonths: number; effectiveAt: string };
-type Policy = { id: string; revision: number; onboardingMode: string; trialDays: number; graceDays: number; effectiveAt: string };
+type Plan = Required<components["schemas"]["PlanOffer"]>;
+type Policy = Required<components["schemas"]["Policy"]>;
 
 async function requireJson<T>(response: Response): Promise<T> {
   if (!response.ok) throw await readApiError(response);

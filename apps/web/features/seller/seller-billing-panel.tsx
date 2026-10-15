@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CreditCard, ArrowSquareOut, ArrowClockwise, ShieldCheck } from "@phosphor-icons/react";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
+import type { components } from "@covie/api-client";
 
-type Plan = { id: string; code: string; name: string; revision: number; priceVnd: number; cycleMonths: number };
-type Eligibility = { canSell: boolean; enforced: boolean; reasonCode: string; expiry: string | null };
-type Invoice = { invoiceId: string; invoiceNumber: string; status: string; amountVnd: number; periodStart: string; periodEnd: string; createdAt: string };
-type Checkout = { invoiceId: string; orderCode: number; amountVnd: number; checkoutUrl: string; qrPayload: string; expiresAt: string; invoiceStatus: string };
+type Plan = Required<components["schemas"]["PlanOffer"]>;
+type Eligibility = components["schemas"]["Eligibility"];
+type Invoice = Required<components["schemas"]["InvoiceSummary"]>;
+type Checkout = Required<components["schemas"]["CheckoutResult"]>;
 
 const money = (amount: number) => new Intl.NumberFormat("vi-VN").format(amount) + "đ";
 const date = (value: string) => new Intl.DateTimeFormat("vi-VN", { dateStyle: "short" }).format(new Date(value));
