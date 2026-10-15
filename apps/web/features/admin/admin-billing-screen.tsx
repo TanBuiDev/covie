@@ -377,7 +377,7 @@ export function AdminBillingScreen() {
                             disabled={saving} onClick={() => void resolveCase(item.id, "REVIEWING")}>Tiếp nhận</button> : null}
                           <button className="admin-button admin-button--secondary" disabled={saving}
                             onClick={() => void resolveCase(item.id, "REJECTED")}>Từ chối</button>
-                          {item.kind === "REFUND" ? <button className="admin-button admin-button--secondary"
+                          {item.kind === "REFUND" && item.status === "REVIEWING" ? <button className="admin-button admin-button--secondary"
                             disabled={saving} onClick={() => void resolveCase(item.id, "CONFIRMED")}>Xác nhận đã hoàn</button> : null}
                         </div>
                       ) : "Đã xử lý"}

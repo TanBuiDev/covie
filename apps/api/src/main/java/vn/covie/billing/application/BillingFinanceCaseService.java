@@ -102,6 +102,12 @@ public class BillingFinanceCaseService {
         }
         if("CONFIRMED".equals(request.status())) {
             if(!refundApproval)throw conflict("Refund confirmation requires separate operator approval.");
+            var reviewers=jdbc.query("""
+                select created_by_user_id,reviewed_by_user_id
+                from billing_finance_cases where id=?
+                """,(rs,n)->new UUID[]{(UUID)rs.getObject(1),(UUID)rs.getObject(2)},caseId);
+            requireIndependentRefundApproval(current.status(), actor.userId(),
+                reviewers.getFirst()[0], reviewers.getFirst()[1]);
             if(!"REFUND".equals(current.kind()))throw conflict("Disputes require investigation before refund.");
             if(request.externalReference()==null||!request.externalReference().matches("[A-Za-z0-9._/-]{6,180}"))
                 throw invalid("Externally confirmed refund reference required.");
@@ -132,14 +138,27 @@ public class BillingFinanceCaseService {
         boolean finalState=!"REVIEWING".equals(request.status());
         jdbc.update("""
             update billing_finance_cases
-            set status=?,resolution_note=?,external_refund_reference=?,resolved_by_user_id=?,resolved_at=?
+            set status=?,resolution_note=?,external_refund_reference=?,resolved_by_user_id=?,resolved_at=?,
+                reviewed_by_user_id=case when ?='REVIEWING' then ? else reviewed_by_user_id end,
+                reviewed_at=case when ?='REVIEWING' then ? else reviewed_at end
             where id=?
             """,request.status(),request.note().trim(),request.externalReference(),
-            finalState?actor.userId():null,finalState?Timestamp.from(clock.now()):null,caseId);
+            finalState?actor.userId():null,finalState?Timestamp.from(clock.now()):null,
+            request.status(),actor.userId(),request.status(),Timestamp.from(clock.now()),caseId);
         audit.securityEvent(actor.userId(),"BILLING_FINANCE_CASE_"+request.status(),
             "BILLING_FINANCE_CASE",caseId,requestIds.current(),
             Map.of("invoiceId",current.invoiceId().toString(),"status",request.status()));
         return details(caseId);
+    }
+
+    /**
+     * A refund must first be reviewed by a different Admin, and the requester
+     * cannot independently confirm their own reimbursement.
+     */
+    static void requireIndependentRefundApproval(String status,UUID approver,UUID requester,UUID reviewer) {
+        if(!"REVIEWING".equals(status) || reviewer==null || reviewer.equals(approver)
+                || requester==null || requester.equals(approver))
+            throw conflict("Refund requires review by another Administrator and an independent approver.");
     }
 
     @Transactional(readOnly=true)
