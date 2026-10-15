@@ -18,6 +18,13 @@ public class AdminBillingReadController {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(data.overview());
     }
 
+    @GetMapping("/subscriptions")
+    public ResponseEntity<List<AdminBillingReadService.Subscription>> subscriptions(
+        @RequestParam(defaultValue="30") int limit,
+        @RequestParam(defaultValue="0") int offset){
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(data.subscriptions(limit,offset));
+    }
+
     @GetMapping("/invoices")
     public ResponseEntity<List<AdminBillingReadService.Invoice>> invoices(
         @RequestParam(required=false) UUID merchantId,

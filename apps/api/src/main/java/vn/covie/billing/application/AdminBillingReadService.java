@@ -66,6 +66,36 @@ public class AdminBillingReadService {
             """, (rs,n)->row(rs),merchantId,limit,offset);
     }
 
+    @Transactional(readOnly=true)
+    public List<Subscription> subscriptions(int limit,int offset) {
+        requireReader();
+        if(limit<1||limit>100||offset<0||offset>500_000)
+            throw new IllegalArgumentException("Invalid subscriptions page");
+        return jdbc.query("""
+            select s.merchant_id,mp.name merchant_name,s.plan_code,s.status,
+                   s.period_start,s.period_end,s.grace_until,s.cancel_at_period_end
+            from merchant_subscriptions s
+            join merchant_profiles mp on mp.id=s.merchant_id
+            where mp.deleted_at is null
+            order by s.period_end asc nulls last,mp.name,s.merchant_id
+            limit ? offset ?
+            """,(rs,i)->{
+                var periodStart=rs.getTimestamp("period_start");
+                var periodEnd=rs.getTimestamp("period_end");
+                var graceUntil=rs.getTimestamp("grace_until");
+                return new Subscription((UUID)rs.getObject("merchant_id"),
+                    rs.getString("merchant_name"),rs.getString("plan_code"),rs.getString("status"),
+                    periodStart==null?null:periodStart.toInstant(),
+                    periodEnd==null?null:periodEnd.toInstant(),
+                    graceUntil==null?null:graceUntil.toInstant(),
+                    rs.getBoolean("cancel_at_period_end"));
+            },limit,offset);
+    }
+
+    public record Subscription(UUID merchantId,String merchantName,String planCode,String status,
+                               Instant periodStart,Instant periodEnd,Instant graceUntil,
+                               boolean cancelAtPeriodEnd) {}
+
     private static Invoice row(java.sql.ResultSet rs) throws java.sql.SQLException {
         Timestamp paid = rs.getTimestamp("paid_at");
         return new Invoice((UUID)rs.getObject("id"),(UUID)rs.getObject("merchant_id"),
