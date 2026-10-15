@@ -7,15 +7,45 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
+import org.mockito.Mockito;
+import org.flywaydb.core.Flyway;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Transactional;
-import vn.covie.support.PostgresIntegrationTest;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
+import vn.covie.admin.security.AdminAccessPolicy;
+import vn.covie.audit.AuditLogWriter;
+import vn.covie.shared.web.RequestIdAccessor;
 
 /** Real PostgreSQL/Flyway checks: discounts must never escape into buyer payments. */
-class BillingVoucherIntegrationTest extends PostgresIntegrationTest {
-    @Autowired JdbcTemplate jdbc;
-    @Autowired BillingVoucherService vouchers;
+class BillingVoucherIntegrationTest {
+    // Isolated database avoids TRUNCATE/user-row locks from the AuthAcceptance suite.
+    private static final PostgreSQLContainer<?> POSTGRES =
+        new PostgreSQLContainer<>(DockerImageName.parse("postgis/postgis:18-3.6")
+            .asCompatibleSubstituteFor("postgres"))
+            .withDatabaseName("billing_voucher_test").withUsername("voucher")
+            .withPassword("voucher-test-only");
+    private static JdbcTemplate jdbc;
+    private static BillingVoucherService vouchers;
+    private static TransactionTemplate transactions;
+
+    @BeforeAll static void prepare() {
+        POSTGRES.start();
+        var datasource = new DriverManagerDataSource(POSTGRES.getJdbcUrl(),
+            POSTGRES.getUsername(), POSTGRES.getPassword());
+        Flyway.configure().dataSource(datasource).locations("classpath:db/migration").load().migrate();
+        jdbc = new JdbcTemplate(datasource);
+        transactions = new TransactionTemplate(new DataSourceTransactionManager(datasource));
+        vouchers = new BillingVoucherService(jdbc,Instant::now,
+            Mockito.mock(AdminAccessPolicy.class),Mockito.mock(AuditLogWriter.class),
+            Mockito.mock(RequestIdAccessor.class));
+    }
+
+    @AfterAll static void cleanup(){POSTGRES.stop();}
 
     private record Fixture(UUID merchant, String code) {}
 
@@ -80,8 +110,9 @@ class BillingVoucherIntegrationTest extends PostgresIntegrationTest {
             Timestamp.from(now.plusSeconds(900)),Timestamp.from(now.plusSeconds(86400*33)));
     }
 
-    @Test @Transactional
+    @Test
     void recordsImmutableDiscountSnapshotWithoutChangingSellerPlanPrice() {
+      transactions.executeWithoutResult(tx->{
         Fixture f=fixture(1,5);
         UUID invoiceId=UUID.randomUUID();
         var d=vouchers.reserve(f.code(),"SELLER_STANDARD",f.merchant(),10000);
@@ -95,10 +126,13 @@ class BillingVoucherIntegrationTest extends PostgresIntegrationTest {
             Long.class,invoiceId)).isEqualTo(1000L);
         assertThat(jdbc.queryForObject("select price_vnd from billing_plan_versions where plan_code='SELLER_STANDARD'",
             Long.class)).isEqualTo(10000L);
+        tx.setRollbackOnly();
+      });
     }
 
-    @Test @Transactional
+    @Test
     void pendingInvoicesHoldQuotaAndStopSameMerchantRedeemingTwice() {
+      transactions.executeWithoutResult(tx->{
         Fixture f=fixture(1,1);
         UUID invoiceId=UUID.randomUUID();
         var d=vouchers.reserve(f.code(),"SELLER_STANDARD",f.merchant(),10000);
@@ -106,10 +140,13 @@ class BillingVoucherIntegrationTest extends PostgresIntegrationTest {
         vouchers.attachReservation(invoiceId,f.merchant(),10000,d);
         assertThrows(RuntimeException.class, ()->
             vouchers.reserve(f.code(),"SELLER_STANDARD",f.merchant(),10000));
+        tx.setRollbackOnly();
+      });
     }
 
-    @Test @Transactional
+    @Test
     void signedProviderFinalityCanReleaseQuotaWhenInvoiceVoided() {
+      transactions.executeWithoutResult(tx->{
         Fixture f=fixture(1,1);
         UUID invoiceId=UUID.randomUUID();
         var d=vouchers.reserve(f.code(),"SELLER_STANDARD",f.merchant(),10000);
@@ -119,5 +156,7 @@ class BillingVoucherIntegrationTest extends PostgresIntegrationTest {
         jdbc.update("update billing_invoices set status='VOID' where id=?",invoiceId);
         var next=vouchers.reserve(f.code(),"SELLER_STANDARD",f.merchant(),10000);
         assertThat(next.amountDueVnd()).isEqualTo(9000L);
+        tx.setRollbackOnly();
+      });
     }
 }
