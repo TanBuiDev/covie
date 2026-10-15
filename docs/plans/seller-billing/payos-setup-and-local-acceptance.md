@@ -96,3 +96,11 @@ Do not confuse this observer with a complete recovery and refund workflow.
 **Operator warning:** payOS API calls use the real provider endpoint (no separate
 sandbox). Read-only GET queries do not initiate payments, but still need an approved
 account and rate-limit precautions. Keep the worker disabled until configured.
+
+## Legacy seller migration gate
+
+Before activating billing enforcement for old shops, Admin must preview and explicitly issue complimentary legacy grants with a reviewed cutoff and expiry. The server environment toggle `COVIE_BILLING_LEGACY_GRANTS_APPROVED` defaults false and should only be enabled during supervised migration, with enforcement OFF. APIs:
+- `GET /api/v1/admin/billing/legacy/preview?createdBefore=...`
+- `POST /api/v1/admin/billing/legacy/grant`, body has `createdBefore`, `validUntil`, `reason`
+
+These calls are authenticated as Admin and leave audit entries. Do not set an arbitrary hardcoded grandfather date or assume old merchants have been granted.
