@@ -16,8 +16,6 @@ import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.billing.payos.PayosGateway;
 import vn.covie.merchants.model.MerchantRole;
 import vn.covie.merchants.persistence.MerchantMembershipRepository;
-import vn.covie.settings.application.SystemSettingContext;
-import vn.covie.settings.application.SystemSettingResolver;
 import vn.covie.shared.time.AppClock;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
@@ -36,22 +34,17 @@ public class BillingCheckoutService {
     private final PayosGateway payos;
     private final MerchantMembershipRepository memberships;
     private final CurrentActorProvider actors;
-    private final SystemSettingResolver settings;
 
     public BillingCheckoutService(JdbcTemplate jdbc, ObjectMapper json, AppClock clock,
             BillingCatalogService catalog, PayosGateway payos,
-            MerchantMembershipRepository memberships, CurrentActorProvider actors,
-            SystemSettingResolver settings) {
+            MerchantMembershipRepository memberships, CurrentActorProvider actors) {
         this.jdbc = jdbc; this.json = json; this.clock = clock; this.catalog = catalog;
-        this.payos = payos; this.memberships = memberships; this.actors = actors; this.settings = settings;
+        this.payos = payos; this.memberships = memberships; this.actors = actors;
     }
 
     @Transactional
     public CheckoutResult create(UUID merchantId, String idempotencyKey, CheckoutRequest request) {
         requireOwner(merchantId);
-        if (!settings.bool("billing.seller_registration_enabled", SystemSettingContext.globalOnly())) {
-            throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.CONFLICT, "New seller payments unavailable.");
-        }
         if (idempotencyKey == null || !idempotencyKey.matches("[A-Za-z0-9._-]{8,80}")) {
             throw error(ErrorCode.IDEMPOTENCY_KEY_REQUIRED, HttpStatus.BAD_REQUEST, "Idempotency-Key is required.");
         }
@@ -140,9 +133,9 @@ public class BillingCheckoutService {
         var link = payos.createPaymentLink(orderCode, offer.priceVnd(), "COVIE " + orderCode, expires.getEpochSecond());
         jdbc.update("""
             update billing_payment_attempts
-            set status='PENDING', checkout_url=?, qr_payload=?
+            set status='PENDING', checkout_url=?, qr_payload=?, provider_payment_link_id=?
             where id=? and status='CREATED'
-            """, link.checkoutUrl(), link.qrPayload(), attemptId);
+            """, link.checkoutUrl(), link.qrPayload(), link.paymentLinkId(), attemptId);
         return new CheckoutResult(invoiceId, orderCode, offer.priceVnd(),
             link.checkoutUrl(), link.qrPayload(), expires, "PENDING_PAYMENT");
     }

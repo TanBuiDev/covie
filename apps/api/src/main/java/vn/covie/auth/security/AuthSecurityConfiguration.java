@@ -32,7 +32,7 @@ public class AuthSecurityConfiguration {
                 "/api/v1/barcodes/**",
                 "/api/v1/merchants/*/reviews").permitAll()
             .requestMatchers("/api/v1/auth/google/callback/**","/api/v1/auth/oauth2/authorization/**").permitAll()
-            .requestMatchers(HttpMethod.POST,"/api/v1/ads/*/events").permitAll()
+            .requestMatchers(HttpMethod.POST,"/api/v1/ads/*/events","/api/v1/billing/webhooks/payos").permitAll()
             .requestMatchers(HttpMethod.POST,"/api/v1/auth/login","/api/v1/auth/refresh","/api/v1/auth/logout","/api/v1/auth/onboarding/set-password","/api/v1/auth/password/reset-with-google").permitAll()
             .requestMatchers("/api/v1/**").authenticated().anyRequest().permitAll())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
