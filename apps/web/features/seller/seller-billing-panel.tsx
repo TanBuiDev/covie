@@ -78,7 +78,7 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
   }, [base, checkout?.invoiceId, checkout?.invoiceStatus, load]);
 
   async function cancelRenewal() {
-    if (paying || !window.confirm("Hủy tự động gia hạn sau kỳ hiện tại? Quyền đã trả phí vẫn được giữ.")) return;
+    if (paying || !window.confirm("Đánh dấu kết thúc thuê bao sau kỳ hiện tại? Bạn sẽ không bị thu tiền tự động; quyền đã trả phí vẫn được giữ.")) return;
     setPaying(true); setError("");
     try {
       const response = await requestBrowserApi("POST", base + "/cancel-renewal");
@@ -172,10 +172,10 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
                 <p>Gói hiện tại: {subscription.planCode} — trạng thái: {subscription.status}.</p>
                 {subscription.periodEnd ? <p>Kết thúc kỳ: {date(subscription.periodEnd)}.</p> : null}
                 {subscription.cancelAtPeriodEnd ? (
-                  <p role="status">Đã yêu cầu dừng gia hạn sau kỳ hiện tại; quyền đã trả phí vẫn còn hiệu lực.</p>
+                  <p role="status">Đã đánh dấu không tiếp tục kỳ mới; quyền đã trả phí vẫn có hiệu lực đến cuối kỳ.</p>
                 ) : subscription.status === "ACTIVE" || subscription.status === "TRIALING" ? (
                   <button className="admin-button admin-button--secondary" type="button" disabled={paying}
-                    onClick={() => void cancelRenewal()}>Hủy gia hạn sau kỳ hiện tại</button>
+                    onClick={() => void cancelRenewal()}>Không gia hạn sau kỳ hiện tại</button>
                 ) : null}
               </>
             ) : null}
@@ -217,7 +217,7 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
                     <strong>Phải thanh toán: {money(voucherQuote.amountDueVnd)}</strong>
                   </p>
                 ) : null}
-                <p>Thanh toán bằng chuyển khoản VietQR. Chỉ chủ cửa hàng có thể tạo giao dịch.</p>
+                <p>Thanh toán từng lần bằng chuyển khoản VietQR qua payOS. CoVie chưa tự động trừ tiền gia hạn; chỉ chủ cửa hàng được tạo giao dịch.</p>
                 <button className="admin-button admin-button--primary" disabled={paying} onClick={() => void createCheckout()}>
                   {paying ? "Đang tạo link…" : "Tạo link thanh toán payOS"}
                 </button>
