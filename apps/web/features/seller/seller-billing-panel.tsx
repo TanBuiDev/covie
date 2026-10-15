@@ -85,6 +85,23 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
     } finally { setPaying(false); }
   }
 
+  async function requestFinanceCase(invoice: Invoice, kind: "REFUND" | "DISPUTE") {
+    if (paying || invoice.status !== "PAID") return;
+    const reason = window.prompt(kind === "REFUND"
+      ? "Lý do yêu cầu hoàn phí cho hóa đơn này:" : "Nội dung tranh chấp thanh toán:");
+    if (!reason?.trim()) return;
+    setPaying(true); setError("");
+    try {
+      const response = await requestBrowserApi("POST",
+        base + "/invoices/" + encodeURIComponent(invoice.invoiceId) + "/finance-cases",
+        { kind, reason: reason.trim() });
+      if (!response.ok) throw await readApiError(response);
+      window.alert("Yêu cầu đã được ghi nhận. CoVie sẽ kiểm tra và phản hồi qua kênh hỗ trợ.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể gửi yêu cầu tài chính");
+    } finally { setPaying(false); }
+  }
+
   async function createCheckout() {
     if (paying || !selected) return;
     setPaying(true); setError("");
@@ -172,11 +189,19 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
             {invoices.length === 0 ? <p>Chưa có hóa đơn thuê bao.</p> : (
               <div style={{ overflowX: "auto" }}>
                 <table className="admin-table">
-                  <thead><tr><th>Mã hóa đơn</th><th>Số tiền</th><th>Kỳ hạn</th><th>Trạng thái</th></tr></thead>
+                  <thead><tr><th>Mã hóa đơn</th><th>Số tiền</th><th>Kỳ hạn</th><th>Trạng thái</th><th>Hỗ trợ</th></tr></thead>
                   <tbody>{invoices.map(invoice => (
                     <tr key={invoice.invoiceId}>
                       <td>{invoice.invoiceNumber}</td><td>{money(invoice.amountVnd)}</td>
                       <td>{date(invoice.periodStart)} – {date(invoice.periodEnd)}</td><td>{invoice.status}</td>
+                      <td>{invoice.status === "PAID" ? (
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <button type="button" className="admin-button admin-button--secondary"
+                            disabled={paying} onClick={() => void requestFinanceCase(invoice, "REFUND")}>Yêu cầu hoàn phí</button>
+                          <button type="button" className="admin-button admin-button--secondary"
+                            disabled={paying} onClick={() => void requestFinanceCase(invoice, "DISPUTE")}>Tranh chấp</button>
+                        </div>
+                      ) : "—"}</td>
                     </tr>
                   ))}</tbody>
                 </table>
