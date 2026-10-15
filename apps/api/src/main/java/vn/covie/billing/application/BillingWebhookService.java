@@ -104,7 +104,13 @@ public class BillingWebhookService {
             values (?,'PAYOS',?, ?,true,'PENDING',?)
             on conflict (provider,provider_event_id) do nothing
             """, eventId, eventKey, digest, Timestamp.from(clock.now()));
-        if (added == 0 || "PAID".equals(payment.invoiceStatus())) return "duplicate";
+        if (added == 0) return "duplicate";
+        if ("PAID".equals(payment.invoiceStatus())) {
+            // A second signed event for a paid invoice must not leave a forever-pending inbox row.
+            jdbc.update("update billing_webhook_inbox set processing_status='DONE',processed_at=? where id=?",
+                Timestamp.from(clock.now()), eventId);
+            return "duplicate";
+        }
         if (!"PENDING_PAYMENT".equals(payment.invoiceStatus())) {
             throw error(ErrorCode.BILLING_PRICE_INVALID, HttpStatus.CONFLICT, "Invoice is not payable.");
         }
