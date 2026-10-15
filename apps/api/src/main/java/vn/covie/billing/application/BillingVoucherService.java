@@ -46,8 +46,7 @@ public class BillingVoucherService {
      * payOS call or HTTP activity occurs while reserving the promotion.
      */
     @Transactional(propagation=Propagation.MANDATORY)
-    public Discount reserve(String rawCode,String planCode,UUID merchantId,UUID invoiceId,
-            long originalAmount){
+    public Discount reserve(String rawCode,String planCode,UUID merchantId,long originalAmount){
         String code=normalize(rawCode);
         if(code==null)return new Discount(null,0L,originalAmount);
         var rows=jdbc.query("""
@@ -60,12 +59,24 @@ public class BillingVoucherService {
         validateOffer(offer,planCode,originalAmount,clock.now());
         checkQuotas(offer,merchantId);
         long discount=discountAmount(originalAmount,offer.discountType(),offer.discountValue());
+        return new Discount(code,discount,originalAmount-discount);
+    }
+
+    /**
+     * Called after invoice insertion, while the same transaction still holds
+     * the voucher FOR UPDATE lock from reserve(). The FK enforces invoice existence.
+     */
+    @Transactional(propagation=Propagation.MANDATORY)
+    public void attachReservation(UUID invoiceId,UUID merchantId,long originalAmount,Discount discount){
+        if(discount.code()==null)return;
+        if(discount.discountVnd()<=0||discount.amountDueVnd()!=originalAmount-discount.discountVnd())
+            throw invalid("Invalid reserved promotion.");
         jdbc.update("""
             insert into billing_voucher_redemptions
               (invoice_id,voucher_code,merchant_id,original_amount_vnd,discount_vnd,created_at)
             values (?,?,?,?,?,?)
-            """,invoiceId,code,merchantId,originalAmount,discount,Timestamp.from(clock.now()));
-        return new Discount(code,discount,originalAmount-discount);
+            """,invoiceId,discount.code(),merchantId,originalAmount,discount.discountVnd(),
+            Timestamp.from(clock.now()));
     }
 
     @Transactional(readOnly=true)
