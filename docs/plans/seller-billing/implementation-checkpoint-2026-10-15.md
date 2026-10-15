@@ -78,3 +78,17 @@ Place `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY` in ignored root `
 
 ### Follow-on execution
 Resolve final CI against latest head (both API client and UI), finish promotions and comprehensive BIL acceptance cases, review end-to-end entitlement paths, finish separate Admin finance roles, investigate secret-history privately, and only then hand off a release candidate for locally supervised real-money acceptance. Do not merge by default.
+
+## Continuation — 16/10/2026: configurable vouchers, onboarding, finance RBAC (V028–V029)
+
+Source changes pushed on feature branch (still DRAFT):
+- Added seller-subscription-only vouchers: `billing_vouchers`, `billing_voucher_redemptions` (Flyway V028), Admin create/list/disable, optional plan-scoped FIXED or PERCENT discounts (basis points), quotas per merchant and total usage. The voucher row is locked `FOR UPDATE` in the same DB transaction as the immutable invoice reservation, then a payOS link is created for the reduced **integer-VND** amount. Buyer checkout is unchanged.
+- Seller Billing UI has optional voucher input, server-side quote and clear final price. The idempotency fingerprint includes a normalized voucher code, but remains backward-compatible for invoices without a voucher. No zero-value payOS payments.
+- Added PostgreSQL voucher integration tests and Seller onboarding UI tests; backend regression suites must be reverified on latest head.
+- Public `GET /api/v1/billing/onboarding` shows current Admin-owned price cycles, pay-before-sell/trial mode, grace days and registration/enforcement status. Seller Center displays this before initial/additional shop creation, buyer remains free. New shops created with active pay-before-sell policy navigate to billing; policy TRIAL/disabled keep their prior flow.
+- Added `billing_finance_permissions` (V029): Admin finance READER/OPERATOR/APPROVER roles with explicit operator-gated assignment, second-Admin restriction, and audit. Finance role enforcement is **OFF** by default via `billing.finance_roles_enabled=false`. Financial reporting/refund/grants/legacy operations check roles when enabled.
+- Added Admin Billing UI for role assignment/listing/revocation and graceful finance-read denial without blocking price/policy administration.
+- Added Admin-configurable `billing.checkout_hourly_limit` (default 6; allowed 1–60) enforced under merchant DB lock to throttle payment link reservations.
+- Updated OpenAPI/client from GitHub CI generated contract and acceptance matrix `docs/plans/seller-billing/acceptance-matrix-v1.md`.
+
+**Outstanding:** latest-head CI verification, source-only vs full BIL-001–030 test coverage, concurrency verification, real payOS operator acceptance, ads UI nondeterminism, finance special-account bootstrapping, refund settlement independent proof, secrets-history finding (do not bypass), responsive/browser checks, manual deployment and tax/compliance. Do not merge or claim fully finished.

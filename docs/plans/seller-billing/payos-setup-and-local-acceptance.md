@@ -113,3 +113,13 @@ These calls are authenticated as Admin and leave audit entries. Do not set an ar
 - `billing.reminders_enabled=false` by default, configured in Admin System Settings. When enabled, reminders are sent at 7/3/1 days before a subscription period's end.
 - Production Compose currently has a legacy shared `COVIE_ENV_FILE` used by API and Web. Web now explicitly overwrites `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, and `PAYOS_CHECKSUM_KEY` to empty strings so the web container will not inherit these keys. For a future hardening deployment, **split the shared env file into API-only and Web-only files**; do not place secrets in frontend build arguments.
 - payOS financial refunds must be reconciled with the receiving bank/processor by a human before an Admin confirms them in CoVie. Never represent the in-app case workflow as a money transfer.
+
+## Seller-only voucher and finance roles settings
+
+- New Admin-generated vouchers are `FIXED` integer VND or `PERCENT` integer basis points, 1–9999, and are never applied to buyers.
+- Pending payment invoices continue to reserve quota until payOS confirms cancellation/expiry and the invoice is safely VOID. A local 15-minute link TTL **alone** does not free a voucher. FINANCE REFUNDED invoices do not hold redeemed voucher quota.
+- The voucher discount and immutable original price are recorded in the invoice pricing snapshot, while the payOS amount equals discounted `billing_invoices.amount_vnd`.
+- Admin can adjust checkout attempts per merchant per hour through System Setting `billing.checkout_hourly_limit`, default 6.
+- Fine-grained finance RBAC is opt-in via Admin System Setting `billing.finance_roles_enabled=false`, **not automatically enabled on migration**. Before enabling, provision at least one APPROVER and an OPERATOR/READER using the Admin Billing screen. Changes require a *different* global Admin account and transient env `COVIE_BILLING_FINANCE_ROLE_ASSIGNMENT_APPROVED=true`; keep false outside supervised role assignment.
+- Finance role assignment never grants a global ADMIN role to a user. Only already provisioned system Admin accounts can access the Admin finance APIs. Do not attempt to bootstrap access by editing JWT role claims manually.
+- When fine-grained roles are enabled: READER can read finance cases/revenue and legacy preview; OPERATOR can additionally review/reject cases; APPROVER can additionally confirm independently verified external refunds and control legacy/manual grants, still subject to their separate ops approval flags.
