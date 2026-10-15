@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 public class PayosGateway {
     private final String clientId, apiKey, checksumKey, appUrl;
     private final boolean enabled;
+    @Value("${COVIE_BILLING_RELEASE_APPROVED:false}")
+    private boolean releaseApproved;
     private final PayosSignature signatures;
     private final ObjectMapper mapper;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
@@ -31,7 +33,7 @@ public class PayosGateway {
     }
 
     public boolean isEnabled() {
-        if (!enabled || clientId.isBlank() || apiKey.isBlank() || checksumKey.isBlank()) return false;
+        if (!enabled || !releaseApproved || !canLookup()) return false;
         try {
             URI uri = URI.create(appUrl);
             return "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null
@@ -40,7 +42,10 @@ public class PayosGateway {
         } catch (IllegalArgumentException ex) { return false; }
     }
 
-    public boolean canVerifyWebhook() { return enabled && !checksumKey.isBlank(); }
+    /** Existing valid callbacks still settle even after new checkout creation is disabled. */
+    public boolean canVerifyWebhook() { return !checksumKey.isBlank(); }
+    /** Reconciliation is permitted when keys exist, regardless of new-payment rollout. */
+    public boolean canLookup() { return !clientId.isBlank() && !apiKey.isBlank() && !checksumKey.isBlank(); }
     public String checksumKey() {
         if (!canVerifyWebhook()) throw new ProviderUnavailableException("payOS not configured");
         return checksumKey;
@@ -83,7 +88,7 @@ public class PayosGateway {
     }
 
     public JsonNode lookup(long orderCode) {
-        if (!isEnabled()) throw new ProviderUnavailableException("payOS not configured");
+        if (!canLookup()) throw new ProviderUnavailableException("payOS lookup credentials unavailable");
         return request("GET", "/v2/payment-requests/" + orderCode, null);
     }
 

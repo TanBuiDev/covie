@@ -58,7 +58,7 @@ public class BillingReconciliationService {
     }
 
     public Observation queryProvider(Candidate candidate) {
-        if (!gateway.isEnabled()) return new Observation(candidate.invoiceId(), "UNAVAILABLE", "PROVIDER_FAILURE");
+        if (!gateway.canLookup()) return new Observation(candidate.invoiceId(), "UNAVAILABLE", "PROVIDER_FAILURE");
         final JsonNode response;
         try {
             response = gateway.lookup(candidate.orderCode());
