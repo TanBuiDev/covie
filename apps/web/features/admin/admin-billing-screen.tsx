@@ -8,6 +8,8 @@ import type { components } from "@covie/api-client";
 
 type Plan = Required<components["schemas"]["PlanOffer"]>;
 type Policy = Required<components["schemas"]["Policy"]>;
+type Overview = { collectedVnd: number; paidInvoices: number; pendingInvoices: number; entitledShops: number; reconciliationAlerts: number };
+type BillingInvoice = { id: string; merchantId: string; invoiceNumber: string; status: string; amountVnd: number; createdAt: string; paidAt?: string };
 
 async function requireJson<T>(response: Response): Promise<T> {
   if (!response.ok) throw await readApiError(response);
@@ -16,6 +18,8 @@ async function requireJson<T>(response: Response): Promise<T> {
 
 export function AdminBillingScreen() {
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [overview, setOverview] = useState<Overview>();
+  const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
   const [policy, setPolicy] = useState<Policy>();
   const [price, setPrice] = useState("");
   const [months, setMonths] = useState("1");
@@ -29,12 +33,18 @@ export function AdminBillingScreen() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [priceRes, policyRes] = await Promise.all([
+    const [priceRes, policyRes, overviewRes, invoiceRes] = await Promise.all([
       requestBrowserApi("GET", "/api/v1/billing/plans"),
-      requestBrowserApi("GET", "/api/v1/admin/billing/policy")
+      requestBrowserApi("GET", "/api/v1/admin/billing/policy"),
+      requestBrowserApi("GET", "/api/v1/admin/billing/overview"),
+      requestBrowserApi("GET", "/api/v1/admin/billing/invoices?limit=20")
     ]);
     const values = await requireJson<Plan[]>(priceRes);
     const settings = await requireJson<Policy>(policyRes);
+    const totals = await requireJson<Overview>(overviewRes);
+    const ledger = await requireJson<BillingInvoice[]>(invoiceRes);
+    setOverview(totals);
+    setInvoices(ledger);
     setPlans(values); setPolicy(settings);
     setPrice(String(values[0]?.priceVnd ?? ""));
     setMonths(String(values[0]?.cycleMonths ?? 1));
@@ -82,6 +92,33 @@ export function AdminBillingScreen() {
     {notice ? <p role="status">{notice}</p> : null}
     {loading ? <p>Đang tải Billing…</p> : (
       <>
+        <AdminSurface>
+          <h2>Tổng quan thu phí Seller</h2>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
+            <p>Đã thu: <strong>{formatAdminMoney(overview?.collectedVnd ?? 0)}</strong></p>
+            <p>Hóa đơn đã trả: <strong>{overview?.paidInvoices ?? 0}</strong></p>
+            <p>Đang chờ: <strong>{overview?.pendingInvoices ?? 0}</strong></p>
+            <p>Cửa hàng có quyền bán: <strong>{overview?.entitledShops ?? 0}</strong></p>
+            <p>Cảnh báo đối soát: <strong>{overview?.reconciliationAlerts ?? 0}</strong></p>
+          </div>
+          <p>Số liệu thu phí dịch vụ cửa hàng, không bao gồm doanh thu đơn hàng buyer.</p>
+        </AdminSurface>
+        <AdminSurface>
+          <h2>Giao dịch gần đây</h2>
+          {invoices.length === 0 ? <p>Chưa có giao dịch thuê bao.</p> : (
+            <div style={{ overflowX: "auto" }}>
+              <table className="admin-table">
+                <thead><tr><th>Hóa đơn</th><th>Cửa hàng</th><th>Số tiền</th><th>Trạng thái</th></tr></thead>
+                <tbody>{invoices.map(invoice => (
+                  <tr key={invoice.id}>
+                    <td>{invoice.invoiceNumber}</td><td>{invoice.merchantId}</td>
+                    <td>{formatAdminMoney(invoice.amountVnd)}</td><td>{invoice.status}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+        </AdminSurface>
         <AdminSurface>
           <h2>Bảng giá hiện có hiệu lực</h2>
           {plans.length === 0 ? <p>Không có gói đang bán.</p> : plans.map(plan => (
