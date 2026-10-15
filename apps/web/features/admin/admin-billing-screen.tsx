@@ -61,9 +61,10 @@ export function AdminBillingScreen() {
     setInvoices(ledger);
     setPlans(values); setPolicy(settings);
     setSelectedCode(previous => values.some(p => p.code === previous) ? previous : (values[0]?.code ?? ""));
-    if (values.length > 0) {
-      setPrice(previous => previous || String(values[0].priceVnd));
-      setMonths(previous => previous || String(values[0].cycleMonths));
+    const first = values[0];
+    if (first) {
+      setPrice(previous => previous || String(first.priceVnd));
+      setMonths(previous => previous || String(first.cycleMonths));
     }
     setMode(settings.onboardingMode);
     setTrial(String(settings.trialDays));
