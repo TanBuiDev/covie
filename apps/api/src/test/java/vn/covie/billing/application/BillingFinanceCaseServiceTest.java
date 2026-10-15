@@ -29,4 +29,14 @@ class BillingFinanceCaseServiceTest {
         assertThrows(RuntimeException.class,()->service.resolve(UUID.randomUUID(),
             new BillingFinanceCaseService.Resolution("CONFIRMED","done","BANK_TX_1234")));
     }
+    @Test void nullFinanceCaseTransitionIsRejectedWithoutMutation(){
+        JdbcTemplate jdbc=mock(JdbcTemplate.class);
+        var service=new BillingFinanceCaseService(jdbc,mock(BillingCheckoutService.class),
+            mock(AdminAccessPolicy.class),()->java.time.Instant.EPOCH,
+            mock(AuditLogWriter.class),mock(RequestIdAccessor.class),mock(OutboxEventWriter.class),false);
+        assertThrows(RuntimeException.class,()->service.resolve(UUID.randomUUID(),
+            new BillingFinanceCaseService.Resolution(null,"reviewed",null)));
+        verifyNoInteractions(jdbc);
+    }
+
 }

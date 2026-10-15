@@ -46,4 +46,14 @@ class BillingFinanceAccessPolicyTest {
         assertThrows(RuntimeException.class,()->enabled.assign(adminId,"APPROVER"));
         verifyNoInteractions(jdbc);
     }
+    @Test void nullFinanceRoleIsValidationErrorBeforeDatabaseWrite(){
+        JdbcTemplate jdbc=mock(JdbcTemplate.class);
+        AdminAccessPolicy admin=mock(AdminAccessPolicy.class);
+        when(admin.requireAdmin()).thenReturn(actor);
+        var policy=new BillingFinanceAccessPolicy(jdbc,admin,mock(SystemSettingResolver.class),
+            ()->Instant.EPOCH,mock(AuditLogWriter.class),mock(RequestIdAccessor.class),true);
+        assertThrows(RuntimeException.class,()->policy.assign(UUID.randomUUID(),null));
+        verifyNoInteractions(jdbc);
+    }
+
 }
