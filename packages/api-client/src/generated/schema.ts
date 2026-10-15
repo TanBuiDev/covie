@@ -11,9 +11,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
-        post: operations["create_16"];
+        post: operations["create_17"];
         delete?: never;
         options?: never;
         head?: never;
@@ -91,7 +91,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_19"];
+        get: operations["list_20"];
         put?: never;
         post?: never;
         delete?: never;
@@ -187,9 +187,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
-        post: operations["create_15"];
+        post: operations["create_16"];
         delete?: never;
         options?: never;
         head?: never;
@@ -276,6 +276,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/billing/vouchers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_7"];
+        put?: never;
+        post: operations["create_15"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/vouchers/{code}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["disable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/maintenance/ratings/rebuild": {
         parameters: {
             query?: never;
@@ -315,7 +347,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_18"];
+        get: operations["list_19"];
         put?: never;
         post?: never;
         delete?: never;
@@ -507,7 +539,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_17"];
+        get: operations["list_18"];
         put?: never;
         post?: never;
         delete?: never;
@@ -555,7 +587,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_16"];
+        get: operations["list_17"];
         put?: never;
         post?: never;
         delete?: never;
@@ -603,7 +635,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_15"];
+        get: operations["list_16"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1011,7 +1043,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_14"];
+        get: operations["list_15"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1181,7 +1213,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_13"];
+        get: operations["list_14"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1486,7 +1518,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_12"];
+        get: operations["list_13"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1535,7 +1567,7 @@ export interface paths {
             cookie?: never;
         };
         /** List active sessions */
-        get: operations["list_11"];
+        get: operations["list_12"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1776,6 +1808,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/merchants/{merchantId}/billing/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["quote"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{merchantId}/billing/subscription": {
         parameters: {
             query?: never;
@@ -1991,7 +2039,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_10"];
+        get: operations["list_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2279,7 +2327,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_9"];
+        get: operations["list_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3248,6 +3296,7 @@ export interface components {
         };
         CheckoutRequest: {
             planCode?: string;
+            voucherCode?: string;
         };
         CheckoutResult: {
             /** Format: int64 */
@@ -3344,6 +3393,21 @@ export interface components {
             /** @enum {string} */
             targetType: "USER" | "MERCHANT" | "CATALOG_ITEM" | "NEED_REQUEST" | "REVIEW" | "SOCIAL_COMMENT";
         };
+        CreateRequest: {
+            code?: string;
+            discountType?: string;
+            /** Format: int64 */
+            discountValue?: number;
+            /** Format: date-time */
+            endsAt?: string;
+            /** Format: int32 */
+            maxRedemptions?: number;
+            /** Format: int32 */
+            perMerchantLimit?: number;
+            planCode?: string;
+            /** Format: date-time */
+            startsAt?: string;
+        };
         CreateReviewRequest: {
             comment?: string;
             /** Format: uuid */
@@ -3438,6 +3502,13 @@ export interface components {
             locationVariantId?: string;
             /** Format: int64 */
             quantity?: number;
+        };
+        Discount: {
+            /** Format: int64 */
+            amountDueVnd?: number;
+            code?: string;
+            /** Format: int64 */
+            discountVnd?: number;
         };
         Eligibility: {
             canSell?: boolean;
@@ -4893,6 +4964,22 @@ export interface components {
             name?: string;
             selectedOptionIds?: string[];
         };
+        Voucher: {
+            code?: string;
+            discountType?: string;
+            /** Format: int64 */
+            discountValue?: number;
+            enabled?: boolean;
+            /** Format: date-time */
+            endsAt?: string;
+            /** Format: int32 */
+            maxRedemptions?: number;
+            /** Format: int32 */
+            perMerchantLimit?: number;
+            planCode?: string;
+            /** Format: date-time */
+            startsAt?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -4902,7 +4989,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    list_8: {
+    list_9: {
         parameters: {
             query?: {
                 /** @description Zero-based offset, 0 to 1000000. Returns at most 100 campaigns per page. */
@@ -4925,7 +5012,7 @@ export interface operations {
             };
         };
     };
-    create_16: {
+    create_17: {
         parameters: {
             query?: never;
             header?: never;
@@ -5083,7 +5170,7 @@ export interface operations {
             };
         };
     };
-    list_19: {
+    list_20: {
         parameters: {
             query?: {
                 status?: string;
@@ -5226,7 +5313,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -5248,7 +5335,7 @@ export interface operations {
             };
         };
     };
-    create_15: {
+    create_16: {
         parameters: {
             query?: never;
             header?: never;
@@ -5408,6 +5495,70 @@ export interface operations {
             };
         };
     };
+    list_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Voucher"][];
+                };
+            };
+        };
+    };
+    create_15: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Voucher"];
+                };
+            };
+        };
+    };
+    disable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     ratings: {
         parameters: {
             query?: never;
@@ -5462,7 +5613,7 @@ export interface operations {
             };
         };
     };
-    list_18: {
+    list_19: {
         parameters: {
             query?: {
                 page?: number;
@@ -5776,7 +5927,7 @@ export interface operations {
             };
         };
     };
-    list_17: {
+    list_18: {
         parameters: {
             query?: {
                 page?: number;
@@ -5849,7 +6000,7 @@ export interface operations {
             };
         };
     };
-    list_16: {
+    list_17: {
         parameters: {
             query?: never;
             header?: never;
@@ -5950,7 +6101,7 @@ export interface operations {
             };
         };
     };
-    list_15: {
+    list_16: {
         parameters: {
             query?: {
                 page?: number;
@@ -6529,7 +6680,7 @@ export interface operations {
             };
         };
     };
-    list_14: {
+    list_15: {
         parameters: {
             query?: {
                 parentId?: string;
@@ -6845,7 +6996,7 @@ export interface operations {
             };
         };
     };
-    list_13: {
+    list_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -7434,7 +7585,7 @@ export interface operations {
             };
         };
     };
-    list_12: {
+    list_13: {
         parameters: {
             query?: {
                 limit?: number;
@@ -7503,7 +7654,7 @@ export interface operations {
             };
         };
     };
-    list_11: {
+    list_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -7930,6 +8081,31 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Case"];
+                };
+            };
+        };
+    };
+    quote: {
+        parameters: {
+            query: {
+                planCode: string;
+                voucherCode?: string;
+            };
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Discount"];
                 };
             };
         };
@@ -8374,7 +8550,7 @@ export interface operations {
             };
         };
     };
-    list_10: {
+    list_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -9094,7 +9270,7 @@ export interface operations {
             };
         };
     };
-    list_9: {
+    list_10: {
         parameters: {
             query?: {
                 limit?: number;
