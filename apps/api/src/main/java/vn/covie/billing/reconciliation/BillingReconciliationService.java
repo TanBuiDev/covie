@@ -71,6 +71,21 @@ public class BillingReconciliationService {
             return new Observation(candidate.invoiceId(), "UNVERIFIED", "PROVIDER_FAILURE");
         }
         Observation observed = compare(candidate, response);
+        if (candidate.linkId() == null && "NONE".equals(observed.discrepancy())
+                && "PENDING".equals(observed.providerStatus())) {
+            // payOS GET exposes a signed ID but not the hosted checkout URL.
+            // Restore its documented /web/{id} URL only for strict 32-char provider IDs.
+            String linkId = response.path("data").path("id").asText("");
+            if (linkId.matches("[0-9a-fA-F]{32}")) {
+                String url = "https://pay.payos.vn/web/" + linkId;
+                jdbc.update("""
+                    update billing_payment_attempts set
+                      provider_payment_link_id=?,checkout_url=?,status='PENDING'
+                    where invoice_id=? and provider='PAYOS' and status='CREATED'
+                      and provider_payment_link_id is null
+                    """,linkId,url,candidate.invoiceId());
+            }
+        }
         if ("PAID_PENDING_WEBHOOK".equals(observed.discrepancy()) && settlement != null) {
             // Server-authenticated + HMAC-verified payOS GET. The shared settlement
             // transaction enforces unique reference, invoice amount and link id.

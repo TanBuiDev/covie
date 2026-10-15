@@ -38,7 +38,8 @@ public class BillingTrialService {
         BillingCatalogService.Policy policy = catalog.currentPolicy();
         if (!trialEnabled(policy)) return false;
         String planCode = jdbc.query("""
-            select code from billing_plans where retired_at is null order by code limit 1
+            select code from billing_plans where retired_at is null
+              and code='SELLER_STANDARD' limit 1
             """, rs -> rs.next() ? rs.getString(1) : null);
         if (planCode == null) return false;
         Instant now = clock.now();
