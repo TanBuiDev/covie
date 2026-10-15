@@ -10,6 +10,8 @@ type Plan = Required<components["schemas"]["PlanOffer"]>;
 type Policy = Required<components["schemas"]["Policy"]>;
 type Overview = { collectedVnd: number; paidInvoices: number; pendingInvoices: number; entitledShops: number; reconciliationAlerts: number };
 type BillingInvoice = { id: string; merchantId: string; invoiceNumber: string; status: string; amountVnd: number; createdAt: string; paidAt?: string };
+type FinanceCase = { id: string; invoiceId: string; merchantId: string; kind: string; status: string; reason: string; createdAt: string; resolutionNote?: string };
+
 
 async function requireJson<T>(response: Response): Promise<T> {
   if (!response.ok) throw await readApiError(response);
@@ -25,6 +27,10 @@ export function AdminBillingScreen() {
   const [newCycle, setNewCycle] = useState("1");
   const [overview, setOverview] = useState<Overview>();
   const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
+  const [cases, setCases] = useState<FinanceCase[]>([]);
+  const [grantMerchantId, setGrantMerchantId] = useState("");
+  const [grantEnd, setGrantEnd] = useState("");
+  const [grantReason, setGrantReason] = useState("");
   const [policy, setPolicy] = useState<Policy>();
   const [price, setPrice] = useState("");
   const [months, setMonths] = useState("1");
@@ -38,16 +44,19 @@ export function AdminBillingScreen() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [priceRes, policyRes, overviewRes, invoiceRes] = await Promise.all([
+    const [priceRes, policyRes, overviewRes, invoiceRes, caseRes] = await Promise.all([
       requestBrowserApi("GET", "/api/v1/billing/plans"),
       requestBrowserApi("GET", "/api/v1/admin/billing/policy"),
       requestBrowserApi("GET", "/api/v1/admin/billing/overview"),
-      requestBrowserApi("GET", "/api/v1/admin/billing/invoices?limit=20")
+      requestBrowserApi("GET", "/api/v1/admin/billing/invoices?limit=20"),
+      requestBrowserApi("GET", "/api/v1/admin/billing/finance-cases?limit=30")
     ]);
     const values = await requireJson<Plan[]>(priceRes);
     const settings = await requireJson<Policy>(policyRes);
     const totals = await requireJson<Overview>(overviewRes);
     const ledger = await requireJson<BillingInvoice[]>(invoiceRes);
+    const financeCases = await requireJson<FinanceCase[]>(caseRes);
+    setCases(financeCases);
     setOverview(totals);
     setInvoices(ledger);
     setPlans(values); setPolicy(settings);
@@ -133,6 +142,48 @@ export function AdminBillingScreen() {
     } finally { setSaving(false); }
   }
 
+  async function resolveCase(id: string, status: "REVIEWING" | "REJECTED" | "CONFIRMED") {
+    if (saving) return;
+    const note = window.prompt("Ghi rõ kết quả xác minh hoặc lý do xử lý:");
+    if (!note?.trim()) return;
+    let externalReference: string | null = null;
+    if (status === "CONFIRMED") {
+      externalReference = window.prompt("Nhập mã tham chiếu hoàn tiền đã xác minh tại ngân hàng/nhà cung cấp:");
+      if (!externalReference || externalReference.length < 6) return;
+      if (!window.confirm("Xác nhận đã hoàn tiền ngoài CoVie? Thao tác này sẽ thu hồi quyền từ hóa đơn hoàn phí.")) return;
+    }
+    setSaving(true); setError(""); setNotice("");
+    try {
+      await requireJson(await requestBrowserApi("POST",
+        `/api/v1/admin/billing/finance-cases/${encodeURIComponent(id)}/resolve`,
+        { status, note, externalReference }));
+      setNotice("Đã cập nhật hồ sơ tài chính và ghi nhật ký quản trị.");
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không xử lý được hồ sơ");
+    } finally { setSaving(false); }
+  }
+
+  async function grantFreeAccess() {
+    if (saving) return;
+    const until = new Date(grantEnd);
+    if (!/^[0-9a-f-]{36}$/i.test(grantMerchantId) || !grantReason.trim()
+        || !grantEnd || Number.isNaN(until.getTime()) || until <= new Date()) {
+      setError("Nhập Merchant ID, ngày kết thúc và lý do hợp lệ."); return;
+    }
+    if (!window.confirm("Cấp quyền miễn phí cho cửa hàng này? Thao tác sẽ được lưu audit.")) return;
+    setSaving(true); setError(""); setNotice("");
+    try {
+      await requireJson(await requestBrowserApi("POST",
+        `/api/v1/admin/billing/merchants/${encodeURIComponent(grantMerchantId)}/grants`,
+        { validUntil: until.toISOString(), reason: grantReason.trim() }));
+      setNotice("Đã cấp quyền miễn phí có thời hạn và ghi nhật ký.");
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể cấp quyền");
+    } finally { setSaving(false); }
+  }
+
   return <div className="admin-page-stack">
     <AdminPageHeader title="Thuê bao Seller" subtitle="Bảng giá và chính sách kinh doanh do máy chủ quản lý theo phiên bản." />
     {error ? <p role="alert" className="admin-error">{error}</p> : null}
@@ -165,6 +216,50 @@ export function AdminBillingScreen() {
               </table>
             </div>
           )}
+        </AdminSurface>
+        <AdminSurface>
+          <h2>Yêu cầu hoàn phí và tranh chấp</h2>
+          <p>Hoàn tiền thực tế được xác minh ngoài CoVie trước khi Admin xác nhận. Không có API tự chuyển tiền.</p>
+          {cases.length === 0 ? <p>Không có hồ sơ cần xem.</p> : (
+            <div style={{ overflowX: "auto" }}>
+              <table className="admin-table">
+                <thead><tr><th>Hóa đơn</th><th>Loại</th><th>Lý do</th><th>Trạng thái</th><th>Xử lý</th></tr></thead>
+                <tbody>{cases.map(item => (
+                  <tr key={item.id}>
+                    <td>{item.invoiceId}</td><td>{item.kind}</td><td>{item.reason}</td>
+                    <td>{item.status}</td>
+                    <td>
+                      {item.status === "REQUESTED" || item.status === "REVIEWING" ? (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {item.status === "REQUESTED" ? <button className="admin-button admin-button--secondary"
+                            disabled={saving} onClick={() => void resolveCase(item.id, "REVIEWING")}>Tiếp nhận</button> : null}
+                          <button className="admin-button admin-button--secondary" disabled={saving}
+                            onClick={() => void resolveCase(item.id, "REJECTED")}>Từ chối</button>
+                          {item.kind === "REFUND" ? <button className="admin-button admin-button--secondary"
+                            disabled={saving} onClick={() => void resolveCase(item.id, "CONFIRMED")}>Xác nhận đã hoàn</button> : null}
+                        </div>
+                      ) : "Đã xử lý"}
+                    </td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+        </AdminSurface>
+        <AdminSurface>
+          <h2>Cấp quyền miễn phí thủ công</h2>
+          <p>Chỉ Admin được thực hiện. Backend yêu cầu phê duyệt vận hành riêng và ghi audit; không tạo giao dịch payOS.</p>
+          <div className="admin-field"><label htmlFor="billing-merchant-grant">Merchant ID</label>
+            <input id="billing-merchant-grant" value={grantMerchantId}
+              onChange={event => setGrantMerchantId(event.target.value)} placeholder="UUID cửa hàng" /></div>
+          <div className="admin-field"><label htmlFor="billing-grant-until">Hạn được cấp quyền</label>
+            <input id="billing-grant-until" type="datetime-local" value={grantEnd}
+              onChange={event => setGrantEnd(event.target.value)} /></div>
+          <div className="admin-field"><label htmlFor="billing-grant-reason">Lý do cấp quyền</label>
+            <input id="billing-grant-reason" value={grantReason}
+              onChange={event => setGrantReason(event.target.value)} /></div>
+          <button className="admin-button admin-button--secondary" disabled={saving}
+            onClick={() => void grantFreeAccess()}>Cấp quyền có thời hạn</button>
         </AdminSurface>
         <AdminSurface>
           <h2>Bảng giá hiện có hiệu lực</h2>
