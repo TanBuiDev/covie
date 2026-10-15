@@ -159,4 +159,49 @@ class BillingVoucherIntegrationTest {
         tx.setRollbackOnly();
       });
     }
+    @Test
+    void twoConcurrentMerchantsCannotExceedOneVoucherRedemption() throws Exception {
+        // Each attempt uses its own database transaction and merchant. The
+        // voucher row lock must serialize a globally shared quota of one.
+        Fixture primary=fixture(1,1);
+        Fixture secondary=fixture(1,1);
+        var executor=java.util.concurrent.Executors.newFixedThreadPool(2);
+        var ready=new java.util.concurrent.CountDownLatch(2);
+        var start=new java.util.concurrent.CountDownLatch(1);
+        try {
+            java.util.concurrent.Callable<Boolean> first=()->attemptSharedVoucher(primary.code(),primary.merchant(),ready,start);
+            java.util.concurrent.Callable<Boolean> second=()->attemptSharedVoucher(primary.code(),secondary.merchant(),ready,start);
+            var futures=java.util.List.of(executor.submit(first),executor.submit(second));
+            assertThat(ready.await(10,java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            int successful=0;
+            for(var result:futures) if(result.get(20,java.util.concurrent.TimeUnit.SECONDS))successful++;
+            assertThat(successful).isEqualTo(1);
+            assertThat(jdbc.queryForObject("""
+                select count(*) from billing_voucher_redemptions where voucher_code=?
+                """,Long.class,primary.code())).isEqualTo(1L);
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    private boolean attemptSharedVoucher(String code,UUID merchant,
+            java.util.concurrent.CountDownLatch ready,java.util.concurrent.CountDownLatch start) throws Exception {
+        ready.countDown();
+        if(!start.await(10,java.util.concurrent.TimeUnit.SECONDS))throw new IllegalStateException("start timed out");
+        try {
+            Boolean purchased=transactions.execute(tx->{
+                UUID invoiceId=UUID.randomUUID();
+                var discount=vouchers.reserve(code,"SELLER_STANDARD",merchant,10000);
+                invoice(new Fixture(merchant,code),invoiceId,discount);
+                vouchers.attachReservation(invoiceId,merchant,10000,discount);
+                return true;
+            });
+            return Boolean.TRUE.equals(purchased);
+        } catch(vn.covie.shared.web.ApiException expectedQuotaExhaustion) {
+            return false;
+        }
+    }
+
 }
