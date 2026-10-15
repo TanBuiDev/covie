@@ -55,6 +55,11 @@ public class BillingReconciliationService {
         } catch (PayosGateway.ProviderUnavailableException ex) {
             return new Observation(candidate.invoiceId(), "UNAVAILABLE", "PROVIDER_FAILURE");
         }
+        // payOS includes an HMAC of response.data. A GET that is merely HTTP 200
+        // is not sufficient to authorize invoice settlement or reconcile to PAID.
+        if (!gateway.verifyResponseSignature(response)) {
+            return new Observation(candidate.invoiceId(), "UNVERIFIED", "PROVIDER_FAILURE");
+        }
         return compare(candidate, response);
     }
 

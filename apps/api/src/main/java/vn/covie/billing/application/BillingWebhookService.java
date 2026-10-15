@@ -90,8 +90,20 @@ public class BillingWebhookService {
             throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE, "Payment not yet registered.");
         }
         Payment payment = matches.getFirst();
-        if (payment.amount() != amount || !linkId.equals(payment.linkId())) {
+        if (payment.amount() != amount || (payment.linkId() != null && !linkId.equals(payment.linkId()))) {
             throw error(ErrorCode.BILLING_PRICE_INVALID, HttpStatus.CONFLICT, "Payment reference or amount mismatch.");
+        }
+        // A signed webhook may arrive between payOS creating the link and our
+        // second DB transaction storing it. Bind the trusted link ID atomically.
+        if (payment.linkId() == null) {
+            int bound = jdbc.update("""
+                update billing_payment_attempts set provider_payment_link_id=?
+                where id=? and provider_payment_link_id is null and status='CREATED'
+                """, linkId, payment.attemptId());
+            if (bound != 1) {
+                throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.CONFLICT,
+                    "Payment link binding requires reconciliation.");
+            }
         }
         String eventKey = reference.isBlank() ? "sig:" + root.path("signature").asText() :
             "ref:" + reference;

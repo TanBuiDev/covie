@@ -76,6 +76,12 @@ public class PayosGateway {
         return new PaymentLink(orderCode, linkId, url, data.path("qrCode").asText(""));
     }
 
+    /** Do not act on external payment state unless the response.data signature verifies. */
+    public boolean verifyResponseSignature(JsonNode response) {
+        return response != null && canVerifyWebhook() && signatures.verifyWebhook(
+            response.path("data"), response.path("signature").asText(""), checksumKey);
+    }
+
     public JsonNode lookup(long orderCode) {
         if (!isEnabled()) throw new ProviderUnavailableException("payOS not configured");
         return request("GET", "/v2/payment-requests/" + orderCode, null);

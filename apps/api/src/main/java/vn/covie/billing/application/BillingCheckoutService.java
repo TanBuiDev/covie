@@ -73,11 +73,26 @@ public class BillingCheckoutService {
                 set status='PENDING', checkout_url=?, qr_payload=?, provider_payment_link_id=?
                 where id=? and status='CREATED'
                 """, link.checkoutUrl(), link.qrPayload(), link.paymentLinkId(), reservation.attemptId());
-            if (updated != 1) throw new IllegalStateException("Payment link persistence race.");
+            if (updated != 1) {
+                // A signed payment callback can settle while the payOS POST is in flight.
+                Boolean settled = jdbc.queryForObject("""
+                    select exists (
+                       select 1 from billing_invoices i
+                       join billing_payment_attempts a on a.invoice_id=i.id
+                       where i.id=? and i.status='PAID' and a.status='SUCCEEDED'
+                         and a.provider_payment_link_id=?
+                    )
+                    """, Boolean.class, reservation.invoiceId(), link.paymentLinkId());
+                if (!Boolean.TRUE.equals(settled)) {
+                    throw new IllegalStateException("Payment link persistence race.");
+                }
+            }
         });
+        String invoiceStatus = jdbc.queryForObject(
+            "select status from billing_invoices where id=?", String.class, reservation.invoiceId());
         return new CheckoutResult(reservation.invoiceId(), reservation.orderCode(),
             reservation.amountVnd(), link.checkoutUrl(), link.qrPayload(),
-            reservation.expiresAt(), "PENDING_PAYMENT");
+            reservation.expiresAt(), invoiceStatus);
     }
 
     private Reservation reserve(UUID merchantId, String idempotencyKey, CheckoutRequest request) {
