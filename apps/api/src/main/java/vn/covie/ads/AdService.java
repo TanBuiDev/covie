@@ -147,10 +147,19 @@ public class AdService {
       and (? = false or c.merchant_id is null or exists(
           select 1 from billing_entitlement_grants g where g.merchant_id=c.merchant_id
             and g.revoked_at is null and g.valid_from<=? and g.valid_until>?
+      ) or exists (
+          select 1 from merchant_subscriptions bs
+          where bs.merchant_id=c.merchant_id and bs.status in ('ACTIVE','TRIALING','PAST_DUE')
+            and bs.cancel_at_period_end=false and bs.period_end<=?
+            and bs.grace_until>?
+            and exists(select 1 from billing_entitlement_grants bg
+                where bg.merchant_id=bs.merchant_id and bg.revoked_at is null
+                  and bg.source_type in ('TRIAL','PAID_INVOICE') and bg.valid_until=bs.period_end)
       ))
       order by c.priority desc,c.created_at desc,c.id desc limit 100
     """,this::map,placement.name(),device.name(),java.sql.Timestamp.from(now),
-      java.sql.Timestamp.from(now),enforced,java.sql.Timestamp.from(now),java.sql.Timestamp.from(now)).stream().filter(this::targetVisible).filter(row->row.request().mediaId()==null||mediaUrl(row.request())!=null).limit(10).map(row->{var r=row.request();UUID token=ids.generate();Instant expires=now.plusSeconds(1800);jdbc.update("insert into ad_deliveries(id,campaign_id,campaign_version,issued_at,expires_at) values(?,?,?,?,?)",token,row.id(),row.version(),java.sql.Timestamp.from(now),java.sql.Timestamp.from(expires));return new PublicAdResponse(row.id(),r.title(),r.body(),r.ctaLabel(),r.targetUrl(),r.creativeType(),r.template(),mediaUrl(r),r.placement(),r.endsAt(),token.toString(),expires);}).toList();
+      java.sql.Timestamp.from(now),enforced,java.sql.Timestamp.from(now),java.sql.Timestamp.from(now),
+      java.sql.Timestamp.from(now),java.sql.Timestamp.from(now)).stream().filter(this::targetVisible).filter(row->row.request().mediaId()==null||mediaUrl(row.request())!=null).limit(10).map(row->{var r=row.request();UUID token=ids.generate();Instant expires=now.plusSeconds(1800);jdbc.update("insert into ad_deliveries(id,campaign_id,campaign_version,issued_at,expires_at) values(?,?,?,?,?)",token,row.id(),row.version(),java.sql.Timestamp.from(now),java.sql.Timestamp.from(expires));return new PublicAdResponse(row.id(),r.title(),r.body(),r.ctaLabel(),r.targetUrl(),r.creativeType(),r.template(),mediaUrl(r),r.placement(),r.endsAt(),token.toString(),expires);}).toList();
  }
  public void event(UUID id,AdEventRequest event) {
   if(!AdRules.acceptsEvent(event.type().name(),event.visibleMillis()))throw AdRules.invalid("Impressions require at least 1000ms of continuous visibility.");
