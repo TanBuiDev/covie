@@ -5,3 +5,8 @@ e826cc61498db79d5bcba587300aa63a15c1c42e:docs/CoVie-technical-plan-03-merchant-l
 e826cc61498db79d5bcba587300aa63a15c1c42e:docs/CoVie-technical-plan-03-merchant-location-media-catalog-v1.0.md:generic-api-key:2539
 e826cc61498db79d5bcba587300aa63a15c1c42e:docs/CoVie-technical-plan-10-production-hardening-pilot-launch-v1.0.md:generic-api-key:73
 e826cc61498db79d5bcba587300aa63a15c1c42e:docs/CoVie-technical-plan-10-production-hardening-pilot-launch-v1.0.md:generic-api-key:1570
+
+# Reviewed 2026-10-16: Gitleaks generic-api-key falsely matched an ordinary
+# operations readiness checklist line; no credential, assignment or token value.
+# Narrow exception covers precisely this historical commit, path, rule and line.
+e976ce1af5de4928800b8c65108cdfad858fb4e8:docs/plans/seller-billing/CoVie-Seller-Billing-Subscription-Implementation-Plan-v1.0.md:generic-api-key:459
