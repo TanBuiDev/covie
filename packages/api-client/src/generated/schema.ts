@@ -84,6 +84,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/billing/legacy/grant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["grant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/legacy/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["preview_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/billing/plans/{planCode}/prices": {
         parameters: {
             query?: never;
@@ -3230,6 +3262,13 @@ export interface components {
         GoogleAuthStatusResponse: {
             configured?: boolean;
         };
+        GrantRequest: {
+            /** Format: date-time */
+            createdBefore?: string;
+            reason?: string;
+            /** Format: date-time */
+            validUntil?: string;
+        };
         HealthResponse: {
             status?: string;
         };
@@ -4079,6 +4118,14 @@ export interface components {
             /** Format: int32 */
             trialDays?: number;
         };
+        Preview: {
+            /** Format: date-time */
+            createdBefore?: string;
+            /** Format: int32 */
+            eligibleMerchants?: number;
+            /** Format: int32 */
+            previouslyGranted?: number;
+        };
         PriceChange: {
             /** Format: int32 */
             cycleMonths?: number;
@@ -4261,6 +4308,12 @@ export interface components {
         ResponseConstraints: {
             /** Format: int32 */
             maxItems?: number;
+        };
+        Result: {
+            /** Format: int32 */
+            newlyGranted?: number;
+            /** Format: date-time */
+            validUntil?: string;
         };
         ReverseGeocodingResponse: {
             addressText?: string;
@@ -4763,6 +4816,52 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PageAdminAuditLogResponse"];
+                };
+            };
+        };
+    };
+    grant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Result"];
+                };
+            };
+        };
+    };
+    preview_1: {
+        parameters: {
+            query: {
+                createdBefore: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Preview"];
                 };
             };
         };
