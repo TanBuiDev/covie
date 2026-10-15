@@ -12,6 +12,8 @@ type Invoice = Required<components["schemas"]["InvoiceSummary"]>;
 type Checkout = Required<components["schemas"]["CheckoutResult"]>;
 type Subscription = { status: string; planCode: string | null; cancelAtPeriodEnd: boolean;
   periodStart: string | null; periodEnd: string | null };
+type VoucherQuote = { code: string | null; discountVnd: number; amountDueVnd: number };
+
 
 const money = (amount: number) => new Intl.NumberFormat("vi-VN").format(amount) + "đ";
 const date = (value: string) => new Intl.DateTimeFormat("vi-VN", { dateStyle: "short" }).format(new Date(value));
@@ -23,6 +25,8 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [subscription, setSubscription] = useState<Subscription>();
   const [selected, setSelected] = useState("");
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherQuote, setVoucherQuote] = useState<(VoucherQuote & { planCode: string; enteredCode: string })>();
   const [checkout, setCheckout] = useState<Checkout>();
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
@@ -102,13 +106,35 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
     } finally { setPaying(false); }
   }
 
+  async function previewVoucher() {
+    if (paying || !selected) return;
+    setPaying(true); setError(""); setVoucherQuote(undefined);
+    const code = voucherCode.trim().toUpperCase();
+    try {
+      const query = new URLSearchParams({ planCode: selected });
+      if (code) query.set("voucherCode", code);
+      const response = await requestBrowserApi("GET", base + "/quote?" + query.toString());
+      if (!response.ok) throw await readApiError(response);
+      const data = await response.json() as VoucherQuote;
+      setVoucherQuote({ ...data, planCode: selected, enteredCode: code });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Mã ưu đãi không khả dụng");
+    } finally { setPaying(false); }
+  }
+
   async function createCheckout() {
     if (paying || !selected) return;
+    const code = voucherCode.trim().toUpperCase();
+    if (code && (voucherQuote?.enteredCode !== code || voucherQuote?.planCode !== selected)) {
+      setError("Vui lòng kiểm tra và xác nhận số tiền sau giảm trước khi tạo link thanh toán.");
+      return;
+    }
     setPaying(true); setError("");
     if (!idempotency.current) idempotency.current = crypto.randomUUID();
     try {
       const response = await requestBrowserApi("POST", base + "/checkout",
-        { planCode: selected }, { "Idempotency-Key": idempotency.current });
+        { planCode: selected, voucherCode: code || null },
+        { "Idempotency-Key": idempotency.current });
       if (!response.ok) throw await readApiError(response);
       const link = await response.json() as Checkout;
       if (!link.checkoutUrl.startsWith("https://pay.payos.vn/")) {
@@ -159,12 +185,34 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
               <>
                 <label className="admin-field">
                   <span>Chọn gói</span>
-                  <select value={selected} onChange={event => { setSelected(event.target.value); idempotency.current = null; }}>
+                  <select value={selected} onChange={event => {
+                    setSelected(event.target.value); setVoucherQuote(undefined); idempotency.current = null;
+                  }}>
                     {plans.map(plan => <option key={plan.id} value={plan.code}>
                       {plan.name} — {money(plan.priceVnd)} / {plan.cycleMonths} tháng
                     </option>)}
                   </select>
                 </label>
+                <label className="admin-field">
+                  <span>Mã ưu đãi (không bắt buộc)</span>
+                  <input type="text" autoComplete="off" value={voucherCode}
+                    maxLength={32} placeholder="Nhập mã voucher thuê bao"
+                    onChange={event => {
+                      setVoucherCode(event.target.value.toUpperCase());
+                      setVoucherQuote(undefined); idempotency.current = null;
+                    }} />
+                </label>
+                <button type="button" className="admin-button admin-button--secondary"
+                  disabled={paying} onClick={() => void previewVoucher()}>
+                  {paying ? "Đang kiểm tra…" : "Kiểm tra số tiền thanh toán"}
+                </button>
+                {voucherQuote && voucherQuote.planCode === selected &&
+                  voucherQuote.enteredCode === voucherCode.trim().toUpperCase() ? (
+                  <p role="status">
+                    {voucherQuote.code ? `Giảm ${money(voucherQuote.discountVnd)}. ` : ""}
+                    <strong>Phải thanh toán: {money(voucherQuote.amountDueVnd)}</strong>
+                  </p>
+                ) : null}
                 <p>Thanh toán bằng chuyển khoản VietQR. Chỉ chủ cửa hàng có thể tạo giao dịch.</p>
                 <button className="admin-button admin-button--primary" disabled={paying} onClick={() => void createCheckout()}>
                   {paying ? "Đang tạo link…" : "Tạo link thanh toán payOS"}
