@@ -9,6 +9,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.admin.security.AdminAccessPolicy;
+import vn.covie.audit.AuditLogWriter;
+import vn.covie.shared.web.RequestIdAccessor;
+import vn.covie.shared.outbox.OutboxEventWriter;
+import vn.covie.shared.outbox.OutboxEventIntent;
 import vn.covie.shared.time.AppClock;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
@@ -22,11 +26,18 @@ public class BillingCatalogService {
     private final JdbcTemplate jdbc;
     private final AppClock clock;
     private final AdminAccessPolicy admins;
+    private final AuditLogWriter audit;
+    private final RequestIdAccessor requestIds;
+    private final OutboxEventWriter outbox;
 
-    public BillingCatalogService(JdbcTemplate jdbc, AppClock clock, AdminAccessPolicy admins) {
+    public BillingCatalogService(JdbcTemplate jdbc, AppClock clock, AdminAccessPolicy admins,
+                                 AuditLogWriter audit, RequestIdAccessor requestIds, OutboxEventWriter outbox) {
         this.jdbc = jdbc;
         this.clock = clock;
         this.admins = admins;
+        this.audit = audit;
+        this.requestIds = requestIds;
+        this.outbox = outbox;
     }
 
     @Transactional(readOnly = true)
@@ -86,7 +97,13 @@ public class BillingCatalogService {
             """, id, planCode, rev + 1, request.priceVnd(), request.cycleMonths(),
             java.sql.Timestamp.from(request.effectiveAt()), java.sql.Timestamp.from(clock.now()),
             actor.userId());
-        return new PlanOffer(id, planCode, locked.getFirst(), rev + 1,
+        audit.securityEvent(actor.userId(), "BILLING_PRICE_PUBLISHED", "BILLING_PLAN_VERSION", id,
+            requestIds.current(), Map.of("planCode", planCode, "revision", rev + 1));
+        outbox.append(new OutboxEventIntent("BILLING_PRICE_PUBLISHED", "BILLING_PLAN_VERSION", id,
+            Map.of("planCode", planCode, "revision", rev + 1)));
+        String displayName = jdbc.queryForObject(
+            "select display_name from billing_plans where code = ?", String.class, planCode);
+        return new PlanOffer(id, planCode, displayName, rev + 1,
             request.priceVnd(), request.cycleMonths(), request.effectiveAt());
     }
 
@@ -110,6 +127,10 @@ public class BillingCatalogService {
             """, id, rev + 1, request.onboardingMode(), request.trialDays(),
             request.graceDays(), java.sql.Timestamp.from(request.effectiveAt()),
             java.sql.Timestamp.from(clock.now()), actor.userId());
+        audit.securityEvent(actor.userId(), "BILLING_POLICY_PUBLISHED", "BILLING_POLICY_VERSION", id,
+            requestIds.current(), Map.of("revision", rev + 1));
+        outbox.append(new OutboxEventIntent("BILLING_POLICY_PUBLISHED", "BILLING_POLICY_VERSION", id,
+            Map.of("revision", rev + 1)));
         return new Policy(id, rev + 1, request.onboardingMode(),
             request.trialDays(), request.graceDays(), request.effectiveAt());
     }

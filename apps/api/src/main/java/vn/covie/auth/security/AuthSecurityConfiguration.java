@@ -25,6 +25,7 @@ public class AuthSecurityConfiguration {
             .requestMatchers(HttpMethod.GET,
                 "/api/v1/location-areas",
                 "/api/v1/ads/active",
+                "/api/v1/billing/plans",
                 "/api/v1/categories",
                 "/api/v1/categories/**",
                 "/api/v1/catalog/**",

@@ -47,7 +47,7 @@ public class BillingEntitlementService {
     @Transactional(readOnly = true)
     public void requireCanSell(UUID merchantId) {
         if (!evaluate(merchantId).canSell()) {
-            throw new ApiException(ErrorCode.PAYMENT_METHOD_NOT_SUPPORTED,
+            throw new ApiException(ErrorCode.BILLING_SUBSCRIPTION_REQUIRED,
                 HttpStatus.CONFLICT, "Seller subscription is required for this operation.");
         }
     }
