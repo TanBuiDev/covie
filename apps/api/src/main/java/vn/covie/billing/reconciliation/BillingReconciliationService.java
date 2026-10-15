@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import vn.covie.billing.application.BillingWebhookService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import vn.covie.billing.payos.PayosGateway;
 import vn.covie.shared.time.AppClock;
 
@@ -24,18 +26,20 @@ public class BillingReconciliationService {
     private final PayosGateway gateway;
     private final AppClock clock;
     private final BillingWebhookService settlement;
+    private final TransactionTemplate transactions;
 
     public BillingReconciliationService(JdbcTemplate jdbc, PayosGateway gateway, AppClock clock) {
-        this(jdbc, gateway, clock, null);
+        this(jdbc, gateway, clock, null, null);
     }
 
     @Autowired
     public BillingReconciliationService(JdbcTemplate jdbc, PayosGateway gateway, AppClock clock,
-            BillingWebhookService settlement) {
+            BillingWebhookService settlement, PlatformTransactionManager transactionManager) {
         this.jdbc = jdbc;
         this.gateway = gateway;
         this.clock = clock;
         this.settlement = settlement;
+        this.transactions = transactionManager == null ? null : new TransactionTemplate(transactionManager);
     }
 
     @Transactional(readOnly = true)
@@ -85,6 +89,28 @@ public class BillingReconciliationService {
                       and provider_payment_link_id is null
                     """,linkId,url,candidate.invoiceId());
             }
+        }
+        if ("NONE".equals(observed.discrepancy())
+                && ("EXPIRED".equals(observed.providerStatus()) || "CANCELLED".equals(observed.providerStatus()))
+                && response.path("data").path("amountPaid").asLong(-1) == 0 && transactions != null) {
+            // Only a signed provider-final status with zero received money can void an invoice.
+            transactions.executeWithoutResult(tx -> {
+                var rows=jdbc.query("""
+                    select i.status invoice_status,a.status attempt_status
+                    from billing_invoices i join billing_payment_attempts a on a.invoice_id=i.id
+                    where i.id=? and i.payos_order_code=? for update of i,a
+                    """, (rs,n)->new String[]{rs.getString("invoice_status"),rs.getString("attempt_status")},
+                    candidate.invoiceId(),candidate.orderCode());
+                if (rows.size()==1 && "PENDING_PAYMENT".equals(rows.getFirst()[0])
+                        && !"SUCCEEDED".equals(rows.getFirst()[1])) {
+                    jdbc.update("update billing_invoices set status='VOID',version=version+1 where id=?",
+                        candidate.invoiceId());
+                    jdbc.update("""
+                        update billing_payment_attempts set status='EXPIRED',version=version+1
+                        where invoice_id=? and status in ('CREATED','PENDING')
+                        """,candidate.invoiceId());
+                }
+            });
         }
         if ("PAID_PENDING_WEBHOOK".equals(observed.discrepancy()) && settlement != null) {
             // Server-authenticated + HMAC-verified payOS GET. The shared settlement
