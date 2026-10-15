@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.shared.time.AppClock;
+import vn.covie.settings.application.SystemSettingResolver;
+import vn.covie.settings.application.SystemSettingContext;
 
 /**
  * Called within a merchant creation transaction.
@@ -19,15 +21,20 @@ public class BillingTrialService {
     private final JdbcTemplate jdbc;
     private final BillingCatalogService catalog;
     private final AppClock clock;
+    private final SystemSettingResolver settings;
 
-    public BillingTrialService(JdbcTemplate jdbc, BillingCatalogService catalog, AppClock clock) {
+    public BillingTrialService(JdbcTemplate jdbc, BillingCatalogService catalog, AppClock clock,
+            SystemSettingResolver settings) {
         this.jdbc = jdbc;
         this.catalog = catalog;
         this.clock = clock;
+        this.settings = settings;
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public boolean grantEligibleTrial(UUID merchantId, UUID ownerUserId) {
+        // Observe-only mode does not alter legacy merchant entitlement or depend on billing rows.
+        if (!settings.bool("billing.enforcement_enabled", SystemSettingContext.globalOnly())) return false;
         BillingCatalogService.Policy policy = catalog.currentPolicy();
         if (!trialEnabled(policy)) return false;
         String planCode = jdbc.query("""
