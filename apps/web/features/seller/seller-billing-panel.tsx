@@ -186,7 +186,7 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
                 {subscription.cancelAtPeriodEnd ? (
                   <>
                     <p role="status">Đã đánh dấu không tiếp tục kỳ mới; quyền đã trả phí vẫn có hiệu lực đến cuối kỳ.</p>
-                    {subscription.periodEnd && new Date(subscription.periodEnd).getTime() > Date.now() ? (
+                    {(subscription.status === "ACTIVE" || subscription.status === "TRIALING") ? (
                       <button className="admin-button admin-button--secondary" type="button" disabled={paying}
                         onClick={() => void resumeRenewal()}>Bỏ yêu cầu dừng kỳ sau</button>
                     ) : null}
