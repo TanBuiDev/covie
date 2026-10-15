@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.admin.security.AdminAccessPolicy;
 import vn.covie.audit.AuditLogWriter;
@@ -30,6 +31,8 @@ public class AdminBillingGrantService {
     private final RequestIdAccessor requests;
     private final OutboxEventWriter outbox;
     private final boolean approved;
+    private BillingFinanceAccessPolicy finance;
+    @Autowired public void setFinanceAccess(BillingFinanceAccessPolicy finance){this.finance=finance;}
 
     public AdminBillingGrantService(JdbcTemplate jdbc,AdminAccessPolicy admins,AppClock clock,
             AuditLogWriter audit,RequestIdAccessor requests,OutboxEventWriter outbox,
@@ -41,6 +44,7 @@ public class AdminBillingGrantService {
     @Transactional
     public Grant grant(UUID merchantId,Request request) {
         var actor=admins.requireAdmin();
+        if(finance!=null)finance.requireApprover();
         if(!approved)throw conflict("Manual grants require an explicit operator approval.");
         Instant now=clock.now();
         if(request==null||request.validUntil()==null||!request.validUntil().isAfter(now)
@@ -70,7 +74,7 @@ public class AdminBillingGrantService {
 
     @Transactional(readOnly=true)
     public List<Grant> list(UUID merchantId) {
-        admins.requireAdmin();
+        if(finance!=null)finance.requireReader();else admins.requireAdmin();
         return jdbc.query("""
             select id,merchant_id,source_type,valid_from,valid_until,revoked_at,reason
             from billing_entitlement_grants where merchant_id=?
@@ -85,6 +89,7 @@ public class AdminBillingGrantService {
     @Transactional
     public void revoke(UUID grantId,String reason) {
         var actor=admins.requireAdmin();
+        if(finance!=null)finance.requireApprover();
         if(!approved)throw conflict("Grant revocation requires an explicit operator approval.");
         if(reason==null||reason.isBlank()||reason.length()>400)throw invalid("Reason is required.");
         int updated=jdbc.update("""

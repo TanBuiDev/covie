@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.admin.security.AdminAccessPolicy;
 import vn.covie.shared.time.AppClock;
@@ -16,6 +17,9 @@ public class AdminBillingReadService {
     private final JdbcTemplate jdbc;
     private final AdminAccessPolicy admins;
     private final AppClock clock;
+    private BillingFinanceAccessPolicy finance;
+    @Autowired public void setFinanceAccess(BillingFinanceAccessPolicy finance){this.finance=finance;}
+    private void requireReader(){if(finance!=null)finance.requireReader();else admins.requireAdmin();}
 
     public AdminBillingReadService(JdbcTemplate jdbc, AdminAccessPolicy admins, AppClock clock) {
         this.jdbc=jdbc; this.admins=admins; this.clock=clock;
@@ -23,7 +27,7 @@ public class AdminBillingReadService {
 
     @Transactional(readOnly=true)
     public Overview overview() {
-        admins.requireAdmin();
+        requireReader();
         return jdbc.query("""
             select
               (select coalesce(sum(amount_vnd),0) from billing_invoices
@@ -46,7 +50,7 @@ public class AdminBillingReadService {
 
     @Transactional(readOnly=true)
     public List<Invoice> invoices(UUID merchantId, int limit, int offset) {
-        admins.requireAdmin();
+        requireReader();
         if(limit < 1 || limit > 100 || offset < 0 || offset > 500_000)
             throw new IllegalArgumentException("Invalid billing page");
         if(merchantId==null){

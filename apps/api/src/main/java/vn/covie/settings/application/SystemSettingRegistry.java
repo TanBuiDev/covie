@@ -37,6 +37,7 @@ public class SystemSettingRegistry {
         add(values, bool("billing.enforcement_enabled", false));
         add(values, bool("billing.seller_registration_enabled", true));
         add(values, bool("billing.reminders_enabled", false));
+        add(values, bool("billing.finance_roles_enabled", false));
         definitions = Map.copyOf(values);
     }
     public SystemSettingDefinition require(String key) { SystemSettingDefinition definition = definitions.get(key); if (definition == null) throw invalidKey(key); return definition; }

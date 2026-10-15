@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.admin.security.AdminAccessPolicy;
 import vn.covie.audit.AuditLogWriter;
@@ -31,6 +32,8 @@ public class BillingLegacyMigrationService {
     private final AuditLogWriter audit;
     private final RequestIdAccessor requestIds;
     private final boolean opsApproved;
+    private BillingFinanceAccessPolicy finance;
+    @Autowired public void setFinanceAccess(BillingFinanceAccessPolicy finance){this.finance=finance;}
 
     public BillingLegacyMigrationService(JdbcTemplate jdbc, AdminAccessPolicy admins,
             SystemSettingResolver settings, AppClock clock, AuditLogWriter audit,
@@ -42,7 +45,7 @@ public class BillingLegacyMigrationService {
 
     @Transactional(readOnly = true)
     public Preview preview(Instant createdBefore) {
-        admins.requireAdmin();
+        if(finance!=null)finance.requireReader();else admins.requireAdmin();
         validateCutoff(createdBefore, clock.now());
         Integer eligible = jdbc.queryForObject("""
             select count(*) from merchant_profiles
@@ -60,6 +63,7 @@ public class BillingLegacyMigrationService {
     @Transactional
     public Result grant(GrantRequest request) {
         var actor = admins.requireAdmin();
+        if(finance!=null)finance.requireApprover();
         Instant now = clock.now();
         if (!opsApproved) throw reject("Legacy billing grants require an explicit operations approval.");
         if (settings.bool("billing.enforcement_enabled", SystemSettingContext.globalOnly())) {

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.admin.security.AdminAccessPolicy;
 import vn.covie.audit.AuditLogWriter;
@@ -33,6 +34,8 @@ public class BillingFinanceCaseService {
     private final RequestIdAccessor requestIds;
     private final OutboxEventWriter outbox;
     private final boolean refundApproval;
+    private BillingFinanceAccessPolicy finance;
+    @Autowired public void setFinanceAccess(BillingFinanceAccessPolicy finance){this.finance=finance;}
 
     public BillingFinanceCaseService(JdbcTemplate jdbc,BillingCheckoutService checkout,
             AdminAccessPolicy admins,AppClock clock,AuditLogWriter audit,
@@ -72,7 +75,7 @@ public class BillingFinanceCaseService {
 
     @Transactional(readOnly=true)
     public List<Case> list(String status,int limit){
-        admins.requireAdmin();
+        if(finance!=null)finance.requireReader();else admins.requireAdmin();
         if(limit<1||limit>100)throw invalid("Page limit must be between 1 and 100.");
         if(status!=null&&!List.of("REQUESTED","REVIEWING","REJECTED","CONFIRMED").contains(status))throw invalid("Invalid case status.");
         String sql="select * from billing_finance_cases"+
@@ -83,6 +86,10 @@ public class BillingFinanceCaseService {
     @Transactional
     public Case resolve(UUID caseId,Resolution request) {
         var actor=admins.requireAdmin();
+        if(finance!=null){
+            if(request!=null && "CONFIRMED".equals(request.status()))finance.requireApprover();
+            else finance.requireOperator();
+        }
         if(request==null||!List.of("REVIEWING","REJECTED","CONFIRMED").contains(request.status())
                 ||request.note()==null||request.note().isBlank()||request.note().length()>2000)
             throw invalid("Invalid resolution.");
