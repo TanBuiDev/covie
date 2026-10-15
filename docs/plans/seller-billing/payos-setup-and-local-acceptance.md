@@ -66,3 +66,33 @@ Ensure reverse proxy routes that path to the Spring Boot API. The public webhook
 ## Local test safety
 
 There is **no requirement to provide API secrets to ChatGPT**. Configure backend secrets on your own machine or deployment secret manager. Never share a screenshot where the Client ID, API Key, or Checksum Key is visible.
+
+## CoVie Windows local environment (verified from README and scripts/dev.ps1)
+
+The repository root `.env.local` is ignored by Git and imported into the API process by
+`pnpm dev` (scripts/dev.ps1). Set `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`,
+`PAYOS_CHECKSUM_KEY` in that file; leave `PAYOS_PAYMENT_ENABLED=false`.
+No code change, GitHub secret commit, screenshot or ChatGPT sharing is needed.
+
+Do not assume that Spring Boot automatically reads the root .env.local if you run
+`apps/api/mvnw.cmd` directly: follow the README PowerShell environment import.
+When deploying production, give payment secrets ONLY to API containers, not web or
+public build-time NEXT_PUBLIC_* configuration. The current production Compose uses one
+shared `COVIE_ENV_FILE` for both API and web: **split API-only secrets into a separate
+env_file or secret injection before enabling payOS**.
+
+### Optional read-only reconciliation (V023)
+
+`COVIE_BILLING_RECONCILE_ENABLED=false` by default. If enabled only after
+provider credentials and operational controls are verified, an opt-in scheduled
+worker checks up to 20 pending invoices every 15 minutes against authenticated
+payOS GET link information. It stores minimal observations in
+`billing_reconciliation_observations` and logs invoice ID plus a discrepancy code.
+Even when payOS says PAID, this worker does NOT mark invoices PAID or grant
+entitlements; a paid-without-webhook discrepancy needs authenticated recovery,
+human reconciliation and idempotent settlement flow before enabling charging users.
+Do not confuse this observer with a complete recovery and refund workflow.
+
+**Operator warning:** payOS API calls use the real provider endpoint (no separate
+sandbox). Read-only GET queries do not initiate payments, but still need an approved
+account and rate-limit precautions. Keep the worker disabled until configured.
