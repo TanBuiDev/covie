@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { AdminPageHeader, AdminSurface, formatAdminMoney } from "./admin-ui";
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
@@ -295,6 +296,7 @@ export function AdminBillingScreen() {
 
   return <div className="admin-page-stack">
     <AdminPageHeader title="Thuê bao Seller" subtitle="Bảng giá và chính sách kinh doanh do máy chủ quản lý theo phiên bản." />
+    <p><Link href="/admin/settings?section=billing">Cấu hình kiểm soát thu phí, nhắc gia hạn, phân quyền và giới hạn tạo giao dịch</Link></p>
     {error ? <p role="alert" className="admin-error">{error}</p> : null}
     {notice ? <p role="status">{notice}</p> : null}
     {loading ? <p>Đang tải Billing…</p> : (
