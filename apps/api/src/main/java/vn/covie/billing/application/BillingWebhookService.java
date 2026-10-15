@@ -71,7 +71,7 @@ public class BillingWebhookService {
         }
         var matches = jdbc.query("""
             select i.id invoice_id,i.merchant_id,i.status invoice_status,i.amount_vnd,
-                   i.period_start,i.period_end,i.plan_version_id,
+                   i.period_start,i.period_end,i.grace_until,i.plan_version_id,
                    a.id attempt_id,a.provider_payment_link_id,a.status attempt_status
             from billing_invoices i join billing_payment_attempts a on a.invoice_id=i.id
             where i.payos_order_code=? and a.provider='PAYOS'
@@ -80,6 +80,7 @@ public class BillingWebhookService {
                 (UUID) rs.getObject("invoice_id"), (UUID) rs.getObject("merchant_id"),
                 rs.getString("invoice_status"), rs.getLong("amount_vnd"),
                 rs.getTimestamp("period_start").toInstant(), rs.getTimestamp("period_end").toInstant(),
+                rs.getTimestamp("grace_until").toInstant(),
                 (UUID) rs.getObject("plan_version_id"), (UUID) rs.getObject("attempt_id"),
                 rs.getString("provider_payment_link_id"), rs.getString("attempt_status")), orderCode);
         if (matches.isEmpty()) {
@@ -140,15 +141,17 @@ public class BillingWebhookService {
             Timestamp.from(clock.now()));
         jdbc.update("""
             insert into merchant_subscriptions
-             (merchant_id,plan_code,status,period_start,period_end,created_at,updated_at)
-            values (?,?,'ACTIVE',?,?,?,?)
+             (merchant_id,plan_code,status,period_start,period_end,grace_until,created_at,updated_at)
+            values (?,?,'ACTIVE',?,?,?,?,?)
             on conflict(merchant_id) do update set
               status='ACTIVE', plan_code=excluded.plan_code,
               period_end=greatest(merchant_subscriptions.period_end,excluded.period_end),
+              grace_until=greatest(merchant_subscriptions.grace_until,excluded.grace_until),
               period_start=coalesce(merchant_subscriptions.period_start,excluded.period_start),
               updated_at=excluded.updated_at,version=merchant_subscriptions.version+1
             """, payment.merchantId(), planCode, Timestamp.from(payment.periodStart()),
-            Timestamp.from(payment.periodEnd()), Timestamp.from(clock.now()), Timestamp.from(clock.now()));
+            Timestamp.from(payment.periodEnd()), Timestamp.from(payment.graceUntil()),
+            Timestamp.from(clock.now()), Timestamp.from(clock.now()));
         jdbc.update("""
             update billing_webhook_inbox set processing_status='DONE',processed_at=?
             where id=?
@@ -170,6 +173,6 @@ public class BillingWebhookService {
         return new ApiException(code, status, message);
     }
     private record Payment(UUID invoiceId, UUID merchantId, String invoiceStatus, long amount,
-                           Instant periodStart, Instant periodEnd, UUID planVersionId,
+                           Instant periodStart, Instant periodEnd, Instant graceUntil, UUID planVersionId,
                            UUID attemptId, String linkId, String attemptStatus) {}
 }

@@ -132,11 +132,12 @@ public class BillingCheckoutService {
             insert into billing_invoices
               (id,invoice_number,merchant_id,plan_version_id,policy_version_id,status,
                amount_vnd,period_start,period_end,pricing_snapshot,idempotency_key,
-               request_fingerprint,created_at,expires_at,payos_order_code)
-            values (?,?,?,?,?,'PENDING_PAYMENT',?,?,?,?::jsonb,?,?,?,?,?)
+               request_fingerprint,created_at,expires_at,payos_order_code,grace_until)
+            values (?,?,?,?,?,'PENDING_PAYMENT',?,?,?,?::jsonb,?,?,?,?,?,?)
             """, invoiceId, number, merchantId, offer.id(), policy.id(), offer.priceVnd(),
             Timestamp.from(periodStart), Timestamp.from(periodEnd), snapshot, idempotencyKey,
-            fingerprint, at, Timestamp.from(expires), orderCode);
+            fingerprint, at, Timestamp.from(expires), orderCode,
+            Timestamp.from(periodEnd.plusSeconds(86400L * policy.graceDays())));
         jdbc.update("""
             insert into billing_payment_attempts
               (id,invoice_id,provider,provider_order_id,status,expected_amount_vnd,created_at)

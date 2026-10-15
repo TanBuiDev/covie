@@ -49,10 +49,11 @@ public class BillingTrialService {
             Timestamp.from(end), Timestamp.from(now));
         jdbc.update("""
             insert into merchant_subscriptions
-              (merchant_id,plan_code,status,period_start,period_end,trial_end,created_at,updated_at)
-            values (?,?,'TRIALING',?,?,?,?,?)
+              (merchant_id,plan_code,status,period_start,period_end,trial_end,grace_until,created_at,updated_at)
+            values (?,?,'TRIALING',?,?,?,?,?,?)
             """, merchantId, planCode, Timestamp.from(now), Timestamp.from(end),
-            Timestamp.from(end), Timestamp.from(now), Timestamp.from(now));
+            Timestamp.from(end), Timestamp.from(end.plus(Duration.ofDays(policy.graceDays()))),
+            Timestamp.from(now), Timestamp.from(now));
         return true;
     }
 
