@@ -132,8 +132,12 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
     setPaying(true); setError("");
     if (!idempotency.current) idempotency.current = crypto.randomUUID();
     try {
+      const plan = plans.find(value => value.code === selected);
+      if (!plan) throw new Error("Gói không còn được mở bán. Tải lại bảng giá.");
+      const expectedAmountVnd = code ? voucherQuote?.amountDueVnd : plan.priceVnd;
       const response = await requestBrowserApi("POST", base + "/checkout",
-        { planCode: selected, voucherCode: code || null },
+        { planCode: selected, voucherCode: code || null,
+          expectedAmountVnd, expectedPlanRevision: plan.revision },
         { "Idempotency-Key": idempotency.current });
       if (!response.ok) throw await readApiError(response);
       const link = await response.json() as Checkout;
