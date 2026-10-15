@@ -123,3 +123,11 @@ These calls are authenticated as Admin and leave audit entries. Do not set an ar
 - Fine-grained finance RBAC is opt-in via Admin System Setting `billing.finance_roles_enabled=false`, **not automatically enabled on migration**. Before enabling, provision at least one APPROVER and an OPERATOR/READER using the Admin Billing screen. Changes require a *different* global Admin account and transient env `COVIE_BILLING_FINANCE_ROLE_ASSIGNMENT_APPROVED=true`; keep false outside supervised role assignment.
 - Finance role assignment never grants a global ADMIN role to a user. Only already provisioned system Admin accounts can access the Admin finance APIs. Do not attempt to bootstrap access by editing JWT role claims manually.
 - When fine-grained roles are enabled: READER can read finance cases/revenue and legacy preview; OPERATOR can additionally review/reject cases; APPROVER can additionally confirm independently verified external refunds and control legacy/manual grants, still subject to their separate ops approval flags.
+
+## Final pre-release rules: signed response, independent refund, manual renewal
+
+1. payOS credentials remain only in the API runtime; **both** `PAYOS_PAYMENT_ENABLED=true` and `COVIE_BILLING_RELEASE_APPROVED=true` plus verified HTTPS app URL are needed to issue *new* payment links. Confirm real payment only after independently signed callback or signed provider reconciliation.
+2. Return to the merchant Billing screen to renew manually; there is **no automatic debit**. Opt-out/undo changes metadata only and never transfers money.
+3. A refund case must be explicitly marked REVIEWING by an Admin reviewer before a **different** global Admin approver may mark the externally executed refund CONFIRMED; the initial requester cannot approve their own case. Migration V030 stores reviewer and review time.
+4. For `secret-history`, the only allowlisted new finding is a specifically reviewed false positive in a historical implementation-plan checklist. Do not disable Gitleaks or add wildcard ignores. If additional findings appear, treat them independently.
+5. Test the nine-character `CV`+base36 bank description and verify payOS signs its `data` response in the user's actual channel before enabling any real charge. Any response mismatch must leave invoices unpaid for safe manual review.

@@ -92,3 +92,16 @@ Source changes pushed on feature branch (still DRAFT):
 - Updated OpenAPI/client from GitHub CI generated contract and acceptance matrix `docs/plans/seller-billing/acceptance-matrix-v1.md`.
 
 **Outstanding:** latest-head CI verification, source-only vs full BIL-001–030 test coverage, concurrency verification, real payOS operator acceptance, ads UI nondeterminism, finance special-account bootstrapping, refund settlement independent proof, secrets-history finding (do not bypass), responsive/browser checks, manual deployment and tax/compliance. Do not merge or claim fully finished.
+
+## Continuation — 16/10/2026: payOS response integrity, refund four-eyes, CI security triage (V030)
+
+- Added compact non-colliding `CV<base36-order-code>` payOS description, at most nine ASCII characters, to respect bank-linked merchant channel constraints. Added regression test.
+- payOS hosted link creation now **verifies the signature on the returned response data** before storing a provider URL. The web checkout origin is strictly `https://pay.payos.vn`, with a valid 32-hex link ID.
+- Owners may undo a `cancel_at_period_end` opt-out **before their current prepaid period expires**. This action never creates a charge; the product still uses manual payOS renewal only.
+- Added V030 with refund review audit fields. An externally confirmed refund requires prior review and distinct requester/reviewer/approver identities; a single Admin cannot approve a case they reviewed. The UI exposes explicit review/re-review and approval stages. Refund payout remains an external, supervised action.
+- CI secret-history finding was traced, without printing any secret, to an ordinary operations checklist line in a **historic documentation-only** commit. Added a single narrow, reviewed `commit:path:rule:line` false-positive fingerprint. Secret scanning remains enabled and a later CI scan passed; no blanket bypass.
+- Added safe metadata-only Gitleaks triage output that never prints or uploads scanner secret matches.
+- Regenerated the OpenAPI/TypeScript client after adding `resume-renewal`; fixed a React purity lint violation on the Seller Billing page.
+- Added payOS response-signature and independent-refund tests.
+
+These code changes remain on the Draft PR. Latest-head CI success, local live-provider verification and all outstanding BIL acceptance scenarios must still be confirmed independently. Do not enable production money collection solely based on this checkpoint.
