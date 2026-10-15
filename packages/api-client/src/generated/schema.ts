@@ -84,6 +84,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/billing/finance-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_21"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/finance-access/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["assign"];
+        delete: operations["revoke_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/billing/finance-cases": {
         parameters: {
             query?: never;
@@ -892,6 +924,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/billing/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["onboarding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/billing/plans": {
         parameters: {
             query?: never;
@@ -1610,7 +1658,7 @@ export interface paths {
          * Revoke one session
          * @description Browser mutations use X-CSRF-Token.
          */
-        delete: operations["revoke_2"];
+        delete: operations["revoke_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2250,7 +2298,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["revoke_1"];
+        delete: operations["revoke_2"];
         options?: never;
         head?: never;
         patch: operations["update_1"];
@@ -2913,6 +2961,15 @@ export interface components {
             status?: "ACTIVE" | "SUSPENDED" | "BANNED" | "DELETED";
             /** Format: date-time */
             updatedAt?: string;
+        };
+        Assignment: {
+            /** Format: uuid */
+            assignedBy?: string;
+            role?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: uuid */
+            userId?: string;
         };
         AttributeDefinition: {
             attributeKey?: string;
@@ -4071,6 +4128,16 @@ export interface components {
             /** @enum {string} */
             type?: "ORDER_NEW" | "ORDER_CONFIRMED" | "ORDER_REJECTED" | "ORDER_EXPIRED" | "ORDER_CANCELLED" | "ORDER_CANCELLATION_REQUESTED" | "ORDER_CANCELLATION_RESPONDED" | "ORDER_FULFILLMENT_UPDATED" | "ORDER_ISSUE_REPORTED" | "ORDER_COMPLETED" | "ORDER_CLOSED_WITH_ISSUE" | "NEED_MATCH_AVAILABLE" | "NEED_RESPONSE_RECEIVED" | "NEED_RESPONSE_UPDATED" | "NEED_RESPONSE_WITHDRAWN" | "NEED_FULFILLED" | "NEED_EXPIRED" | "REVIEW_RECEIVED" | "MODERATION_UPDATED" | "ACCOUNT_SUSPENDED" | "ACCOUNT_RESTORED" | "MERCHANT_SUSPENDED" | "MERCHANT_RESTORED" | "BILLING_PAYMENT_RECEIVED" | "BILLING_RENEWAL_REMINDER" | "BILLING_SUBSCRIPTION_EXPIRED";
         };
+        Onboarding: {
+            enforcementEnabled?: boolean;
+            /** Format: int32 */
+            graceDays?: number;
+            onboardingMode?: string;
+            plans?: components["schemas"]["PlanOffer"][];
+            registrationEnabled?: boolean;
+            /** Format: int32 */
+            trialDays?: number;
+        };
         OptionGroupCreateRequest: {
             clientKey: string;
             name: string;
@@ -4677,6 +4744,9 @@ export interface components {
         RevokeRequest: {
             reason?: string;
         };
+        RoleAssignment: {
+            role?: string;
+        };
         SetOnboardingPasswordRequest: {
             password: string;
         };
@@ -5167,6 +5237,72 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["PageAdminAuditLogResponse"];
                 };
+            };
+        };
+    };
+    list_21: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Assignment"][];
+                };
+            };
+        };
+    };
+    assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleAssignment"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Assignment"];
+                };
+            };
+        };
+    };
+    revoke_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -6448,6 +6584,26 @@ export interface operations {
             };
         };
     };
+    onboarding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Onboarding"];
+                };
+            };
+        };
+    };
     plans: {
         parameters: {
             query?: never;
@@ -7692,7 +7848,7 @@ export interface operations {
             };
         };
     };
-    revoke_2: {
+    revoke_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -9115,7 +9271,7 @@ export interface operations {
             };
         };
     };
-    revoke_1: {
+    revoke_2: {
         parameters: {
             query?: never;
             header?: never;
