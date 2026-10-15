@@ -38,7 +38,7 @@ public class BillingReconciliationService {
                 join billing_payment_attempts a on a.invoice_id = i.id
                 left join billing_reconciliation_observations obs on obs.invoice_id=i.id
                 where i.status = 'PENDING_PAYMENT' and a.provider='PAYOS'
-                  and a.provider_payment_link_id is not null
+                  and i.payos_order_code is not null
                 order by obs.last_checked_at asc nulls first, i.created_at asc
                 limit ?
                 """,
@@ -72,7 +72,7 @@ public class BillingReconciliationService {
         if (data.path("amount").asLong(-1) != candidate.amount()) {
             return new Observation(candidate.invoiceId(), status, "AMOUNT_MISMATCH");
         }
-        if (!candidate.linkId().equals(data.path("id").asText(""))) {
+        if (candidate.linkId() == null || !candidate.linkId().equals(data.path("id").asText(""))) {
             return new Observation(candidate.invoiceId(), status, "LINK_MISMATCH");
         }
         if ("PAID".equals(status)) {
