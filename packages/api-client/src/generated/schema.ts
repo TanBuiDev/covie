@@ -308,6 +308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/billing/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["subscriptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/billing/vouchers": {
         parameters: {
             query?: never;
@@ -4854,6 +4870,20 @@ export interface components {
             quantity?: number;
             reasonCode?: string;
         };
+        Subscription: {
+            cancelAtPeriodEnd?: boolean;
+            /** Format: date-time */
+            graceUntil?: string;
+            /** Format: uuid */
+            merchantId?: string;
+            merchantName?: string;
+            /** Format: date-time */
+            periodEnd?: string;
+            /** Format: date-time */
+            periodStart?: string;
+            planCode?: string;
+            status?: string;
+        };
         SubscriptionState: {
             cancelAtPeriodEnd?: boolean;
             /** Format: date-time */
@@ -5631,6 +5661,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Policy"];
+                };
+            };
+        };
+    };
+    subscriptions: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Subscription"][];
                 };
             };
         };
