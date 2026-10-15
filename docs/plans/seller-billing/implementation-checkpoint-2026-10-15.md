@@ -45,3 +45,36 @@ Implemented in subsequent commits on this feature branch (not merged):
 Outstanding before claiming **all code complete**: verified orphan-link repair and authenticated recovery settlement, refund/chargeback workflow, seller renewal cancellation and manual extension workflow, reminder/notification integration, full Admin multi-plan/yearly/discount UI + RBAC, full Need/Ads/public detail and item guard matrix, quote TTL with price-version race handling, full BIL-001..030 test coverage, real-money payOS verification with user-operated secrets, local/Figma E2E, legal invoice/tax operations. CI gitleaks history scanner still reports one match in full repository history and requires private investigation. Do not merge or enable payment.
 
 For payOS keys: root `.env.local` is untracked and loaded by `pnpm dev`, with `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`. Never commit credentials or switch on `PAYOS_PAYMENT_ENABLED` by default.
+
+## Continuation — 16/10/2026: substantial implementation added (unmerged, release flags OFF)
+
+**Do not assume PRODUCTION READY.** The code below was pushed to `feat/seller-billing-subscription`; GitHub PR #31 remains Draft. No real key was committed and no payOS charge was initiated by ChatGPT.
+
+### Newly implemented code
+- Hosted payOS link/webhook early-callback race fixed: signed webhook can bind a previously unbound provider link ID, and post-request persistence handles a concurrent PAID callback.
+- Provider reconciliation now verifies signed payOS GET data; a single, unambiguous paid transaction with exact orderCode, amount and provider reference can enter the **same transaction-safe, idempotent settlement path** as the webhook. Unverified/multiple/partial transactions require review. Pending links can be restored only from strongly validated, signed provider IDs. Reconciliation worker remains opt-in and bounded.
+- A **second release approval gate** `COVIE_BILLING_RELEASE_APPROVED=false` was added in addition to `PAYOS_PAYMENT_ENABLED=false`. New payment links require both; independently signed callbacks and read-only reconciliation for existing orders remain possible when checkout creation is disabled.
+- Admin can create independent plans (monthly, quarterly, yearly or any 1–120 month cycle), retire plans, publish immutable versioned prices and policies, and see revenues/settlement alerts.
+- Seller can see current subscription, period, invoices, create payment links, opt out of renewal and submit REFUND/DISPUTE cases for PAID invoices.
+- Added `billing_finance_cases` (V027): Admin finance case reviews, operator-gated `CONFIRMED` status for externally verified refunds, audit, revocation of only the specific refunded invoice grant. **No bank payout API**.
+- Added Admin discretionary time-bound entitlement grants with audit, max-one-year validity and separate `COVIE_BILLING_ADMIN_GRANTS_APPROVED=false` ops gate. Legacy grants still require separate `COVIE_BILLING_LEGACY_GRANTS_APPROVED=false`.
+- Added 7/3/1-day reminder scheduling with database dedupe + outbox, owner in-app notifications, payment-success messages and expiry messages. Controlled by Admin's `billing.reminders_enabled` (OFF by default). Billing lifecycle respects snapshotted grace and cancellation.
+- Unified paid/trial grace eligibility across `BillingEntitlementService`, buyer Checkout, SQL discovery, merchant catalog and ad delivery. Added public item detail and Ad submission checks. Expired subscriptions never delete existing orders, products, likes or comments.
+- Backend payOS credentials are explicitly overridden to **empty** on the production Web service where a legacy shared env file is used. In production plan to split API-only and Web-only env files.
+- Added targeted Java unit regression tests covering signed recovery, invalid financial action, default-safe flags and seller checkout/catalog eligibility; updated Flyway upgrade test through V027.
+- Synced `packages/api-client/openapi/openapi.json` and `packages/api-client/src/generated/schema.ts` after adding finance/Admin/Seller APIs and notification types.
+
+### Not-yet-complete code and testing
+- New code needs latest-head CI green and local E2E with Java 25/Postgres/MinIO/Redis; latest-head job status is **not assumed**. Occasional unrelated ads UI test flakiness is being tracked separately.
+- GitHub `secret-history` has **one persistent redacted finding** from repository history; must privately investigate, rotate any exposed credential, and approve remediation before merge. Do not bypass this security check.
+- Promotions/vouchers and customer-facing discount selection with quota/misuse protection remain unimplemented; Seller onboarding's full guided fee/trial experience and role-specific finance management UI still need UI review.
+- The finance case feature records and confirms *manually executed* external refunds but intentionally never issues a payout from CoVie. Provider-controlled real refund APIs require business/account eligibility and separate authorization; refund fraud and chargeback handling require further acceptance tests.
+- Full BIL-001 through BIL-030 test matrix, concurrency/live payOS webhook registration and real bank transfer proof, monitoring/retry/operational runbook and data-protection/regulatory acceptance are not completed.
+- Admin finance roles are still global Admin, not separate accounting/approval roles. Advanced reporting, rate limits, promotions and Figma/browser/mobile visual acceptance remain pending.
+- The code contains no authorized live payout or deployment action.
+
+### Safe local configuration
+Place `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY` in ignored root `.env.local` loaded by `pnpm dev`. For local review keep `PAYOS_PAYMENT_ENABLED=false`, `COVIE_BILLING_RELEASE_APPROVED=false`, `COVIE_BILLING_RECONCILE_ENABLED=false`, and Admin's `billing.enforcement_enabled=false`. Never send credentials in chat.
+
+### Follow-on execution
+Resolve final CI against latest head (both API client and UI), finish promotions and comprehensive BIL acceptance cases, review end-to-end entitlement paths, finish separate Admin finance roles, investigate secret-history privately, and only then hand off a release candidate for locally supervised real-money acceptance. Do not merge by default.
