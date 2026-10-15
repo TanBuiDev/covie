@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
   Gear,
+  CreditCard,
   MapPinLine,
   Megaphone,
   Package,
@@ -20,6 +21,7 @@ const sections = [
   { key: "locations", segment: "locations", label: "Điểm bán" },
   { key: "ads", segment: "ads", label: "Quảng cáo" },
   { key: "settings", segment: "settings", label: "Cài đặt" },
+  { key: "billing", segment: "billing", label: "Thuê bao" },
 ] as const;
 
 type SellerSectionKey = (typeof sections)[number]["key"];
@@ -38,6 +40,8 @@ function SellerNavIcon({ section }: { section: SellerSectionKey }) {
       return <Megaphone size={22} weight="duotone" aria-hidden="true" />;
     case "settings":
       return <Gear size={22} weight="duotone" aria-hidden="true" />;
+    case "billing":
+      return <CreditCard size={22} weight="duotone" aria-hidden="true" />;
   }
 }
 
@@ -100,7 +104,7 @@ export function SellerNavLinks({
   }
 
   const opItems = items.filter((s) => s.key === "overview" || s.key === "orders" || s.key === "catalog");
-  const configItems = items.filter((s) => s.key === "locations" || s.key === "ads" || s.key === "settings");
+  const configItems = items.filter((s) => s.key === "locations" || s.key === "ads" || s.key === "settings" || s.key === "billing");
 
   return (
     <nav className="seller-nav-links" aria-label="Điều hướng Seller Center">
