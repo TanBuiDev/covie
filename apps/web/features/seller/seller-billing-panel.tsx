@@ -89,6 +89,18 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
     } finally { setPaying(false); }
   }
 
+  async function resumeRenewal() {
+    if (paying || !window.confirm("Bỏ yêu cầu dừng thuê bao cuối kỳ? Không có khoản phí nào được tự động thu.")) return;
+    setPaying(true); setError("");
+    try {
+      const response = await requestBrowserApi("POST", base + "/resume-renewal");
+      if (!response.ok) throw await readApiError(response);
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể bỏ yêu cầu dừng thuê bao");
+    } finally { setPaying(false); }
+  }
+
   async function requestFinanceCase(invoice: Invoice, kind: "REFUND" | "DISPUTE") {
     if (paying || invoice.status !== "PAID") return;
     const reason = window.prompt(kind === "REFUND"
@@ -172,7 +184,13 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
                 <p>Gói hiện tại: {subscription.planCode} — trạng thái: {subscription.status}.</p>
                 {subscription.periodEnd ? <p>Kết thúc kỳ: {date(subscription.periodEnd)}.</p> : null}
                 {subscription.cancelAtPeriodEnd ? (
-                  <p role="status">Đã đánh dấu không tiếp tục kỳ mới; quyền đã trả phí vẫn có hiệu lực đến cuối kỳ.</p>
+                  <>
+                    <p role="status">Đã đánh dấu không tiếp tục kỳ mới; quyền đã trả phí vẫn có hiệu lực đến cuối kỳ.</p>
+                    {subscription.periodEnd && new Date(subscription.periodEnd).getTime() > Date.now() ? (
+                      <button className="admin-button admin-button--secondary" type="button" disabled={paying}
+                        onClick={() => void resumeRenewal()}>Bỏ yêu cầu dừng kỳ sau</button>
+                    ) : null}
+                  </>
                 ) : subscription.status === "ACTIVE" || subscription.status === "TRIALING" ? (
                   <button className="admin-button admin-button--secondary" type="button" disabled={paying}
                     onClick={() => void cancelRenewal()}>Không gia hạn sau kỳ hiện tại</button>

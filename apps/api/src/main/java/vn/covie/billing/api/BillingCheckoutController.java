@@ -35,6 +35,12 @@ public class BillingCheckoutController {
         return ResponseEntity.noContent().cacheControl(CacheControl.noStore()).build();
     }
 
+    @PostMapping("/resume-renewal")
+    public ResponseEntity<Void> resumeRenewal(@PathVariable UUID merchantId) {
+        checkout.resumeRenewal(merchantId);
+        return ResponseEntity.noContent().cacheControl(CacheControl.noStore()).build();
+    }
+
     @GetMapping("/invoices/{invoiceId}")
     public ResponseEntity<BillingCheckoutService.PaymentStatus> paymentStatus(
             @PathVariable UUID merchantId, @PathVariable UUID invoiceId) {

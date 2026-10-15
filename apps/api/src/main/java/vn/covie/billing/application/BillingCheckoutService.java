@@ -268,6 +268,31 @@ public class BillingCheckoutService {
         }
     }
 
+    /**
+     * Undo a voluntary stop before the prepaid period ends; no payment,
+     * recurring charge or payOS request is initiated.
+     */
+    @Transactional
+    public void resumeRenewal(UUID merchantId) {
+        requireOwner(merchantId);
+        int updated=jdbc.update("""
+            update merchant_subscriptions set cancel_at_period_end=false,
+                updated_at=?,version=version+1
+            where merchant_id=? and cancel_at_period_end=true
+              and status in ('ACTIVE','TRIALING','PAST_DUE') and period_end>?
+            """,Timestamp.from(clock.now()),merchantId,Timestamp.from(clock.now()));
+        if(updated==0) {
+            Boolean alreadyActive=jdbc.queryForObject("""
+                select exists(select 1 from merchant_subscriptions
+                where merchant_id=? and status in ('ACTIVE','TRIALING','PAST_DUE')
+                  and period_end>? and cancel_at_period_end=false)
+                """,Boolean.class,merchantId,Timestamp.from(clock.now()));
+            if(!Boolean.TRUE.equals(alreadyActive))
+                throw error(ErrorCode.BILLING_SUBSCRIPTION_REQUIRED,HttpStatus.CONFLICT,
+                    "This subscription must be renewed with a new payment.");
+        }
+    }
+
     @Transactional(readOnly = true)
     public SubscriptionState subscription(UUID merchantId) {
         requireOwner(merchantId);
