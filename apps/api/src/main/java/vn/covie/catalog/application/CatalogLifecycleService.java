@@ -2,6 +2,8 @@ package vn.covie.catalog.application;
 
 import java.time.Instant;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.billing.application.BillingEntitlementService;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,15 +33,27 @@ public class CatalogLifecycleService {
     private final OutboxEventWriter outbox;
     private final ModerationCaseWriter moderationCases;
     private final AppClock clock;
+    private final BillingEntitlementService entitlements;
 
+    /** Kept for existing isolated unit tests. Spring always uses the wired constructor below. */
     public CatalogLifecycleService(MerchantAccessPolicy access, CatalogItemRepository items, CatalogManagementActionPolicy actions,
             CatalogPublishPolicy policy, OutboxEventWriter outbox, ModerationCaseWriter moderationCases, AppClock clock) {
-        this.access = access; this.items = items; this.actions = actions; this.policy = policy; this.outbox = outbox; this.moderationCases = moderationCases; this.clock = clock;
+        this(access, items, actions, policy, outbox, moderationCases, clock, null);
+    }
+
+    @Autowired
+    public CatalogLifecycleService(MerchantAccessPolicy access, CatalogItemRepository items, CatalogManagementActionPolicy actions,
+            CatalogPublishPolicy policy, OutboxEventWriter outbox, ModerationCaseWriter moderationCases, AppClock clock,
+            BillingEntitlementService entitlements) {
+        this.access = access; this.items = items; this.actions = actions; this.policy = policy;
+        this.outbox = outbox; this.moderationCases = moderationCases; this.clock = clock;
+        this.entitlements = entitlements;
     }
 
     @Transactional
     public LifecycleResult publish(UUID merchantId, UUID itemId, String ifMatch) {
         access.require(merchantId, MerchantCapability.PUBLISH_CATALOG);
+        if (entitlements != null) entitlements.requireCanSell(merchantId);
         CatalogItemEntity item = locked(merchantId, itemId, ifMatch);
         actions.requirePublish(item);
         Instant now = clock.now();
@@ -69,6 +83,7 @@ public class CatalogLifecycleService {
     @Transactional
     public LifecycleResult activate(UUID merchantId, UUID itemId, String ifMatch) {
         access.require(merchantId, MerchantCapability.PUBLISH_CATALOG);
+        if (entitlements != null) entitlements.requireCanSell(merchantId);
         CatalogItemEntity item = locked(merchantId, itemId, ifMatch);
         actions.requireActivate(item);
         item.activate(clock.now());

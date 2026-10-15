@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.auth.security.CurrentActorProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.billing.application.BillingEntitlementService;
 import vn.covie.merchants.model.MerchantLocationEntity;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.security.MerchantAccessPolicy;
@@ -47,6 +49,7 @@ public class NeedResponseService {
     private final OutboxEventWriter outbox;
     private final UuidV7Generator ids;
     private final AppClock clock;
+    private final BillingEntitlementService billingEntitlements;
 
     public NeedResponseService(CurrentActorProvider actors, NeedRequestRepository needs,
             NeedResponseRepository responses, NeedResponseItemRepository responseItems,
@@ -57,6 +60,22 @@ public class NeedResponseService {
         this.locations = locations; this.merchantAccess = merchantAccess; this.eligibility = eligibility;
         this.itemFactory = itemFactory; this.idempotency = idempotency; this.outbox = outbox;
         this.ids = ids; this.clock = clock;
+        this.billingEntitlements = null;
+    }
+
+    @Autowired
+    public NeedResponseService(CurrentActorProvider actors, NeedRequestRepository needs,
+            NeedResponseRepository responses, NeedResponseItemRepository responseItems,
+            MerchantLocationRepository locations, MerchantAccessPolicy merchantAccess,
+            NeedResponseEligibilityPolicy eligibility, NeedResponseItemFactory itemFactory,
+            IdempotencyExecutor idempotency, OutboxEventWriter outbox, UuidV7Generator ids,
+            AppClock clock, BillingEntitlementService billingEntitlements) {
+        this.actors = actors; this.needs = needs; this.responses = responses;
+        this.responseItems = responseItems; this.locations = locations;
+        this.merchantAccess = merchantAccess; this.eligibility = eligibility;
+        this.itemFactory = itemFactory; this.idempotency = idempotency;
+        this.outbox = outbox; this.ids = ids; this.clock = clock;
+        this.billingEntitlements = billingEntitlements;
     }
 
     public IdempotencyExecutor.Execution<NeedResponseResponse> create(
@@ -74,6 +93,7 @@ public class NeedResponseService {
         Instant now = clock.now();
         MerchantLocationEntity location = resolveAuthorizedLocation(request.merchantLocationId());
         UUID merchantId = location.getMerchantProfileId();
+        if (billingEntitlements != null) billingEntitlements.requireCanSell(merchantId);
         if (responses.findByNeedRequestIdAndMerchantLocationIdAndResponseStatus(
                 needId, location.getId(), NeedResponseStatus.ACTIVE).isPresent()) {
             throw conflict(ErrorCode.NEED_RESPONSE_ALREADY_ACTIVE, "An active response already exists for this location.");
@@ -103,6 +123,7 @@ public class NeedResponseService {
         NeedRequestEntity need = lockNeed(needId);
         NeedResponseEntity response = lockResponse(needId, responseId);
         authorizeResponse(response);
+        if (billingEntitlements != null) billingEntitlements.requireCanSell(response.getMerchantProfileId());
         requireVersion(response, ifMatch);
         Instant now = clock.now();
         if (!need.isActiveAt(now)) throw conflict(ErrorCode.NEED_NOT_ACTIVE, "Need is not active.");
