@@ -21,7 +21,7 @@
 - CI secret-history scanner reported one match while scanning full Git history. **Do not dismiss.** Inspect sensitive details only in a private security workflow, determine historical/current scope and rotate any real exposed credential if applicable. Never put secret value into discussions.
 - payOS officially **has no separate sandbox**; avoid real-money testing until approved. See `payos-setup-and-local-acceptance.md`.
 
-**Incomplete:** provider reconciliation and refund workflow; rate limiting, seller registration gating, trial/grace scheduler; backend enforcement across catalog/checkout/Need/discovery/ads; legacy merchant migration; fully audited Admin finance RBAC; contract-level verification with payOS test transfer; Figma/responsive/UI validation; complete end-to-end tests and security release approval. These are release blockers.
+**Incomplete:** full provider reconciliation and refund workflow (an opt-in read-only observation worker has been added); rate limiting, seller registration gating, trial/grace scheduler; backend enforcement across catalog/checkout/Need/discovery/ads; legacy merchant migration; fully audited Admin finance RBAC; contract-level verification with payOS test transfer; Figma/responsive/UI validation; complete end-to-end tests and security release approval. These are release blockers.
 
 ## Resume instruction
 
