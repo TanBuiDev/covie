@@ -11,6 +11,9 @@ type Policy = Required<components["schemas"]["Policy"]>;
 type Overview = { collectedVnd: number; paidInvoices: number; pendingInvoices: number; entitledShops: number; reconciliationAlerts: number };
 type BillingInvoice = { id: string; merchantId: string; invoiceNumber: string; status: string; amountVnd: number; createdAt: string; paidAt?: string };
 type FinanceCase = { id: string; invoiceId: string; merchantId: string; kind: string; status: string; reason: string; createdAt: string; resolutionNote?: string };
+type Voucher = { code: string; planCode: string | null; discountType: "FIXED" | "PERCENT";
+  discountValue: number; maxRedemptions: number; perMerchantLimit: number;
+  startsAt: string; endsAt: string; enabled: boolean };
 
 
 async function requireJson<T>(response: Response): Promise<T> {
@@ -28,6 +31,15 @@ export function AdminBillingScreen() {
   const [overview, setOverview] = useState<Overview>();
   const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
   const [cases, setCases] = useState<FinanceCase[]>([]);
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherPlan, setVoucherPlan] = useState("");
+  const [voucherKind, setVoucherKind] = useState<"FIXED" | "PERCENT">("FIXED");
+  const [voucherValue, setVoucherValue] = useState("1000");
+  const [voucherMax, setVoucherMax] = useState("100");
+  const [voucherPerMerchant, setVoucherPerMerchant] = useState("1");
+  const [voucherStart, setVoucherStart] = useState("");
+  const [voucherEnd, setVoucherEnd] = useState("");
   const [grantMerchantId, setGrantMerchantId] = useState("");
   const [grantEnd, setGrantEnd] = useState("");
   const [grantReason, setGrantReason] = useState("");
@@ -44,19 +56,22 @@ export function AdminBillingScreen() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [priceRes, policyRes, overviewRes, invoiceRes, caseRes] = await Promise.all([
+    const [priceRes, policyRes, overviewRes, invoiceRes, caseRes, voucherRes] = await Promise.all([
       requestBrowserApi("GET", "/api/v1/billing/plans"),
       requestBrowserApi("GET", "/api/v1/admin/billing/policy"),
       requestBrowserApi("GET", "/api/v1/admin/billing/overview"),
       requestBrowserApi("GET", "/api/v1/admin/billing/invoices?limit=20"),
-      requestBrowserApi("GET", "/api/v1/admin/billing/finance-cases?limit=30")
+      requestBrowserApi("GET", "/api/v1/admin/billing/finance-cases?limit=30"),
+      requestBrowserApi("GET", "/api/v1/admin/billing/vouchers")
     ]);
     const values = await requireJson<Plan[]>(priceRes);
     const settings = await requireJson<Policy>(policyRes);
     const totals = await requireJson<Overview>(overviewRes);
     const ledger = await requireJson<BillingInvoice[]>(invoiceRes);
     const financeCases = await requireJson<FinanceCase[]>(caseRes);
+    const promotionList = await requireJson<Voucher[]>(voucherRes);
     setCases(financeCases);
+    setVouchers(promotionList);
     setOverview(totals);
     setInvoices(ledger);
     setPlans(values); setPolicy(settings);
@@ -185,6 +200,51 @@ export function AdminBillingScreen() {
     } finally { setSaving(false); }
   }
 
+  async function createVoucher() {
+    if (saving) return;
+    const from = new Date(voucherStart);
+    const until = new Date(voucherEnd);
+    const value = voucherKind === "PERCENT"
+      ? Math.round(Number(voucherValue) * 100) : Number(voucherValue);
+    if (!/^[A-Z0-9_-]{4,32}$/.test(voucherCode)
+      || !Number.isSafeInteger(value) || value <= 0
+      || (voucherKind === "PERCENT" && value >= 10000)
+      || !Number.isInteger(Number(voucherMax)) || Number(voucherMax) < 1
+      || !Number.isInteger(Number(voucherPerMerchant)) || Number(voucherPerMerchant) < 1
+      || !voucherStart || !voucherEnd || Number.isNaN(from.getTime()) ||
+      Number.isNaN(until.getTime()) || until <= from || until <= new Date()) {
+      setError("Kiểm tra mã, mức giảm, hạn mức và khoảng thời gian voucher."); return;
+    }
+    if (!window.confirm("Phát hành mã giảm giá thuê bao này? Hạn mức sử dụng không thể tăng tùy ý sau khi có hóa đơn.")) return;
+    setSaving(true); setError(""); setNotice("");
+    try {
+      await requireJson(await requestBrowserApi("POST", "/api/v1/admin/billing/vouchers", {
+        code: voucherCode, planCode: voucherPlan || null, discountType: voucherKind,
+        discountValue: value, maxRedemptions: Number(voucherMax),
+        perMerchantLimit: Number(voucherPerMerchant),
+        startsAt: from.toISOString(), endsAt: until.toISOString()
+      }));
+      setNotice("Đã phát hành voucher cho phí thuê bao Seller.");
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể tạo voucher");
+    } finally { setSaving(false); }
+  }
+
+  async function disableVoucher(code: string) {
+    if (saving || !window.confirm(`Ngừng nhận mã ${code} cho hóa đơn mới?`)) return;
+    setSaving(true); setError(""); setNotice("");
+    try {
+      const response = await requestBrowserApi("POST",
+        `/api/v1/admin/billing/vouchers/${encodeURIComponent(code)}/disable`);
+      if (!response.ok) throw await readApiError(response);
+      setNotice("Đã ngừng sử dụng mã cho các hóa đơn mới.");
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể ngừng voucher");
+    } finally { setSaving(false); }
+  }
+
   return <div className="admin-page-stack">
     <AdminPageHeader title="Thuê bao Seller" subtitle="Bảng giá và chính sách kinh doanh do máy chủ quản lý theo phiên bản." />
     {error ? <p role="alert" className="admin-error">{error}</p> : null}
@@ -304,6 +364,59 @@ export function AdminBillingScreen() {
               onClick={() => void retirePlan()}>Ngừng bán gói đã chọn</button>
           </div>
           <p>Thời điểm có hiệu lực dùng ô nhập phía cuối trang.</p>
+        </AdminSurface>
+        <AdminSurface>
+          <h2>Mã giảm phí thuê bao Seller</h2>
+          <p>Áp dụng cho Seller Billing, không giảm giá các đơn hàng buyer. Mã giảm theo % nhập từ 0,01 đến dưới 100%.</p>
+          <div className="admin-field"><label htmlFor="billing-voucher-code">Mã giảm giá</label>
+            <input id="billing-voucher-code" value={voucherCode}
+              onChange={event => setVoucherCode(event.target.value.toUpperCase())}
+              placeholder="COVIE_SELLER" maxLength={32} /></div>
+          <div className="admin-field"><label htmlFor="billing-voucher-plan">Chỉ áp dụng cho gói</label>
+            <select id="billing-voucher-plan" value={voucherPlan}
+              onChange={event => setVoucherPlan(event.target.value)}>
+              <option value="">Tất cả gói đang bán</option>
+              {plans.map(plan => <option key={plan.code} value={plan.code}>{plan.name} ({plan.code})</option>)}
+            </select></div>
+          <div className="admin-field"><label htmlFor="billing-voucher-type">Kiểu giảm</label>
+            <select id="billing-voucher-type" value={voucherKind}
+              onChange={event => setVoucherKind(event.target.value as "FIXED" | "PERCENT")}>
+              <option value="FIXED">Số tiền VND</option><option value="PERCENT">Phần trăm (%)</option>
+            </select></div>
+          <div className="admin-field"><label htmlFor="billing-voucher-value">Mức giảm ({voucherKind === "PERCENT" ? "%" : "VND"})</label>
+            <input id="billing-voucher-value" type="number" min="0.01" step={voucherKind === "PERCENT" ? "0.01" : "1"}
+              value={voucherValue} onChange={event => setVoucherValue(event.target.value)} /></div>
+          <div className="admin-field"><label htmlFor="billing-voucher-limit">Tổng số lượt sử dụng</label>
+            <input id="billing-voucher-limit" type="number" min="1" max="100000"
+              value={voucherMax} onChange={event => setVoucherMax(event.target.value)} /></div>
+          <div className="admin-field"><label htmlFor="billing-voucher-per-merchant">Tối đa mỗi cửa hàng</label>
+            <input id="billing-voucher-per-merchant" type="number" min="1" max="100"
+              value={voucherPerMerchant} onChange={event => setVoucherPerMerchant(event.target.value)} /></div>
+          <div className="admin-field"><label htmlFor="billing-voucher-start">Bắt đầu</label>
+            <input id="billing-voucher-start" type="datetime-local"
+              value={voucherStart} onChange={event => setVoucherStart(event.target.value)} /></div>
+          <div className="admin-field"><label htmlFor="billing-voucher-end">Kết thúc</label>
+            <input id="billing-voucher-end" type="datetime-local"
+              value={voucherEnd} onChange={event => setVoucherEnd(event.target.value)} /></div>
+          <button className="admin-button admin-button--primary" type="button"
+            disabled={saving} onClick={() => void createVoucher()}>Tạo voucher thuê bao</button>
+          {vouchers.length === 0 ? <p>Chưa có mã giảm phí thuê bao.</p> : (
+            <div style={{ overflowX: "auto" }}>
+              <table className="admin-table">
+                <thead><tr><th>Mã</th><th>Giảm</th><th>Giới hạn</th><th>Trạng thái</th><th>Quản lý</th></tr></thead>
+                <tbody>{vouchers.map(v => <tr key={v.code}>
+                  <td>{v.code}</td>
+                  <td>{v.discountType === "PERCENT"
+                    ? (v.discountValue / 100).toLocaleString("vi-VN") + "%"
+                    : formatAdminMoney(v.discountValue)}</td>
+                  <td>{v.maxRedemptions} lượt / {v.perMerchantLimit} mỗi shop</td>
+                  <td>{v.enabled ? "Đang bật" : "Ngừng bán"}</td>
+                  <td>{v.enabled ? <button className="admin-button admin-button--secondary"
+                    type="button" disabled={saving} onClick={() => void disableVoucher(v.code)}>Tắt mã</button> : "—"}</td>
+                </tr>)}</tbody>
+              </table>
+            </div>
+          )}
         </AdminSurface>
         <AdminSurface>
           <h2>Chính sách mở cửa hàng</h2>
