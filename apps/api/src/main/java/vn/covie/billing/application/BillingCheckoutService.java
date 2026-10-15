@@ -269,6 +269,8 @@ public class BillingCheckoutService {
             rs.getTimestamp("period_end").toInstant(), rs.getTimestamp("created_at").toInstant()), merchantId);
     }
 
+    public UUID currentOwnerId() { return actors.currentActor().userId(); }
+
     public void requireOwner(UUID merchantId) {
         var member = memberships.findActive(merchantId, actors.currentActor().userId())
             .orElseThrow(() -> error(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Merchant not found."));
