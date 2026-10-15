@@ -373,8 +373,10 @@ export function AdminBillingScreen() {
                     <td>
                       {item.status === "REQUESTED" || item.status === "REVIEWING" ? (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                          {item.status === "REQUESTED" ? <button className="admin-button admin-button--secondary"
-                            disabled={saving} onClick={() => void resolveCase(item.id, "REVIEWING")}>Tiếp nhận</button> : null}
+                          <button className="admin-button admin-button--secondary"
+                            disabled={saving} onClick={() => void resolveCase(item.id, "REVIEWING")}>
+                            {item.status === "REQUESTED" ? "Tiếp nhận & kiểm tra" : "Ghi nhận kiểm tra lại"}
+                          </button>
                           <button className="admin-button admin-button--secondary" disabled={saving}
                             onClick={() => void resolveCase(item.id, "REJECTED")}>Từ chối</button>
                           {item.kind === "REFUND" && item.status === "REVIEWING" ? <button className="admin-button admin-button--secondary"
