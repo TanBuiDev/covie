@@ -144,7 +144,7 @@ public class BillingCheckoutService {
             """, attemptId, invoiceId, orderCode.toString(), offer.priceVnd(), at);
 
         // No checkout is returned to the buyer or seller until this has succeeded.
-        var link = payos.createPaymentLink(orderCode, offer.priceVnd(), "COVIE " + orderCode, expires.getEpochSecond());
+        var link = payos.createPaymentLink(merchantId, orderCode, offer.priceVnd(), "COVIE " + orderCode, expires.getEpochSecond());
         jdbc.update("""
             update billing_payment_attempts
             set status='PENDING', checkout_url=?, qr_payload=?, provider_payment_link_id=?

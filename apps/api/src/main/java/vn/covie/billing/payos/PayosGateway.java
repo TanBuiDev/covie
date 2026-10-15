@@ -46,10 +46,10 @@ public class PayosGateway {
         return checksumKey;
     }
 
-    public PaymentLink createPaymentLink(long orderCode, long amount, String description, long expiresAt) {
+    public PaymentLink createPaymentLink(java.util.UUID merchantId, long orderCode, long amount, String description, long expiresAt) {
         if (!isEnabled()) throw new ProviderUnavailableException("payOS not configured");
-        String cancelUrl = appUrl + "/seller/billing/return?cancel=true";
-        String returnUrl = appUrl + "/seller/billing/return";
+        String cancelUrl = appUrl + "/seller/billing/return?merchantId=" + merchantId + "&cancel=true";
+        String returnUrl = appUrl + "/seller/billing/return?merchantId=" + merchantId;
         String signature = signatures.signPaymentLink(amount, cancelUrl, description, orderCode, returnUrl, checksumKey);
         var payload = Map.of("orderCode", orderCode, "amount", amount,
             "description", description, "cancelUrl", cancelUrl,

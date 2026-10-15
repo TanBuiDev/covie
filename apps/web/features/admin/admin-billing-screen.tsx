@@ -68,7 +68,7 @@ export function AdminBillingScreen() {
       const body = kind === "price"
         ? { priceVnd: Number(price), cycleMonths: Number(months), effectiveAt: date.toISOString() }
         : { onboardingMode: mode, trialDays: Number(trial), graceDays: Number(grace), effectiveAt: date.toISOString() };
-      await requireJson(requestBrowserApi("POST", url, body));
+      await requireJson(await requestBrowserApi("POST", url, body));
       setNotice("Đã tạo phiên bản mới; giá và chính sách có hiệu lực theo lịch đã chọn.");
       await load();
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Không thể lưu chính sách"); }

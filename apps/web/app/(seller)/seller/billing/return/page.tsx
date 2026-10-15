@@ -6,7 +6,12 @@ import { ArrowLeft, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
  * payOS return/cancel is UX only, never proof of settled payment.
  * The seller billing dashboard must poll authenticated invoice status from backend.
  */
-export default async function BillingReturnPage() {
+export default async function BillingReturnPage({
+  searchParams,
+}: { searchParams: Promise<{ merchantId?: string }> }) {
+  const { merchantId } = await searchParams;
+  const href = merchantId && /^[0-9a-f-]{36}$/i.test(merchantId)
+    ? `/seller/${encodeURIComponent(merchantId)}/billing` : "/seller";
   await requireUser();
   return (
     <main className="seller-entry seller-stack">
@@ -19,7 +24,7 @@ export default async function BillingReturnPage() {
               Việc trở lại trang này không có nghĩa thanh toán đã thành công.</p>
           </div>
         </div>
-        <Link href="/seller"><ArrowLeft size={18} aria-hidden="true" /> Trở về Seller Center</Link>
+        <Link href={href}><ArrowLeft size={18} aria-hidden="true" /> Trở về Seller Center</Link>
       </section>
     </main>
   );
