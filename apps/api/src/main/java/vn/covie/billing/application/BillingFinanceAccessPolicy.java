@@ -79,7 +79,7 @@ public class BillingFinanceAccessPolicy {
     public Assignment assign(UUID target,String role){
         var actor=admins.requireAdmin();
         verifyOps(actor.userId(),target);
-        if(!List.of("READER","OPERATOR","APPROVER").contains(role))
+        if(role==null || !List.of("READER","OPERATOR","APPROVER").contains(role))
             throw invalid("Invalid finance permission.");
         Integer exists=jdbc.queryForObject("select count(*) from users where id=?",
             Integer.class,target);

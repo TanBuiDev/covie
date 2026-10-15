@@ -90,7 +90,8 @@ public class BillingFinanceCaseService {
             if(request!=null && "CONFIRMED".equals(request.status()))finance.requireApprover();
             else finance.requireOperator();
         }
-        if(request==null||!List.of("REVIEWING","REJECTED","CONFIRMED").contains(request.status())
+        if(request==null||request.status()==null
+                ||!List.of("REVIEWING","REJECTED","CONFIRMED").contains(request.status())
                 ||request.note()==null||request.note().isBlank()||request.note().length()>2000)
             throw invalid("Invalid resolution.");
         var rows=jdbc.query("select * from billing_finance_cases where id=? for update",this::map,caseId);
