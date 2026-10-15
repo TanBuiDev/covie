@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.billing.payos.PayosGateway;
 import vn.covie.merchants.model.MerchantRole;
@@ -34,15 +36,17 @@ public class BillingCheckoutService {
     private final PayosGateway payos;
     private final MerchantMembershipRepository memberships;
     private final CurrentActorProvider actors;
+    private final TransactionTemplate transactions;
 
     public BillingCheckoutService(JdbcTemplate jdbc, ObjectMapper json, AppClock clock,
             BillingCatalogService catalog, PayosGateway payos,
-            MerchantMembershipRepository memberships, CurrentActorProvider actors) {
+            MerchantMembershipRepository memberships, CurrentActorProvider actors,
+            PlatformTransactionManager transactionManager) {
         this.jdbc = jdbc; this.json = json; this.clock = clock; this.catalog = catalog;
         this.payos = payos; this.memberships = memberships; this.actors = actors;
+        this.transactions = new TransactionTemplate(transactionManager);
     }
 
-    @Transactional
     public CheckoutResult create(UUID merchantId, String idempotencyKey, CheckoutRequest request) {
         requireOwner(merchantId);
         if (idempotencyKey == null || !idempotencyKey.matches("[A-Za-z0-9._-]{8,80}")) {
@@ -54,6 +58,29 @@ public class BillingCheckoutService {
         if (!payos.isEnabled()) {
             throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE, "payOS is not enabled.");
         }
+        // Commit the invoice/orderCode reservation BEFORE calling payOS. A PSP response
+        // must never be followed by an uncommitted local invoice.
+        Reservation reservation = transactions.execute(tx -> reserve(merchantId, idempotencyKey, request));
+        if (reservation == null) throw new IllegalStateException("Billing reservation failed.");
+        if (reservation.existing() != null) return reservation.existing();
+        // No DB transaction holds merchant locks during a potentially slow network call.
+        var link = payos.createPaymentLink(merchantId, reservation.orderCode(),
+            reservation.amountVnd(), "COVIE " + reservation.orderCode(),
+            reservation.expiresAt().getEpochSecond());
+        transactions.executeWithoutResult(tx -> {
+            int updated = jdbc.update("""
+                update billing_payment_attempts
+                set status='PENDING', checkout_url=?, qr_payload=?, provider_payment_link_id=?
+                where id=? and status='CREATED'
+                """, link.checkoutUrl(), link.qrPayload(), link.paymentLinkId(), reservation.attemptId());
+            if (updated != 1) throw new IllegalStateException("Payment link persistence race.");
+        });
+        return new CheckoutResult(reservation.invoiceId(), reservation.orderCode(),
+            reservation.amountVnd(), link.checkoutUrl(), link.qrPayload(),
+            reservation.expiresAt(), "PENDING_PAYMENT");
+    }
+
+    private Reservation reserve(UUID merchantId, String idempotencyKey, CheckoutRequest request) {
         // One outstanding create/renewal per merchant at a time, including competing requests.
         var merchantLock = jdbc.query("select id from merchant_profiles where id=? and deleted_at is null for update",
                 (rs, row) -> rs.getObject(1), merchantId);
@@ -80,8 +107,9 @@ public class BillingCheckoutService {
             if (prior.checkoutUrl() == null) {
                 throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.CONFLICT, "Payment initialization pending.");
             }
-            return new CheckoutResult(prior.invoiceId(), prior.orderCode(), prior.amount(),
-                prior.checkoutUrl(), prior.qrPayload(), prior.expiresAt(), prior.status());
+            return Reservation.previous(new CheckoutResult(
+                prior.invoiceId(), prior.orderCode(), prior.amount(),
+                prior.checkoutUrl(), prior.qrPayload(), prior.expiresAt(), prior.status()));
         }
         Boolean pending = jdbc.queryForObject("""
             select exists (
@@ -144,15 +172,14 @@ public class BillingCheckoutService {
             values (?,?,'PAYOS',?,'CREATED',?,?)
             """, attemptId, invoiceId, orderCode.toString(), offer.priceVnd(), at);
 
-        // No checkout is returned to the buyer or seller until this has succeeded.
-        var link = payos.createPaymentLink(merchantId, orderCode, offer.priceVnd(), "COVIE " + orderCode, expires.getEpochSecond());
-        jdbc.update("""
-            update billing_payment_attempts
-            set status='PENDING', checkout_url=?, qr_payload=?, provider_payment_link_id=?
-            where id=? and status='CREATED'
-            """, link.checkoutUrl(), link.qrPayload(), link.paymentLinkId(), attemptId);
-        return new CheckoutResult(invoiceId, orderCode, offer.priceVnd(),
-            link.checkoutUrl(), link.qrPayload(), expires, "PENDING_PAYMENT");
+        return new Reservation(invoiceId, attemptId, orderCode, offer.priceVnd(), expires, null);
+    }
+
+    private record Reservation(UUID invoiceId, UUID attemptId, long orderCode, long amountVnd,
+                               Instant expiresAt, CheckoutResult existing) {
+        static Reservation previous(CheckoutResult value) {
+            return new Reservation(null, null, 0L, 0L, null, value);
+        }
     }
 
     @Transactional(readOnly = true)
