@@ -87,6 +87,12 @@ public class BillingCatalogService {
             select code from billing_plans where code = ? and retired_at is null for update
             """, (rs, i) -> rs.getString(1), planCode);
         if (locked.isEmpty()) throw notFound();
+        java.sql.Timestamp lastEffective = jdbc.queryForObject("""
+            select max(effective_at) from billing_plan_versions where plan_code = ?
+            """, java.sql.Timestamp.class, planCode);
+        if (lastEffective != null && !request.effectiveAt().isAfter(lastEffective.toInstant())) {
+            throw badRequest("A new price must become effective after already published versions.");
+        }
         Integer rev = jdbc.queryForObject(
             "select coalesce(max(revision), 0) from billing_plan_versions where plan_code = ?",
             Integer.class, planCode);
@@ -120,6 +126,11 @@ public class BillingCatalogService {
         }
         // Serialize concurrent policy publications on a single existing policy row.
         jdbc.queryForList("select id from billing_policy_versions order by revision asc limit 1 for update");
+        java.sql.Timestamp lastEffective = jdbc.queryForObject(
+            "select max(effective_at) from billing_policy_versions", java.sql.Timestamp.class);
+        if (lastEffective != null && !request.effectiveAt().isAfter(lastEffective.toInstant())) {
+            throw badRequest("A new policy must become effective after already published versions.");
+        }
         Integer rev = jdbc.queryForObject("select max(revision) from billing_policy_versions", Integer.class);
         UUID id = UUID.randomUUID();
         jdbc.update("""

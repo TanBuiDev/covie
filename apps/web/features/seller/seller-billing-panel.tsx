@@ -102,6 +102,7 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
             <p>{eligibility?.enforced
               ? (eligibility.canSell ? "Cửa hàng đang có quyền mở bán." : "Chưa có thuê bao hợp lệ để mở bán.")
               : "Chế độ thu phí chưa được kích hoạt cho các cửa hàng hiện tại."}</p>
+            {eligibility?.expiry ? <p>Quyền thuê bao có hiệu lực tới: {date(eligibility.expiry)}.</p> : null}
             <p>CoVie chỉ xác nhận thanh toán sau khi nhận được webhook hợp lệ từ payOS.</p>
             <button className="admin-button admin-button--secondary" type="button" onClick={() => void load()}
               aria-label="Tải lại trạng thái thanh toán"><ArrowClockwise size={17} /> Làm mới</button>

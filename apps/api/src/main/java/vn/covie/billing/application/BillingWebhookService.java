@@ -65,7 +65,8 @@ public class BillingWebhookService {
         String currency = data.path("currency").asText("");
         String linkId = data.path("paymentLinkId").asText("");
         String reference = data.path("reference").asText("");
-        if (orderCode < 1 || amount < 1 || !"VND".equals(currency) || linkId.isBlank()) {
+        if (orderCode < 1 || amount < 1 || !"VND".equals(currency) || linkId.isBlank()
+                || reference.isBlank() || !"00".equals(data.path("code").asText(""))) {
             throw error(ErrorCode.BILLING_PRICE_INVALID, HttpStatus.UNPROCESSABLE_ENTITY, "Payment event incomplete.");
         }
         var matches = jdbc.query("""
@@ -118,12 +119,12 @@ public class BillingWebhookService {
         String planCode = jdbc.queryForObject("""
             select plan_code from billing_plan_versions where id=?
             """, String.class, payment.planVersionId());
-        jdbc.update("""
+        int attempted = jdbc.update("""
             update billing_payment_attempts
             set status='SUCCEEDED', received_amount_vnd=?, provider_transaction_id=?, settled_at=?
             where id=? and status in ('CREATED','PENDING')
-            """, amount, reference.isBlank() ? null : reference, Timestamp.from(clock.now()),
-            payment.attemptId());
+            """, amount, reference, Timestamp.from(clock.now()), payment.attemptId());
+        if (attempted != 1) throw new IllegalStateException("Payment attempt settlement race.");
         int settled = jdbc.update("""
             update billing_invoices set status='PAID', paid_at=?, version=version+1
             where id=? and status='PENDING_PAYMENT'

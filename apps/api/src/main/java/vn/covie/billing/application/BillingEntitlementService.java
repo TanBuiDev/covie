@@ -33,15 +33,17 @@ public class BillingEntitlementService {
         boolean enforce = settings.bool("billing.enforcement_enabled", SystemSettingContext.globalOnly());
         if (!enforce) return new Eligibility(true, false, "ENFORCEMENT_DISABLED", null);
         Instant now = clock.now();
-        Boolean active = jdbc.queryForObject("""
-            select exists (
-              select 1 from billing_entitlement_grants g
-              where g.merchant_id = ? and g.revoked_at is null
-                and g.valid_from <= ? and g.valid_until > ?
-            )
-            """, Boolean.class, merchantId, java.sql.Timestamp.from(now), java.sql.Timestamp.from(now));
-        boolean canSell = Boolean.TRUE.equals(active);
-        return new Eligibility(canSell, true, canSell ? "ACTIVE_ENTITLEMENT" : "SUBSCRIPTION_REQUIRED", null);
+        Instant expiry = jdbc.query("""
+            select max(valid_until) from billing_entitlement_grants
+            where merchant_id = ? and revoked_at is null
+              and valid_from <= ? and valid_until > ?
+            """, rs -> {
+                rs.next();
+                java.sql.Timestamp until = rs.getTimestamp(1);
+                return until == null ? null : until.toInstant();
+            }, merchantId, java.sql.Timestamp.from(now), java.sql.Timestamp.from(now));
+        boolean canSell = expiry != null;
+        return new Eligibility(canSell, true, canSell ? "ACTIVE_ENTITLEMENT" : "SUBSCRIPTION_REQUIRED", expiry);
     }
 
     @Transactional(readOnly = true)
