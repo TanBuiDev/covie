@@ -156,7 +156,7 @@ public class BillingCheckoutService {
 
     @Transactional(readOnly = true)
     public PaymentStatus paymentStatus(UUID merchantId, UUID invoiceId) {
-        requireMember(merchantId);
+        requireOwner(merchantId);
         var rows = jdbc.query("""
             select i.id, i.status, i.amount_vnd, i.period_start, i.period_end,
                    a.status provider_status, a.checkout_url, i.expires_at
@@ -175,7 +175,7 @@ public class BillingCheckoutService {
 
     @Transactional(readOnly = true)
     public java.util.List<InvoiceSummary> invoices(UUID merchantId) {
-        requireMember(merchantId);
+        requireOwner(merchantId);
         return jdbc.query("""
             select id, invoice_number, status, amount_vnd, period_start, period_end, created_at
             from billing_invoices where merchant_id=? order by created_at desc limit 100

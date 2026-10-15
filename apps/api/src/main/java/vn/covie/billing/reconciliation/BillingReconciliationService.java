@@ -36,9 +36,10 @@ public final class BillingReconciliationService {
                        i.amount_vnd amount, a.provider_payment_link_id link_id
                 from billing_invoices i
                 join billing_payment_attempts a on a.invoice_id = i.id
+                left join billing_reconciliation_observations obs on obs.invoice_id=i.id
                 where i.status = 'PENDING_PAYMENT' and a.provider='PAYOS'
                   and a.provider_payment_link_id is not null
-                order by i.created_at asc
+                order by obs.last_checked_at asc nulls first, i.created_at asc
                 limit ?
                 """,
             (rs,n) -> new Candidate((UUID) rs.getObject("invoice_id"),
