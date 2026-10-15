@@ -23,6 +23,13 @@ public class BillingCheckoutController {
             .body(checkout.create(merchantId, idempotencyKey, request));
     }
 
+    @GetMapping("/invoices/{invoiceId}")
+    public ResponseEntity<BillingCheckoutService.PaymentStatus> paymentStatus(
+            @PathVariable UUID merchantId, @PathVariable UUID invoiceId) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(checkout.paymentStatus(merchantId, invoiceId));
+    }
+
     @GetMapping("/invoices")
     public ResponseEntity<List<BillingCheckoutService.InvoiceSummary>> invoices(@PathVariable UUID merchantId) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(checkout.invoices(merchantId));

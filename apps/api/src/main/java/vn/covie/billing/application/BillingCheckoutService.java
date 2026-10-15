@@ -141,6 +141,25 @@ public class BillingCheckoutService {
     }
 
     @Transactional(readOnly = true)
+    public PaymentStatus paymentStatus(UUID merchantId, UUID invoiceId) {
+        requireMember(merchantId);
+        var rows = jdbc.query("""
+            select i.id, i.status, i.amount_vnd, i.period_start, i.period_end,
+                   a.status provider_status, a.checkout_url, i.expires_at
+            from billing_invoices i join billing_payment_attempts a on a.invoice_id=i.id
+            where i.merchant_id=? and i.id=?
+            """, (rs,i) -> new PaymentStatus(
+                (UUID) rs.getObject("id"), rs.getString("status"),
+                rs.getString("provider_status"), rs.getLong("amount_vnd"),
+                rs.getTimestamp("period_start").toInstant(),
+                rs.getTimestamp("period_end").toInstant(),
+                rs.getString("checkout_url"), rs.getTimestamp("expires_at").toInstant()
+            ), merchantId, invoiceId);
+        if (rows.isEmpty()) throw error(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Invoice not found.");
+        return rows.getFirst();
+    }
+
+    @Transactional(readOnly = true)
     public java.util.List<InvoiceSummary> invoices(UUID merchantId) {
         requireMember(merchantId);
         return jdbc.query("""
@@ -179,6 +198,9 @@ public class BillingCheckoutService {
     public record CheckoutRequest(String planCode) {}
     public record CheckoutResult(UUID invoiceId, long orderCode, long amountVnd,
                                  String checkoutUrl, String qrPayload, Instant expiresAt, String invoiceStatus) {}
+    public record PaymentStatus(UUID invoiceId, String invoiceStatus, String paymentStatus,
+                                long amountVnd, Instant periodStart, Instant periodEnd,
+                                String checkoutUrl, Instant expiresAt) {}
     public record InvoiceSummary(UUID invoiceId, String invoiceNumber, String status,
                                  long amountVnd, Instant periodStart, Instant periodEnd, Instant createdAt) {}
 }
