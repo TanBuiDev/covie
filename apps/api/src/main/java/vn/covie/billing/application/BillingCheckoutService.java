@@ -17,6 +17,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.billing.payos.PayosGateway;
 import vn.covie.merchants.model.MerchantRole;
+import vn.covie.settings.application.SystemSettingResolver;
+import vn.covie.settings.application.SystemSettingContext;
 import vn.covie.merchants.persistence.MerchantMembershipRepository;
 import vn.covie.shared.time.AppClock;
 import vn.covie.shared.web.ApiException;
@@ -34,6 +36,7 @@ public class BillingCheckoutService {
     private final AppClock clock;
     private final BillingCatalogService catalog;
     private final BillingVoucherService vouchers;
+    private final SystemSettingResolver billingSettings;
     private final PayosGateway payos;
     private final MerchantMembershipRepository memberships;
     private final CurrentActorProvider actors;
@@ -42,10 +45,12 @@ public class BillingCheckoutService {
     public BillingCheckoutService(JdbcTemplate jdbc, ObjectMapper json, AppClock clock,
             BillingCatalogService catalog, PayosGateway payos,
             MerchantMembershipRepository memberships, CurrentActorProvider actors,
-            PlatformTransactionManager transactionManager, BillingVoucherService vouchers) {
+            PlatformTransactionManager transactionManager, BillingVoucherService vouchers,
+            SystemSettingResolver billingSettings) {
         this.jdbc = jdbc; this.json = json; this.clock = clock; this.catalog = catalog;
         this.payos = payos; this.memberships = memberships; this.actors = actors;
         this.vouchers = vouchers;
+        this.billingSettings = billingSettings;
         this.transactions = new TransactionTemplate(transactionManager);
     }
 
@@ -141,6 +146,16 @@ public class BillingCheckoutService {
             throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.CONFLICT,
                 "Another payment link is still pending. Wait or check the existing invoice.");
         }
+        // Merchant FOR UPDATE lock serializes this quota across concurrent requests.
+        int maximum = billingSettings.integer("billing.checkout_hourly_limit",
+            SystemSettingContext.globalOnly());
+        Long recent=jdbc.queryForObject("""
+            select count(*) from billing_invoices
+            where merchant_id=? and created_at>=?
+            """,Long.class,merchantId,Timestamp.from(clock.now().minusSeconds(3600)));
+        if(recent!=null && recent>=maximum)
+            throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE,HttpStatus.TOO_MANY_REQUESTS,
+                "Too many Seller Billing checkout attempts. Try again later.");
         var offer = catalog.availablePlans().stream()
             .filter(p -> p.code().equals(request.planCode()))
             .findFirst().orElseThrow(() -> error(ErrorCode.BILLING_PRICE_INVALID,
