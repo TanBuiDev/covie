@@ -104,3 +104,12 @@ Before activating billing enforcement for old shops, Admin must preview and expl
 - `POST /api/v1/admin/billing/legacy/grant`, body has `createdBefore`, `validUntil`, `reason`
 
 These calls are authenticated as Admin and leave audit entries. Do not set an arbitrary hardcoded grandfather date or assume old merchants have been granted.
+
+## Release safety of Admin finance operations and production Compose
+
+- `COVIE_BILLING_REFUND_CONFIRM_APPROVED=false` by default. Only an Admin with explicit ops approval may mark a **previously externally refunded** invoice REFUNDED and revoke its associated paid grant; no automatic bank payout is issued.
+- `COVIE_BILLING_ADMIN_GRANTS_APPROVED=false` by default. Admin promotional/manual grants and revocations require explicit ops approval and leave audit entries.
+- `COVIE_BILLING_LEGACY_GRANTS_APPROVED=false` by default. Existing sellers are never migrated or billed merely by applying migrations.
+- `billing.reminders_enabled=false` by default, configured in Admin System Settings. When enabled, reminders are sent at 7/3/1 days before a subscription period's end.
+- Production Compose currently has a legacy shared `COVIE_ENV_FILE` used by API and Web. Web now explicitly overwrites `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, and `PAYOS_CHECKSUM_KEY` to empty strings so the web container will not inherit these keys. For a future hardening deployment, **split the shared env file into API-only and Web-only files**; do not place secrets in frontend build arguments.
+- payOS financial refunds must be reconciled with the receiving bank/processor by a human before an Admin confirms them in CoVie. Never represent the in-app case workflow as a money transfer.
