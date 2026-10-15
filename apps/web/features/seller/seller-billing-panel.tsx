@@ -10,6 +10,8 @@ type Plan = Required<components["schemas"]["PlanOffer"]>;
 type Eligibility = components["schemas"]["Eligibility"];
 type Invoice = Required<components["schemas"]["InvoiceSummary"]>;
 type Checkout = Required<components["schemas"]["CheckoutResult"]>;
+type Subscription = { status: string; planCode: string | null; cancelAtPeriodEnd: boolean;
+  periodStart: string | null; periodEnd: string | null };
 
 const money = (amount: number) => new Intl.NumberFormat("vi-VN").format(amount) + "đ";
 const date = (value: string) => new Intl.DateTimeFormat("vi-VN", { dateStyle: "short" }).format(new Date(value));
@@ -19,6 +21,7 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
   const [plans, setPlans] = useState<Plan[]>([]);
   const [eligibility, setEligibility] = useState<Eligibility>();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [subscription, setSubscription] = useState<Subscription>();
   const [selected, setSelected] = useState("");
   const [checkout, setCheckout] = useState<Checkout>();
   const [loading, setLoading] = useState(true);
@@ -28,20 +31,22 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
   const active = useRef(true);
 
   const load = useCallback(async () => {
-    const [planRes, entitlementRes, invoiceRes] = await Promise.all([
+    const [planRes, entitlementRes, invoiceRes, subscriptionRes] = await Promise.all([
       requestBrowserApi("GET", "/api/v1/billing/plans"),
       requestBrowserApi("GET", base + "/summary"),
       requestBrowserApi("GET", base + "/invoices"),
+      requestBrowserApi("GET", base + "/subscription"),
     ]);
-    for (const response of [planRes, entitlementRes, invoiceRes]) {
+    for (const response of [planRes, entitlementRes, invoiceRes, subscriptionRes]) {
       if (!response.ok) throw await readApiError(response);
     }
     const values = (await planRes.json()) as Plan[];
     const ent = (await entitlementRes.json()) as Eligibility;
     const bills = (await invoiceRes.json()) as Invoice[];
+    const currentSubscription = (await subscriptionRes.json()) as Subscription;
     if (!active.current) return;
     setPlans(values); setSelected(previous => previous || values[0]?.code || "");
-    setEligibility(ent); setInvoices(bills);
+    setEligibility(ent); setInvoices(bills); setSubscription(currentSubscription);
   }, [base]);
 
   useEffect(() => {
@@ -67,6 +72,18 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
     }, 5000);
     return () => clearInterval(interval);
   }, [base, checkout?.invoiceId, checkout?.invoiceStatus, load]);
+
+  async function cancelRenewal() {
+    if (paying || !window.confirm("Hủy tự động gia hạn sau kỳ hiện tại? Quyền đã trả phí vẫn được giữ.")) return;
+    setPaying(true); setError("");
+    try {
+      const response = await requestBrowserApi("POST", base + "/cancel-renewal");
+      if (!response.ok) throw await readApiError(response);
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể cập nhật thuê bao");
+    } finally { setPaying(false); }
+  }
 
   async function createCheckout() {
     if (paying || !selected) return;
@@ -103,6 +120,18 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
               ? (eligibility.canSell ? "Cửa hàng đang có quyền mở bán." : "Chưa có thuê bao hợp lệ để mở bán.")
               : "Chế độ thu phí chưa được kích hoạt cho các cửa hàng hiện tại."}</p>
             {eligibility?.expiry ? <p>Quyền thuê bao có hiệu lực tới: {date(eligibility.expiry)}.</p> : null}
+            {subscription && subscription.status !== "NONE" ? (
+              <>
+                <p>Gói hiện tại: {subscription.planCode} — trạng thái: {subscription.status}.</p>
+                {subscription.periodEnd ? <p>Kết thúc kỳ: {date(subscription.periodEnd)}.</p> : null}
+                {subscription.cancelAtPeriodEnd ? (
+                  <p role="status">Đã yêu cầu dừng gia hạn sau kỳ hiện tại; quyền đã trả phí vẫn còn hiệu lực.</p>
+                ) : subscription.status === "ACTIVE" || subscription.status === "TRIALING" ? (
+                  <button className="admin-button admin-button--secondary" type="button" disabled={paying}
+                    onClick={() => void cancelRenewal()}>Hủy gia hạn sau kỳ hiện tại</button>
+                ) : null}
+              </>
+            ) : null}
             <p>CoVie chỉ xác nhận thanh toán sau khi nhận được webhook hợp lệ từ payOS.</p>
             <button className="admin-button admin-button--secondary" type="button" onClick={() => void load()}
               aria-label="Tải lại trạng thái thanh toán"><ArrowClockwise size={17} /> Làm mới</button>

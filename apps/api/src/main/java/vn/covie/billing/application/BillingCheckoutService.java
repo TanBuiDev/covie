@@ -223,6 +223,23 @@ public class BillingCheckoutService {
     }
 
     @Transactional(readOnly = true)
+    public SubscriptionState subscription(UUID merchantId) {
+        requireOwner(merchantId);
+        var results = jdbc.query("""
+            select status,plan_code,cancel_at_period_end,period_start,period_end
+            from merchant_subscriptions where merchant_id=?
+            """, (rs,n) -> new SubscriptionState(rs.getString("status"),
+                rs.getString("plan_code"), rs.getBoolean("cancel_at_period_end"),
+                rs.getTimestamp("period_start") == null ? null : rs.getTimestamp("period_start").toInstant(),
+                rs.getTimestamp("period_end") == null ? null : rs.getTimestamp("period_end").toInstant()),
+            merchantId);
+        return results.isEmpty() ? new SubscriptionState("NONE", null, false, null, null) : results.getFirst();
+    }
+
+    public record SubscriptionState(String status, String planCode, boolean cancelAtPeriodEnd,
+                                    Instant periodStart, Instant periodEnd) {}
+
+    @Transactional(readOnly = true)
     public PaymentStatus paymentStatus(UUID merchantId, UUID invoiceId) {
         requireOwner(merchantId);
         var rows = jdbc.query("""
