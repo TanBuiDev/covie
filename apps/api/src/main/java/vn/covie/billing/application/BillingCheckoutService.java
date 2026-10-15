@@ -83,10 +83,24 @@ public class BillingCheckoutService {
             return new CheckoutResult(prior.invoiceId(), prior.orderCode(), prior.amount(),
                 prior.checkoutUrl(), prior.qrPayload(), prior.expiresAt(), prior.status());
         }
+        Boolean pending = jdbc.queryForObject("""
+            select exists (
+              select 1 from billing_invoices
+              where merchant_id=? and status='PENDING_PAYMENT' and expires_at > ?
+            )
+            """, Boolean.class, merchantId, Timestamp.from(clock.now()));
+        if (Boolean.TRUE.equals(pending)) {
+            throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.CONFLICT,
+                "Another payment link is still pending. Wait or check the existing invoice.");
+        }
         var offer = catalog.availablePlans().stream()
             .filter(p -> p.code().equals(request.planCode()))
             .findFirst().orElseThrow(() -> error(ErrorCode.BILLING_PRICE_INVALID,
                 HttpStatus.UNPROCESSABLE_ENTITY, "Plan is not currently available."));
+        if (offer.priceVnd() <= 0) {
+            throw error(ErrorCode.BILLING_PRICE_INVALID, HttpStatus.UNPROCESSABLE_ENTITY,
+                "Zero-value plans require an Admin entitlement grant, not payOS.");
+        }
         var policy = catalog.currentPolicy();
         Instant now = clock.now();
         Instant expires = now.plusSeconds(15 * 60);
