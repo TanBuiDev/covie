@@ -3352,6 +3352,10 @@ export interface components {
             total?: number;
         };
         CheckoutRequest: {
+            /** Format: int64 */
+            expectedAmountVnd?: number;
+            /** Format: int32 */
+            expectedPlanRevision?: number;
             planCode?: string;
             voucherCode?: string;
         };
