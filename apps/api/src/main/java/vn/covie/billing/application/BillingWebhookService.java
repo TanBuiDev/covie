@@ -69,6 +69,53 @@ public class BillingWebhookService {
                 || reference.isBlank() || !"00".equals(data.path("code").asText(""))) {
             throw error(ErrorCode.BILLING_PRICE_INVALID, HttpStatus.UNPROCESSABLE_ENTITY, "Payment event incomplete.");
         }
+        // payOS webhook URL confirmation submits a signed sample: acknowledge
+        // without looking up a real invoice or issuing an entitlement.
+        if (orderCode == 123 && "VQRIO123".equals(data.path("description").asText())) return "sample";
+        return settleVerifiedPayment(orderCode, amount, currency, linkId, reference,
+            "ref:" + reference, sha256(raw));
+    }
+
+    /**
+     * Call only with a fresh, independently signed payOS GET response.
+     * Recovery deliberately rejects ambiguous/multiple transactions.
+     */
+    @Transactional
+    public String recoverVerifiedProviderPayment(JsonNode response) {
+        if (!payos.verifyResponseSignature(response)) {
+            throw error(ErrorCode.ACCESS_DENIED, HttpStatus.UNAUTHORIZED, "Unverified payOS response.");
+        }
+        JsonNode data = response.path("data");
+        if (!"00".equals(response.path("code").asText()) || !"PAID".equals(data.path("status").asText())) {
+            return "not-paid";
+        }
+        long orderCode = data.path("orderCode").asLong(-1);
+        long amount = data.path("amount").asLong(-1);
+        long amountPaid = data.path("amountPaid").asLong(-1);
+        String linkId = data.path("id").asText("");
+        if (orderCode < 1 || amount < 1 || amountPaid != amount || linkId.isBlank()) return "review";
+        JsonNode transactions = data.path("transactions");
+        JsonNode tx;
+        if (transactions.isArray() && transactions.size() == 1) {
+            tx = transactions.get(0);
+        } else if (transactions.isObject() && transactions.size() == 1) {
+            tx = transactions.elements().next();
+        } else {
+            return "review";
+        }
+        if (tx == null || !tx.isObject() || tx.path("amount").asLong(-1) != amount) return "review";
+        String reference = tx.path("reference").asText("");
+        if (reference.isBlank()) return "review";
+        return settleVerifiedPayment(orderCode, amount, "VND", linkId, reference,
+            "ref:" + reference, sha256("verified-payos-get:" + orderCode + ":" + reference));
+    }
+
+    private String settleVerifiedPayment(long orderCode, long amount, String currency, String linkId,
+                                         String reference, String eventKey, String payloadHash) {
+        if (orderCode < 1 || amount < 1 || !"VND".equals(currency) || linkId == null || linkId.isBlank()
+                || reference == null || reference.isBlank()) {
+            throw error(ErrorCode.BILLING_PRICE_INVALID, HttpStatus.UNPROCESSABLE_ENTITY, "Payment event incomplete.");
+        }
         var matches = jdbc.query("""
             select i.id invoice_id,i.merchant_id,i.status invoice_status,i.amount_vnd,
                    i.period_start,i.period_end,i.grace_until,i.plan_version_id,
@@ -84,9 +131,6 @@ public class BillingWebhookService {
                 (UUID) rs.getObject("plan_version_id"), (UUID) rs.getObject("attempt_id"),
                 rs.getString("provider_payment_link_id"), rs.getString("attempt_status")), orderCode);
         if (matches.isEmpty()) {
-            // payOS confirm-webhook probes with the documented sample order 123.
-            // Samples must NEVER create an invoice, grant or subscription.
-            if (orderCode == 123 && "VQRIO123".equals(data.path("description").asText())) return "sample";
             throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE, "Payment not yet registered.");
         }
         Payment payment = matches.getFirst();
@@ -105,19 +149,16 @@ public class BillingWebhookService {
                     "Payment link binding requires reconciliation.");
             }
         }
-        String eventKey = reference.isBlank() ? "sig:" + root.path("signature").asText() :
-            "ref:" + reference;
         if (eventKey.length() > 180) {
             throw error(ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST, "Reference too long.");
         }
-        String digest = sha256(raw);
         UUID eventId = UUID.randomUUID();
         int added = jdbc.update("""
             insert into billing_webhook_inbox
              (id,provider,provider_event_id,payload_sha256,verified,processing_status,received_at)
             values (?,'PAYOS',?, ?,true,'PENDING',?)
             on conflict (provider,provider_event_id) do nothing
-            """, eventId, eventKey, digest, Timestamp.from(clock.now()));
+            """, eventId, eventKey, payloadHash, Timestamp.from(clock.now()));
         if (added == 0) return "duplicate";
         if ("PAID".equals(payment.invoiceStatus())) {
             // A second signed event for a paid invoice must not leave a forever-pending inbox row.
