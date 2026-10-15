@@ -197,6 +197,31 @@ public class BillingCheckoutService {
         }
     }
 
+    /**
+     * Opt out of future automatic renewal. The existing prepaid period and
+     * historical order obligations are never cancelled by this operation.
+     */
+    @Transactional
+    public void cancelRenewal(UUID merchantId) {
+        requireOwner(merchantId);
+        int updated = jdbc.update("""
+            update merchant_subscriptions set cancel_at_period_end=true,
+                updated_at=?, version=version+1
+            where merchant_id=? and status in ('ACTIVE','TRIALING','PAST_DUE')
+              and cancel_at_period_end=false
+            """, Timestamp.from(clock.now()), merchantId);
+        if (updated == 0) {
+            Boolean alreadyCancelled = jdbc.queryForObject("""
+                select exists(select 1 from merchant_subscriptions
+                    where merchant_id=? and cancel_at_period_end=true)
+                """, Boolean.class, merchantId);
+            if (!Boolean.TRUE.equals(alreadyCancelled)) {
+                throw error(ErrorCode.BILLING_SUBSCRIPTION_REQUIRED, HttpStatus.CONFLICT,
+                    "No active subscription to cancel.");
+            }
+        }
+    }
+
     @Transactional(readOnly = true)
     public PaymentStatus paymentStatus(UUID merchantId, UUID invoiceId) {
         requireOwner(merchantId);

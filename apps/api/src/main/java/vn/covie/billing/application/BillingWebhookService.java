@@ -197,7 +197,7 @@ public class BillingWebhookService {
              (merchant_id,plan_code,status,period_start,period_end,grace_until,created_at,updated_at)
             values (?,?,'ACTIVE',?,?,?,?,?)
             on conflict(merchant_id) do update set
-              status='ACTIVE', plan_code=excluded.plan_code,
+              status='ACTIVE', cancel_at_period_end=false, plan_code=excluded.plan_code,
               period_end=greatest(merchant_subscriptions.period_end,excluded.period_end),
               grace_until=greatest(merchant_subscriptions.grace_until,excluded.grace_until),
               period_start=coalesce(merchant_subscriptions.period_start,excluded.period_start),

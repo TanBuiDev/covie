@@ -28,13 +28,16 @@ public class BillingLifecycleScheduler {
         jdbc.update("""
             update merchant_subscriptions set
                 status = case
+                    when cancel_at_period_end then 'CANCELLED'
                     when coalesce(grace_until,period_end) > ? then 'PAST_DUE'
                     else 'EXPIRED'
                 end,
                 updated_at = ?, version = version + 1
             where period_end <= ? and status in ('ACTIVE','TRIALING','PAST_DUE')
-              and status <> case when coalesce(grace_until,period_end) > ?
-                  then 'PAST_DUE' else 'EXPIRED' end
+              and status <> case
+                  when cancel_at_period_end then 'CANCELLED'
+                  when coalesce(grace_until,period_end) > ? then 'PAST_DUE'
+                  else 'EXPIRED' end
             """, now, now, now, now);
     }
 }

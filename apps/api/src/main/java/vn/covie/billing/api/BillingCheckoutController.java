@@ -23,6 +23,12 @@ public class BillingCheckoutController {
             .body(checkout.create(merchantId, idempotencyKey, request));
     }
 
+    @PostMapping("/cancel-renewal")
+    public ResponseEntity<Void> cancelRenewal(@PathVariable UUID merchantId) {
+        checkout.cancelRenewal(merchantId);
+        return ResponseEntity.noContent().cacheControl(CacheControl.noStore()).build();
+    }
+
     @GetMapping("/invoices/{invoiceId}")
     public ResponseEntity<BillingCheckoutService.PaymentStatus> paymentStatus(
             @PathVariable UUID merchantId, @PathVariable UUID invoiceId) {
