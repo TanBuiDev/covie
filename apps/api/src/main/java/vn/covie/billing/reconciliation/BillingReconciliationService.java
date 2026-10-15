@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.billing.application.BillingWebhookService;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.billing.payos.PayosGateway;
 import vn.covie.shared.time.AppClock;
@@ -21,11 +23,19 @@ public class BillingReconciliationService {
     private final JdbcTemplate jdbc;
     private final PayosGateway gateway;
     private final AppClock clock;
+    private final BillingWebhookService settlement;
 
     public BillingReconciliationService(JdbcTemplate jdbc, PayosGateway gateway, AppClock clock) {
+        this(jdbc, gateway, clock, null);
+    }
+
+    @Autowired
+    public BillingReconciliationService(JdbcTemplate jdbc, PayosGateway gateway, AppClock clock,
+            BillingWebhookService settlement) {
         this.jdbc = jdbc;
         this.gateway = gateway;
         this.clock = clock;
+        this.settlement = settlement;
     }
 
     @Transactional(readOnly = true)
@@ -60,7 +70,16 @@ public class BillingReconciliationService {
         if (!gateway.verifyResponseSignature(response)) {
             return new Observation(candidate.invoiceId(), "UNVERIFIED", "PROVIDER_FAILURE");
         }
-        return compare(candidate, response);
+        Observation observed = compare(candidate, response);
+        if ("PAID_PENDING_WEBHOOK".equals(observed.discrepancy()) && settlement != null) {
+            // Server-authenticated + HMAC-verified payOS GET. The shared settlement
+            // transaction enforces unique reference, invoice amount and link id.
+            String result = settlement.recoverVerifiedProviderPayment(response);
+            if ("settled".equals(result) || "duplicate".equals(result)) {
+                return new Observation(candidate.invoiceId(), "PAID", "NONE");
+            }
+        }
+        return observed;
     }
 
     /** No exception, raw provider body, bank account or API key leaks into observation storage. */
@@ -77,7 +96,10 @@ public class BillingReconciliationService {
         if (data.path("amount").asLong(-1) != candidate.amount()) {
             return new Observation(candidate.invoiceId(), status, "AMOUNT_MISMATCH");
         }
-        if (candidate.linkId() == null || !candidate.linkId().equals(data.path("id").asText(""))) {
+        if (candidate.linkId() != null && !candidate.linkId().equals(data.path("id").asText(""))) {
+            return new Observation(candidate.invoiceId(), status, "LINK_MISMATCH");
+        }
+        if (data.path("id").asText("").isBlank()) {
             return new Observation(candidate.invoiceId(), status, "LINK_MISMATCH");
         }
         if ("PAID".equals(status)) {
