@@ -139,12 +139,15 @@ public class BillingCheckoutService {
         Boolean pending = jdbc.queryForObject("""
             select exists (
               select 1 from billing_invoices
-              where merchant_id=? and status='PENDING_PAYMENT' and expires_at > ?
+              where merchant_id=? and status='PENDING_PAYMENT'
             )
-            """, Boolean.class, merchantId, Timestamp.from(clock.now()));
+            """, Boolean.class, merchantId);
         if (Boolean.TRUE.equals(pending)) {
+            // A local 15-minute checkout TTL does NOT prove payOS has cancelled
+            // the old link; payment could arrive late. Only signed provider finality
+            // or trusted settlement transitions the invoice out of PENDING_PAYMENT.
             throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.CONFLICT,
-                "Another payment link is still pending. Wait or check the existing invoice.");
+                "Another payment remains unresolved. Check its status or request reconciliation.");
         }
         // Merchant FOR UPDATE lock serializes this quota across concurrent requests.
         int maximum = billingSettings.integer("billing.checkout_hourly_limit",
