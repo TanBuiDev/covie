@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.auth.security.CurrentActorProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.billing.application.BillingEntitlementService;
 import vn.covie.catalog.api.dto.create.AttributeValueRequest;
 import vn.covie.catalog.api.dto.edit.CreateVariantRequest;
 import vn.covie.catalog.api.dto.edit.UpdateCatalogItemRequest;
@@ -69,6 +71,14 @@ public class CatalogEditService {
     private final MediaAttachmentPolicy media; private final CatalogSearchDocumentService search;
     private final UuidV7Generator ids; private final AppClock clock; private final InventoryModeCoordinator inventory;
     private final CatalogManagementActionPolicy actions;
+    private BillingEntitlementService billingEntitlements;
+
+    /** Mandatory Spring injection; isolated unit tests retain the existing constructor. */
+    @Autowired
+    public void setBillingEntitlements(BillingEntitlementService billingEntitlements) {
+        this.billingEntitlements = java.util.Objects.requireNonNull(billingEntitlements);
+    }
+
 
     public CatalogEditService(CurrentActorProvider actors, MerchantAccessPolicy access, CatalogItemRepository items,
             CatalogItemAttributeValueRepository attributes, CatalogItemTagRepository itemTags, TagRepository tags,
@@ -170,6 +180,7 @@ public class CatalogEditService {
         VersionPrecondition.require(VersionPrecondition.parseRequired(ifMatch), offer.getVersion());
         long price = request.price() == null ? offer.getPrice() : request.price();
         boolean available = request.available() == null ? offer.isAvailable() : request.available();
+        if (available && billingEntitlements != null) billingEntitlements.requireCanSell(merchantId);
         InventoryMode inventoryMode = request.inventoryMode() == null ? offer.getInventoryMode() : request.inventoryMode();
         Integer preparation = request.preparationTimeMinutesWasSupplied()
                 ? request.preparationTimeMinutes() : offer.getPreparationTimeMinutes();
