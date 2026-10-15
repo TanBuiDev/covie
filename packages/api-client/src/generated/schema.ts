@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/billing/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["invoices_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/billing/legacy/grant": {
         parameters: {
             query?: never;
@@ -108,6 +124,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["preview_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["overview"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3315,6 +3347,20 @@ export interface components {
             /** Format: int64 */
             version?: number;
         };
+        Invoice: {
+            /** Format: int64 */
+            amountVnd?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: uuid */
+            id?: string;
+            invoiceNumber?: string;
+            /** Format: uuid */
+            merchantId?: string;
+            /** Format: date-time */
+            paidAt?: string;
+            status?: string;
+        };
         InvoiceSummary: {
             /** Format: int64 */
             amountVnd?: number;
@@ -3994,6 +4040,18 @@ export interface components {
             reasonCode?: string;
             /** @enum {string} */
             toStatus?: "PENDING_CONFIRMATION" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "READY_FOR_PICKUP" | "AWAITING_BUYER_CONFIRMATION" | "CANCELLATION_REQUESTED" | "DELIVERY_ISSUE_REPORTED" | "SERVICE_ISSUE_REPORTED" | "BUYER_NO_SHOW" | "NO_SHOW_CONTESTED" | "COMPLETED" | "EXPIRED" | "REJECTED_BY_SELLER" | "CANCELLED_BEFORE_CONFIRMATION" | "CANCELLED_BY_BUYER_AFTER_CONFIRMATION" | "CANCELLED_BY_SELLER_AFTER_CONFIRMATION" | "CLOSED_WITH_ISSUE";
+        };
+        Overview: {
+            /** Format: int64 */
+            collectedVnd?: number;
+            /** Format: int64 */
+            entitledShops?: number;
+            /** Format: int64 */
+            paidInvoices?: number;
+            /** Format: int64 */
+            pendingInvoices?: number;
+            /** Format: int64 */
+            reconciliationAlerts?: number;
         };
         PageAdminAuditLogResponse: {
             content?: components["schemas"]["AdminAuditLogResponse"][];
@@ -4820,6 +4878,30 @@ export interface operations {
             };
         };
     };
+    invoices_1: {
+        parameters: {
+            query?: {
+                merchantId?: string;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Invoice"][];
+                };
+            };
+        };
+    };
     grant: {
         parameters: {
             query?: never;
@@ -4862,6 +4944,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Preview"];
+                };
+            };
+        };
+    };
+    overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Overview"];
                 };
             };
         };
