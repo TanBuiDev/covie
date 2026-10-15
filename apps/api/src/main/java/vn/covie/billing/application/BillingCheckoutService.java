@@ -72,7 +72,7 @@ public class BillingCheckoutService {
         if (reservation.existing() != null) return reservation.existing();
         // No DB transaction holds merchant locks during a potentially slow network call.
         var link = payos.createPaymentLink(merchantId, reservation.orderCode(),
-            reservation.amountVnd(), "COVIE " + reservation.orderCode(),
+            reservation.amountVnd(), PayosGateway.paymentDescription(reservation.orderCode()),
             reservation.expiresAt().getEpochSecond());
         transactions.executeWithoutResult(tx -> {
             int updated = jdbc.update("""

@@ -8,6 +8,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +52,17 @@ public class PayosGateway {
         return checksumKey;
     }
 
+    /**
+     * Some payOS bank integrations limit the transfer description to 9 characters.
+     * Unique sequence order codes are encoded base36 and prefixed with CV.
+     */
+    public static String paymentDescription(long orderCode) {
+        if (orderCode < 1) throw new IllegalArgumentException("Invalid billing order code.");
+        String description = "CV" + Long.toString(orderCode,36).toUpperCase(Locale.ROOT);
+        if (description.length() > 9) throw new IllegalArgumentException("payOS order code exceeds description capacity.");
+        return description;
+    }
+
     public PaymentLink createPaymentLink(java.util.UUID merchantId, long orderCode, long amount, String description, long expiresAt) {
         if (!isEnabled()) throw new ProviderUnavailableException("payOS not configured");
         String cancelUrl = appUrl + "/seller/billing/return?merchantId=" + merchantId + "&cancel=true";
@@ -61,7 +73,9 @@ public class PayosGateway {
             "returnUrl", returnUrl, "expiredAt", expiresAt, "signature", signature);
         JsonNode response = request("POST", "/v2/payment-requests", payload);
         JsonNode data = response.path("data");
-        if (!"00".equals(response.path("code").asText())
+        // Authenticate the payOS response before trusting its hosted URL or link ID.
+        if (!verifyResponseSignature(response)
+            || !"00".equals(response.path("code").asText())
             || data.path("orderCode").asLong(-1) != orderCode
             || data.path("amount").asLong(-1) != amount) {
             throw new ProviderUnavailableException("Mismatched payOS checkout response");
@@ -71,8 +85,8 @@ public class PayosGateway {
         try {
             URI uri = URI.create(url);
             if (!"https".equals(uri.getScheme()) || uri.getHost() == null
-                || !(uri.getHost().equals("pay.payos.vn") || uri.getHost().endsWith(".payos.vn"))
-                || uri.getUserInfo() != null || linkId.isBlank()) {
+                || !uri.getHost().equals("pay.payos.vn")
+                || uri.getUserInfo() != null || !linkId.matches("[0-9a-fA-F]{32}")) {
                 throw new ProviderUnavailableException("Unsafe payOS checkout URL");
             }
         } catch (IllegalArgumentException ex) {
