@@ -77,7 +77,8 @@ public class BillingCatalogService {
     @Transactional
     public PlanOffer publishPrice(String planCode, PriceChange request) {
         var actor = admins.requireAdmin();
-        if (request == null || request.priceVnd() < 0 || request.priceVnd() > 1_000_000_000L
+        if (request == null || planCode == null || !planCode.matches("[A-Z0-9_]{1,60}")
+                || request.priceVnd() < 0 || request.priceVnd() > 1_000_000_000L
                 || request.cycleMonths() < 1 || request.cycleMonths() > 120
                 || request.effectiveAt() == null || !request.effectiveAt().isAfter(clock.now())) {
             throw badRequest("Invalid price or effective date.");
@@ -110,7 +111,8 @@ public class BillingCatalogService {
     @Transactional
     public Policy publishPolicy(PolicyChange request) {
         var actor = admins.requireAdmin();
-        if (request == null || !List.of("PAY_BEFORE_SELL", "TRIAL").contains(request.onboardingMode())
+        if (request == null || request.onboardingMode() == null
+                || !List.of("PAY_BEFORE_SELL", "TRIAL").contains(request.onboardingMode())
                 || request.trialDays() < 0 || request.trialDays() > 365
                 || request.graceDays() < 0 || request.graceDays() > 60
                 || request.effectiveAt() == null || !request.effectiveAt().isAfter(clock.now())) {
