@@ -1,6 +1,13 @@
 package vn.covie.billing.application;
 
 import java.sql.Timestamp;
+import java.util.Map;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.shared.outbox.OutboxEventIntent;
+import vn.covie.shared.outbox.OutboxEventWriter;
+import vn.covie.settings.application.SystemSettingContext;
+import vn.covie.settings.application.SystemSettingResolver;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,6 +22,14 @@ import vn.covie.shared.time.AppClock;
 public class BillingLifecycleScheduler {
     private final JdbcTemplate jdbc;
     private final AppClock clock;
+    private SystemSettingResolver settings;
+    private OutboxEventWriter outbox;
+
+    @Autowired
+    public void setNotificationDependencies(SystemSettingResolver settings, OutboxEventWriter outbox) {
+        this.settings = settings;
+        this.outbox = outbox;
+    }
 
     public BillingLifecycleScheduler(JdbcTemplate jdbc, AppClock clock) {
         this.jdbc = jdbc;
@@ -25,7 +40,7 @@ public class BillingLifecycleScheduler {
     @Transactional
     public void refreshStatuses() {
         var now = Timestamp.from(clock.now());
-        jdbc.update("""
+        var changes = jdbc.query("""
             update merchant_subscriptions set
                 status = case
                     when cancel_at_period_end then 'CANCELLED'
@@ -38,6 +53,19 @@ public class BillingLifecycleScheduler {
                   when cancel_at_period_end then 'CANCELLED'
                   when coalesce(grace_until,period_end) > ? then 'PAST_DUE'
                   else 'EXPIRED' end
-            """, now, now, now, now);
+            returning merchant_id,status
+            """, (rs,n)->new Change((UUID)rs.getObject("merchant_id"),rs.getString("status")),
+            now,now,now,now);
+        if (outbox != null && settings != null
+                && settings.bool("billing.reminders_enabled",SystemSettingContext.globalOnly())) {
+            for(Change change:changes) {
+                if ("EXPIRED".equals(change.status())) {
+                    outbox.append(new OutboxEventIntent("BILLING_SUBSCRIPTION_EXPIRED","MERCHANT",
+                        change.merchantId(),Map.of("merchantId",change.merchantId().toString())));
+                }
+            }
+        }
     }
+
+    private record Change(UUID merchantId,String status) {}
 }

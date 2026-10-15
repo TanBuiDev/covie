@@ -16,7 +16,8 @@ import vn.covie.realtime.SseSignal;
 @Component
 public class BillingNotificationHandler implements OutboxEventHandler {
     private static final Set<String> EVENTS = Set.of(
-        "BILLING_RENEWAL_REMINDER","SELLER_SUBSCRIPTION_PAYMENT_SETTLED");
+        "BILLING_RENEWAL_REMINDER","SELLER_SUBSCRIPTION_PAYMENT_SETTLED",
+        "BILLING_SUBSCRIPTION_EXPIRED");
     private final JdbcTemplate jdbc;
     private final NotificationService notifications;
 
@@ -33,11 +34,14 @@ public class BillingNotificationHandler implements OutboxEventHandler {
         } catch (IllegalArgumentException ex) { throw new IllegalStateException("Missing merchant ID",ex); }
         boolean reminder="BILLING_RENEWAL_REMINDER".equals(event.eventType());
         int days=event.payload().path("daysBefore").asInt(0);
-        NotificationType type=reminder ? NotificationType.BILLING_RENEWAL_REMINDER
-            : NotificationType.BILLING_PAYMENT_RECEIVED;
-        String title=reminder ? "Sắp hết hạn thuê bao cửa hàng" : "Thanh toán thuê bao thành công";
-        String body=reminder ? "Thuê bao cửa hàng còn "+days+" ngày. Bạn có thể gia hạn tại Seller Center."
-            : "CoVie đã xác minh và ghi nhận thanh toán thuê bao.";
+        boolean expired="BILLING_SUBSCRIPTION_EXPIRED".equals(event.eventType());
+        NotificationType type=expired?NotificationType.BILLING_SUBSCRIPTION_EXPIRED:
+            (reminder ? NotificationType.BILLING_RENEWAL_REMINDER : NotificationType.BILLING_PAYMENT_RECEIVED);
+        String title=expired?"Thuê bao cửa hàng đã hết hạn":
+            (reminder ? "Sắp hết hạn thuê bao cửa hàng" : "Thanh toán thuê bao thành công");
+        String body=expired?"Vui lòng gia hạn để khôi phục quyền đăng bán.":
+            (reminder ? "Thuê bao cửa hàng còn "+days+" ngày. Bạn có thể gia hạn tại Seller Center."
+                : "CoVie đã xác minh và ghi nhận thanh toán thuê bao.");
         var owners=jdbc.query("""
             select distinct user_id from merchant_memberships
             where merchant_profile_id=? and role='OWNER' and membership_status='ACTIVE'
