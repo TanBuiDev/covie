@@ -52,6 +52,18 @@ public class BillingController {
         return catalog.currentPolicy();
     }
 
+    @PostMapping("/api/v1/admin/billing/plans")
+    public BillingCatalogService.PlanOffer createPlan(
+            @RequestBody BillingCatalogService.NewPlan request) {
+        return catalog.createPlan(request);
+    }
+
+    @PostMapping("/api/v1/admin/billing/plans/{planCode}/retire")
+    public ResponseEntity<Void> retirePlan(@PathVariable String planCode) {
+        catalog.retirePlan(planCode);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/api/v1/admin/billing/plans/{planCode}/prices")
     public BillingCatalogService.PlanOffer publishPrice(@PathVariable String planCode,
                                       @RequestBody BillingCatalogService.PriceChange request) {

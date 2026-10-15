@@ -74,6 +74,58 @@ public class BillingCatalogService {
             }, java.sql.Timestamp.from(clock.now()));
     }
 
+    /** Admin creates independent plans, with their own immutable cycle and price history. */
+    @Transactional
+    public PlanOffer createPlan(NewPlan request) {
+        var actor = admins.requireAdmin();
+        if (request == null || request.code() == null || !request.code().matches("[A-Z0-9_]{1,60}")
+                || request.displayName() == null || request.displayName().isBlank()
+                || request.displayName().length() > 180
+                || request.priceVnd() <= 0 || request.priceVnd() > 1_000_000_000L
+                || request.cycleMonths() < 1 || request.cycleMonths() > 120
+                || request.effectiveAt() == null || request.effectiveAt().isBefore(clock.now())) {
+            throw badRequest("Invalid new plan.");
+        }
+        // Database primary key prevents duplicate plan creation across concurrent Admin requests.
+        UUID id = UUID.randomUUID();
+        try {
+            jdbc.update("insert into billing_plans(code,display_name,created_at) values (?,?,?)",
+                request.code(), request.displayName().trim(), java.sql.Timestamp.from(clock.now()));
+        } catch (org.springframework.dao.DuplicateKeyException ex) {
+            throw new ApiException(ErrorCode.VALIDATION_FAILED, HttpStatus.CONFLICT,
+                "A plan with this code already exists.");
+        }
+        jdbc.update("""
+            insert into billing_plan_versions
+              (id,plan_code,revision,price_vnd,cycle_months,effective_at,published_at,created_by_user_id)
+            values (?,?,1,?,?,?,?,?)
+            """, id, request.code(), request.priceVnd(), request.cycleMonths(),
+            java.sql.Timestamp.from(request.effectiveAt()), java.sql.Timestamp.from(clock.now()), actor.userId());
+        audit.securityEvent(actor.userId(), "BILLING_PLAN_CREATED", "BILLING_PLAN_VERSION", id,
+            requestIds.current(), Map.of("planCode", request.code(), "revision", 1));
+        outbox.append(new OutboxEventIntent("BILLING_PLAN_CREATED", "BILLING_PLAN_VERSION", id,
+            Map.of("planCode", request.code())));
+        return new PlanOffer(id, request.code(), request.displayName().trim(), 1,
+            request.priceVnd(), request.cycleMonths(), request.effectiveAt());
+    }
+
+    /** Retiring a plan prevents new purchases; paid invoice snapshots remain valid. */
+    @Transactional
+    public void retirePlan(String planCode) {
+        var actor = admins.requireAdmin();
+        if (planCode == null || !planCode.matches("[A-Z0-9_]{1,60}")) throw badRequest("Invalid plan.");
+        int count = jdbc.update("""
+            update billing_plans set retired_at=?
+            where code=? and retired_at is null
+            """, java.sql.Timestamp.from(clock.now()), planCode);
+        if (count != 1) throw notFound();
+        UUID event = UUID.randomUUID();
+        audit.securityEvent(actor.userId(), "BILLING_PLAN_RETIRED", "BILLING_PLAN", event,
+            requestIds.current(), Map.of("planCode", planCode));
+        outbox.append(new OutboxEventIntent("BILLING_PLAN_RETIRED", "BILLING_PLAN", event,
+            Map.of("planCode", planCode)));
+    }
+
     @Transactional
     public PlanOffer publishPrice(String planCode, PriceChange request) {
         var actor = admins.requireAdmin();
@@ -155,6 +207,8 @@ public class BillingCatalogService {
         return new ApiException(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Billing plan not found.");
     }
 
+    public record NewPlan(String code, String displayName, long priceVnd,
+                          int cycleMonths, Instant effectiveAt) {}
     public record PlanOffer(UUID id, String code, String name, int revision, long priceVnd,
                             int cycleMonths, Instant effectiveAt) {}
     public record PriceChange(long priceVnd, int cycleMonths, Instant effectiveAt) {}
