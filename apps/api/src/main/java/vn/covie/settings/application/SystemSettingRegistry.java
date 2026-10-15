@@ -33,6 +33,10 @@ public class SystemSettingRegistry {
         add(values, new SystemSettingDefinition("moderation.mode", SettingValueType.ENUM, json.textNode("AUTO_PUBLISH"), Set.copyOf(MERCHANT_CATEGORY_AREA_GLOBAL), MERCHANT_CATEGORY_AREA_GLOBAL, value -> value.isTextual() && Set.of("AUTO_PUBLISH", "PRE_APPROVAL", "HYBRID").contains(value.textValue())));
         add(values, integer("moderation.hybrid_adverse_lookback_days", 90, 1, 3650, GLOBAL));
         add(values, integer("bulk.max_items", 100, 1, 500, GLOBAL));
+        // Billing flags are deliberately OFF by default. Enforce only after legacy grants/pilot acceptance.
+        add(values, bool("billing.enforcement_enabled", false));
+        add(values, bool("billing.seller_registration_enabled", true));
+        add(values, bool("billing.reminders_enabled", false));
         definitions = Map.copyOf(values);
     }
     public SystemSettingDefinition require(String key) { SystemSettingDefinition definition = definitions.get(key); if (definition == null) throw invalidKey(key); return definition; }
