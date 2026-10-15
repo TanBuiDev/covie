@@ -181,12 +181,8 @@ public class BillingCheckoutService {
         UUID invoiceId = UUID.randomUUID();
         var discount = vouchers.reserve(coupon,offer.code(),merchantId,offer.priceVnd());
         long amountDue = discount.amountDueVnd();
-        if ((request.expectedAmountVnd()!=null && request.expectedAmountVnd()!=amountDue)
-                || (request.expectedPlanRevision()!=null
-                    && request.expectedPlanRevision()!=offer.revision())) {
-            throw error(ErrorCode.BILLING_PRICE_INVALID,HttpStatus.CONFLICT,
-                "Subscription price or plan version changed. Review the current quote before paying.");
-        }
+        requireQuoteUnchanged(request.expectedAmountVnd(),request.expectedPlanRevision(),
+            amountDue,offer.revision());
         UUID attemptId = UUID.randomUUID();
         Long orderCode = jdbc.queryForObject("select nextval('billing_payos_order_code_seq')", Long.class);
         if (orderCode == null) throw new IllegalStateException("Missing payOS order code.");
@@ -343,6 +339,14 @@ public class BillingCheckoutService {
     private record PreviousPayment(UUID invoiceId, String fingerprint, String status,
                                    String checkoutUrl, String qrPayload, Instant expiresAt,
                                    long orderCode, long amount) {}
+    static void requireQuoteUnchanged(Long expectedAmount,Integer expectedRevision,
+                                      long amount,int revision) {
+        if ((expectedAmount!=null && expectedAmount.longValue()!=amount)
+                || (expectedRevision!=null && expectedRevision.intValue()!=revision))
+            throw error(ErrorCode.BILLING_PRICE_INVALID,HttpStatus.CONFLICT,
+                "Subscription price or plan version changed. Review the current quote before paying.");
+    }
+
     public record CheckoutRequest(String planCode,String voucherCode,
                                   Long expectedAmountVnd,Integer expectedPlanRevision) {}
     public record CheckoutResult(UUID invoiceId, long orderCode, long amountVnd,
