@@ -10,6 +10,10 @@ import java.util.UUID;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.settings.application.SystemSettingResolver;
+import vn.covie.settings.application.SystemSettingContext;
+import vn.covie.shared.time.AppClock;
 import vn.covie.catalog.model.CatalogItemType;
 import vn.covie.catalog.api.dto.publicview.PublicMerchantCatalogCursor;
 import vn.covie.catalog.model.ListingKind;
@@ -27,12 +31,35 @@ public class JdbcPublicMerchantCatalogRepository implements PublicMerchantCatalo
             and ml.location_status = 'ACTIVE'
             and ml.deleted_at is null
             and ml.merchant_profile_id = ci.merchant_profile_id
+            and (:billingEnforced = false or exists (
+                select 1 from billing_entitlement_grants bge
+                where bge.merchant_id = ci.merchant_profile_id and bge.revoked_at is null
+                  and bge.valid_from <= cast(:billingNow as timestamptz)
+                  and bge.valid_until > cast(:billingNow as timestamptz)
+            ))
             """;
 
     private final NamedParameterJdbcTemplate jdbc;
+    private final SystemSettingResolver settings;
+    private final AppClock clock;
 
     public JdbcPublicMerchantCatalogRepository(NamedParameterJdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+        this.jdbc = jdbc; this.settings = null; this.clock = null;
+    }
+
+    @Autowired
+    public JdbcPublicMerchantCatalogRepository(NamedParameterJdbcTemplate jdbc,
+            SystemSettingResolver settings, AppClock clock) {
+        this.jdbc = jdbc; this.settings = settings; this.clock = clock;
+    }
+
+    private MapSqlParameterSource visibilityParameters(UUID merchantId) {
+        return new MapSqlParameterSource()
+            .addValue("merchantId", merchantId)
+            .addValue("billingEnforced", settings != null &&
+                settings.bool("billing.enforcement_enabled", SystemSettingContext.globalOnly()))
+            .addValue("billingNow", (clock == null ? java.time.Instant.now() : clock.now())
+                .atOffset(java.time.ZoneOffset.UTC), Types.TIMESTAMP_WITH_TIMEZONE);
     }
 
     @Override
@@ -47,14 +74,13 @@ public class JdbcPublicMerchantCatalogRepository implements PublicMerchantCatalo
                   and %s
                 order by ci.item_type
                 """.formatted(PUBLIC_AVAILABILITY);
-        return jdbc.query(sql, Map.of("merchantId", merchantId),
+        return jdbc.query(sql, visibilityParameters(merchantId),
                 (result, ignored) -> CatalogItemType.valueOf(result.getString("item_type")));
     }
 
     @Override
     public List<Row> findItems(UUID merchantId, PublicMerchantCatalogCursor cursor, int fetchLimit) {
-        MapSqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("merchantId", merchantId)
+        MapSqlParameterSource parameters = visibilityParameters(merchantId)
                 .addValue("fetchLimit", fetchLimit);
         String cursorPredicate = "";
         if (cursor != null) {
