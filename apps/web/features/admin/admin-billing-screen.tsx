@@ -14,6 +14,8 @@ type FinanceCase = { id: string; invoiceId: string; merchantId: string; kind: st
 type Voucher = { code: string; planCode: string | null; discountType: "FIXED" | "PERCENT";
   discountValue: number; maxRedemptions: number; perMerchantLimit: number;
   startsAt: string; endsAt: string; enabled: boolean };
+type FinanceAssignment = { userId: string; role: "READER" | "OPERATOR" | "APPROVER";
+  assignedBy: string; updatedAt: string };
 
 
 async function requireJson<T>(response: Response): Promise<T> {
@@ -32,6 +34,10 @@ export function AdminBillingScreen() {
   const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
   const [cases, setCases] = useState<FinanceCase[]>([]);
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [financeAssignments, setFinanceAssignments] = useState<FinanceAssignment[]>([]);
+  const [financeRoleUserId, setFinanceRoleUserId] = useState("");
+  const [financeRole, setFinanceRole] = useState<FinanceAssignment["role"]>("READER");
+  const [financeForbidden, setFinanceForbidden] = useState(false);
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherPlan, setVoucherPlan] = useState("");
   const [voucherKind, setVoucherKind] = useState<"FIXED" | "PERCENT">("FIXED");
@@ -56,24 +62,34 @@ export function AdminBillingScreen() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [priceRes, policyRes, overviewRes, invoiceRes, caseRes, voucherRes] = await Promise.all([
+    const [priceRes, policyRes, overviewRes, invoiceRes, caseRes, voucherRes, roleRes] = await Promise.all([
       requestBrowserApi("GET", "/api/v1/billing/plans"),
       requestBrowserApi("GET", "/api/v1/admin/billing/policy"),
       requestBrowserApi("GET", "/api/v1/admin/billing/overview"),
       requestBrowserApi("GET", "/api/v1/admin/billing/invoices?limit=20"),
       requestBrowserApi("GET", "/api/v1/admin/billing/finance-cases?limit=30"),
-      requestBrowserApi("GET", "/api/v1/admin/billing/vouchers")
+      requestBrowserApi("GET", "/api/v1/admin/billing/vouchers"),
+      requestBrowserApi("GET", "/api/v1/admin/billing/finance-access")
     ]);
     const values = await requireJson<Plan[]>(priceRes);
     const settings = await requireJson<Policy>(policyRes);
-    const totals = await requireJson<Overview>(overviewRes);
-    const ledger = await requireJson<BillingInvoice[]>(invoiceRes);
-    const financeCases = await requireJson<FinanceCase[]>(caseRes);
+    // When fine-grained finance roles are enabled, a policy Admin may still
+    // manage plans without being allowed to read invoices or finance cases.
+    const denied = [overviewRes, invoiceRes, caseRes].some(response => response.status === 403);
+    if (denied) {
+      setFinanceForbidden(true);
+      setOverview(undefined); setInvoices([]); setCases([]);
+    } else {
+      const totals = await requireJson<Overview>(overviewRes);
+      const ledger = await requireJson<BillingInvoice[]>(invoiceRes);
+      const financeCases = await requireJson<FinanceCase[]>(caseRes);
+      setFinanceForbidden(false);
+      setCases(financeCases);
+      setOverview(totals); setInvoices(ledger);
+    }
     const promotionList = await requireJson<Voucher[]>(voucherRes);
-    setCases(financeCases);
     setVouchers(promotionList);
-    setOverview(totals);
-    setInvoices(ledger);
+    setFinanceAssignments(await requireJson<FinanceAssignment[]>(roleRes));
     setPlans(values); setPolicy(settings);
     setSelectedCode(previous => values.some(p => p.code === previous) ? previous : (values[0]?.code ?? ""));
     const first = values[0];
@@ -245,12 +261,47 @@ export function AdminBillingScreen() {
     } finally { setSaving(false); }
   }
 
+  async function assignFinanceRole() {
+    if (saving || !/^[0-9a-f-]{36}$/i.test(financeRoleUserId)) {
+      setError("Nhập User ID hợp lệ của tài khoản Admin cần cấp quyền.");
+      return;
+    }
+    if (!window.confirm("Cấp quyền tài chính này cho một Admin khác? Cần phê duyệt vận hành riêng.")) return;
+    setSaving(true); setError(""); setNotice("");
+    try {
+      await requireJson(await requestBrowserApi("POST",
+        `/api/v1/admin/billing/finance-access/${encodeURIComponent(financeRoleUserId)}`,
+        { role: financeRole }));
+      setNotice("Đã phân quyền tài chính và ghi lịch sử quản trị.");
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể phân quyền tài chính");
+    } finally { setSaving(false); }
+  }
+
+  async function revokeFinanceRole(userId: string) {
+    if (saving || !window.confirm("Thu hồi quyền tài chính của tài khoản này?")) return;
+    setSaving(true); setError(""); setNotice("");
+    try {
+      const response = await requestBrowserApi("DELETE",
+        `/api/v1/admin/billing/finance-access/${encodeURIComponent(userId)}`);
+      if (!response.ok) throw await readApiError(response);
+      setNotice("Đã thu hồi quyền tài chính.");
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể thu hồi quyền");
+    } finally { setSaving(false); }
+  }
+
   return <div className="admin-page-stack">
     <AdminPageHeader title="Thuê bao Seller" subtitle="Bảng giá và chính sách kinh doanh do máy chủ quản lý theo phiên bản." />
     {error ? <p role="alert" className="admin-error">{error}</p> : null}
     {notice ? <p role="status">{notice}</p> : null}
     {loading ? <p>Đang tải Billing…</p> : (
       <>
+        {financeForbidden ? <p role="alert">
+          Tài khoản này chưa được cấp quyền đọc dữ liệu tài chính. Bạn vẫn có thể quản lý bảng giá và chính sách Seller.
+        </p> : null}
         <AdminSurface>
           <h2>Tổng quan thu phí Seller</h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
@@ -277,6 +328,34 @@ export function AdminBillingScreen() {
               </table>
             </div>
           )}
+        </AdminSurface>
+        <AdminSurface>
+          <h2>Phân quyền quản trị tài chính</h2>
+          <p>READER chỉ xem dữ liệu, OPERATOR tiếp nhận/từ chối hồ sơ, APPROVER có quyền xác nhận hoàn tiền đã thực hiện bên ngoài CoVie. Cần bật chính sách phân quyền sau khi cấp tài khoản phù hợp.</p>
+          <div className="admin-field"><label htmlFor="billing-finance-role-user">User ID tài khoản Admin khác</label>
+            <input id="billing-finance-role-user" value={financeRoleUserId} placeholder="UUID Admin"
+              onChange={event => setFinanceRoleUserId(event.target.value)} /></div>
+          <div className="admin-field"><label htmlFor="billing-finance-role">Vai trò tài chính</label>
+            <select id="billing-finance-role" value={financeRole}
+              onChange={event => setFinanceRole(event.target.value as FinanceAssignment["role"])}>
+              <option value="READER">READER — chỉ đọc</option>
+              <option value="OPERATOR">OPERATOR — xử lý</option>
+              <option value="APPROVER">APPROVER — phê duyệt</option>
+            </select></div>
+          <button className="admin-button admin-button--secondary" type="button" disabled={saving}
+            onClick={() => void assignFinanceRole()}>Cấp vai trò tài chính</button>
+          {financeAssignments.length === 0 ? <p>Chưa có phân quyền tài chính riêng.</p> : (
+            <div style={{ overflowX: "auto" }}>
+              <table className="admin-table"><thead><tr><th>User ID</th><th>Vai trò</th><th>Quản lý</th></tr></thead>
+                <tbody>{financeAssignments.map(value => <tr key={value.userId}>
+                  <td>{value.userId}</td><td>{value.role}</td>
+                  <td><button className="admin-button admin-button--secondary" type="button"
+                    disabled={saving} onClick={() => void revokeFinanceRole(value.userId)}>Thu hồi</button></td>
+                </tr>)}</tbody>
+              </table>
+            </div>
+          )}
+          <small>Trước khi bật billing.finance_roles_enabled, cần phân quyền cho Admin tài chính và bật COVIE_BILLING_FINANCE_ROLE_ASSIGNMENT_APPROVED chỉ trong đợt phê duyệt vận hành.</small>
         </AdminSurface>
         <AdminSurface>
           <h2>Yêu cầu hoàn phí và tranh chấp</h2>
