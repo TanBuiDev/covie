@@ -55,7 +55,7 @@ export default async function SellerPage() {
             <div className="seller-onboarding-layout__main">
               <div className="seller-form-wrapper">
                 <SellerBillingOnboarding />
-                <MerchantForm />
+                <MerchantForm billingOnboarding />
               </div>
             </div>
 
@@ -164,7 +164,7 @@ export default async function SellerPage() {
                 <p className="seller-muted">Tạo thêm cửa hàng để phân tách các ngành hàng hoặc dịch vụ khác nhau trong khu căn hộ. Mỗi cửa hàng có quyền thuê bao và thời hạn riêng.</p>
               </div>
               <SellerBillingOnboarding />
-              <MerchantForm />
+              <MerchantForm billingOnboarding />
             </div>
           </details>
         </section>
