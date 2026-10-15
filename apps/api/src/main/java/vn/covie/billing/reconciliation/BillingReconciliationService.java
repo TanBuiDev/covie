@@ -17,7 +17,7 @@ import vn.covie.shared.time.AppClock;
  * webhook is an explicit operational incident awaiting verified settlement flow.
  */
 @Service
-public final class BillingReconciliationService {
+public class BillingReconciliationService {
     private final JdbcTemplate jdbc;
     private final PayosGateway gateway;
     private final AppClock clock;
