@@ -33,6 +33,7 @@ public class BillingCheckoutService {
     private final ObjectMapper json;
     private final AppClock clock;
     private final BillingCatalogService catalog;
+    private final BillingVoucherService vouchers;
     private final PayosGateway payos;
     private final MerchantMembershipRepository memberships;
     private final CurrentActorProvider actors;
@@ -41,9 +42,10 @@ public class BillingCheckoutService {
     public BillingCheckoutService(JdbcTemplate jdbc, ObjectMapper json, AppClock clock,
             BillingCatalogService catalog, PayosGateway payos,
             MerchantMembershipRepository memberships, CurrentActorProvider actors,
-            PlatformTransactionManager transactionManager) {
+            PlatformTransactionManager transactionManager, BillingVoucherService vouchers) {
         this.jdbc = jdbc; this.json = json; this.clock = clock; this.catalog = catalog;
         this.payos = payos; this.memberships = memberships; this.actors = actors;
+        this.vouchers = vouchers;
         this.transactions = new TransactionTemplate(transactionManager);
     }
 
@@ -102,7 +104,10 @@ public class BillingCheckoutService {
         if (merchantLock.isEmpty()) {
             throw error(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Merchant not found.");
         }
-        String fingerprint = sha256(request.planCode());
+        String coupon = BillingVoucherService.normalize(request.voucherCode());
+        // Preserve the historical fingerprint for checkout requests without promotions.
+        String fingerprint = sha256(request.planCode()
+            + (coupon == null ? "" : "|VOUCHER|" + coupon));
         var old = jdbc.query("""
                 select i.id, i.request_fingerprint, i.status, a.checkout_url, a.qr_payload, i.expires_at,
                        i.payos_order_code, i.amount_vnd
@@ -159,15 +164,24 @@ public class BillingCheckoutService {
         Instant periodStart = paidThrough != null && paidThrough.isAfter(now) ? paidThrough : now;
         Instant periodEnd = BillingPeriodCalculator.addMonths(periodStart, offer.cycleMonths());
         UUID invoiceId = UUID.randomUUID();
+        var discount = vouchers.reserve(coupon,offer.code(),merchantId,offer.priceVnd());
+        long amountDue = discount.amountDueVnd();
         UUID attemptId = UUID.randomUUID();
         Long orderCode = jdbc.queryForObject("select nextval('billing_payos_order_code_seq')", Long.class);
         if (orderCode == null) throw new IllegalStateException("Missing payOS order code.");
         String number = "CB-" + orderCode;
         String snapshot;
         try {
-            snapshot = json.writeValueAsString(Map.of("planCode", offer.code(),
-                "priceRevision", offer.revision(), "priceVnd", offer.priceVnd(),
-                "cycleMonths", offer.cycleMonths(), "policyRevision", policy.revision()));
+            var pricing = new java.util.LinkedHashMap<String,Object>();
+            pricing.put("planCode", offer.code());
+            pricing.put("priceRevision", offer.revision());
+            pricing.put("originalPriceVnd", offer.priceVnd());
+            pricing.put("discountVnd", discount.discountVnd());
+            pricing.put("amountDueVnd", amountDue);
+            pricing.put("voucherCode", coupon);
+            pricing.put("cycleMonths", offer.cycleMonths());
+            pricing.put("policyRevision", policy.revision());
+            snapshot = json.writeValueAsString(pricing);
         } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
             throw new IllegalStateException("Unable to serialize billing snapshot", ex);
         }
@@ -177,17 +191,18 @@ public class BillingCheckoutService {
                amount_vnd,period_start,period_end,pricing_snapshot,idempotency_key,
                request_fingerprint,created_at,expires_at,payos_order_code,grace_until)
             values (?,?,?,?,?,'PENDING_PAYMENT',?,?,?,?::jsonb,?,?,?,?,?,?)
-            """, invoiceId, number, merchantId, offer.id(), policy.id(), offer.priceVnd(),
+            """, invoiceId, number, merchantId, offer.id(), policy.id(), amountDue,
             Timestamp.from(periodStart), Timestamp.from(periodEnd), snapshot, idempotencyKey,
             fingerprint, at, Timestamp.from(expires), orderCode,
             Timestamp.from(periodEnd.plusSeconds(86400L * policy.graceDays())));
+        vouchers.attachReservation(invoiceId,merchantId,offer.priceVnd(),discount);
         jdbc.update("""
             insert into billing_payment_attempts
               (id,invoice_id,provider,provider_order_id,status,expected_amount_vnd,created_at)
             values (?,?,'PAYOS',?,'CREATED',?,?)
-            """, attemptId, invoiceId, orderCode.toString(), offer.priceVnd(), at);
+            """, attemptId, invoiceId, orderCode.toString(), amountDue, at);
 
-        return new Reservation(invoiceId, attemptId, orderCode, offer.priceVnd(), expires, null);
+        return new Reservation(invoiceId, attemptId, orderCode, amountDue, expires, null);
     }
 
     private record Reservation(UUID invoiceId, UUID attemptId, long orderCode, long amountVnd,
@@ -195,6 +210,17 @@ public class BillingCheckoutService {
         static Reservation previous(CheckoutResult value) {
             return new Reservation(null, null, 0L, 0L, null, value);
         }
+    }
+
+    @Transactional(readOnly=true)
+    public BillingVoucherService.Discount quote(UUID merchantId,String planCode,String voucherCode){
+        requireOwner(merchantId);
+        if(planCode==null || !planCode.matches("[A-Z0-9_]{1,60}"))
+            throw error(ErrorCode.BILLING_PRICE_INVALID,HttpStatus.UNPROCESSABLE_ENTITY,"Invalid plan.");
+        var offer = catalog.availablePlans().stream().filter(x->x.code().equals(planCode))
+            .findFirst().orElseThrow(()->error(ErrorCode.BILLING_PRICE_INVALID,
+                HttpStatus.UNPROCESSABLE_ENTITY,"Plan is not currently available."));
+        return vouchers.quote(voucherCode,planCode,merchantId,offer.priceVnd());
     }
 
     /**
@@ -296,7 +322,7 @@ public class BillingCheckoutService {
     private record PreviousPayment(UUID invoiceId, String fingerprint, String status,
                                    String checkoutUrl, String qrPayload, Instant expiresAt,
                                    long orderCode, long amount) {}
-    public record CheckoutRequest(String planCode) {}
+    public record CheckoutRequest(String planCode,String voucherCode) {}
     public record CheckoutResult(UUID invoiceId, long orderCode, long amountVnd,
                                  String checkoutUrl, String qrPayload, Instant expiresAt, String invoiceStatus) {}
     public record PaymentStatus(UUID invoiceId, String invoiceStatus, String paymentStatus,
