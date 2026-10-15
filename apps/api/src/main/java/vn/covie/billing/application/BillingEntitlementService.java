@@ -42,8 +42,24 @@ public class BillingEntitlementService {
                 java.sql.Timestamp until = rs.getTimestamp(1);
                 return until == null ? null : until.toInstant();
             }, merchantId, java.sql.Timestamp.from(now), java.sql.Timestamp.from(now));
-        boolean canSell = expiry != null;
-        return new Eligibility(canSell, true, canSell ? "ACTIVE_ENTITLEMENT" : "SUBSCRIPTION_REQUIRED", expiry);
+        if (expiry != null) return new Eligibility(true, true, "ACTIVE_ENTITLEMENT", expiry);
+        // Existing paid/trial access can continue until the policy snapshot's grace
+        // timestamp. Refunds, revoked grants and explicit cancellation never earn grace.
+        Instant grace = jdbc.query("""
+            select s.grace_until
+            from merchant_subscriptions s
+            where s.merchant_id=? and s.status in ('ACTIVE','TRIALING','PAST_DUE')
+              and s.cancel_at_period_end=false
+              and s.period_end<=? and s.grace_until>?
+              and exists (
+                select 1 from billing_entitlement_grants g
+                where g.merchant_id=s.merchant_id and g.revoked_at is null
+                  and g.source_type in ('TRIAL','PAID_INVOICE') and g.valid_until=s.period_end
+              )
+            """, rs -> rs.next() ? rs.getTimestamp(1).toInstant() : null,
+            merchantId, java.sql.Timestamp.from(now), java.sql.Timestamp.from(now));
+        if (grace != null) return new Eligibility(true, true, "GRACE_PERIOD", grace);
+        return new Eligibility(false, true, "SUBSCRIPTION_REQUIRED", null);
     }
 
     @Transactional(readOnly = true)
