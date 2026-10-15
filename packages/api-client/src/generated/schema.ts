@@ -13,7 +13,7 @@ export interface paths {
         };
         get: operations["list_7"];
         put?: never;
-        post: operations["create_13"];
+        post: operations["create_14"];
         delete?: never;
         options?: never;
         head?: never;
@@ -78,6 +78,38 @@ export interface paths {
         get: operations["page_1"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/plans/{planCode}/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["publishPrice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["policy"];
+        put?: never;
+        post: operations["publishPolicy"];
         delete?: never;
         options?: never;
         head?: never;
@@ -668,6 +700,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/billing/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["plans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/webhooks/payos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalog/items": {
         parameters: {
             query?: never;
@@ -771,7 +835,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["summary"];
+        get: operations["summary_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -911,7 +975,7 @@ export interface paths {
          * Create a saved address
          * @description Browser mutations use X-CSRF-Token.
          */
-        post: operations["create_12"];
+        post: operations["create_13"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1088,7 +1152,7 @@ export interface paths {
         /** List contact methods */
         get: operations["active_1"];
         put?: never;
-        post: operations["create_11"];
+        post: operations["create_12"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1136,7 +1200,7 @@ export interface paths {
         };
         get: operations["mine"];
         put?: never;
-        post: operations["create_10"];
+        post: operations["create_11"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1152,7 +1216,7 @@ export interface paths {
         };
         get: operations["list_6"];
         put?: never;
-        post: operations["create_9"];
+        post: operations["create_10"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1296,7 +1360,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_8"];
+        post: operations["create_9"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1417,7 +1481,7 @@ export interface paths {
         };
         get: operations["list_5"];
         put?: never;
-        post: operations["create_7"];
+        post: operations["create_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1466,6 +1530,70 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/billing/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_7"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/billing/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["invoices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/billing/invoices/{invoiceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["paymentStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{merchantId}/billing/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["summary"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2894,6 +3022,22 @@ export interface components {
             /** Format: int64 */
             total?: number;
         };
+        CheckoutRequest: {
+            planCode?: string;
+        };
+        CheckoutResult: {
+            /** Format: int64 */
+            amountVnd?: number;
+            checkoutUrl?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: uuid */
+            invoiceId?: string;
+            invoiceStatus?: string;
+            /** Format: int64 */
+            orderCode?: number;
+            qrPayload?: string;
+        };
         ContactMethodResponse: {
             /** Format: date-time */
             createdAt?: string;
@@ -3071,6 +3215,13 @@ export interface components {
             /** Format: int64 */
             quantity?: number;
         };
+        Eligibility: {
+            canSell?: boolean;
+            enforced?: boolean;
+            /** Format: date-time */
+            expiry?: string;
+            reasonCode?: string;
+        };
         EmailPasswordLoginRequest: {
             /** Format: email */
             email: string;
@@ -3124,6 +3275,20 @@ export interface components {
             variantName?: string;
             /** Format: int64 */
             version?: number;
+        };
+        InvoiceSummary: {
+            /** Format: int64 */
+            amountVnd?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: uuid */
+            invoiceId?: string;
+            invoiceNumber?: string;
+            /** Format: date-time */
+            periodEnd?: string;
+            /** Format: date-time */
+            periodStart?: string;
+            status?: string;
         };
         IssueRequest: {
             reasonText: string;
@@ -3863,6 +4028,65 @@ export interface components {
             scopeType: "GLOBAL" | "LOCATION_AREA" | "CATEGORY" | "MERCHANT";
             value: unknown;
         };
+        PaymentStatus: {
+            /** Format: int64 */
+            amountVnd?: number;
+            checkoutUrl?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: uuid */
+            invoiceId?: string;
+            invoiceStatus?: string;
+            paymentStatus?: string;
+            /** Format: date-time */
+            periodEnd?: string;
+            /** Format: date-time */
+            periodStart?: string;
+        };
+        PlanOffer: {
+            code?: string;
+            /** Format: int32 */
+            cycleMonths?: number;
+            /** Format: date-time */
+            effectiveAt?: string;
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: int64 */
+            priceVnd?: number;
+            /** Format: int32 */
+            revision?: number;
+        };
+        Policy: {
+            /** Format: date-time */
+            effectiveAt?: string;
+            /** Format: int32 */
+            graceDays?: number;
+            /** Format: uuid */
+            id?: string;
+            onboardingMode?: string;
+            /** Format: int32 */
+            revision?: number;
+            /** Format: int32 */
+            trialDays?: number;
+        };
+        PolicyChange: {
+            /** Format: date-time */
+            effectiveAt?: string;
+            /** Format: int32 */
+            graceDays?: number;
+            onboardingMode?: string;
+            /** Format: int32 */
+            trialDays?: number;
+        };
+        PriceChange: {
+            /** Format: int32 */
+            cycleMonths?: number;
+            /** Format: date-time */
+            effectiveAt?: string;
+            /** Format: int64 */
+            priceVnd?: number;
+        };
         PublicAdResponse: {
             body?: string;
             /** @enum {string} */
@@ -4385,7 +4609,7 @@ export interface operations {
             };
         };
     };
-    create_13: {
+    create_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -4539,6 +4763,76 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PageAdminAuditLogResponse"];
+                };
+            };
+        };
+    };
+    publishPrice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PlanOffer"];
+                };
+            };
+        };
+    };
+    policy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Policy"];
+                };
+            };
+        };
+    };
+    publishPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PolicyChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Policy"];
                 };
             };
         };
@@ -5432,6 +5726,52 @@ export interface operations {
             };
         };
     };
+    plans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PlanOffer"][];
+                };
+            };
+        };
+    };
+    accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": string;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
     discover_1: {
         parameters: {
             query?: {
@@ -5594,7 +5934,7 @@ export interface operations {
             };
         };
     };
-    summary: {
+    summary_1: {
         parameters: {
             query: {
                 itemIds: string[];
@@ -5819,7 +6159,7 @@ export interface operations {
             };
         };
     };
-    create_12: {
+    create_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -6207,7 +6547,7 @@ export interface operations {
             };
         };
     };
-    create_11: {
+    create_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -6317,7 +6657,7 @@ export interface operations {
             };
         };
     };
-    create_10: {
+    create_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -6365,7 +6705,7 @@ export interface operations {
             };
         };
     };
-    create_9: {
+    create_10: {
         parameters: {
             query?: never;
             header?: {
@@ -6566,7 +6906,7 @@ export interface operations {
             };
         };
     };
-    create_8: {
+    create_9: {
         parameters: {
             query?: never;
             header: {
@@ -6774,7 +7114,7 @@ export interface operations {
             };
         };
     };
-    create_7: {
+    create_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -6899,6 +7239,101 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AdCampaignResponse"];
+                };
+            };
+        };
+    };
+    create_7: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CheckoutResult"];
+                };
+            };
+        };
+    };
+    invoices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InvoiceSummary"][];
+                };
+            };
+        };
+    };
+    paymentStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PaymentStatus"];
+                };
+            };
+        };
+    };
+    summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                merchantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Eligibility"];
                 };
             };
         };
