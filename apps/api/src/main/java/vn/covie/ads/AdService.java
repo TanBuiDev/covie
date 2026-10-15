@@ -10,6 +10,10 @@ import vn.covie.media.application.*;
 import vn.covie.media.persistence.MediaAssetRepository;
 import vn.covie.catalog.persistence.CatalogItemRepository;
 import vn.covie.audit.AuditLogWriter;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.billing.application.BillingEntitlementService;
+import vn.covie.settings.application.SystemSettingContext;
+import vn.covie.settings.application.SystemSettingResolver;
 import vn.covie.shared.id.UuidV7Generator;
 import vn.covie.shared.time.AppClock;
 import vn.covie.shared.concurrency.VersionPrecondition;
@@ -28,6 +32,13 @@ public class AdService {
  private final MediaAttachmentPolicy mediaPolicy; private final MediaAssetRepository media; private final MediaUrlResolver urls;
  private final CatalogItemRepository items; private final AuditLogWriter audit; private final UuidV7Generator ids; private final AppClock clock;
  private final ObjectMapper json=new ObjectMapper().findAndRegisterModules();
+ private BillingEntitlementService billing;
+ private SystemSettingResolver settings;
+
+ @Autowired public void setBillingDependencies(BillingEntitlementService billing, SystemSettingResolver settings) {
+  this.billing=Objects.requireNonNull(billing);
+  this.settings=Objects.requireNonNull(settings);
+ }
  public AdService(JdbcTemplate j, AdminAccessPolicy a, MerchantAccessPolicy m, MediaAttachmentPolicy p, MediaAssetRepository r, MediaUrlResolver u, CatalogItemRepository i, AuditLogWriter l, UuidV7Generator g, AppClock c) {
   jdbc=j;admins=a;merchants=m;mediaPolicy=p;media=r;urls=u;items=i;audit=l;ids=g;clock=c;
  }
@@ -94,6 +105,7 @@ public class AdService {
  public AdCampaignResponse submit(UUID merchant,UUID id,String match) {
   UUID owner=actor(merchant);var row=find(merchant,id,true);VersionPrecondition.require(VersionPrecondition.parseRequired(match),row.version());
   if(row.status()!=Status.DRAFT&&row.status()!=Status.REJECTED)throw AdRules.invalid("Only draft or rejected campaigns can be submitted.");
+  if(billing != null) billing.requireCanSell(merchant);
   validate(merchant,mediaOwner(row.request(),row.owner()),row.request());return changeStatus(row,Status.PENDING,null,owner,"AD_SUBMIT",false);
  }
  public AdCampaignResponse review(UUID id,String match,boolean approved,String reason) {
@@ -123,7 +135,22 @@ public class AdService {
  public List<PublicAdResponse> active(Placement placement,Device device) {
   if(device==Device.ALL)throw AdRules.invalid("Select a concrete device.");var now=clock.now();
   jdbc.update("delete from ad_deliveries where id in (select id from ad_deliveries where expires_at<? order by expires_at limit 500)",java.sql.Timestamp.from(now));
-  return jdbc.query("select * from ad_campaigns c where deleted_at is null and enabled and status='APPROVED' and placement=? and (device=? or device='ALL') and starts_at<=? and ends_at>? and (merchant_id is null or exists(select 1 from merchant_profiles m where m.id=c.merchant_id and m.deleted_at is null and m.merchant_status='ACTIVE' and m.moderation_status in ('NOT_REQUIRED','APPROVED'))) order by priority desc,created_at desc,id desc limit 100",this::map,placement.name(),device.name(),java.sql.Timestamp.from(now),java.sql.Timestamp.from(now)).stream().filter(this::targetVisible).filter(row->row.request().mediaId()==null||mediaUrl(row.request())!=null).limit(10).map(row->{var r=row.request();UUID token=ids.generate();Instant expires=now.plusSeconds(1800);jdbc.update("insert into ad_deliveries(id,campaign_id,campaign_version,issued_at,expires_at) values(?,?,?,?,?)",token,row.id(),row.version(),java.sql.Timestamp.from(now),java.sql.Timestamp.from(expires));return new PublicAdResponse(row.id(),r.title(),r.body(),r.ctaLabel(),r.targetUrl(),r.creativeType(),r.template(),mediaUrl(r),r.placement(),r.endsAt(),token.toString(),expires);}).toList();
+  boolean enforced=settings != null && settings.bool("billing.enforcement_enabled",SystemSettingContext.globalOnly());
+  return jdbc.query("""
+    select * from ad_campaigns c where c.deleted_at is null and c.enabled
+      and c.status='APPROVED' and c.placement=? and (c.device=? or c.device='ALL')
+      and c.starts_at<=? and c.ends_at>?
+      and (c.merchant_id is null or exists(
+          select 1 from merchant_profiles m where m.id=c.merchant_id and m.deleted_at is null
+           and m.merchant_status='ACTIVE' and m.moderation_status in ('NOT_REQUIRED','APPROVED')
+      ))
+      and (? = false or c.merchant_id is null or exists(
+          select 1 from billing_entitlement_grants g where g.merchant_id=c.merchant_id
+            and g.revoked_at is null and g.valid_from<=? and g.valid_until>?
+      ))
+      order by c.priority desc,c.created_at desc,c.id desc limit 100
+    """,this::map,placement.name(),device.name(),java.sql.Timestamp.from(now),
+      java.sql.Timestamp.from(now),enforced,java.sql.Timestamp.from(now),java.sql.Timestamp.from(now)).stream().filter(this::targetVisible).filter(row->row.request().mediaId()==null||mediaUrl(row.request())!=null).limit(10).map(row->{var r=row.request();UUID token=ids.generate();Instant expires=now.plusSeconds(1800);jdbc.update("insert into ad_deliveries(id,campaign_id,campaign_version,issued_at,expires_at) values(?,?,?,?,?)",token,row.id(),row.version(),java.sql.Timestamp.from(now),java.sql.Timestamp.from(expires));return new PublicAdResponse(row.id(),r.title(),r.body(),r.ctaLabel(),r.targetUrl(),r.creativeType(),r.template(),mediaUrl(r),r.placement(),r.endsAt(),token.toString(),expires);}).toList();
  }
  public void event(UUID id,AdEventRequest event) {
   if(!AdRules.acceptsEvent(event.type().name(),event.visibleMillis()))throw AdRules.invalid("Impressions require at least 1000ms of continuous visibility.");
