@@ -33,6 +33,22 @@ class BillingVoucherIntegrationTest extends PostgresIntegrationTest {
               (id,name,slug,merchant_status,moderation_status,created_at,updated_at,version)
             values (?,'Voucher merchant',?,'ACTIVE','APPROVED',?,?,0)
             """,merchant,"voucher-"+merchant,Timestamp.from(now),Timestamp.from(now));
+        // Other integration fixtures can remove seed versions. This test owns
+        // its minimal plan/policy snapshot references rather than depending on order.
+        jdbc.update("""
+            insert into billing_plan_versions
+              (id,plan_code,revision,price_vnd,cycle_months,effective_at,published_at)
+            values (?,'SELLER_STANDARD',1,10000,1,?,?)
+            on conflict do nothing
+            """,UUID.randomUUID(),Timestamp.from(Instant.parse("2026-01-01T00:00:00Z")),
+                Timestamp.from(now));
+        jdbc.update("""
+            insert into billing_policy_versions
+              (id,revision,onboarding_mode,trial_days,grace_days,effective_at,created_at)
+            values (?,1,'PAY_BEFORE_SELL',0,3,?,?)
+            on conflict do nothing
+            """,UUID.randomUUID(),Timestamp.from(Instant.parse("2026-01-01T00:00:00Z")),
+                Timestamp.from(now));
         jdbc.update("""
             insert into billing_vouchers
               (code,plan_code,discount_type,discount_value,max_redemptions,per_merchant_limit,
