@@ -1,0 +1,30 @@
+package vn.covie.billing.api;
+
+import java.util.List;
+import java.util.UUID;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import vn.covie.billing.application.BillingCheckoutService;
+
+/** Seller invoices and payOS links are not buyer order payments. */
+@RestController
+@RequestMapping("/api/v1/merchants/{merchantId}/billing")
+public class BillingCheckoutController {
+    private final BillingCheckoutService checkout;
+    public BillingCheckoutController(BillingCheckoutService checkout) { this.checkout = checkout; }
+
+    @PostMapping("/checkout")
+    public ResponseEntity<BillingCheckoutService.CheckoutResult> create(
+            @PathVariable UUID merchantId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @RequestBody BillingCheckoutService.CheckoutRequest request) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(checkout.create(merchantId, idempotencyKey, request));
+    }
+
+    @GetMapping("/invoices")
+    public ResponseEntity<List<BillingCheckoutService.InvoiceSummary>> invoices(@PathVariable UUID merchantId) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(checkout.invoices(merchantId));
+    }
+}
