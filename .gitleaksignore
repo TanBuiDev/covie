@@ -10,3 +10,6 @@ e826cc61498db79d5bcba587300aa63a15c1c42e:docs/CoVie-technical-plan-10-production
 # operations readiness checklist line; no credential, assignment or token value.
 # Narrow exception covers precisely this historical commit, path, rule and line.
 e976ce1af5de4928800b8c65108cdfad858fb4e8:docs/plans/seller-billing/CoVie-Seller-Billing-Subscription-Implementation-Plan-v1.0.md:generic-api-key:459
+
+# Same previously reviewed documentation-only false positive when original plan was restored intact.
+01b2f28f9551fdcf8bc6a0d3d22cc6f781139d49:docs/plans/seller-billing/CoVie-Seller-Billing-Subscription-Implementation-Plan-v1.0.md:generic-api-key:459
