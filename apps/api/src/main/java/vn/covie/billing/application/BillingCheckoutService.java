@@ -179,10 +179,7 @@ public class BillingCheckoutService {
                 rs.getString("consumed_by_idempotency_key")), request.quoteId(),merchantId);
         if (quotes.isEmpty()) throw expiredQuote();
         QuoteSnapshot checkedQuote = quotes.getFirst();
-        if (!checkedQuote.planVersionId().equals(offer.id())
-                || !java.util.Objects.equals(checkedQuote.voucherCode(),coupon)
-                || !checkedQuote.expiresAt().isAfter(clock.now())
-                || checkedQuote.consumedByIdempotencyKey() != null) throw expiredQuote();
+        requireQuoteValid(checkedQuote,offer.id(),coupon,clock.now());
         var policy = catalog.currentPolicy();
         Instant now = clock.now();
         Instant expires = now.plusSeconds(15 * 60);
@@ -200,7 +197,7 @@ public class BillingCheckoutService {
         UUID invoiceId = UUID.randomUUID();
         var discount = vouchers.reserve(coupon,offer.code(),merchantId,offer.priceVnd());
         long amountDue = discount.amountDueVnd();
-        if (checkedQuote.amountDueVnd() != amountDue) throw expiredQuote();
+        requireQuoteAmount(checkedQuote.amountDueVnd(),amountDue);
         requireQuoteUnchanged(request.expectedAmountVnd(),request.expectedPlanRevision(),
             amountDue,offer.revision());
         UUID attemptId = UUID.randomUUID();
@@ -281,7 +278,16 @@ public class BillingCheckoutService {
         return error(ErrorCode.BILLING_PRICE_INVALID,HttpStatus.CONFLICT,
             "Quote expired, was used, or pricing changed. Request and confirm a new quote.");
     }
-    private record QuoteSnapshot(UUID planVersionId,String voucherCode,long amountDueVnd,
+    static void requireQuoteValid(QuoteSnapshot quote,UUID planVersionId,String voucherCode,Instant now) {
+        if (quote == null || !quote.planVersionId().equals(planVersionId)
+                || !java.util.Objects.equals(quote.voucherCode(),voucherCode)
+                || !quote.expiresAt().isAfter(now)
+                || quote.consumedByIdempotencyKey() != null) throw expiredQuote();
+    }
+    static void requireQuoteAmount(long quoted,long calculated) {
+        if (quoted != calculated) throw expiredQuote();
+    }
+    static record QuoteSnapshot(UUID planVersionId,String voucherCode,long amountDueVnd,
                                  Instant expiresAt,String consumedByIdempotencyKey) {}
     public record Quote(String code,long discountVnd,long amountDueVnd,
                         UUID quoteId,Instant quoteExpiresAt,int planRevision) {}
