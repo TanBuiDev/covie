@@ -42,6 +42,7 @@ public class SystemSettingRegistry {
         add(values, integer("billing.reminder_last_days", 1, 1, 60, GLOBAL));
         add(values, bool("billing.finance_roles_enabled", false));
         add(values, integer("billing.checkout_hourly_limit", 6, 1, 60, GLOBAL));
+        add(values, integer("billing.quote_hourly_limit", 30, 1, 120, GLOBAL));
         definitions = Map.copyOf(values);
     }
     public SystemSettingDefinition require(String key) { SystemSettingDefinition definition = definitions.get(key); if (definition == null) throw invalidKey(key); return definition; }

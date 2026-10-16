@@ -81,11 +81,14 @@ public class BillingFinanceAccessPolicy {
         verifyOps(actor.userId(),target);
         if(role==null || !List.of("READER","OPERATOR","APPROVER").contains(role))
             throw invalid("Invalid finance permission.");
-        Integer exists=jdbc.queryForObject("select count(*) from users where id=?",
-            Integer.class,target);
-        if(exists==null||exists!=1)throw invalid("Unknown finance Admin account.");
-        // Global ADMIN validation of target remains part of the identity process:
-        // this table alone never grants system Admin role.
+        Boolean qualified=jdbc.queryForObject("""
+            select exists (
+                select 1 from users u
+                join system_role_assignments a on a.user_id=u.id and a.role='ADMIN'
+                where u.id=? and u.account_status='ACTIVE' and u.deleted_at is null
+            )
+            """,Boolean.class,target);
+        if (!Boolean.TRUE.equals(qualified)) throw invalid("The finance role target must be an active global Admin.");
         var at=Timestamp.from(clock.now());
         jdbc.update("""
             insert into billing_finance_permissions

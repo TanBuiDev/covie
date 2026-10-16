@@ -259,6 +259,16 @@ public class BillingCheckoutService {
         var offer = catalog.availablePlans().stream().filter(x->x.code().equals(planCode))
             .findFirst().orElseThrow(()->error(ErrorCode.BILLING_PRICE_INVALID,
                 HttpStatus.UNPROCESSABLE_ENTITY,"Plan is not currently available."));
+        // Serialize quote-rate checks on the merchant row, like checkout reservations.
+        var locked=jdbc.query("select id from merchant_profiles where id=? and deleted_at is null for update",
+            (rs,n)->(UUID)rs.getObject(1),merchantId);
+        if (locked.isEmpty()) throw error(ErrorCode.RESOURCE_NOT_FOUND,HttpStatus.NOT_FOUND,"Merchant not found.");
+        int cap=billingSettings.integer("billing.quote_hourly_limit",SystemSettingContext.globalOnly());
+        Long recent=jdbc.queryForObject("""
+            select count(*) from billing_quotes where merchant_id=? and created_at>=?
+            """,Long.class,merchantId,Timestamp.from(clock.now().minusSeconds(3600)));
+        if (recent != null && recent >= cap) throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE,
+            HttpStatus.TOO_MANY_REQUESTS,"Too many quotes. Try again later.");
         var discount = vouchers.quote(voucherCode,planCode,merchantId,offer.priceVnd());
         if (discount.amountDueVnd() <= 0) throw error(ErrorCode.BILLING_PRICE_INVALID,
             HttpStatus.UNPROCESSABLE_ENTITY,"A paid quote must have a positive amount.");

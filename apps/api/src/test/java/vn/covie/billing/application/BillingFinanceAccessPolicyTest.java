@@ -56,4 +56,15 @@ class BillingFinanceAccessPolicyTest {
         verifyNoInteractions(jdbc);
     }
 
+    @Test void refusesFinanceAssignmentToUsersWithoutActiveGlobalAdminRole(){
+        JdbcTemplate jdbc=mock(JdbcTemplate.class);
+        AdminAccessPolicy admin=mock(AdminAccessPolicy.class);
+        when(admin.requireAdmin()).thenReturn(actor);
+        when(jdbc.queryForObject(anyString(),eq(Boolean.class),any(UUID.class))).thenReturn(false);
+        var policy=new BillingFinanceAccessPolicy(jdbc,admin,mock(SystemSettingResolver.class),
+            ()->Instant.EPOCH,mock(AuditLogWriter.class),mock(RequestIdAccessor.class),true);
+        assertThrows(RuntimeException.class,()->policy.assign(UUID.randomUUID(),"APPROVER"));
+        verify(jdbc,never()).update(anyString(),any(Object[].class));
+    }
 }
+
