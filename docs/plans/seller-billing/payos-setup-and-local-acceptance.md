@@ -131,3 +131,14 @@ These calls are authenticated as Admin and leave audit entries. Do not set an ar
 3. A refund case must be explicitly marked REVIEWING by an Admin reviewer before a **different** global Admin approver may mark the externally executed refund CONFIRMED; the initial requester cannot approve their own case. Migration V030 stores reviewer and review time.
 4. For `secret-history`, the only allowlisted new finding is a specifically reviewed false positive in a historical implementation-plan checklist. Do not disable Gitleaks or add wildcard ignores. If additional findings appear, treat them independently.
 5. Test the nine-character `CV`+base36 bank description and verify payOS signs its `data` response in the user's actual channel before enabling any real charge. Any response mismatch must leave invoices unpaid for safe manual review.
+
+## Updated source status (2026-10-16) — overrides early WIP snapshot
+
+- Source migrations now extend to V033: V031 configurable reminder offsets, V032 server-bound quotes, V033 normalization of remaining legacy reminder constraints. Do not manually modify existing applied Flyway migrations.
+- HMAC-verified authenticated payOS GET can recover a paid invoice through the same idempotent webhook settlement path. Earlier claims that reconciliation is only observation are outdated.
+- Admin finance reviewer/approver roles and vouchers are implemented; actual bank refunds remain manual. Do not interpret early WIP statements as current code status.
+- Seller POST /api/v1/merchants/{merchantId}/billing/quote returns quoteId, quoteExpiresAt, amountDueVnd and planRevision. POST /checkout requires the one-use quoteId, exact price/version and Idempotency-Key. Quote identity is an opaque unpredictable DB-bound token, not a client-signed assertion.
+- Admin POST /api/v1/admin/billing/plans/{planCode}/prices and POST /api/v1/admin/billing/policy require quoted published revision in If-Match, e.g. "3". Stale revisions are rejected.
+- Production Compose uses separate COVIE_API_ENV_FILE (API-only keys) and COVIE_WEB_ENV_FILE (web-only values), not the earlier common COVIE_ENV_FILE. Never put payOS keys in Web env.
+- Live pilot: verify provider's minimum positive VND amount for your channel before Admin creates a dedicated low-cost pilot plan. PAYOS_PAYMENT_ENABLED and COVIE_BILLING_RELEASE_APPROVED default false and only operator may temporarily enable them after approval; billing.enforcement_enabled remains false for pilot.
+- Original approved BIL-001 through BIL-030 scenarios are restored in CoVie-Seller-Billing-Subscription-Implementation-Plan-v1.0.md. New acceptance-matrix-v1.md reuses BIL IDs inconsistently and cannot substitute for original criteria.

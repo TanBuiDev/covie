@@ -17,8 +17,8 @@ import vn.covie.shared.time.AppClock;
 
 /**
  * Queries payOS authoritative link status, stores a privacy-minimal observation.
- * This does not settle invoices or create entitlements: PAID without an authenticated
- * webhook is an explicit operational incident awaiting verified settlement flow.
+ * A signed provider GET can recover a PAID invoice via the same idempotent
+ * BillingWebhookService settlement transaction; unsigned/ambiguous states never settle.
  */
 @Service
 public class BillingReconciliationService {

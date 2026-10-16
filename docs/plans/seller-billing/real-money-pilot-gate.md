@@ -14,5 +14,6 @@ This plan DOES NOT authorize a payment. payOS may charge real funds. No provider
 
 ## Unresolved P0 gates
 
-- Admin catalog revision If-Match/optimistic conflict control, signed expiring quote identity, original approved BIL IDs traceability, full recovery/race E2E, and real provider signature compatibility must still be verified/implemented before broad production rollout.
+- Admin If-Match revision checks and server-bound expiring one-use quotes are implemented in source (V031/V032); full concurrent DB/provider verification remains outstanding.
+- Original BIL IDs traceability, full crash/race E2E and real provider signature compatibility require evidence before broad production rollout.
 - The original detailed approved Seller Billing v1.0 plan is stored at historical commit e976ce1af5de4928800b8c65108cdfad858fb4e8; the newer acceptance matrix reuses BIL IDs for different scenarios. Do not treat the newer matrix as a substitute for the original.
