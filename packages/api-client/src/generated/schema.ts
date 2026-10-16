@@ -1879,9 +1879,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["quote"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["quote"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3389,6 +3389,8 @@ export interface components {
             /** Format: int32 */
             expectedPlanRevision?: number;
             planCode?: string;
+            /** Format: uuid */
+            quoteId?: string;
             voucherCode?: string;
         };
         CheckoutResult: {
@@ -3595,13 +3597,6 @@ export interface components {
             locationVariantId?: string;
             /** Format: int64 */
             quantity?: number;
-        };
-        Discount: {
-            /** Format: int64 */
-            amountDueVnd?: number;
-            code?: string;
-            /** Format: int64 */
-            discountVnd?: number;
         };
         Eligibility: {
             canSell?: boolean;
@@ -4667,6 +4662,19 @@ export interface components {
             offer?: components["schemas"]["PublicOfferResponse"];
             optionValueIds?: string[];
         };
+        Quote: {
+            /** Format: int64 */
+            amountDueVnd?: number;
+            code?: string;
+            /** Format: int64 */
+            discountVnd?: number;
+            /** Format: int32 */
+            planRevision?: number;
+            /** Format: date-time */
+            quoteExpiresAt?: string;
+            /** Format: uuid */
+            quoteId?: string;
+        };
         RatingRebuildRequest: {
             /** Format: uuid */
             catalogItemId?: string;
@@ -5594,7 +5602,9 @@ export interface operations {
     publishPrice: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "If-Match": string;
+            };
             path: {
                 planCode: string;
             };
@@ -5660,7 +5670,9 @@ export interface operations {
     publishPolicy: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "If-Match": string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -8334,7 +8346,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Discount"];
+                    "*/*": components["schemas"]["Quote"];
                 };
             };
         };
