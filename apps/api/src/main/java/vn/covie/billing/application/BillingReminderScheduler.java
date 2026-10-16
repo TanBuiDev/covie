@@ -42,13 +42,15 @@ public class BillingReminderScheduler {
         for(int days : new int[]{7,3,1}) {
             LocalDate target=today.plusDays(days);
             var due=jdbc.query("""
-                select merchant_id,period_end from merchant_subscriptions
-                where status in ('ACTIVE','TRIALING')
-                  and cancel_at_period_end=false and period_end is not null
-                  and (period_end at time zone 'Asia/Ho_Chi_Minh')::date=?
-                order by merchant_id limit 500
+                select s.merchant_id,s.period_end from merchant_subscriptions s
+                where s.status in ('ACTIVE','TRIALING')
+                  and s.cancel_at_period_end=false and s.period_end is not null
+                  and (s.period_end at time zone 'Asia/Ho_Chi_Minh')::date=?
+                  and not exists (select 1 from billing_reminder_dispatches d
+                    where d.merchant_id=s.merchant_id and d.period_end=s.period_end and d.days_before=?)
+                order by s.merchant_id limit 500
                 """, (rs,n)-> new Due((UUID)rs.getObject("merchant_id"),
-                    rs.getTimestamp("period_end").toInstant()),java.sql.Date.valueOf(target));
+                    rs.getTimestamp("period_end").toInstant()),java.sql.Date.valueOf(target),days);
             for(Due item: due) {
                 int inserted=jdbc.update("""
                     insert into billing_reminder_dispatches (merchant_id,period_end,days_before,created_at)

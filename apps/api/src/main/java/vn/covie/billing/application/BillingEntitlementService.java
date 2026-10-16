@@ -58,7 +58,7 @@ public class BillingEntitlementService {
               )
             """, rs -> rs.next() ? rs.getTimestamp(1).toInstant() : null,
             merchantId, java.sql.Timestamp.from(now), java.sql.Timestamp.from(now));
-        if (grace != null) return new Eligibility(true, true, "GRACE_PERIOD", grace);
+        if (grace != null) return new Eligibility(false, true, "GRACE_PERIOD_READ_ONLY", grace);
         return new Eligibility(false, true, "SUBSCRIPTION_REQUIRED", null);
     }
 

@@ -100,6 +100,11 @@ public class BillingFinanceCaseService {
         if(current.status().equals("CONFIRMED")||current.status().equals("REJECTED")) {
             throw conflict("This case is already resolved.");
         }
+        if("REVIEWING".equals(request.status())) {
+            UUID requester=jdbc.queryForObject("select created_by_user_id from billing_finance_cases where id=?",
+                UUID.class,caseId);
+            if(actor.userId().equals(requester)) throw conflict("A requester cannot review their own refund.");
+        }
         if("CONFIRMED".equals(request.status())) {
             if(!refundApproval)throw conflict("Refund confirmation requires separate operator approval.");
             var reviewers=jdbc.query("""
@@ -157,7 +162,7 @@ public class BillingFinanceCaseService {
      */
     static void requireIndependentRefundApproval(String status,UUID approver,UUID requester,UUID reviewer) {
         if(!"REVIEWING".equals(status) || reviewer==null || reviewer.equals(approver)
-                || requester==null || requester.equals(approver))
+                || requester==null || requester.equals(approver) || requester.equals(reviewer))
             throw conflict("Refund requires review by another Administrator and an independent approver.");
     }
 

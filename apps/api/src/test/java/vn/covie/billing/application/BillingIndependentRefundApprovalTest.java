@@ -17,5 +17,7 @@ class BillingIndependentRefundApprovalTest {
             "REVIEWING",SELLER,SELLER,REVIEWER));
         assertThrows(RuntimeException.class,()->BillingFinanceCaseService.requireIndependentRefundApproval(
             "REVIEWING",APPROVER,SELLER,null));
+        assertThrows(RuntimeException.class,()->BillingFinanceCaseService.requireIndependentRefundApproval(
+            "REVIEWING",APPROVER,SELLER,SELLER));
     }
 }
