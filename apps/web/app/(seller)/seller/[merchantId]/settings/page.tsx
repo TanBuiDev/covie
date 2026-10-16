@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { CreditCard } from "@phosphor-icons/react/dist/ssr";
 import { MerchantForm } from "@/features/merchant/merchant-form";
 import { getMerchantForServer } from "@/features/merchant/merchant-server-api";
 import { GearSix } from "@phosphor-icons/react/dist/ssr";
@@ -30,6 +32,13 @@ export default async function SellerSettingsPage({ params }: { params: Promise<{
         </div>
         <p>Hồ sơ shop công khai &amp; nhận diện thương hiệu với cư dân CoVie.</p>
       </header>
+      <section className="admin-surface">
+        <h2><CreditCard size={22} weight="duotone" aria-hidden="true" /> Thuê bao cửa hàng</h2>
+        <p>Quản lý gói thuê bao, thời hạn, thanh toán và lịch sử hóa đơn của cửa hàng.</p>
+        <Link href={`/seller/${encodeURIComponent(merchantId)}/billing`}>
+          Xem và quản lý thuê bao
+        </Link>
+      </section>
       <MerchantForm key={merchant.etag || String(merchant.data.version ?? "merchant")} merchant={merchant} />
     </section>
   );

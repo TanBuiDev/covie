@@ -7,6 +7,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { StatusChip, type StatusTone } from "@/components/ui/status-chip";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { CovieApiError } from "@/lib/api/api-error";
+import { requestBrowserApi } from "@/lib/api/api-client";
 import {
   ArrowRight,
   Check,
@@ -112,10 +113,11 @@ export function MerchantList({ merchants }: { merchants: MerchantSummary[] }) {
   );
 }
 
-export function MerchantForm({ merchant, onCreated, onReload }: {
+export function MerchantForm({ merchant, onCreated, onReload, billingOnboarding = false }: {
   merchant?: Etagged<components["schemas"]["MerchantManagementResponse"]>;
   onCreated?: () => void;
   onReload?: () => void;
+  billingOnboarding?: boolean;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState<string>();
@@ -227,8 +229,27 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
         ...(coverMediaId ? { coverMediaId } : {}),
       };
 
-      if (editing && merchant?.data.id) await updateMerchant(merchant.data.id, merchant.etag, input);
-      else await createMerchant(input);
+      if (editing && merchant?.data.id) {
+        await updateMerchant(merchant.data.id, merchant.etag, input);
+      } else {
+        const created = await createMerchant(input);
+        if (billingOnboarding && created.id) {
+          // Do not rely on UI for enforcement. Backend guards publishing/checkout.
+          // Navigate to payment only when Admin's effective policy requires it.
+          try {
+            const response = await requestBrowserApi("GET", "/api/v1/billing/onboarding");
+            if (response.ok) {
+              const rules = await response.json() as {
+                enforcementEnabled: boolean; onboardingMode: string;
+              };
+              if (rules.enforcementEnabled && rules.onboardingMode === "PAY_BEFORE_SELL") {
+                router.push(`/seller/${encodeURIComponent(created.id)}/billing`);
+                return;
+              }
+            }
+          } catch { /* Merchant was already created; keep its standard navigation on network errors. */ }
+        }
+      }
       setMessage(editing ? "Đã lưu thay đổi hồ sơ shop." : "Đã tạo cửa hàng.");
       saved();
     } catch (error) {

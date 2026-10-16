@@ -9,6 +9,7 @@ import {
   Package,
   PlusCircle,
   Megaphone,
+  CreditCard,
   Users,
   Storefront,
   MapPin,
@@ -58,6 +59,7 @@ export const adminSections: NavSection[] = [
       { href: "/admin/orders", label: "Đơn hàng toàn sàn", icon: Package, badge: "12", badgeType: "warning" },
       { href: "/admin/needs", label: "Nhu cầu cư dân", icon: PlusCircle },
       { href: "/admin/ads", label: "Chiến dịch quảng cáo", icon: Megaphone, badge: "3", badgeType: "info" },
+      { href: "/admin/billing", label: "Thuê bao Seller", icon: CreditCard },
     ],
   },
   {

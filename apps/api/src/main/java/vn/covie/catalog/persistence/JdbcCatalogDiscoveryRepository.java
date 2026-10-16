@@ -10,6 +10,10 @@ import java.util.UUID;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.settings.application.SystemSettingResolver;
+import vn.covie.settings.application.SystemSettingContext;
+
 import vn.covie.catalog.api.dto.discovery.CatalogCursor;
 import vn.covie.catalog.api.dto.discovery.CatalogDiscoveryQuery;
 import vn.covie.catalog.api.dto.discovery.CatalogSort;
@@ -20,9 +24,18 @@ import vn.covie.location.application.LocationContext;
 @Repository
 public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepository {
     private final NamedParameterJdbcTemplate jdbc;
+    private final SystemSettingResolver settings;
 
+    /** Legacy standalone repository tests use this constructor with enforcement OFF. */
     public JdbcCatalogDiscoveryRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
+        this.settings = null;
+    }
+
+    @Autowired
+    public JdbcCatalogDiscoveryRepository(NamedParameterJdbcTemplate jdbc, SystemSettingResolver settings) {
+        this.jdbc = jdbc;
+        this.settings = settings;
     }
 
     @Override
@@ -37,7 +50,9 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
                 .addValue("contextAreaId", context.locationAreaId(), Types.OTHER)
                 .addValue("now", now.atOffset(ZoneOffset.UTC), Types.TIMESTAMP_WITH_TIMEZONE)
                 .addValue("q", normalizedTerm(query.q()), Types.VARCHAR)
-                .addValue("fetchLimit", query.limit() + 1);
+                .addValue("fetchLimit", query.limit() + 1)
+                .addValue("billingEnforced", settings != null
+                    && settings.bool("billing.enforcement_enabled", SystemSettingContext.globalOnly()));
         parameters.addValue("shippingMode", query.shipping() == null ? null : query.shipping().name(), Types.VARCHAR);
 
         StringBuilder filters = new StringBuilder();
@@ -84,6 +99,23 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
                     join merchant_profiles mp on mp.id = ml.merchant_profile_id
                     where ml.location_status = 'ACTIVE' and ml.deleted_at is null
                       and mp.merchant_status = 'ACTIVE' and mp.moderation_status in ('NOT_REQUIRED', 'APPROVED') and mp.deleted_at is null
+                      and (:billingEnforced = false or exists (
+                          select 1 from billing_entitlement_grants grant_row
+                          where grant_row.merchant_id = mp.id
+                            and grant_row.revoked_at is null
+                            and grant_row.valid_from <= cast(:now as timestamptz)
+                            and grant_row.valid_until > cast(:now as timestamptz)
+                      ) or exists (
+                          select 1 from merchant_subscriptions bs
+                          where bs.merchant_id=mp.id and bs.status in ('ACTIVE','TRIALING','PAST_DUE')
+                            and bs.cancel_at_period_end=false
+                            and bs.period_end<=cast(:now as timestamptz)
+                            and bs.grace_until>cast(:now as timestamptz)
+                            and exists (select 1 from billing_entitlement_grants bg
+                                where bg.merchant_id=bs.merchant_id and bg.revoked_at is null
+                                  and bg.source_type in ('TRIAL','PAID_INVOICE')
+                                  and bg.valid_until=bs.period_end)
+                      ))
                       and st_dwithin(ml.geo_point, st_setsrid(st_makepoint(:lng, :lat), 4326)::geography, :radiusMeters)
                       and (:pickup = false or ml.pickup_enabled)
                       and (:shippingMode is null or exists (

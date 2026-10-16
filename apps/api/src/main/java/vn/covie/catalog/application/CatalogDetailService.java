@@ -10,6 +10,8 @@ import java.util.UUID;
 import org.locationtech.jts.geom.Point;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.billing.application.BillingEntitlementService;
 import vn.covie.catalog.api.dto.publicview.CatalogItemDetailResponse;
 import vn.covie.catalog.api.dto.publicview.PublicMediaResponse;
 import vn.covie.catalog.api.dto.publicview.PublicOfferResponse;
@@ -60,6 +62,11 @@ public class CatalogDetailService {
     private final LocationContextResolver contexts;
     private final PublicMerchantViewService merchantViews;
     private final MediaUrlResolver mediaUrls;
+    private BillingEntitlementService billing;
+
+    @Autowired public void setBillingEntitlements(BillingEntitlementService billing) {
+        this.billing = java.util.Objects.requireNonNull(billing);
+    }
 
     public CatalogDetailService(CatalogItemRepository items, VariantRepository variants,
             LocationVariantRepository offers, MerchantLocationRepository locations,
@@ -82,6 +89,10 @@ public class CatalogDetailService {
     public CatalogItemDetailResponse get(UUID itemId, UUID locationId, UUID addressId, Double lat, Double lng) {
         CatalogItemEntity item = requireVisibleItem(itemId);
         MerchantProfileEntity merchant = merchantViews.requireVisible(item.getMerchantProfileId());
+        if (billing != null) {
+            var eligible = billing.evaluate(merchant.getId());
+            if (eligible.enforced() && !eligible.canSell()) throw notFound();
+        }
         List<VariantEntity> activeVariants = variants.findAllByCatalogItemIdAndDeletedAtIsNullOrderBySortOrderAscIdAsc(itemId)
                 .stream().filter(variant -> variant.getVariantStatus() == VariantStatus.ACTIVE).toList();
         Map<UUID, VariantEntity> variantsById = activeVariants.stream()

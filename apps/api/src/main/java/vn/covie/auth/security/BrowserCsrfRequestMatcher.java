@@ -12,6 +12,9 @@ public final class BrowserCsrfRequestMatcher implements RequestMatcher {
     private static final Set<String> SAFE_METHODS = Set.of(HttpMethod.GET.name(), HttpMethod.HEAD.name(), HttpMethod.OPTIONS.name(), HttpMethod.TRACE.name());
     @Override public boolean matches(HttpServletRequest request) {
         if (SAFE_METHODS.contains(request.getMethod())) return false;
+        // payOS is a server-to-server webhook; its payload is authenticated by HMAC_SHA256.
+        if (HttpMethod.POST.matches(request.getMethod())
+                && "/api/v1/billing/webhooks/payos".equals(request.getRequestURI())) return false;
         // Anonymous ad telemetry authorizes with a short-lived delivery proof and changes no user/session state.
         // Keep all campaign-management mutations under the normal browser-CSRF contract.
         if (HttpMethod.POST.matches(request.getMethod()) && request.getRequestURI().matches(

@@ -108,6 +108,29 @@ jobs:
           fetch-depth: 0
       - name: Scan every fetched branch and tag for secrets
         run: |
-          docker run --rm -v "$PWD:/repo:ro" \
+          # Retain a blocking exit code; print only safe metadata for triage.
+          # Never upload or echo Match, Secret, or raw scanner JSON.
+          set +e
+          docker run --rm -v "$PWD:/repo:ro" -v "$RUNNER_TEMP:/reports:rw" \
             zricethezav/gitleaks@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9 \
-            git /repo --log-opts=--all --gitleaks-ignore-path=/repo/.gitleaksignore --redact
+            git /repo --log-opts=--all --gitleaks-ignore-path=/repo/.gitleaksignore \
+            --redact --report-format=json --report-path=/reports/gitleaks-history.json
+          result=$?
+          set -e
+          if [ "$result" -ne 0 ] && [ -f "$RUNNER_TEMP/gitleaks-history.json" ]; then
+            python3 - "$RUNNER_TEMP/gitleaks-history.json" <<'PY'
+          import json
+          import sys
+          with open(sys.argv[1], encoding="utf-8") as f:
+              findings = json.load(f)
+          for finding in findings:
+              print("Potential historic secret (metadata only):", json.dumps({
+                  "rule": finding.get("RuleID"),
+                  "file": finding.get("File"),
+                  "line": finding.get("StartLine"),
+                  "commit": finding.get("Commit"),
+              }, ensure_ascii=False))
+          PY
+          fi
+          rm -f "$RUNNER_TEMP/gitleaks-history.json"
+          exit "$result"

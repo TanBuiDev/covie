@@ -95,6 +95,7 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
     fillBaseFields({ categoryId: "cat-service", name: "Vệ sinh máy lạnh" });
 
     await waitFor(() => expect(mocks.getCategoryDetail).toHaveBeenCalledWith("cat-service"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Tạo nội dung" })).toBeEnabled());
 
     fireEvent.click(screen.getByLabelText("Dịch vụ có nhiều gói"));
     fireEvent.change(screen.getByLabelText("Tên lựa chọn"), { target: { value: "Số máy" } });
@@ -201,6 +202,9 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
     fillBaseFields({ categoryId: "cat-resale", name: "Nồi chiên không dầu" });
 
     await waitFor(() => expect(screen.getByLabelText(/^Tình trạng/)).toBeInTheDocument());
+    // Category detail is set before its asynchronous loading flag is cleared.
+    // A visible selector alone does not mean the submit button is enabled.
+    await waitFor(() => expect(screen.getByRole("button", { name: "Tạo nội dung" })).toBeEnabled());
 
     fireEvent.change(screen.getByLabelText(/^Tình trạng/), { target: { value: "condition-good" } });
     fireEvent.change(screen.getByLabelText("Tháng đã sử dụng"), { target: { value: "8" } });

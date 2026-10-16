@@ -2,7 +2,7 @@ services:
   api:
     image: ${COVIE_API_IMAGE:?COVIE_API_IMAGE is required}
     env_file:
-      - ${COVIE_ENV_FILE:?COVIE_ENV_FILE is required}
+      - ${COVIE_API_ENV_FILE:?COVIE_API_ENV_FILE is required}
     volumes:
       - ${COVIE_JWT_SECRET_DIR:?COVIE_JWT_SECRET_DIR is required}:/run/covie-secrets:ro
     expose:
@@ -20,7 +20,8 @@ services:
   web:
     image: ${COVIE_WEB_IMAGE:?COVIE_WEB_IMAGE is required}
     env_file:
-      - ${COVIE_ENV_FILE:?COVIE_ENV_FILE is required}
+      - ${COVIE_WEB_ENV_FILE:?COVIE_WEB_ENV_FILE is required}
+    # Web env file MUST NOT contain API-only keys (payOS, DB, JWT).
     expose:
       - "3000"
     networks: [internal]
