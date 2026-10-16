@@ -167,6 +167,22 @@ public class BillingCheckoutService {
             throw error(ErrorCode.BILLING_PRICE_INVALID, HttpStatus.UNPROCESSABLE_ENTITY,
                 "Zero-value plans require an Admin entitlement grant, not payOS.");
         }
+        if (request.quoteId() == null)
+            throw error(ErrorCode.BILLING_PRICE_INVALID, HttpStatus.CONFLICT,
+                "Please review a fresh billing quote before creating a payment.");
+        var quotes = jdbc.query("""
+            select plan_version_id,voucher_code,amount_due_vnd,expires_at,consumed_by_idempotency_key
+            from billing_quotes where id=? and merchant_id=? for update
+            """, (rs,n) -> new QuoteSnapshot((UUID) rs.getObject("plan_version_id"),
+                rs.getString("voucher_code"),rs.getLong("amount_due_vnd"),
+                rs.getTimestamp("expires_at").toInstant(),
+                rs.getString("consumed_by_idempotency_key")), request.quoteId(),merchantId);
+        if (quotes.isEmpty()) throw expiredQuote();
+        QuoteSnapshot checkedQuote = quotes.getFirst();
+        if (!checkedQuote.planVersionId().equals(offer.id())
+                || !java.util.Objects.equals(checkedQuote.voucherCode(),coupon)
+                || !checkedQuote.expiresAt().isAfter(clock.now())
+                || checkedQuote.consumedByIdempotencyKey() != null) throw expiredQuote();
         var policy = catalog.currentPolicy();
         Instant now = clock.now();
         Instant expires = now.plusSeconds(15 * 60);
@@ -184,6 +200,7 @@ public class BillingCheckoutService {
         UUID invoiceId = UUID.randomUUID();
         var discount = vouchers.reserve(coupon,offer.code(),merchantId,offer.priceVnd());
         long amountDue = discount.amountDueVnd();
+        if (checkedQuote.amountDueVnd() != amountDue) throw expiredQuote();
         requireQuoteUnchanged(request.expectedAmountVnd(),request.expectedPlanRevision(),
             amountDue,offer.revision());
         UUID attemptId = UUID.randomUUID();
@@ -215,6 +232,11 @@ public class BillingCheckoutService {
             Timestamp.from(periodStart), Timestamp.from(periodEnd), snapshot, idempotencyKey,
             fingerprint, at, Timestamp.from(expires), orderCode,
             Timestamp.from(periodEnd.plusSeconds(86400L * policy.graceDays())));
+        int quoteClaim = jdbc.update("""
+            update billing_quotes set consumed_by_idempotency_key=?
+            where id=? and merchant_id=? and consumed_by_idempotency_key is null
+            """,idempotencyKey,request.quoteId(),merchantId);
+        if (quoteClaim != 1) throw expiredQuote();
         vouchers.attachReservation(invoiceId,merchantId,offer.priceVnd(),discount);
         jdbc.update("""
             insert into billing_payment_attempts
@@ -232,16 +254,37 @@ public class BillingCheckoutService {
         }
     }
 
-    @Transactional(readOnly=true)
-    public BillingVoucherService.Discount quote(UUID merchantId,String planCode,String voucherCode){
+    @Transactional
+    public Quote quote(UUID merchantId,String planCode,String voucherCode) {
         requireOwner(merchantId);
         if(planCode==null || !planCode.matches("[A-Z0-9_]{1,60}"))
             throw error(ErrorCode.BILLING_PRICE_INVALID,HttpStatus.UNPROCESSABLE_ENTITY,"Invalid plan.");
         var offer = catalog.availablePlans().stream().filter(x->x.code().equals(planCode))
             .findFirst().orElseThrow(()->error(ErrorCode.BILLING_PRICE_INVALID,
                 HttpStatus.UNPROCESSABLE_ENTITY,"Plan is not currently available."));
-        return vouchers.quote(voucherCode,planCode,merchantId,offer.priceVnd());
+        var discount = vouchers.quote(voucherCode,planCode,merchantId,offer.priceVnd());
+        if (discount.amountDueVnd() <= 0) throw error(ErrorCode.BILLING_PRICE_INVALID,
+            HttpStatus.UNPROCESSABLE_ENTITY,"A paid quote must have a positive amount.");
+        UUID id = UUID.randomUUID();
+        Instant now = clock.now(), expiry = now.plusSeconds(10*60);
+        jdbc.update("""
+            insert into billing_quotes
+              (id,merchant_id,plan_version_id,voucher_code,amount_due_vnd,created_at,expires_at)
+            values (?,?,?,?,?,?,?)
+            """,id,merchantId,offer.id(),discount.code(),discount.amountDueVnd(),
+            Timestamp.from(now),Timestamp.from(expiry));
+        return new Quote(discount.code(),discount.discountVnd(),discount.amountDueVnd(),
+            id,expiry,offer.revision());
     }
+
+    private static ApiException expiredQuote() {
+        return error(ErrorCode.BILLING_PRICE_INVALID,HttpStatus.CONFLICT,
+            "Quote expired, was used, or pricing changed. Request and confirm a new quote.");
+    }
+    private record QuoteSnapshot(UUID planVersionId,String voucherCode,long amountDueVnd,
+                                 Instant expiresAt,String consumedByIdempotencyKey) {}
+    public record Quote(String code,long discountVnd,long amountDueVnd,
+                        UUID quoteId,Instant quoteExpiresAt,int planRevision) {}
 
     /**
      * Opt out of future automatic renewal. The existing prepaid period and
@@ -376,7 +419,11 @@ public class BillingCheckoutService {
     }
 
     public record CheckoutRequest(String planCode,String voucherCode,
-                                  Long expectedAmountVnd,Integer expectedPlanRevision) {}
+                                  Long expectedAmountVnd,Integer expectedPlanRevision,UUID quoteId) {
+        public CheckoutRequest(String planCode,String voucherCode,Long expectedAmountVnd,Integer expectedPlanRevision) {
+            this(planCode,voucherCode,expectedAmountVnd,expectedPlanRevision,null);
+        }
+    }
     public record CheckoutResult(UUID invoiceId, long orderCode, long amountVnd,
                                  String checkoutUrl, String qrPayload, Instant expiresAt, String invoiceStatus) {}
     public record PaymentStatus(UUID invoiceId, String invoiceStatus, String paymentStatus,

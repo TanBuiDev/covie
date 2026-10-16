@@ -17,8 +17,8 @@ public class BillingVoucherController {
         this.vouchers=vouchers;this.checkout=checkout;
     }
 
-    @GetMapping("/api/v1/merchants/{merchantId}/billing/quote")
-    public ResponseEntity<BillingVoucherService.Discount> quote(@PathVariable UUID merchantId,
+    @PostMapping("/api/v1/merchants/{merchantId}/billing/quote")
+    public ResponseEntity<BillingCheckoutService.Quote> quote(@PathVariable UUID merchantId,
             @RequestParam String planCode,@RequestParam(required=false) String voucherCode){
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
             .body(checkout.quote(merchantId,planCode,voucherCode));

@@ -12,7 +12,8 @@ type Invoice = Required<components["schemas"]["InvoiceSummary"]>;
 type Checkout = Required<components["schemas"]["CheckoutResult"]>;
 type Subscription = { status: string; planCode: string | null; cancelAtPeriodEnd: boolean;
   periodStart: string | null; periodEnd: string | null };
-type VoucherQuote = { code: string | null; discountVnd: number; amountDueVnd: number };
+type VoucherQuote = { code: string | null; discountVnd: number; amountDueVnd: number;
+  quoteId: string; quoteExpiresAt: string; planRevision: number };
 
 
 const money = (amount: number) => new Intl.NumberFormat("vi-VN").format(amount) + "đ";
@@ -125,7 +126,7 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
     try {
       const query = new URLSearchParams({ planCode: selected });
       if (code) query.set("voucherCode", code);
-      const response = await requestBrowserApi("GET", base + "/quote?" + query.toString());
+      const response = await requestBrowserApi("POST", base + "/quote?" + query.toString());
       if (!response.ok) throw await readApiError(response);
       const data = await response.json() as VoucherQuote;
       setVoucherQuote({ ...data, planCode: selected, enteredCode: code });
@@ -137,7 +138,8 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
   async function createCheckout() {
     if (paying || !selected) return;
     const code = voucherCode.trim().toUpperCase();
-    if (code && (voucherQuote?.enteredCode !== code || voucherQuote?.planCode !== selected)) {
+    if (!voucherQuote || voucherQuote.enteredCode !== code || voucherQuote.planCode !== selected
+      || new Date(voucherQuote.quoteExpiresAt).getTime() <= Date.now()) {
       setError("Vui lòng kiểm tra và xác nhận số tiền sau giảm trước khi tạo link thanh toán.");
       return;
     }
@@ -146,10 +148,11 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
     try {
       const plan = plans.find(value => value.code === selected);
       if (!plan) throw new Error("Gói không còn được mở bán. Tải lại bảng giá.");
-      const expectedAmountVnd = code ? voucherQuote?.amountDueVnd : plan.priceVnd;
+      const expectedAmountVnd = voucherQuote.amountDueVnd;
+      if (voucherQuote.planRevision !== plan.revision) throw new Error("Giá đã thay đổi. Vui lòng kiểm tra lại báo giá.");
       const response = await requestBrowserApi("POST", base + "/checkout",
         { planCode: selected, voucherCode: code || null,
-          expectedAmountVnd, expectedPlanRevision: plan.revision },
+          expectedAmountVnd, expectedPlanRevision: plan.revision, quoteId: voucherQuote.quoteId },
         { "Idempotency-Key": idempotency.current });
       if (!response.ok) throw await readApiError(response);
       const link = await response.json() as Checkout;
@@ -233,6 +236,7 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
                   <p role="status">
                     {voucherQuote.code ? `Giảm ${money(voucherQuote.discountVnd)}. ` : ""}
                     <strong>Phải thanh toán: {money(voucherQuote.amountDueVnd)}</strong>
+                    <span> — báo giá hết hạn lúc {new Date(voucherQuote.quoteExpiresAt).toLocaleTimeString("vi-VN")}</span>
                   </p>
                 ) : null}
                 <p>Thanh toán từng lần bằng chuyển khoản VietQR qua payOS. CoVie chưa tự động trừ tiền gia hạn; chỉ chủ cửa hàng được tạo giao dịch.</p>
