@@ -205,9 +205,14 @@ public class BillingCatalogService {
     }
 
     public static int parseIfMatch(String header) {
-        if (header == null || !header.matches("\\\"[1-9][0-9]{0,8}\\\""))
-            throw badRequest("If-Match must be a quoted published revision, e.g. \\"3\\".");
-        return Integer.parseInt(header.substring(1, header.length()-1));
+        if (header == null || header.length() < 3
+                || header.charAt(0) != '"' || header.charAt(header.length()-1) != '"') {
+            throw badRequest("If-Match must contain a quoted positive revision.");
+        }
+        String value = header.substring(1, header.length()-1);
+        if (!value.matches("[1-9][0-9]{0,8}"))
+            throw badRequest("If-Match contains an invalid revision.");
+        return Integer.parseInt(value);
     }
 
     private static ApiException revisionConflict() {
