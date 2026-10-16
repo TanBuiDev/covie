@@ -127,7 +127,7 @@ public class BillingCatalogService {
     }
 
     @Transactional
-    public PlanOffer publishPrice(String planCode, PriceChange request) {
+    public PlanOffer publishPrice(String planCode, PriceChange request, int expectedRevision) {
         var actor = admins.requireAdmin();
         if (request == null || planCode == null || !planCode.matches("[A-Z0-9_]{1,60}")
                 || request.priceVnd() < 0 || request.priceVnd() > 1_000_000_000L
@@ -148,6 +148,9 @@ public class BillingCatalogService {
         Integer rev = jdbc.queryForObject(
             "select coalesce(max(revision), 0) from billing_plan_versions where plan_code = ?",
             Integer.class, planCode);
+        if (rev == null || rev != expectedRevision) {
+            throw revisionConflict();
+        }
         UUID id = UUID.randomUUID();
         jdbc.update("""
             insert into billing_plan_versions
@@ -167,7 +170,7 @@ public class BillingCatalogService {
     }
 
     @Transactional
-    public Policy publishPolicy(PolicyChange request) {
+    public Policy publishPolicy(PolicyChange request, int expectedRevision) {
         var actor = admins.requireAdmin();
         if (request == null || request.onboardingMode() == null
                 || !List.of("PAY_BEFORE_SELL", "TRIAL").contains(request.onboardingMode())
@@ -184,6 +187,7 @@ public class BillingCatalogService {
             throw badRequest("A new policy must become effective after already published versions.");
         }
         Integer rev = jdbc.queryForObject("select max(revision) from billing_policy_versions", Integer.class);
+        if (rev == null || rev != expectedRevision) throw revisionConflict();
         UUID id = UUID.randomUUID();
         jdbc.update("""
             insert into billing_policy_versions
@@ -200,6 +204,16 @@ public class BillingCatalogService {
             request.trialDays(), request.graceDays(), request.effectiveAt());
     }
 
+    public static int parseIfMatch(String header) {
+        if (header == null || !header.matches("\\\"[1-9][0-9]{0,8}\\\""))
+            throw badRequest("If-Match must be a quoted published revision, e.g. \\"3\\".");
+        return Integer.parseInt(header.substring(1, header.length()-1));
+    }
+
+    private static ApiException revisionConflict() {
+        return new ApiException(ErrorCode.VALIDATION_FAILED, HttpStatus.CONFLICT,
+            "Billing configuration changed since it was loaded. Reload and review the latest revision.");
+    }
     private static ApiException badRequest(String message) {
         return new ApiException(ErrorCode.VALIDATION_FAILED, HttpStatus.UNPROCESSABLE_ENTITY, message);
     }

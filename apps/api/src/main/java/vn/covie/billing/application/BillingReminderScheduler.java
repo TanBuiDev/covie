@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.LinkedHashSet;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,7 +18,7 @@ import vn.covie.shared.outbox.OutboxEventWriter;
 import vn.covie.shared.time.AppClock;
 
 /**
- * Admin-enabled daily reminders at 7, 3 and 1 days before prepaid period expiry.
+ * Admin-enabled configurable daily reminders before prepaid period expiry.
  * Database claim + outbox insertion are atomic. No duplicate reminders across replicas.
  */
 @Service
@@ -39,8 +40,15 @@ public class BillingReminderScheduler {
         if (!settings.bool("billing.reminders_enabled",SystemSettingContext.globalOnly())) return;
         Instant now=clock.now();
         LocalDate today=now.atZone(BUSINESS_ZONE).toLocalDate();
-        for(int days : new int[]{7,3,1}) {
+        var daysBefore = new LinkedHashSet<Integer>();
+        daysBefore.add(settings.integer("billing.reminder_first_days",SystemSettingContext.globalOnly()));
+        daysBefore.add(settings.integer("billing.reminder_second_days",SystemSettingContext.globalOnly()));
+        daysBefore.add(settings.integer("billing.reminder_last_days",SystemSettingContext.globalOnly()));
+        for (int days : daysBefore) {
             LocalDate target=today.plusDays(days);
+            // Move to the next 500 unclaimed merchants after every batch. Without
+            // this loop a busy day can starve merchants beyond the first page.
+            for (int batch = 0; batch < 20; batch++) {
             var due=jdbc.query("""
                 select s.merchant_id,s.period_end from merchant_subscriptions s
                 where s.status in ('ACTIVE','TRIALING')
@@ -51,6 +59,7 @@ public class BillingReminderScheduler {
                 order by s.merchant_id limit 500
                 """, (rs,n)-> new Due((UUID)rs.getObject("merchant_id"),
                     rs.getTimestamp("period_end").toInstant()),java.sql.Date.valueOf(target),days);
+            if(due.isEmpty()) break;
             for(Due item: due) {
                 int inserted=jdbc.update("""
                     insert into billing_reminder_dispatches (merchant_id,period_end,days_before,created_at)
@@ -62,6 +71,8 @@ public class BillingReminderScheduler {
                             "merchantId",item.merchantId().toString(),"daysBefore",days,
                             "periodEnd",item.periodEnd().toString())));
                 }
+            }
+            if (due.size() < 500) break;
             }
         }
     }

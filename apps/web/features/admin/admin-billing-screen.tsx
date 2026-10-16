@@ -129,7 +129,12 @@ export function AdminBillingScreen() {
       const body = kind === "price"
         ? { priceVnd: Number(price), cycleMonths: Number(months), effectiveAt: date.toISOString() }
         : { onboardingMode: mode, trialDays: Number(trial), graceDays: Number(grace), effectiveAt: date.toISOString() };
-      await requireJson(await requestBrowserApi("POST", url, body));
+      const expectedRevision = kind === "price"
+        ? plans.find(plan => plan.code === selectedCode)?.revision
+        : policy?.revision;
+      if (!expectedRevision) throw new Error("Không xác định được phiên bản. Vui lòng tải lại.");
+      await requireJson(await requestBrowserApi("POST", url, body,
+        { "If-Match": `"${expectedRevision}"` }));
       setNotice("Đã tạo phiên bản mới; giá và chính sách có hiệu lực theo lịch đã chọn.");
       await load();
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Không thể lưu chính sách"); }

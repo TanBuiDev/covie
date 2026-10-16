@@ -37,6 +37,9 @@ public class SystemSettingRegistry {
         add(values, bool("billing.enforcement_enabled", false));
         add(values, bool("billing.seller_registration_enabled", true));
         add(values, bool("billing.reminders_enabled", false));
+        add(values, integer("billing.reminder_first_days", 7, 1, 60, GLOBAL));
+        add(values, integer("billing.reminder_second_days", 3, 1, 60, GLOBAL));
+        add(values, integer("billing.reminder_last_days", 1, 1, 60, GLOBAL));
         add(values, bool("billing.finance_roles_enabled", false));
         add(values, integer("billing.checkout_hourly_limit", 6, 1, 60, GLOBAL));
         definitions = Map.copyOf(values);

@@ -66,13 +66,15 @@ public class BillingController {
 
     @PostMapping("/api/v1/admin/billing/plans/{planCode}/prices")
     public BillingCatalogService.PlanOffer publishPrice(@PathVariable String planCode,
+                                      @RequestHeader("If-Match") String ifMatch,
                                       @RequestBody BillingCatalogService.PriceChange request) {
-        return catalog.publishPrice(planCode, request);
+        return catalog.publishPrice(planCode, request, BillingCatalogService.parseIfMatch(ifMatch));
     }
 
     @PostMapping("/api/v1/admin/billing/policy")
-    public BillingCatalogService.Policy publishPolicy(@RequestBody BillingCatalogService.PolicyChange request) {
-        return catalog.publishPolicy(request);
+    public BillingCatalogService.Policy publishPolicy(@RequestHeader("If-Match") String ifMatch,
+            @RequestBody BillingCatalogService.PolicyChange request) {
+        return catalog.publishPolicy(request, BillingCatalogService.parseIfMatch(ifMatch));
     }
 
     private void requireMember(UUID merchantId) {
