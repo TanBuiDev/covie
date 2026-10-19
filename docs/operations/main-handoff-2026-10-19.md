@@ -119,3 +119,27 @@ remain uncompleted. Do not infer them from isolated or candidate local acceptanc
 
 Normal Social/video/money/release/reconciliation/enforcement flags remain OFF.
 Existing/recovered data and normal stacks have not been started, reset or migrated.
+
+### PR39 CI follow-up
+
+The first remote backend run failed two cases: Edit/Restore assumed PostgreSQL
+waiter FIFO, and a Java child fixture inherited the CI launcher diagnostic. The
+bounded real-transaction gate now executes all four Restore outcomes; its targeted
+case passed30.19s. The launcher test checks/removes only the exact inherited banner,
+using the actual LF emitted by Java on Windows as well as Linux.
+
+Running the probe cases with CI JAVA_TOOL_OPTIONS exposed a real bounded-output
+problem on Windows: the reader stopped at32769 bytes while the child remained
+blocked writing to its pipe, so process.waitFor reached the timeout instead of the
+output-limit rejection. The bounded reader now terminates the owned process and
+descendants immediately on overflow. All four actual-process cases passed0.838s
+(Maven19.381s), retaining exact failure-message assertions. This production change
+supersedes the earlier packaged-JAR source binding; that older runtime/Trivy evidence
+does not cover the new binary. Fresh remote backend verification remains required.
+
+The prior packaged-JAR read fixture completed with six financial tables unchanged,
+zero post-login writes and zero page errors. The actual current-dependency Social
+Seller/upload/publish/guest flow passed78.58s in a copied development Web runtime.
+Neither result is staging, production deployment, real payment or new-binary proof.
+Seven source-bound CodeQL false positives were individually dismissed with API
+receipts; the aggregate check succeeded without disabling queries or changing rules.

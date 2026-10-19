@@ -19,7 +19,14 @@ final class MediaProbeProcess {
         long deadline = System.nanoTime() + timeout.toNanos();
         Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
         try (var input = process.getInputStream(); var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            var output = executor.submit(() -> input.readNBytes(MAX_OUTPUT_BYTES + 1));
+            var output = executor.submit(() -> {
+                byte[] bytes = input.readNBytes(MAX_OUTPUT_BYTES + 1);
+                if (bytes.length > MAX_OUTPUT_BYTES) {
+                    process.descendants().forEach(ProcessHandle::destroyForcibly);
+                    process.destroyForcibly();
+                }
+                return bytes;
+            });
             try {
                 process.getOutputStream().close();
                 if (!process.waitFor(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS))

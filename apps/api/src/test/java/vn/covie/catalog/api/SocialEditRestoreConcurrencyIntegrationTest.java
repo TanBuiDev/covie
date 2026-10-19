@@ -31,7 +31,8 @@ import vn.covie.users.persistence.UserRepository;
 
 @AutoConfigureMockMvc
 @SpringBootTest(properties={"covie.social-v2.caption-authoring-enabled=true","covie.social-v2.previews-enabled=true",
-        "covie.outbox.max-events-per-poll=0","covie.retention.enabled=false"})
+        "covie.outbox.max-events-per-poll=0","covie.retention.enabled=false",
+        "spring.jpa.properties.hibernate.session_factory.statement_inspector=vn.covie.catalog.api.SocialEditRestoreConcurrencyIntegrationTest$UpdateGateInspector"})
 class SocialEditRestoreConcurrencyIntegrationTest extends PostgresIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
@@ -83,17 +84,23 @@ class SocialEditRestoreConcurrencyIntegrationTest extends PostgresIntegrationTes
                     try (var rows=lock.executeQuery()) { assertThat(rows.next()).isTrue(); }
                 }
                 var first=workers.submit(sellerFirst?edit:restore);
-                java.util.concurrent.Future<MockHttpServletResponse> second;
+                var gate = new UpdateGate();
                 try {
                     awaitItemUpdates(1);
-                    second=workers.submit(sellerFirst?restore:edit);
-                    awaitItemUpdates(2);
+                    var second=workers.submit(() -> {
+                        UpdateGateInspector.current.set(gate);
+                        try { return (sellerFirst?restore:edit).call(); }
+                        finally { UpdateGateInspector.current.remove(); }
+                    });
+                    assertThat(gate.ready.await(10, TimeUnit.SECONDS)).as("second real transaction reached its item UPDATE").isTrue();
                     assertPublic(item,null,null);
-                } finally { blocker.rollback(); }
-                var firstResponse=first.get(15,TimeUnit.SECONDS);
-                var secondResponse=second.get(15,TimeUnit.SECONDS);
-                editResponse=sellerFirst?firstResponse:secondResponse;
-                restoreResponse=sellerFirst?secondResponse:firstResponse;
+                    blocker.rollback();
+                    var firstResponse=first.get(15,TimeUnit.SECONDS);
+                    gate.release.countDown();
+                    var secondResponse=second.get(15,TimeUnit.SECONDS);
+                    editResponse=sellerFirst?firstResponse:secondResponse;
+                    restoreResponse=sellerFirst?secondResponse:firstResponse;
+                } finally { gate.release.countDown(); blocker.rollback(); }
             }
             boolean edited=editResponse.getStatus()==204;
             assertThat(editResponse.getStatus()).as(editResponse.getContentAsString()).isIn(204,409);
@@ -154,6 +161,29 @@ class SocialEditRestoreConcurrencyIntegrationTest extends PostgresIntegrationTes
 
     private List<String> gallery(UUID item) {
         return jdbc.queryForList("select to_jsonb(original)::text from catalog_item_media original where catalog_item_id=? order by sort_order",String.class,item);
+    }
+
+    private static final class UpdateGate {
+        private final java.util.concurrent.CountDownLatch ready = new java.util.concurrent.CountDownLatch(1);
+        private final java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+    }
+
+    public static final class UpdateGateInspector implements org.hibernate.resource.jdbc.spi.StatementInspector {
+        private static final ThreadLocal<UpdateGate> current = new ThreadLocal<>();
+
+        @Override public String inspect(String sql) {
+            var gate = current.get();
+            if (gate != null && sql.toLowerCase(java.util.Locale.ROOT).contains("update catalog_items ")) {
+                gate.ready.countDown();
+                try {
+                    if (!gate.release.await(20, TimeUnit.SECONDS)) throw new IllegalStateException("Item update test gate timed out");
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("Item update test gate interrupted", exception);
+                }
+            }
+            return sql;
+        }
     }
 
     private void awaitItemUpdates(int expected) throws Exception {

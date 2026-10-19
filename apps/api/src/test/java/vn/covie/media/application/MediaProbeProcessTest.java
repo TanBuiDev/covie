@@ -11,8 +11,14 @@ import org.junit.jupiter.api.Test;
 
 class MediaProbeProcessTest {
     @Test void readsMachineOutputFromActualProcess() throws Exception {
-        assertThat(MediaProbeProcess.run(command("json"), Duration.ofSeconds(5)))
-                .isEqualTo("{\"format\":{\"duration\":\"1.0\"}}");
+        String output = MediaProbeProcess.run(command("json"), Duration.ofSeconds(5));
+        String options = System.getenv("JAVA_TOOL_OPTIONS");
+        if (options != null && !options.isBlank()) {
+            String diagnostic = "Picked up JAVA_TOOL_OPTIONS: " + options + "\n";
+            assertThat(output).startsWith(diagnostic);
+            output = output.substring(diagnostic.length());
+        }
+        assertThat(output).isEqualTo("{\"format\":{\"duration\":\"1.0\"}}");
     }
 
     @Test void rejectsNonzeroExitWithoutExposingProbeOutput() {
