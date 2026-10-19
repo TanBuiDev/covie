@@ -66,10 +66,56 @@ Retiring a branch is not deleting its data or private recovery archive.
 
 ## Remaining gates
 
-Combined migration/backup/contract verification is running. Combined application,
-dependencies, publication allowlist, secret/artifact scans, GitHub required checks,
-merge, branch deletion and primary synchronization remain uncompleted. Do not infer
-success from the earlier isolated Social/Billing acceptance reports.
+Combined migration/backup/contract checks passed11/11. The separate lineage test
+passed1/1. Current Web typecheck/build passed (Next16.4.1,39 routes); lint has0 errors
+and28 existing warnings. The initial default16-worker Web run had1 intermittent
+unchanged Ads assertion failure; a second had2 UI wait timeouts. The unchanged Ads
+component/test match main exactly and passed5 focused tests; the two timeout suites
+passed47 focused tests. A full resource-bounded run (maxWorkers2, unchanged assertions
+and timeouts) passed685, with12 Redis opt-in skips, in352.85s. A separate durable,
+non-evicting Redis fixture passed those12 tests in47.30s. These are distinct runs.
+
+The first combined backend full verify executed1176 reported cases in14m03s:
+1157 passed,4 failed,15 skipped,0 errors. It is NOT a green full run. Failures were:
+
+- Billing populated-upgrade snapshots compared new nullable Social columns with old
+  row JSON. Project only the known original fields; retain all business values.
+- Social Edit/Hide asserted PostgreSQL lock wake-up order. Both observed real outcomes
+  were atomic but Seller won both runs. A bounded test-only Hibernate statement gate
+  now controls the second stale UPDATE while the first real UPDATE waits in PostgreSQL;
+  both real HTTP winner branches and all existing rollback/audit assertions remain.
+- One Order cancellation/reception repeat asserted publication after200 immediate
+  processOne calls while schedulers may also own SKIP LOCKED events. Await the exact
+  fixture's published state with a15-second deadline and short pauses when no work is
+  acquired. A201-event backlog-only experiment passed and did NOT reproduce the
+  failure; that speculative additional case was removed. No production dispatch change.
+
+All three corrected test classes then passed17/17 (including both migration stages,
+both controlled Edit/Hide outcomes and14 order cases); Maven package passed49.262s.
+Do not add this result to the failed full run and label the aggregate a green verify.
+The current source still requires fresh GitHub full backend/contract/security checks
+before main merge; another unchanged local full backend run is not needed for these
+test-only corrections. Current package boot/read and library vulnerability checks
+are being completed independently.
+
+The six supported dependency PR heads are integrated locally with explicit merge
+commits. Preserve Billing's Jackson/Tomcat security versions and removal of the old
+Netty override when resolving the AWS BOM conflict; preserve QR-code dependencies in
+the Next conflict. TypeScript remains5.9 and PR35 was actually closed without merge
+after its incompatibility comment. No ignore/detector configuration was changed.
+
+Current production dependency audit reports0 findings at every severity. The full
+development tree has1 high Braces advisory and0 critical; production exposure is not
+claimed for this dev-only finding and it is not hidden. The configured source gate's
+dev threshold remains critical. Actual Trivy0.72 source misconfiguration/secret scan
+with network disabled passed0 high/critical findings, using the existing configured
+Dockerfile.dockerignore exclusion (these are ignore files, not Dockerfiles). Actual
+Gitleaks history scan passed960 commits/22.23MB/0 findings using unchanged reviewed
+historical fingerprints. Raw current-source Gitleaks reports7 reviewed unchanged
+documentation matches,0 unresolved; it is not relabeled as raw0.
+
+Publication, required GitHub checks, merge, branch deletion and primary synchronization
+remain uncompleted. Do not infer them from isolated or candidate local acceptance.
 
 Normal Social/video/money/release/reconciliation/enforcement flags remain OFF.
 Existing/recovered data and normal stacks have not been started, reset or migrated.

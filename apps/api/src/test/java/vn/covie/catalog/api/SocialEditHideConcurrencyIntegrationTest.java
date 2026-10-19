@@ -31,7 +31,8 @@ import vn.covie.users.persistence.UserRepository;
 
 @AutoConfigureMockMvc
 @SpringBootTest(properties={"covie.social-v2.caption-authoring-enabled=true","covie.social-v2.previews-enabled=true",
-        "covie.outbox.max-events-per-poll=0","covie.retention.enabled=false"})
+        "covie.outbox.max-events-per-poll=0","covie.retention.enabled=false",
+        "spring.jpa.properties.hibernate.session_factory.statement_inspector=vn.covie.catalog.api.SocialEditHideConcurrencyIntegrationTest$UpdateGateInspector"})
 class SocialEditHideConcurrencyIntegrationTest extends PostgresIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
@@ -80,11 +81,15 @@ class SocialEditHideConcurrencyIntegrationTest extends PostgresIntegrationTest {
                     try (var rows=lock.executeQuery()) { assertThat(rows.next()).isTrue(); }
                 }
                 var first=workers.submit(sellerFirst?edit:hide);
-                java.util.concurrent.Future<MockHttpServletResponse> second;
+                var gate = new UpdateGate();
                 try {
                     awaitItemUpdates(1);
-                    second=workers.submit(sellerFirst?hide:edit);
-                    awaitItemUpdates(2);
+                    var second=workers.submit(() -> {
+                        UpdateGateInspector.current.set(gate);
+                        try { return (sellerFirst?hide:edit).call(); }
+                        finally { UpdateGateInspector.current.remove(); }
+                    });
+                    assertThat(gate.ready.await(10, TimeUnit.SECONDS)).as("second real transaction reached its item UPDATE").isTrue();
                     var preview=mvc.perform(get("/api/v1/catalog/social-previews").param("itemIds",item.toString()))
                             .andExpect(status().isOk()).andReturn().getResponse();
                     var visible=new com.fasterxml.jackson.databind.ObjectMapper().readTree(preview.getContentAsString()).path(item.toString());
@@ -92,11 +97,13 @@ class SocialEditHideConcurrencyIntegrationTest extends PostgresIntegrationTest {
                     var visibleMedia=new ArrayList<String>();
                     for (var entry:visible.path("media")) visibleMedia.add(entry.path("id").asText());
                     assertThat(visibleMedia).containsExactly(firstMedia.toString(),secondMedia.toString());
-                } finally { blocker.rollback(); }
-                var firstResponse=first.get(15,TimeUnit.SECONDS);
-                var secondResponse=second.get(15,TimeUnit.SECONDS);
-                editResponse=sellerFirst?firstResponse:secondResponse;
-                hideResponse=sellerFirst?secondResponse:firstResponse;
+                    blocker.rollback();
+                    var firstResponse=first.get(15,TimeUnit.SECONDS);
+                    gate.release.countDown();
+                    var secondResponse=second.get(15,TimeUnit.SECONDS);
+                    editResponse=sellerFirst?firstResponse:secondResponse;
+                    hideResponse=sellerFirst?secondResponse:firstResponse;
+                } finally { gate.release.countDown(); blocker.rollback(); }
             }
             boolean editWon=editResponse.getStatus()==204;
             assertThat(editResponse.getStatus()).as(editResponse.getContentAsString()).isIn(204,409);
@@ -139,6 +146,29 @@ class SocialEditHideConcurrencyIntegrationTest extends PostgresIntegrationTest {
         return jdbc.queryForList("select to_jsonb(original)::text from catalog_item_media original where catalog_item_id=? order by sort_order",String.class,item);
     }
 
+    private static final class UpdateGate {
+        private final java.util.concurrent.CountDownLatch ready = new java.util.concurrent.CountDownLatch(1);
+        private final java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+    }
+
+    public static final class UpdateGateInspector implements org.hibernate.resource.jdbc.spi.StatementInspector {
+        private static final ThreadLocal<UpdateGate> current = new ThreadLocal<>();
+
+        @Override public String inspect(String sql) {
+            var gate = current.get();
+            if (gate != null && sql.toLowerCase(java.util.Locale.ROOT).contains("update catalog_items ")) {
+                gate.ready.countDown();
+                try {
+                    if (!gate.release.await(20, TimeUnit.SECONDS)) throw new IllegalStateException("Item update test gate timed out");
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("Item update test gate interrupted", exception);
+                }
+            }
+            return sql;
+        }
+    }
+
     private void awaitItemUpdates(int expected) throws Exception {
         long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);
         List<java.util.Map<String,Object>> waiting=List.of();
@@ -147,7 +177,7 @@ class SocialEditHideConcurrencyIntegrationTest extends PostgresIntegrationTest {
             if (waiting.size()==expected) break;
             Thread.sleep(20);
         }
-        assertThat(waiting).as("actual versioned item UPDATE statements must both reach PostgreSQL contention").hasSize(expected);
+        assertThat(waiting).as("the first versioned item UPDATE must reach PostgreSQL contention").hasSize(expected);
         System.out.println("Social edit/hide waiting="+expected+" events="+waiting.stream().map(row -> row.get("wait_event")).toList());
     }
 }

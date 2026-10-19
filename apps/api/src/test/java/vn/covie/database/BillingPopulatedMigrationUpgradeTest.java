@@ -101,7 +101,12 @@ class BillingPopulatedMigrationUpgradeTest {
     private Map<String, String> snapshot(JdbcTemplate jdbc) {
         Map<String, String> rows = new LinkedHashMap<>();
         for (String table : jdbc.queryForList("select tablename from pg_tables where schemaname='public' and tablename not in ('flyway_schema_history','spatial_ref_sys') order by tablename", String.class)) {
-            rows.put(table, jdbc.queryForObject("select coalesce(jsonb_agg(row_data order by row_data::text),'[]'::jsonb)::text from (select to_jsonb(existing) row_data from \"" + table + "\" existing) all_rows", String.class));
+            String originalFields = switch (table) {
+                case "catalog_items" -> "to_jsonb(existing)-'social_caption'";
+                case "media_assets" -> "to_jsonb(existing)-'video_duration_ms'-'video_codec'-'storage_cleanup_attempted_at'-'storage_deleted_at'";
+                default -> "to_jsonb(existing)";
+            };
+            rows.put(table, jdbc.queryForObject("select coalesce(jsonb_agg(row_data order by row_data::text),'[]'::jsonb)::text from (select " + originalFields + " row_data from \"" + table + "\" existing) all_rows", String.class));
         }
         return rows;
     }
