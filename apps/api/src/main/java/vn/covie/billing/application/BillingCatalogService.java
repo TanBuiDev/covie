@@ -74,6 +74,105 @@ public class BillingCatalogService {
             }, java.sql.Timestamp.from(clock.now()));
     }
 
+    @Transactional(readOnly = true)
+    public List<PlanOffer> latestPublishedPlans() {
+        admins.requireAdmin();
+        return jdbc.query("""
+            select distinct on (p.code) v.id, p.code, p.display_name, v.revision,
+                   v.price_vnd, v.cycle_months, v.effective_at
+            from billing_plans p join billing_plan_versions v on v.plan_code=p.code
+            where p.retired_at is null order by p.code, v.revision desc
+            """, (result, rowNumber) -> new PlanOffer((UUID) result.getObject("id"), result.getString("code"),
+                result.getString("display_name"), result.getInt("revision"), result.getLong("price_vnd"),
+                result.getInt("cycle_months"), result.getTimestamp("effective_at").toInstant()));
+    }
+
+    @Transactional(readOnly = true)
+    public Policy latestPublishedPolicy() {
+        admins.requireAdmin();
+        return jdbc.query("""
+            select id, revision, onboarding_mode, trial_days, grace_days, effective_at
+            from billing_policy_versions order by revision desc limit 1
+            """, result -> {
+                if (!result.next()) throw new IllegalStateException("No published billing policy.");
+                return new Policy((UUID) result.getObject("id"), result.getInt("revision"),
+                    result.getString("onboarding_mode"), result.getInt("trial_days"), result.getInt("grace_days"),
+                    result.getTimestamp("effective_at").toInstant());
+            });
+    }
+
+    @Transactional(readOnly = true)
+    public List<PriceHistory> priceHistory(String planCode, int limit, int offset) {
+        admins.requireAdmin();
+        validateHistoryPage(limit, offset);
+        if (planCode == null || !planCode.matches("[A-Z0-9_]{1,60}")) throw badRequest("Invalid plan.");
+        if (jdbc.queryForObject("select count(*) from billing_plans where code=?", Long.class, planCode) == 0) throw notFound();
+        return jdbc.query("""
+            select v.id, v.plan_code, p.display_name, v.revision, v.price_vnd,
+                   v.cycle_months, v.effective_at, v.published_at, p.retired_at
+            from billing_plan_versions v join billing_plans p on p.code=v.plan_code
+            where v.plan_code=? order by v.revision desc limit ? offset ?
+            """, (result, rowNumber) -> new PriceHistory(new PlanOffer((UUID) result.getObject("id"),
+                result.getString("plan_code"), result.getString("display_name"), result.getInt("revision"),
+                result.getLong("price_vnd"), result.getInt("cycle_months"), result.getTimestamp("effective_at").toInstant()),
+                result.getTimestamp("published_at").toInstant(), result.getTimestamp("retired_at") != null), planCode, limit, offset);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PolicyHistory> policyHistory(int limit, int offset) {
+        admins.requireAdmin();
+        validateHistoryPage(limit, offset);
+        return jdbc.query("""
+            select id, revision, onboarding_mode, trial_days, grace_days, effective_at, created_at
+            from billing_policy_versions order by revision desc limit ? offset ?
+            """, (result, rowNumber) -> new PolicyHistory(new Policy((UUID) result.getObject("id"),
+                result.getInt("revision"), result.getString("onboarding_mode"), result.getInt("trial_days"),
+                result.getInt("grace_days"), result.getTimestamp("effective_at").toInstant()),
+                result.getTimestamp("created_at").toInstant()), limit, offset);
+    }
+
+    private static void validateHistoryPage(int limit, int offset) {
+        if (limit < 1 || limit > 100 || offset < 0 || offset > 500_000) throw badRequest("Invalid billing history page.");
+    }
+
+    @Transactional(readOnly = true)
+    public PricePublicationPreview previewPrice(String planCode, PriceChange request, int expectedRevision) {
+        admins.requireAdmin();
+        if (request == null || planCode == null || !planCode.matches("[A-Z0-9_]{1,60}")
+                || request.priceVnd() < 0 || request.priceVnd() > 1_000_000_000L
+                || request.cycleMonths() < 1 || request.cycleMonths() > 120
+                || request.effectiveAt() == null || !request.effectiveAt().isAfter(clock.now())) {
+            throw badRequest("Invalid price or effective date.");
+        }
+        PlanOffer previous = latestPublishedPlans().stream().filter(plan -> plan.code().equals(planCode))
+            .findFirst().orElseThrow(BillingCatalogService::notFound);
+        if (previous.revision() != expectedRevision) throw revisionConflict();
+        if (!request.effectiveAt().isAfter(previous.effectiveAt())) {
+            throw badRequest("A new price must become effective after already published versions.");
+        }
+        long merchants = jdbc.queryForObject("select count(*) from merchant_subscriptions where plan_code=?", Long.class, planCode);
+        return new PricePublicationPreview(previous, request, merchants, clock.now());
+    }
+
+    @Transactional(readOnly = true)
+    public PolicyPublicationPreview previewPolicy(PolicyChange request, int expectedRevision) {
+        admins.requireAdmin();
+        if (request == null || request.onboardingMode() == null
+                || !List.of("PAY_BEFORE_SELL", "TRIAL").contains(request.onboardingMode())
+                || request.trialDays() < 0 || request.trialDays() > 365
+                || request.graceDays() < 0 || request.graceDays() > 60
+                || request.effectiveAt() == null || !request.effectiveAt().isAfter(clock.now())) {
+            throw badRequest("Invalid billing policy.");
+        }
+        Policy previous = latestPublishedPolicy();
+        if (previous.revision() != expectedRevision) throw revisionConflict();
+        if (!request.effectiveAt().isAfter(previous.effectiveAt())) {
+            throw badRequest("A new policy must become effective after already published versions.");
+        }
+        long merchants = jdbc.queryForObject("select count(*) from merchant_subscriptions", Long.class);
+        return new PolicyPublicationPreview(previous, request, merchants, clock.now());
+    }
+
     /** Admin creates independent plans, with their own immutable cycle and price history. */
     @Transactional
     public PlanOffer createPlan(NewPlan request) {
@@ -139,17 +238,17 @@ public class BillingCatalogService {
             select code from billing_plans where code = ? and retired_at is null for update
             """, (rs, i) -> rs.getString(1), planCode);
         if (locked.isEmpty()) throw notFound();
-        java.sql.Timestamp lastEffective = jdbc.queryForObject("""
-            select max(effective_at) from billing_plan_versions where plan_code = ?
-            """, java.sql.Timestamp.class, planCode);
-        if (lastEffective != null && !request.effectiveAt().isAfter(lastEffective.toInstant())) {
-            throw badRequest("A new price must become effective after already published versions.");
-        }
         Integer rev = jdbc.queryForObject(
             "select coalesce(max(revision), 0) from billing_plan_versions where plan_code = ?",
             Integer.class, planCode);
         if (rev == null || rev != expectedRevision) {
             throw revisionConflict();
+        }
+        java.sql.Timestamp lastEffective = jdbc.queryForObject("""
+            select max(effective_at) from billing_plan_versions where plan_code = ?
+            """, java.sql.Timestamp.class, planCode);
+        if (lastEffective != null && !request.effectiveAt().isAfter(lastEffective.toInstant())) {
+            throw badRequest("A new price must become effective after already published versions.");
         }
         UUID id = UUID.randomUUID();
         jdbc.update("""
@@ -181,13 +280,13 @@ public class BillingCatalogService {
         }
         // Serialize concurrent policy publications on a single existing policy row.
         jdbc.queryForList("select id from billing_policy_versions order by revision asc limit 1 for update");
+        Integer rev = jdbc.queryForObject("select max(revision) from billing_policy_versions", Integer.class);
+        if (rev == null || rev != expectedRevision) throw revisionConflict();
         java.sql.Timestamp lastEffective = jdbc.queryForObject(
             "select max(effective_at) from billing_policy_versions", java.sql.Timestamp.class);
         if (lastEffective != null && !request.effectiveAt().isAfter(lastEffective.toInstant())) {
             throw badRequest("A new policy must become effective after already published versions.");
         }
-        Integer rev = jdbc.queryForObject("select max(revision) from billing_policy_versions", Integer.class);
-        if (rev == null || rev != expectedRevision) throw revisionConflict();
         UUID id = UUID.randomUUID();
         jdbc.update("""
             insert into billing_policy_versions
@@ -234,4 +333,10 @@ public class BillingCatalogService {
     public record Policy(UUID id, int revision, String onboardingMode, int trialDays,
                          int graceDays, Instant effectiveAt) {}
     public record PolicyChange(String onboardingMode, int trialDays, int graceDays, Instant effectiveAt) {}
+    public record PricePublicationPreview(PlanOffer previous, PriceChange proposed,
+                                           long referencingMerchants, Instant observedAt) {}
+    public record PolicyPublicationPreview(Policy previous, PolicyChange proposed,
+                                            long referencingMerchants, Instant observedAt) {}
+    public record PriceHistory(PlanOffer version, Instant publishedAt, boolean retired) {}
+    public record PolicyHistory(Policy version, Instant publishedAt) {}
 }

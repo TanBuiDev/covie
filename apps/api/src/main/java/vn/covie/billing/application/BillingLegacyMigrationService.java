@@ -4,12 +4,14 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 import vn.covie.admin.security.AdminAccessPolicy;
 import vn.covie.audit.AuditLogWriter;
 import vn.covie.settings.application.SystemSettingContext;
@@ -34,6 +36,8 @@ public class BillingLegacyMigrationService {
     private final boolean opsApproved;
     private BillingFinanceAccessPolicy finance;
     @Autowired public void setFinanceAccess(BillingFinanceAccessPolicy finance){this.finance=finance;}
+    private MeterRegistry metrics;
+    @Autowired public void setMetrics(MeterRegistry metrics){this.metrics=metrics;}
 
     public BillingLegacyMigrationService(JdbcTemplate jdbc, AdminAccessPolicy admins,
             SystemSettingResolver settings, AppClock clock, AuditLogWriter audit,
@@ -43,10 +47,11 @@ public class BillingLegacyMigrationService {
         this.audit = audit; this.requestIds = requestIds; this.opsApproved = opsApproved;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public Preview preview(Instant createdBefore) {
         if(finance!=null)finance.requireReader();else admins.requireAdmin();
-        validateCutoff(createdBefore, clock.now());
+        Instant now = clock.now();
+        validateCutoff(createdBefore, now);
         Integer eligible = jdbc.queryForObject("""
             select count(*) from merchant_profiles
             where deleted_at is null and created_at < ?
@@ -56,8 +61,26 @@ public class BillingLegacyMigrationService {
             join merchant_profiles m on m.id = g.merchant_id
             where g.source_type='LEGACY' and m.deleted_at is null and m.created_at < ?
             """, Integer.class, Timestamp.from(createdBefore));
-        return new Preview(eligible == null ? 0 : eligible,
-            alreadyGranted == null ? 0 : alreadyGranted, createdBefore);
+        Integer allowed = jdbc.queryForObject("""
+            select count(*) from merchant_profiles m
+            where m.deleted_at is null and m.created_at < ?
+              and exists (
+                select 1 from billing_entitlement_grants g where g.merchant_id=m.id
+                  and g.revoked_at is null and g.valid_from <= ? and g.valid_until > ?
+              )
+            """, Integer.class, Timestamp.from(createdBefore), Timestamp.from(now), Timestamp.from(now));
+        int evaluated = eligible == null ? 0 : eligible;
+        int wouldAllow = allowed == null ? 0 : allowed;
+        int wouldDeny = evaluated - wouldAllow;
+        boolean enforcement = settings.bool("billing.enforcement_enabled", SystemSettingContext.globalOnly());
+        if (metrics != null) {
+            metrics.counter("covie.billing.shadow.previews", "enforcement", enforcement ? "ON" : "OFF").increment();
+            metrics.counter("covie.billing.shadow.decisions", "decision", "ALLOW").increment(wouldAllow);
+            metrics.counter("covie.billing.shadow.decisions", "decision", "DENY").increment(wouldDeny);
+        }
+        return new Preview(evaluated, alreadyGranted == null ? 0 : alreadyGranted, createdBefore,
+            new LegacyBillingShadowPreview("BILLING_ENTITLEMENT_ONLY", now, enforcement, evaluated,
+                enforcement ? wouldAllow : evaluated, wouldAllow, wouldDeny));
     }
 
     @Transactional
@@ -103,7 +126,9 @@ public class BillingLegacyMigrationService {
     private static ApiException reject(String text) {
         return new ApiException(ErrorCode.VALIDATION_FAILED, HttpStatus.UNPROCESSABLE_ENTITY, text);
     }
-    public record Preview(int eligibleMerchants, int previouslyGranted, Instant createdBefore) {}
+    public record Preview(int eligibleMerchants, int previouslyGranted, Instant createdBefore, LegacyBillingShadowPreview shadow) {}
+    public record LegacyBillingShadowPreview(String decisionScope, Instant observedAt, boolean enforcementEnabled,
+        int evaluatedMerchants, int currentlyAllowed, int wouldAllow, int wouldDeny) {}
     public record GrantRequest(Instant createdBefore, Instant validUntil, String reason) {}
     public record Result(int newlyGranted, Instant validUntil) {}
 }

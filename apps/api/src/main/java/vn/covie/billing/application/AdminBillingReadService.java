@@ -5,11 +5,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.admin.security.AdminAccessPolicy;
 import vn.covie.shared.time.AppClock;
+import vn.covie.shared.web.ApiException;
+import vn.covie.shared.web.ErrorCode;
 
 /** Financial data is server-owned, admin-only, and returned without PSP secrets. */
 @Service
@@ -51,60 +54,71 @@ public class AdminBillingReadService {
     @Transactional(readOnly=true)
     public List<Invoice> invoices(UUID merchantId, int limit, int offset) {
         requireReader();
+        List<String> allowedActions=finance==null||finance.canOperate()?List.of("RECONCILE"):List.of();
         if(limit < 1 || limit > 100 || offset < 0 || offset > 500_000)
-            throw new IllegalArgumentException("Invalid billing page");
+            throw new ApiException(ErrorCode.VALIDATION_FAILED, HttpStatus.UNPROCESSABLE_ENTITY,
+                "Invalid billing page");
         if(merchantId==null){
             return jdbc.query("""
                 select id,merchant_id,invoice_number,status,amount_vnd,created_at,paid_at
                 from billing_invoices order by created_at desc,id desc limit ? offset ?
-                """, (rs,n)->row(rs),limit,offset);
+                """, (rs,n)->row(rs,allowedActions),limit,offset);
         }
         return jdbc.query("""
             select id,merchant_id,invoice_number,status,amount_vnd,created_at,paid_at
             from billing_invoices where merchant_id=?
             order by created_at desc,id desc limit ? offset ?
-            """, (rs,n)->row(rs),merchantId,limit,offset);
+            """, (rs,n)->row(rs,allowedActions),merchantId,limit,offset);
     }
 
     @Transactional(readOnly=true)
-    public List<Subscription> subscriptions(int limit,int offset) {
+    public List<Subscription> subscriptions(UUID merchantId,int limit,int offset) {
         requireReader();
         if(limit<1||limit>100||offset<0||offset>500_000)
-            throw new IllegalArgumentException("Invalid subscriptions page");
+            throw new ApiException(ErrorCode.VALIDATION_FAILED, HttpStatus.UNPROCESSABLE_ENTITY,
+                "Invalid subscriptions page");
         return jdbc.query("""
             select s.merchant_id,mp.name merchant_name,s.plan_code,s.status,
-                   s.period_start,s.period_end,s.grace_until,s.cancel_at_period_end
+                   s.period_start,s.period_end,s.grace_until,s.cancel_at_period_end,
+                   array(select distinct mm.user_id from merchant_memberships mm
+                         where mm.merchant_profile_id=s.merchant_id and mm.role='OWNER'
+                           and mm.membership_status='ACTIVE' order by mm.user_id) current_owner_ids
             from merchant_subscriptions s
             join merchant_profiles mp on mp.id=s.merchant_id
-            where mp.deleted_at is null
+            where mp.deleted_at is null and (cast(? as uuid) is null or s.merchant_id=?)
             order by s.period_end asc nulls last,mp.name,s.merchant_id
             limit ? offset ?
             """,(rs,i)->{
                 var periodStart=rs.getTimestamp("period_start");
                 var periodEnd=rs.getTimestamp("period_end");
                 var graceUntil=rs.getTimestamp("grace_until");
+                var ownerArray=rs.getArray("current_owner_ids");
+                List<UUID> owners;
+                try {
+                    owners=java.util.Arrays.stream((Object[])ownerArray.getArray()).map(UUID.class::cast).toList();
+                } finally { ownerArray.free(); }
                 return new Subscription((UUID)rs.getObject("merchant_id"),
                     rs.getString("merchant_name"),rs.getString("plan_code"),rs.getString("status"),
                     periodStart==null?null:periodStart.toInstant(),
                     periodEnd==null?null:periodEnd.toInstant(),
                     graceUntil==null?null:graceUntil.toInstant(),
-                    rs.getBoolean("cancel_at_period_end"));
-            },limit,offset);
+                    rs.getBoolean("cancel_at_period_end"),owners);
+            },merchantId,merchantId,limit,offset);
     }
 
     public record Subscription(UUID merchantId,String merchantName,String planCode,String status,
                                Instant periodStart,Instant periodEnd,Instant graceUntil,
-                               boolean cancelAtPeriodEnd) {}
+                               boolean cancelAtPeriodEnd,List<UUID> currentOwnerUserIds) {}
 
-    private static Invoice row(java.sql.ResultSet rs) throws java.sql.SQLException {
+    private static Invoice row(java.sql.ResultSet rs,List<String> allowedActions) throws java.sql.SQLException {
         Timestamp paid = rs.getTimestamp("paid_at");
         return new Invoice((UUID)rs.getObject("id"),(UUID)rs.getObject("merchant_id"),
             rs.getString("invoice_number"),rs.getString("status"),rs.getLong("amount_vnd"),
-            rs.getTimestamp("created_at").toInstant(),paid==null?null:paid.toInstant());
+            rs.getTimestamp("created_at").toInstant(),paid==null?null:paid.toInstant(),allowedActions);
     }
 
     public record Overview(long collectedVnd,long paidInvoices,long pendingInvoices,
                            long entitledShops,long reconciliationAlerts) {}
     public record Invoice(UUID id,UUID merchantId,String invoiceNumber,String status,
-                          long amountVnd,Instant createdAt,Instant paidAt) {}
+                          long amountVnd,Instant createdAt,Instant paidAt,List<String> allowedActions) {}
 }

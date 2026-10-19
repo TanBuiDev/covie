@@ -9,6 +9,25 @@ $environmentFile = Join-Path $repositoryRoot '.env.local'
 $privateKey = Join-Path $repositoryRoot 'infra/secrets/dev/jwt-private.pem'
 $publicKey = Join-Path $repositoryRoot 'infra/secrets/dev/jwt-public.pem'
 
+function Start-IsolatedWebProcess {
+  param([scriptblock]$Start)
+
+  $privateEnvironment = @{}
+  try {
+    foreach ($name in [Environment]::GetEnvironmentVariables('Process').Keys) {
+      if ($name -like 'PAYOS_*' -or $name -eq 'COVIE_BILLING_RELEASE_APPROVED') {
+        $privateEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+        [Environment]::SetEnvironmentVariable($name, $null, 'Process')
+      }
+    }
+    & $Start
+  } finally {
+    foreach ($name in $privateEnvironment.Keys) {
+      [Environment]::SetEnvironmentVariable($name, $privateEnvironment[$name], 'Process')
+    }
+  }
+}
+
 function Import-LocalEnvironment {
   param([string]$Path)
 
@@ -148,10 +167,10 @@ if (-not (Test-HttpOk $webUrl)) {
   }
 
   Write-Host 'Starting CoVie web on http://localhost:3000...'
-  $web = Start-Process -FilePath 'pnpm.cmd' -ArgumentList @('--dir', $repositoryRoot, 'web:dev') `
+  $web = Start-IsolatedWebProcess { Start-Process -FilePath 'pnpm.cmd' -ArgumentList @('--dir', $repositoryRoot, 'web:dev') `
     -WorkingDirectory $repositoryRoot -WindowStyle Hidden -PassThru `
     -RedirectStandardOutput (Join-Path $stateDirectory 'web.log') `
-    -RedirectStandardError (Join-Path $stateDirectory 'web.error.log')
+    -RedirectStandardError (Join-Path $stateDirectory 'web.error.log') }
   Set-Content -LiteralPath (Join-Path $stateDirectory 'web.pid') -Value $web.Id
   $session.web = @{ pid = $web.Id; startedAt = $web.StartTime.ToUniversalTime().ToString('o') }
   Save-DevSession

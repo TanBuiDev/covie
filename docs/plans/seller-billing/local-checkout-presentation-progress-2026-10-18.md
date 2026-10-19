@@ -1,0 +1,43 @@
+# Seller QR, reference and countdown progress — 2026-10-18
+
+Whole Billing goal ACTIVE / NOT_READY, not only BIL001–030 or one green feature. Original section9.2 explicitly requires QR/reference/copy/countdown, so hosted-link-only code did not satisfy the approved UI scope. Read-only reviewer approved `docs/superpowers/plans/2026-10-18-billing-checkout-presentation.md`, including inherited-live-region clarification. No API/migration/financial policy change or expansion of the existing status8field privacy whitelist.
+
+## Evidence and minimal implementation
+
+Existing panel successfully loads quote/payment shapes before targeted missing presentation:1FAIL15filteredSKIP `.local/billing-checkout-presentation-red.log` missing timer; assertion reordered to independently prove actual missing QR image,1FAIL `.local/billing-checkout-qr-confirmed-red.log`. Neither is a missing dependency/setup failure. Existing retained CheckoutResult already contains signed-provider QR payload, orderCode and expiry.
+
+New small `billing-payment-details.tsx` encodes only matching-invoice provider payload locally. Next Image unoptimized uses dataPNG with256px dimensions/four-module quiet zone; no QR service or unsafe SVG. Existing hosted link remains; recovered status without QR explains the same payOS page fallback, never invents a QR or creates another checkout. Support invoice reference is clearly distinguished from bank-transfer content; exact copy has success/error/retry feedback. Paid/expired/missing expiry does not display stale QR. Existing financial/polling/idempotency logic unchanged.
+
+New `billing-expiry.tsx` displays advisory server-timestamp minutes/seconds, explicit aria-live=off inside existing quote-status ancestor, once-only expiry message and timer cleanup. Clock never settles/voids an invoice, releases quota or creates payment. Parent payment announcement is restricted to its heading rather than wrapping every tick/control. Actual boundary/lifecycle tests verify live-region nesting and cleanup.
+
+Panel16PASS11.61s `.local/billing-checkout-presentation-green.log`; affected components+panel24PASS12.09s `.local/billing-checkout-presentation-focused.log`. New native-image lint warning was resolved using existing Next Image unoptimized; affected22PASS12.31s `.local/billing-checkout-qr-image-final.log` and lint0. No suppressions.
+
+Reviewer found a real new hook defect: an already-expired replacement deadline could retain stale positive time forever because its effect returned without refreshing stored clock. Actual1FAIL2PASS1.09s `.local/billing-checkout-expiry-replacement-red.log` shows00:30 instead of00:00 after120seconds/expired replacement. Minimal zero-delay clock refresh with cleanup, normal ticking unchanged. Affected25PASS11.68s `.local/billing-checkout-expiry-replacement-green.log`; reviewer approved the fix. Tests are confined to explicit QR/reference/expiry/fallback requirements, not a speculative scenario matrix.
+
+Final targeted typecheck/lint0; production build compile5.1s/TypeScript15.7s/38routes `.local/billing-checkout-presentation-build.log`. This only builds the C Billing worktree, never original E `.next`.
+
+## Dependencies and pending native acceptance
+
+### Later authoritative checkpoint: recovered payment confirmation
+
+FINAL current-source results: native6040 TERMINAL exit0,1PASS101.4s/Maven1m44s22:13:18ICT `.local/billing-recovered-confirmation-native.log`; full Web14815 TERMINAL535PASS12SKIP98.98s `.local/billing-recovered-confirmation-web-full.log`. Fixture `.local/billing-browser-1792336347549/result.json` completedTRUE/pageErrors0, Chrome155.0.8059.84, all360/390/1366px QR crops independently decoded to the exact opaque signed loopback payload, keyboard clipboard equality, non-live expiry ticking, same pending invoice/link after reload, no false PAID. Signed callback settled then duplicate rejected as duplicate, recovered confirmation remained visible, old QR removed, actual renewal cancel/resume worked. Java fixture also asserts persisted one settlement/grant per merchant and exactly three provider creations; not real payOS/bank-valid VietQR or legal acceptance.
+
+Viewed all three pending-QR screenshots and final360px Seller confirmation: readable QR/quiet zone, visible keyboard focus, no horizontal page overflow, actual invoice reference retained. Full-page mobile screenshots capture the existing sticky navigation at its scroll position; no claim of physical screen-reader/real-device testing. Existing authorized Admin screenshots were also produced, no new Admin behavior changed. Owned fixture cleaned its API/Next/PG processes; docker ps and normal3000/8081 listeners are empty. Build compile1.014s/TypeScript4.7s, no original E.next changes.
+
+Earlier RUNNING notes below are historical. Full Web11338 finished534PASS12SKIP94.30s;71340 later finished534PASS12SKIP80.45s, both before the final recovered-payment fix. Native89547 and99294 failed because a status role on/inside the heading removed its accessible heading name in Chrome. The final status wrapper contains the plain-text h3, with ticking timers outside; regression logs `billing-checkout-heading-name-red.log`/`-green.log` retain that evidence.
+
+Third native82027 also failed, but at a distinct real defect: after reload, signed settlement reached PAID in the invoice table while the confirmation disappeared. At360px exact screenshot QR decoding, clipboard keyboard copy, non-live ticking expiry, same hosted invoice after reload, and spoof-redirect rejection had already passed. This is not a complete native PASS.
+
+Root cause is the panel's `displayedPayment`: when the refreshed invoice list no longer contains PENDING_PAYMENT, it selected only transient `checkout`, which is absent after reload, discarding the already authorized `recoveredPayment`. New regression `retains server-confirmed payment after a recovered invoice leaves the pending list` reproduced the missing named heading after the PAID cell appeared:1FAIL16filteredSKIP10.99s `.local/billing-recovered-confirmation-red.log`. Minimal fallback retains recovered status and finds the matching invoice reference from the current authorized list; no financial request, poll interval, settlement, grant, API contract or backend change.
+
+Affected panel/payment-details/expiry26PASS16.79s `.local/billing-recovered-confirmation-green.log`. Current production build succeeds `.local/billing-recovered-confirmation-build.log`. Native6040 `.local/billing-recovered-confirmation-native.log` and full Web14815 `.local/billing-recovered-confirmation-web-full.log` are RUNNING at this checkpoint. No predicted outcome. Backend full1057PASS1HotQuerySKIP remains the latest unchanged-source full gate; do not replay for this Web-only fix.
+
+Pinned qrcode1.5.4 and types1.5.6, versions verified from official registry; local encoder API verified in official project documentation https://github.com/soldair/node-qrcode . Generated lock588→613package identities,25additions/zero removed existing package versions `.local/billing-checkout-qr-lock-review.json`; optional peer supports-color resolution rewires existing snapshots, not unrelated version upgrades. Install ignores lifecycle scripts. Current prod pnpm audit exit0/all severities0 `.local/billing-checkout-qr-prod-audit.json`, not whole dev/image/CodeQL acceptance.
+
+Full Web11338 RUNNING `.local/billing-checkout-presentation-web-full.log`. Native89547 RUNNING `.local/billing-checkout-qr-native.log`; poll SAME handles, no predicted counts. Existing owned actual Admin/Seller/API/PG/signed loopback provider fixture at360/390/1366 now opts into QR checks. Native keyboard clipboard, non-live ticks, same invoice after reload/hosted fallback and independent screenshot QR decode must pass before acceptance. Test-only local decoder zxing-cpp3.1.1/Pillow13.0.0 installed in ignored browser venv, not production dependencies. Fixture QR encodes opaque `fixture-qr`, not an assertion of bank-valid VietQR or real transfer. Actual screenshot review and source/security snapshot still pending.
+
+Current BE full1057PASS1HotQuerySKIP9m24s21:49:53 remains source-current; only Web/Python/dependency changes follow, so no repeated full BE just for QR. Independent XML preserved before native Maven. Normal payOS/release/reconcile/enforcement flags OFF; no real payment/refund/activation/remote write/branch/commit/merge/deploy/original E or recovered-data operation.
+
+Next action: Collect native89547/fullWeb11338 and inspect actual QR/viewport screenshots, repairing only proven failures.
+Required from you: Nothing
+Completion condition: Actual local QR/reference/countdown acceptance with truthful whole-plan remaining scope, not only component tests.

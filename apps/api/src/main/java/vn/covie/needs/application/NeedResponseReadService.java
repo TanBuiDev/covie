@@ -4,19 +4,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.catalog.model.InventoryMode;
+import vn.covie.catalog.model.CatalogItemEntity;
 import vn.covie.catalog.model.ListingStatus;
+import vn.covie.catalog.model.LocationVariantEntity;
+import vn.covie.catalog.model.VariantEntity;
 import vn.covie.catalog.model.VariantStatus;
 import vn.covie.catalog.persistence.CatalogItemRepository;
 import vn.covie.catalog.persistence.LocationVariantRepository;
 import vn.covie.catalog.persistence.VariantRepository;
 import vn.covie.inventory.persistence.InventoryBalanceRepository;
+import vn.covie.inventory.model.InventoryBalanceEntity;
 import vn.covie.merchants.model.MerchantLocationEntity;
+import vn.covie.merchants.model.MerchantProfileEntity;
 import vn.covie.merchants.persistence.MerchantLocationRepository;
 import vn.covie.merchants.persistence.MerchantProfileRepository;
 import vn.covie.merchants.security.MerchantAccessPolicy;
@@ -26,6 +33,7 @@ import vn.covie.needs.api.dto.NeedResponseItemResponse;
 import vn.covie.needs.api.dto.NeedResponseResponse;
 import vn.covie.needs.model.NeedRequestEntity;
 import vn.covie.needs.model.NeedResponseEntity;
+import vn.covie.needs.model.NeedResponseItemEntity;
 import vn.covie.needs.model.NeedResponseItemStatus;
 import vn.covie.needs.model.NeedResponseStatus;
 import vn.covie.needs.model.NeedType;
@@ -53,6 +61,12 @@ public class NeedResponseReadService {
     private final InventoryBalanceRepository inventory;
     private final AppClock clock;
     private final NeedTimestampCursorCodec cursors;
+    private vn.covie.billing.application.BillingEntitlementService billing;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setBillingEntitlements(vn.covie.billing.application.BillingEntitlementService billing) {
+        this.billing = java.util.Objects.requireNonNull(billing);
+    }
 
     public NeedResponseReadService(CurrentActorProvider actors, NeedRequestRepository needs,
             NeedResponseRepository responses, NeedResponseItemRepository responseItems,
@@ -79,7 +93,12 @@ public class NeedResponseReadService {
         boolean hasMore = page.size() > limit;
         if (hasMore) page = new ArrayList<>(page.subList(0, limit));
         Instant now = clock.now();
-        List<NeedResponseResponse> values = page.stream().map(response -> toDto(need, response, now)).toList();
+        Set<UUID> merchantIds = page.stream().map(NeedResponseEntity::getMerchantProfileId)
+                .collect(java.util.stream.Collectors.toSet());
+        Set<UUID> allowed = billing == null ? merchantIds : billing.merchantsAllowedToSell(merchantIds);
+        ReadRecords records = loadRecords(page, need.getNeedType());
+        List<NeedResponseResponse> values = page.stream()
+                .map(response -> toDto(need, response, now, allowed.contains(response.getMerchantProfileId()), records)).toList();
         NeedResponseEntity last = page.isEmpty() ? null : page.getLast();
         String next = hasMore && last != null ? cursors.encode(new NeedTimestampCursor(last.getCreatedAt(), last.getId())) : null;
         return new NeedResponseCursorPage(values, hasMore, next);
@@ -95,27 +114,68 @@ public class NeedResponseReadService {
                         needId, locationId, NeedResponseStatus.ACTIVE)
                 .filter(value -> value.getMerchantProfileId().equals(merchantId))
                 .orElseThrow(NeedResponseReadService::notFound);
-        return toDto(need, response, clock.now());
+        return toDto(need, response, clock.now(), billing == null || billing.evaluate(merchantId).canSell(),
+                loadRecords(List.of(response), need.getNeedType()));
     }
 
-    private NeedResponseResponse toDto(NeedRequestEntity need, NeedResponseEntity response, Instant now) {
-        var merchant = merchants.findByIdAndDeletedAtIsNull(response.getMerchantProfileId()).orElse(null);
-        MerchantLocationEntity location = locations.findById(response.getMerchantLocationId()).orElse(null);
+    private ReadRecords loadRecords(List<NeedResponseEntity> page, NeedType type) {
+        if (page.isEmpty()) return new ReadRecords(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+        Set<UUID> merchantIds = page.stream().map(NeedResponseEntity::getMerchantProfileId)
+                .collect(java.util.stream.Collectors.toSet());
+        Set<UUID> locationIds = page.stream().map(NeedResponseEntity::getMerchantLocationId)
+                .collect(java.util.stream.Collectors.toSet());
+        List<NeedResponseItemEntity> items = responseItems.findByNeedResponseIdInAndItemStatusOrderByCreatedAtAsc(
+                page.stream().map(NeedResponseEntity::getId).toList(), NeedResponseItemStatus.ACTIVE);
+        Set<UUID> offerIds = items.stream().map(NeedResponseItemEntity::getLocationVariantId)
+                .collect(java.util.stream.Collectors.toSet());
+        Map<UUID, LocationVariantEntity> offersById = index(offerIds.isEmpty() ? List.of()
+                : locationVariants.findUsableByIdIn(offerIds), LocationVariantEntity::getId);
+        Map<UUID, VariantEntity> variantsById = index(variants.findAllById(offersById.values().stream()
+                .map(LocationVariantEntity::getVariantId).collect(java.util.stream.Collectors.toSet())), VariantEntity::getId);
+        Set<UUID> catalogIds = items.stream().map(NeedResponseItemEntity::getCatalogItemId)
+                .collect(java.util.stream.Collectors.toSet());
+        variantsById.values().forEach(variant -> catalogIds.add(variant.getCatalogItemId()));
+        Set<UUID> trackedIds = offersById.values().stream().filter(offer -> offer.getInventoryMode() == InventoryMode.TRACKED)
+                .map(LocationVariantEntity::getId).collect(java.util.stream.Collectors.toSet());
+        Map<UUID, MerchantProfileEntity> merchantsById = merchants.findAllById(merchantIds).stream()
+                .filter(merchant -> merchant.getDeletedAt() == null)
+                .collect(java.util.stream.Collectors.toMap(MerchantProfileEntity::getId, java.util.function.Function.identity()));
+        return new ReadRecords(merchantsById,
+                index(locations.findAllById(locationIds), MerchantLocationEntity::getId),
+                items.stream().collect(java.util.stream.Collectors.groupingBy(NeedResponseItemEntity::getNeedResponseId)),
+                offersById, variantsById, index(catalogItems.findAllById(catalogIds), CatalogItemEntity::getId),
+                type == NeedType.PRODUCT ? index(inventory.findAllById(trackedIds), InventoryBalanceEntity::getLocationVariantId) : Map.of());
+    }
+
+    private static <EntityType> Map<UUID, EntityType> index(List<EntityType> entities,
+            java.util.function.Function<EntityType, UUID> identity) {
+        return entities.stream().collect(java.util.stream.Collectors.toMap(identity, java.util.function.Function.identity()));
+    }
+
+    private record ReadRecords(Map<UUID, MerchantProfileEntity> merchants, Map<UUID, MerchantLocationEntity> locations,
+            Map<UUID, List<NeedResponseItemEntity>> items, Map<UUID, LocationVariantEntity> offers,
+            Map<UUID, VariantEntity> variants, Map<UUID, CatalogItemEntity> catalogs,
+            Map<UUID, InventoryBalanceEntity> inventory) {}
+
+    private NeedResponseResponse toDto(NeedRequestEntity need, NeedResponseEntity response, Instant now,
+            boolean billingAllowed, ReadRecords records) {
+        var merchant = records.merchants().get(response.getMerchantProfileId());
+        MerchantLocationEntity location = records.locations().get(response.getMerchantLocationId());
         Long distance = location == null ? null : haversineMeters(need.getGeoPoint().getY(), need.getGeoPoint().getX(),
                 location.getGeoPoint().getY(), location.getGeoPoint().getX());
         boolean needActionable = NeedCommandService.effectiveStatus(need, now).name().equals("ACTIVE")
                 && need.getExpiresAt().isAfter(now);
-        List<NeedResponseItemResponse> items = responseItems
-                .findByNeedResponseIdAndItemStatusOrderByCreatedAtAsc(response.getId(), NeedResponseItemStatus.ACTIVE)
+        List<NeedResponseItemResponse> items = records.items().getOrDefault(response.getId(), List.of())
                 .stream().map(item -> {
-                    var displayCatalog = catalogItems.findById(item.getCatalogItemId()).orElse(null);
-                    var offer = locationVariants.findUsableById(item.getLocationVariantId()).orElse(null);
+                    var displayCatalog = records.catalogs().get(item.getCatalogItemId());
+                    var offer = records.offers().get(item.getLocationVariantId());
                     boolean available = false;
                     NeedResponseItemResponse.MoneyResponse current = null;
                     if (offer != null && offer.isAvailable()) {
-                        var variant = variants.findById(offer.getVariantId()).orElse(null);
-                        var catalog = variant == null ? null : catalogItems.findById(variant.getCatalogItemId()).orElse(null);
-                        available = vn.covie.checkout.application.CheckoutTradingPolicy.merchantVisible(merchant)
+                        var variant = records.variants().get(offer.getVariantId());
+                        var catalog = variant == null ? null : records.catalogs().get(variant.getCatalogItemId());
+                        available = billingAllowed
+                                && vn.covie.checkout.application.CheckoutTradingPolicy.merchantVisible(merchant)
                                 && vn.covie.checkout.application.CheckoutTradingPolicy.locationActive(location)
                                 && variant != null && variant.getDeletedAt() == null
                                 && variant.getVariantStatus() == VariantStatus.ACTIVE
@@ -125,7 +185,8 @@ public class NeedResponseReadService {
                                     || "APPROVED".equals(catalog.getModerationStatus().name()));
                         if (available && need.getNeedType() == NeedType.PRODUCT
                                 && offer.getInventoryMode() == InventoryMode.TRACKED) {
-                            available = inventory.findById(offer.getId()).map(v -> v.availableQuantity() > 0).orElse(false);
+                            var balance = records.inventory().get(offer.getId());
+                            available = balance != null && balance.availableQuantity() > 0;
                         }
                         current = new NeedResponseItemResponse.MoneyResponse(offer.getPrice(), offer.getCurrencyCode());
                     }

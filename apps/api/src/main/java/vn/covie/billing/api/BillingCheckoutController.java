@@ -12,7 +12,10 @@ import vn.covie.billing.application.BillingCheckoutService;
 @RequestMapping("/api/v1/merchants/{merchantId}/billing")
 public class BillingCheckoutController {
     private final BillingCheckoutService checkout;
+    private vn.covie.billing.observability.BillingOperationMetrics operationMetrics;
     public BillingCheckoutController(BillingCheckoutService checkout) { this.checkout = checkout; }
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setOperationMetrics(vn.covie.billing.observability.BillingOperationMetrics metrics) { this.operationMetrics = metrics; }
 
     @PostMapping("/checkout")
     public ResponseEntity<BillingCheckoutService.CheckoutResult> create(
@@ -20,7 +23,8 @@ public class BillingCheckoutController {
             @RequestHeader("Idempotency-Key") String idempotencyKey,
             @RequestBody BillingCheckoutService.CheckoutRequest request) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-            .body(checkout.create(merchantId, idempotencyKey, request));
+            .body(operationMetrics == null ? checkout.create(merchantId, idempotencyKey, request)
+                : operationMetrics.checkout(() -> checkout.create(merchantId, idempotencyKey, request)));
     }
 
     @GetMapping("/subscription")

@@ -26,6 +26,7 @@ const enabled = process.env.COVIE_UI_FIXTURE === "1" && existsSync(fixturePath);
 
 test.skip(!enabled, "Run pnpm ui:verify-local with the local Docker stack running.");
 test.setTimeout(180_000);
+test.use({ serviceWorkers: "block" });
 
 async function login(page: Page, email: string, password: string) {
   await page.goto("/login");
@@ -118,7 +119,8 @@ test("Buyer captures every authoritative address, reputation, review and authori
       const form = page.locator("form:visible");
       await expect(page.getByRole("heading", { name: "Thêm địa chỉ", exact: true }).first()).toBeVisible();
       await expect(form.getByLabel("Nhãn *")).toBeVisible();
-      await expect(form.getByText("Có thể dùng GPS hoặc nhập tọa độ đơn giản.", { exact: true })).toBeVisible();
+      await expect(form.getByRole("group", { name: "Địa chỉ giao hàng", exact: true })).toBeVisible();
+      await expect(form.getByRole("button", { name: "Dùng vị trí hiện tại", exact: true })).toBeVisible();
       await expect(form.getByRole("spinbutton", { name: "Vĩ độ *" })).toHaveCount(0);
       await expect(form.getByRole("spinbutton", { name: "Kinh độ *" })).toHaveCount(0);
       await form.getByLabel("Đặt làm địa chỉ mặc định").check();
@@ -142,12 +144,19 @@ test("Buyer captures every authoritative address, reputation, review and authori
   for (const caseId of ["buy-004-new-error", "buy-004-new-error-desktop"]) {
     await capturePrepared(page, caseId, async () => {
       const form = page.locator("form:visible");
+      await form.getByText("Nâng cao: chọn nguồn và nhập tọa độ", { exact: true }).click();
+      await form.getByLabel("Nguồn vị trí", { exact: true }).selectOption("SAVED");
+      await form.getByLabel("Địa chỉ lấy điểm", { exact: true }).selectOption(fixture.addressId);
       await form.getByLabel("Nhãn *").fill("Nhà lỗi");
       await form.getByLabel("Người nhận *").fill("Nguyễn Văn Minh");
       await form.getByLabel("Số điện thoại *").fill("090");
       await form.getByLabel("Địa chỉ *").fill("Địa chỉ sẽ bị từ chối");
       await form.getByLabel("Đặt làm địa chỉ mặc định").check();
-      await form.getByRole("button", { name: "Lưu địa chỉ", exact: true }).click();
+      const [invalidResponse] = await Promise.all([
+        page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname === "/api/v1/me/addresses"),
+        form.getByRole("button", { name: "Lưu địa chỉ", exact: true }).click(),
+      ]);
+      expect(invalidResponse.status()).toBe(422);
       await expect(page.getByText("Giá trị không hợp lệ.", { exact: true })).toBeVisible();
       await expect(page.getByText("Trường này là bắt buộc.", { exact: true })).toBeVisible();
       await expect(form.getByLabel("Nhãn *")).toHaveValue("Nhà lỗi");
@@ -189,8 +198,9 @@ test("Buyer captures every authoritative address, reputation, review and authori
   }
 
   await captureReputationIdentity("buy-009-zero", fixture.zeroReputationBuyerEmail, fixture.zeroReputationBuyerPassword, async (identityPage) => {
-    await expect(identityPage.getByText("Chưa có dữ liệu", { exact: true })).toBeVisible();
-    await expect(identityPage.getByText(/\d+(?:[,.]\d+)?%/)).toHaveCount(0);
+    const summary = identityPage.getByRole("region").filter({ has: identityPage.getByRole("heading", { name: "Uy tín giao dịch", exact: true }) });
+    await expect(summary.locator("strong")).toHaveText("Chưa có dữ liệu");
+    await expect(summary.locator("strong").filter({ hasText: /\d+(?:[,.]\d+)?%/ })).toHaveCount(0);
   });
   await captureReputationIdentity("buy-009-warning", fixture.warningReputationBuyerEmail, fixture.warningReputationBuyerPassword, async (identityPage) => {
     await expect(identityPage.getByText("60%", { exact: true })).toBeVisible();
@@ -209,7 +219,9 @@ test("Buyer captures every authoritative address, reputation, review and authori
       body: JSON.stringify({ error: { code: "SERVICE_UNAVAILABLE", message: "Unavailable" } }),
     });
   });
+  const unavailableResponse = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/v1/me/reputation" && response.status() === 503);
   await capturePrepared(page, "buy-009-error", async () => {
+    expect((await unavailableResponse).status()).toBe(503);
     await expect(page.getByText("Không thể tải uy tín", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Thử lại", exact: true })).toBeVisible();
   }, ["503 (Service Unavailable)"]);

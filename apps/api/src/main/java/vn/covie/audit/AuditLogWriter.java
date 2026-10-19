@@ -27,6 +27,13 @@ public class AuditLogWriter {
         repository.save(AuditLogEntity.security(ids.generate(), actorUserId, action, entityType, entityId, requestId, OBJECT_MAPPER.valueToTree(metadata), clock.now()));
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void systemEvent(String action, String entityType, UUID entityId, String requestId,
+            Map<String, Object> metadata) {
+        repository.save(AuditLogEntity.system(ids.generate(), action, entityType, entityId,
+                requestId, OBJECT_MAPPER.valueToTree(metadata), clock.now()));
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void securityFailure(String action, String requestId, Map<String, Object> metadata) {
         repository.save(AuditLogEntity.security(ids.generate(), null, action, "AUTH", null, requestId, OBJECT_MAPPER.valueToTree(metadata), clock.now()));

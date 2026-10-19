@@ -989,7 +989,7 @@
 
 @media (max-width: 640px) {
   .seller-studio-grid-2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

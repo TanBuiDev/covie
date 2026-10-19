@@ -1,3 +1,7 @@
+.seller-order-page {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .seller-order-location-filter,
 .seller-need-location-filter {
   color: var(--seller-text-primary);

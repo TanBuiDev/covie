@@ -4,19 +4,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
-import vn.covie.support.PostgresIntegrationTest;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @Tag("performance")
 @EnabledIfSystemProperty(named="covie.test.pilot-fixture",matches="true")
 @SpringBootTest(properties={"covie.outbox.max-events-per-poll=0","covie.retention.enabled=false",
         "spring.jpa.properties.hibernate.session_factory.statement_inspector=vn.covie.performance.PilotFixtureIntegrationTest$SqlCapture"})
+@ActiveProfiles("test")
 @Transactional
-class PilotFixtureIntegrationTest extends PostgresIntegrationTest {
+class PilotFixtureIntegrationTest {
+    private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
+        DockerImageName.parse("postgis/postgis:18-3.6").asCompatibleSubstituteFor("postgres"))
+        .withDatabaseName("pilot_fixture_test").withUsername("pilot")
+        .withPassword("pilot-test-only");
+    static { POSTGRES.start(); }
+
+    @DynamicPropertySource
+    static void postgresProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
+    }
+
+    @AfterAll static void cleanup() { POSTGRES.stop(); }
+
     @Autowired JdbcTemplate jdbc;
     @Autowired jakarta.persistence.EntityManager entityManager;
     @Autowired vn.covie.notifications.persistence.NotificationRepository notifications;

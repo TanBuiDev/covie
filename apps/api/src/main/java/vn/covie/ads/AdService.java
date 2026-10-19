@@ -34,6 +34,11 @@ public class AdService {
  private final ObjectMapper json=new ObjectMapper().findAndRegisterModules();
  private BillingEntitlementService billing;
  private SystemSettingResolver settings;
+ private java.net.URI publicOrigin=java.net.URI.create("http://localhost:3000");
+
+ @Autowired public void setPublicOrigin(@org.springframework.beans.factory.annotation.Value("${covie.production.public-url:${COVIE_PUBLIC_URL:http://localhost:3000}}") java.net.URI origin) {
+  publicOrigin=origin;
+ }
 
  @Autowired public void setBillingDependencies(BillingEntitlementService billing, SystemSettingResolver settings) {
   this.billing=Objects.requireNonNull(billing);
@@ -124,19 +129,49 @@ public class AdService {
  }
  private double ctr(long impressions,long clicks){return impressions==0?0:Math.round(clicks*10000.0/impressions)/100.0;}
  private UUID mediaOwner(AdCampaignRequest r,UUID fallback){return r.mediaId()==null?fallback:media.findById(r.mediaId()).map(MediaAssetEntity::getOwnerUserId).orElse(fallback);}
- private boolean targetVisible(Row row) {
-  String target=row.request().targetUrl();if(!target.startsWith("/"))return true;
-  String path=java.net.URI.create(target).getPath();UUID merchant=row.merchant();
+ private record Target(boolean visible,UUID merchant) {}
+ private Target target(Row row) {
+  var destination=java.net.URI.create(row.request().targetUrl());
+  if(destination.isAbsolute()&&!(Objects.equals(destination.getScheme().toLowerCase(Locale.ROOT),publicOrigin.getScheme().toLowerCase(Locale.ROOT))
+    &&Objects.equals(destination.getHost().toLowerCase(Locale.ROOT),publicOrigin.getHost().toLowerCase(Locale.ROOT))
+    &&originPort(destination)==originPort(publicOrigin)))return new Target(true,null);
+  String path=java.net.URI.create(destination.getRawPath().replaceAll("(?i)%2e",".")).normalize().getPath();
+  while(path.startsWith("/../"))path=path.substring(3);
+  if(path.equals("/.."))path="/";
+  UUID merchant=row.merchant();
   if(path.startsWith("/items/")) {
-   try {var item=items.findById(UUID.fromString(path.substring(7))).orElse(null);if(item==null||item.getDeletedAt()!=null||item.getListingStatus()!=vn.covie.catalog.model.ListingStatus.ACTIVE||!(item.getModerationStatus()==vn.covie.catalog.model.CatalogModerationStatus.APPROVED||item.getModerationStatus()==vn.covie.catalog.model.CatalogModerationStatus.NOT_REQUIRED))return false;merchant=item.getMerchantProfileId();}catch(IllegalArgumentException e){return false;}
-  } else if(path.startsWith("/merchants/")) {try{merchant=UUID.fromString(path.substring(11));}catch(IllegalArgumentException e){return false;}}
-  return merchant==null||Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from merchant_profiles where id=? and deleted_at is null and merchant_status='ACTIVE' and moderation_status in ('NOT_REQUIRED','APPROVED'))",Boolean.class,merchant));
+   try {var item=items.findById(UUID.fromString(path.substring(7))).orElse(null);if(item==null||item.getDeletedAt()!=null||item.getListingStatus()!=vn.covie.catalog.model.ListingStatus.ACTIVE||!(item.getModerationStatus()==vn.covie.catalog.model.CatalogModerationStatus.APPROVED||item.getModerationStatus()==vn.covie.catalog.model.CatalogModerationStatus.NOT_REQUIRED))return new Target(false,null);merchant=item.getMerchantProfileId();}catch(IllegalArgumentException e){return new Target(false,null);}
+  } else if(path.startsWith("/merchants/")) {try{merchant=UUID.fromString(path.substring(11));}catch(IllegalArgumentException e){return new Target(false,null);}}
+  return new Target(merchant==null||Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from merchant_profiles where id=? and deleted_at is null and merchant_status='ACTIVE' and moderation_status in ('NOT_REQUIRED','APPROVED'))",Boolean.class,merchant)),merchant);
+ }
+ private boolean billingEnforced() {
+  return settings != null && settings.bool("billing.enforcement_enabled",SystemSettingContext.globalOnly());
+ }
+ private int originPort(java.net.URI origin) {
+  return origin.getPort()>=0?origin.getPort():"https".equalsIgnoreCase(origin.getScheme())?443:80;
+ }
+ private Set<UUID> linkedMerchants(Row row,Target target) {
+  var linked=new HashSet<UUID>();
+  if(row.merchant()!=null)linked.add(row.merchant());
+  if(target.merchant()!=null)linked.add(target.merchant());
+  return linked;
+ }
+ private Map<UUID,Instant> entitlementExpiries(Set<UUID> merchants,Instant now) {
+  if(merchants.isEmpty())return Map.of();
+  var expiries=new HashMap<UUID,Instant>();
+  new org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate(jdbc).query("""
+    select merchant_id,max(valid_until) as valid_until from billing_entitlement_grants
+    where merchant_id in (:merchants) and revoked_at is null
+      and valid_from<=:now and valid_until>:now group by merchant_id
+    """,Map.of("merchants",merchants,"now",java.sql.Timestamp.from(now)),
+    (org.springframework.jdbc.core.RowCallbackHandler) result->expiries.put(result.getObject("merchant_id",UUID.class),result.getTimestamp("valid_until").toInstant()));
+  return expiries;
  }
  public List<PublicAdResponse> active(Placement placement,Device device) {
   if(device==Device.ALL)throw AdRules.invalid("Select a concrete device.");var now=clock.now();
   jdbc.update("delete from ad_deliveries where id in (select id from ad_deliveries where expires_at<? order by expires_at limit 500)",java.sql.Timestamp.from(now));
-  boolean enforced=settings != null && settings.bool("billing.enforcement_enabled",SystemSettingContext.globalOnly());
-  return jdbc.query("""
+  boolean enforced=billingEnforced();
+  var candidates=jdbc.query("""
     select * from ad_campaigns c where c.deleted_at is null and c.enabled
       and c.status='APPROVED' and c.placement=? and (c.device=? or c.device='ALL')
       and c.starts_at<=? and c.ends_at>?
@@ -147,19 +182,34 @@ public class AdService {
       and (? = false or c.merchant_id is null or exists(
           select 1 from billing_entitlement_grants g where g.merchant_id=c.merchant_id
             and g.revoked_at is null and g.valid_from<=? and g.valid_until>?
-      ) or exists (
-          select 1 from merchant_subscriptions bs
-          where bs.merchant_id=c.merchant_id and bs.status in ('ACTIVE','TRIALING','PAST_DUE')
-            and bs.cancel_at_period_end=false and bs.period_end<=?
-            and bs.grace_until>?
-            and exists(select 1 from billing_entitlement_grants bg
-                where bg.merchant_id=bs.merchant_id and bg.revoked_at is null
-                  and bg.source_type in ('TRIAL','PAID_INVOICE') and bg.valid_until=bs.period_end)
       ))
       order by c.priority desc,c.created_at desc,c.id desc limit 100
     """,this::map,placement.name(),device.name(),java.sql.Timestamp.from(now),
-      java.sql.Timestamp.from(now),enforced,java.sql.Timestamp.from(now),java.sql.Timestamp.from(now),
-      java.sql.Timestamp.from(now),java.sql.Timestamp.from(now)).stream().filter(this::targetVisible).filter(row->row.request().mediaId()==null||mediaUrl(row.request())!=null).limit(10).map(row->{var r=row.request();UUID token=ids.generate();Instant expires=now.plusSeconds(1800);jdbc.update("insert into ad_deliveries(id,campaign_id,campaign_version,issued_at,expires_at) values(?,?,?,?,?)",token,row.id(),row.version(),java.sql.Timestamp.from(now),java.sql.Timestamp.from(expires));return new PublicAdResponse(row.id(),r.title(),r.body(),r.ctaLabel(),r.targetUrl(),r.creativeType(),r.template(),mediaUrl(r),r.placement(),r.endsAt(),token.toString(),expires);}).toList();
+      java.sql.Timestamp.from(now),enforced,java.sql.Timestamp.from(now),java.sql.Timestamp.from(now));
+  if(!enforced)return candidates.stream().filter(row->target(row).visible())
+    .filter(row->row.request().mediaId()==null||mediaUrl(row.request())!=null).limit(10)
+    .map(row->deliver(row,now,null)).toList();
+  var deliveries=new ArrayList<PublicAdResponse>();
+  for(int start=0;start<candidates.size()&&deliveries.size()<10;start+=10){
+   var batch=candidates.subList(start,Math.min(start+10,candidates.size()));
+   var targets=new HashMap<UUID,Target>();var merchants=new HashSet<UUID>();
+   for(var row:batch){var resolved=target(row);targets.put(row.id(),resolved);merchants.addAll(linkedMerchants(row,resolved));}
+   var expiries=entitlementExpiries(merchants,now);
+   for(var row:batch){
+    var resolved=targets.get(row.id());var linked=linkedMerchants(row,resolved);
+    if(!resolved.visible()||!expiries.keySet().containsAll(linked)||row.request().mediaId()!=null&&mediaUrl(row.request())==null)continue;
+    Instant expiry=linked.stream().map(expiries::get).min(Comparator.naturalOrder()).orElse(null);
+    deliveries.add(deliver(row,now,expiry));if(deliveries.size()==10)break;
+   }
+  }
+  return List.copyOf(deliveries);
+ }
+ private PublicAdResponse deliver(Row row,Instant now,Instant entitlementExpiry) {
+  var request=row.request();UUID token=ids.generate();Instant expires=now.plusSeconds(1800);
+  if(request.endsAt().isBefore(expires))expires=request.endsAt();
+  if(entitlementExpiry!=null&&entitlementExpiry.isBefore(expires))expires=entitlementExpiry;
+  jdbc.update("insert into ad_deliveries(id,campaign_id,campaign_version,issued_at,expires_at) values(?,?,?,?,?)",token,row.id(),row.version(),java.sql.Timestamp.from(now),java.sql.Timestamp.from(expires));
+  return new PublicAdResponse(row.id(),request.title(),request.body(),request.ctaLabel(),request.targetUrl(),request.creativeType(),request.template(),mediaUrl(request),request.placement(),request.endsAt(),token.toString(),expires);
  }
  public void event(UUID id,AdEventRequest event) {
   if(!AdRules.acceptsEvent(event.type().name(),event.visibleMillis()))throw AdRules.invalid("Impressions require at least 1000ms of continuous visibility.");
@@ -167,7 +217,8 @@ public class AdService {
   var deliveries=jdbc.query("select campaign_version,issued_at from ad_deliveries where id=? and campaign_id=? and expires_at>?",(rs,n)->new long[]{rs.getLong(1),rs.getTimestamp(2).toInstant().toEpochMilli()},token,id,java.sql.Timestamp.from(clock.now()));
   if(deliveries.isEmpty())throw AdRules.invalid("Invalid or expired advertising delivery token.");long version=deliveries.getFirst()[0],issued=deliveries.getFirst()[1];
   var now=clock.now();long age=now.toEpochMilli()-issued;if(age<0||age>1800000||event.type()==AdEventRequest.Type.IMPRESSION&&age<event.visibleMillis())throw AdRules.invalid("Advertising delivery token is expired or too recent.");
-  var row=find(null,id,true);var r=row.request();if(row.version()!=version||row.status()!=Status.APPROVED||!r.enabled()||now.isBefore(r.startsAt())||!now.isBefore(r.endsAt())||!targetVisible(row))throw AdRules.invalid("Campaign is no longer active.");
+  var row=find(null,id,true);var r=row.request();var resolved=target(row);var linked=linkedMerchants(row,resolved);
+  if(row.version()!=version||row.status()!=Status.APPROVED||!r.enabled()||now.isBefore(r.startsAt())||!now.isBefore(r.endsAt())||!resolved.visible()||billingEnforced()&&!entitlementExpiries(linked,now).keySet().containsAll(linked))throw AdRules.invalid("Campaign is no longer active.");
   jdbc.update("insert into ad_events(event_id,campaign_id,delivery_key,event_type,occurred_at) values(?,?,?,?,?) on conflict do nothing",event.eventId(),id,token.toString(),event.type().name(),java.sql.Timestamp.from(now));
  }
 }

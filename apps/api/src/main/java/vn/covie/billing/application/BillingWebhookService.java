@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.covie.audit.AuditLogWriter;
 import vn.covie.billing.payos.PayosGateway;
 import vn.covie.billing.payos.PayosSignature;
 import vn.covie.shared.outbox.OutboxEventIntent;
@@ -20,6 +21,7 @@ import vn.covie.shared.outbox.OutboxEventWriter;
 import vn.covie.shared.time.AppClock;
 import vn.covie.shared.web.ApiException;
 import vn.covie.shared.web.ErrorCode;
+import vn.covie.shared.web.RequestIdAccessor;
 
 /**
  * Signed payOS webhook is the only payment-success write path.
@@ -33,11 +35,15 @@ public class BillingWebhookService {
     private final PayosSignature signatures;
     private final AppClock clock;
     private final OutboxEventWriter outbox;
+    private final AuditLogWriter audit;
+    private final RequestIdAccessor requests;
 
     public BillingWebhookService(JdbcTemplate jdbc, ObjectMapper json, PayosGateway payos,
-            PayosSignature signatures, AppClock clock, OutboxEventWriter outbox) {
+            PayosSignature signatures, AppClock clock, OutboxEventWriter outbox,
+            AuditLogWriter audit, RequestIdAccessor requests) {
         this.jdbc = jdbc; this.json = json; this.payos = payos;
         this.signatures = signatures; this.clock = clock; this.outbox = outbox;
+        this.audit = audit; this.requests = requests;
     }
 
     @Transactional
@@ -200,7 +206,9 @@ public class BillingWebhookService {
               status='ACTIVE', cancel_at_period_end=false, plan_code=excluded.plan_code,
               period_end=greatest(merchant_subscriptions.period_end,excluded.period_end),
               grace_until=greatest(merchant_subscriptions.grace_until,excluded.grace_until),
-              period_start=coalesce(merchant_subscriptions.period_start,excluded.period_start),
+              period_start=case when merchant_subscriptions.period_end < excluded.period_start
+                then excluded.period_start
+                else coalesce(merchant_subscriptions.period_start,excluded.period_start) end,
               updated_at=excluded.updated_at,version=merchant_subscriptions.version+1
             """, payment.merchantId(), planCode, Timestamp.from(payment.periodStart()),
             Timestamp.from(payment.periodEnd()), Timestamp.from(payment.graceUntil()),
@@ -209,6 +217,9 @@ public class BillingWebhookService {
             update billing_webhook_inbox set processing_status='DONE',processed_at=?
             where id=?
             """, Timestamp.from(clock.now()), eventId);
+        audit.securityEvent(null, "BILLING_PAYMENT_SETTLED", "BILLING_INVOICE", payment.invoiceId(),
+            requests.current(), Map.of("merchantId", payment.merchantId().toString(),
+                "provider", "PAYOS", "amountVnd", amount));
         outbox.append(new OutboxEventIntent("SELLER_SUBSCRIPTION_PAYMENT_SETTLED", "BILLING_INVOICE",
             payment.invoiceId(), Map.of("merchantId", payment.merchantId().toString(),
                                        "invoiceId", payment.invoiceId().toString())));

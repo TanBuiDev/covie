@@ -68,3 +68,5 @@ try {
     $env:JAVA_HOME = $originalJavaHome
   }
 }
+
+& (Join-Path $PSScriptRoot 'dev-web-environment.test.ps1')

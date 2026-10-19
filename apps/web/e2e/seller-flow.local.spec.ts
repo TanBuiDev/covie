@@ -44,6 +44,7 @@ const sellerMainCases = new Map([
 
 test.skip(!enabled, "Run pnpm ui:verify-local with the local Docker stack running.");
 test.setTimeout(120_000);
+test.use({ serviceWorkers: "block" });
 
 test("Seller authenticates and captures the deterministic main-state journey", async ({ page }) => {
   const fixture = JSON.parse(readFileSync(fixturePath, "utf8")) as SellerFixture;
@@ -65,7 +66,7 @@ test("Seller authenticates and captures the deterministic main-state journey", a
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(route);
     await expect(page).toHaveURL(route);
-    await expect(page.getByRole("heading", { name: expectedHeading, exact: true, level: 1 })).toBeVisible();
+    await expect(page.getByRole("banner").getByRole("heading", { name: expectedHeading, exact: true, level: 1 })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Điều hướng Seller Center" })).toBeVisible();
     if (caseId.startsWith("sel-015-")) {
       const expectedFulfillment = {
@@ -132,7 +133,7 @@ test("Seller authenticates and captures the deterministic main-state journey", a
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(route);
     await expect(page).toHaveURL(route);
-    await expect(page.getByRole("heading", { name: options.expectedHeading ?? "Chi tiết đơn", exact: true, level: 1 })).toBeVisible();
+    await expect(page.getByRole("banner").getByRole("heading", { name: options.expectedHeading ?? "Chi tiết đơn", exact: true, level: 1 })).toBeVisible();
     await prepare();
     for (const expectedError of options.expectedConsoleErrors ?? []) {
       const errorIndex = diagnostics.consoleErrors.indexOf(expectedError);
@@ -167,19 +168,24 @@ test("Seller authenticates and captures the deterministic main-state journey", a
   }
 
   await capturePreparedCase("sel-010-product", async () => {
-    await expect(page.getByRole("combobox", { name: "Loại", exact: true })).toHaveValue("PRODUCT");
+    await expect(page.getByRole("combobox", { name: "Loại", exact: true })).toHaveText("Sản phẩm");
+    await expect(page.locator('input[name="type"]')).toHaveValue("PRODUCT");
     await expect(page.getByRole("combobox", { name: "Quản lý tồn kho", exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Biến thể" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Biến thể và gói tùy chọn", exact: true })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: "Nội dung có lựa chọn / biến thể", exact: true })).toBeVisible();
   }, { expectedHeading: "Thêm sản phẩm / dịch vụ" });
 
   await capturePreparedCase("sel-011-service", async () => {
-    await page.getByRole("combobox", { name: "Loại", exact: true }).selectOption("SERVICE");
+    await page.getByRole("combobox", { name: "Loại", exact: true }).click();
+    await page.getByRole("option", { name: "Dịch vụ", exact: true }).click();
     await expect(page.getByRole("combobox", { name: "Quản lý tồn kho", exact: true })).toHaveCount(0);
-    await expect(page.getByRole("group", { name: "Gói dịch vụ" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Biến thể và gói tùy chọn", exact: true })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: "Dịch vụ có nhiều gói", exact: true })).toBeVisible();
   }, { expectedHeading: "Thêm sản phẩm / dịch vụ" });
 
   await capturePreparedCase("sel-012-variants", async () => {
-    await page.getByRole("combobox", { name: "Loại", exact: true }).selectOption("SERVICE");
+    await page.getByRole("combobox", { name: "Loại", exact: true }).click();
+    await page.getByRole("option", { name: "Dịch vụ", exact: true }).click();
     await page.getByRole("checkbox", { name: "Dịch vụ có nhiều gói" }).check();
     await page.getByRole("textbox", { name: "Tên lựa chọn", exact: true }).fill("Số máy");
     await page.getByRole("textbox", { name: "Các giá trị", exact: true }).fill("1 máy, 2 máy, 3 máy");
@@ -195,8 +201,10 @@ test("Seller authenticates and captures the deterministic main-state journey", a
   });
 
   await capturePreparedCase("sel-013-resale", async () => {
-    await page.getByRole("combobox", { name: "Loại sản phẩm", exact: true }).selectOption("RESALE");
-    await page.getByRole("combobox", { name: "Danh mục", exact: true }).selectOption({ label: "Tạp hóa" });
+    await page.getByRole("combobox", { name: "Loại sản phẩm", exact: true }).click();
+    await page.getByRole("option", { name: "Thanh lý", exact: true }).click();
+    await page.getByRole("combobox", { name: "Danh mục", exact: true }).click();
+    await page.getByRole("option", { name: "Tạp hóa", exact: true }).click();
     await expect(page.getByRole("status")).toContainText("Danh mục này chưa có tùy chọn tình trạng để chọn.");
   }, { expectedHeading: "Thêm sản phẩm / dịch vụ" });
 
@@ -218,10 +226,13 @@ test("Seller authenticates and captures the deterministic main-state journey", a
   });
   await capturePreparedCase("sel-catalog-media-error", async () => {
     await page.getByRole("textbox", { name: "Tên", exact: true }).fill("Sản phẩm giữ nguyên khi tải ảnh lỗi");
-    await page.getByRole("combobox", { name: "Danh mục", exact: true }).selectOption({ label: "Tạp hóa" });
-    await page.getByRole("combobox", { name: "Điểm bán", exact: true }).selectOption(fixture.locationId);
+    await page.getByRole("combobox", { name: "Danh mục", exact: true }).click();
+    await page.getByRole("option", { name: "Tạp hóa", exact: true }).click();
+    await page.getByRole("combobox", { name: "Điểm bán", exact: true }).click();
+    await page.getByRole("option", { name: /^Chợ Xanh Grand Park(?: —|$)/ }).click();
+    await expect(page.locator('input[name="locationId"]')).toHaveValue(fixture.locationId);
     await page.getByRole("spinbutton", { name: "Giá chính xác (VND)", exact: true }).fill("85000");
-    await page.getByRole("button", { name: "Ảnh catalog", exact: true }).setInputFiles(
+    await page.getByLabel("Ảnh catalog", { exact: true }).setInputFiles(
       path.resolve(process.cwd(), "../../docs/academic-report/assets/success.png"),
     );
     const submit = page.getByRole("button", { name: "Tạo nội dung", exact: true });
@@ -229,7 +240,7 @@ test("Seller authenticates and captures the deterministic main-state journey", a
     await submit.click();
     await expect(page.getByText("Không thể tải ảnh lên. Thông tin đã nhập được giữ lại; hãy thử lại.", { exact: true })).toBeVisible();
     await expect(page.getByRole("textbox", { name: "Tên", exact: true })).toHaveValue("Sản phẩm giữ nguyên khi tải ảnh lỗi");
-    await expect(page.getByText("Đã chọn 1 ảnh.", { exact: true })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Đã chọn 1 ảnh (Ảnh đầu tiên sẽ là ảnh chính):" })).toBeVisible();
   }, {
     expectedHeading: "Thêm sản phẩm / dịch vụ",
     expectedConsoleErrors: ["Failed to load resource: the server responded with a status of 503 (Service Unavailable)"],

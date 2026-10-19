@@ -194,12 +194,19 @@ public class CatalogDetailService {
                 offersAtResolvedLocation.put(offer.getVariantId(), offer);
             }
         }
+        Map<UUID, List<UUID>> optionValuesByVariant = new HashMap<>();
+        if (!activeVariants.isEmpty()) {
+            for (var association : variantOptions.findAllByIdVariantIdIn(
+                    activeVariants.stream().map(VariantEntity::getId).toList())) {
+                optionValuesByVariant.computeIfAbsent(association.getId().getVariantId(), unused -> new ArrayList<>())
+                        .add(association.getId().getOptionValueId());
+            }
+        }
         return activeVariants.stream().map(variant -> {
             LocationVariantEntity offer = offersAtResolvedLocation.get(variant.getId());
             PublicOfferResponse publicOffer = offer == null ? null : new PublicOfferResponse(offer.getId(),
                     offer.isAvailable(), new Money(offer.getPrice(), offer.getCurrencyCode()), offer.getPreparationTimeMinutes());
-            List<UUID> optionValueIds = variantOptions.findAllByIdVariantId(variant.getId()).stream()
-                    .map(association -> association.getId().getOptionValueId()).toList();
+            List<UUID> optionValueIds = optionValuesByVariant.getOrDefault(variant.getId(), List.of());
             return new PublicVariantResponse(variant.getId(), variant.getVariantName(), variant.isDefaultVariant(),
                     optionValueIds, publicOffer);
         }).toList();

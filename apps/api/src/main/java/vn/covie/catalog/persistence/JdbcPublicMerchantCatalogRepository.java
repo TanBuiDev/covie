@@ -36,17 +36,6 @@ public class JdbcPublicMerchantCatalogRepository implements PublicMerchantCatalo
                 where bge.merchant_id = ci.merchant_profile_id and bge.revoked_at is null
                   and bge.valid_from <= cast(:billingNow as timestamptz)
                   and bge.valid_until > cast(:billingNow as timestamptz)
-            ) or exists (
-                select 1 from merchant_subscriptions bs
-                where bs.merchant_id=ci.merchant_profile_id
-                  and bs.status in ('ACTIVE','TRIALING','PAST_DUE')
-                  and bs.cancel_at_period_end=false
-                  and bs.period_end<=cast(:billingNow as timestamptz)
-                  and bs.grace_until>cast(:billingNow as timestamptz)
-                  and exists (select 1 from billing_entitlement_grants bg
-                      where bg.merchant_id=bs.merchant_id and bg.revoked_at is null
-                        and bg.source_type in ('TRIAL','PAID_INVOICE')
-                        and bg.valid_until=bs.period_end)
             ))
             """;
 

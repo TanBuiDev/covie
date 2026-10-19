@@ -21,6 +21,7 @@ import {
 } from "@phosphor-icons/react";
 import type { Etagged } from "./merchant-api";
 import { createMerchant, updateMerchant } from "./merchant-api";
+import { SellerBillingOnboarding } from "@/features/seller/seller-billing-onboarding";
 
 type MerchantSummary = components["schemas"]["MerchantSummaryResponse"];
 
@@ -124,6 +125,9 @@ export function MerchantForm({ merchant, onCreated, onReload, billingOnboarding 
   const [pending, setPending] = useState(false);
   const [showMedia, setShowMedia] = useState(false);
   const editing = Boolean(merchant?.data.id);
+  const [billingReady, setBillingReady] = useState(false);
+  const [billingAcknowledged, setBillingAcknowledged] = useState(false);
+  const requiresBillingAcknowledgement = billingOnboarding && !editing;
   const [previewName, setPreviewName] = useState(merchant?.data.name ?? "");
   const [previewDesc, setPreviewDesc] = useState(merchant?.data.description ?? "");
   const reload = onReload ?? (() => router.refresh());
@@ -185,6 +189,7 @@ export function MerchantForm({ merchant, onCreated, onReload, billingOnboarding 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
+    if (requiresBillingAcknowledgement && (!billingReady || !billingAcknowledged)) return;
     const form = new FormData(event.currentTarget);
 
     setPending(true);
@@ -271,6 +276,7 @@ export function MerchantForm({ merchant, onCreated, onReload, billingOnboarding 
   return (
     <form className={editing ? "seller-merchant-form" : undefined} onSubmit={submit} aria-busy={pending}>
       {!editing ? <h2>Tạo cửa hàng</h2> : null}
+      {requiresBillingAcknowledgement ? <SellerBillingOnboarding onRegistrationReady={setBillingReady} /> : null}
       {editing ? <h2 className="seller-settings-card-title seller-desktop-only">Hồ sơ shop công khai</h2> : null}
 
       <label>
@@ -557,7 +563,12 @@ export function MerchantForm({ merchant, onCreated, onReload, billingOnboarding 
       {message?.startsWith("Dữ liệu") ? (
         <button type="button" disabled={pending} onClick={reload}>Tải dữ liệu mới</button>
       ) : null}
-      <button type="submit" disabled={pending} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+      {requiresBillingAcknowledgement ? <label>
+        <input type="checkbox" name="billingAcknowledged" required disabled={pending || !billingReady}
+          checked={billingAcknowledged} onChange={event => setBillingAcknowledged(event.target.checked)} />
+        <span>Tôi đã đọc các điều kiện thuê bao hiển thị, giá/chu kỳ sẽ được xác nhận lại trong báo giá và không có tự động trừ tiền gia hạn.</span>
+      </label> : null}
+      <button type="submit" disabled={pending || (requiresBillingAcknowledgement && (!billingReady || !billingAcknowledged))} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
         {editing ? <FloppyDisk size={16} weight="bold" /> : <Storefront size={16} weight="bold" />}
         <span>{pending ? (uploadStatus || "Đang lưu…") : editing ? "Lưu thay đổi" : "Tạo cửa hàng"}</span>
       </button>

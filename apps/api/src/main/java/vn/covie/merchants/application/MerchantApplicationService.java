@@ -115,7 +115,10 @@ public class MerchantApplicationService {
         UUID merchantId = merchant.getId();
         merchants.save(merchant);
         memberships.save(MerchantMembershipEntity.active(ids.generate(), merchantId, actor.userId(), MerchantRole.OWNER, now));
-        if (billingTrials != null) billingTrials.grantEligibleTrial(merchantId, actor.userId());
+        if (billingTrials != null) {
+            merchants.flush();
+            billingTrials.grantEligibleTrial(merchantId, actor.userId());
+        }
         audit.securityEvent(actor.userId(), "MERCHANT_CREATED", "MERCHANT", merchantId, requestIds.current(), Map.of());
         return summary(merchant, MerchantRole.OWNER);
     }

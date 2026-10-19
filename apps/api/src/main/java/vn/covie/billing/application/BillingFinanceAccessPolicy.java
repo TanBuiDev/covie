@@ -46,22 +46,31 @@ public class BillingFinanceAccessPolicy {
     public CurrentActor requireOperator(){return requireRank(2);}
     public CurrentActor requireApprover(){return requireRank(3);}
 
+    public boolean canOperate(){
+        var actor=admins.requireAdmin();
+        return !settings.bool("billing.finance_roles_enabled",SystemSettingContext.globalOnly())
+            || financeRank(actor.userId())>=2;
+    }
+
     private CurrentActor requireRank(int required){
         var actor=admins.requireAdmin();
         if(!settings.bool("billing.finance_roles_enabled",SystemSettingContext.globalOnly()))
             return actor;
+        if(financeRank(actor.userId())<required)throw new ApiException(ErrorCode.ACCESS_DENIED,HttpStatus.FORBIDDEN,
+            "Billing financial permissions are required.");
+        return actor;
+    }
+
+    private int financeRank(UUID actorId){
         String role=jdbc.query("""
             select finance_role from billing_finance_permissions where user_id=?
-            """,rs->rs.next()?rs.getString(1):null,actor.userId());
-        int rank=switch(role==null?"":role){
+            """,rs->rs.next()?rs.getString(1):null,actorId);
+        return switch(role==null?"":role){
             case "READER"->1;
             case "OPERATOR"->2;
             case "APPROVER"->3;
             default->0;
         };
-        if(rank<required)throw new ApiException(ErrorCode.ACCESS_DENIED,HttpStatus.FORBIDDEN,
-            "Billing financial permissions are required.");
-        return actor;
     }
 
     @Transactional(readOnly=true)

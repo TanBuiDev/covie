@@ -105,16 +105,6 @@ public class JdbcCatalogDiscoveryRepository implements CatalogDiscoveryRepositor
                             and grant_row.revoked_at is null
                             and grant_row.valid_from <= cast(:now as timestamptz)
                             and grant_row.valid_until > cast(:now as timestamptz)
-                      ) or exists (
-                          select 1 from merchant_subscriptions bs
-                          where bs.merchant_id=mp.id and bs.status in ('ACTIVE','TRIALING','PAST_DUE')
-                            and bs.cancel_at_period_end=false
-                            and bs.period_end<=cast(:now as timestamptz)
-                            and bs.grace_until>cast(:now as timestamptz)
-                            and exists (select 1 from billing_entitlement_grants bg
-                                where bg.merchant_id=bs.merchant_id and bg.revoked_at is null
-                                  and bg.source_type in ('TRIAL','PAID_INVOICE')
-                                  and bg.valid_until=bs.period_end)
                       ))
                       and st_dwithin(ml.geo_point, st_setsrid(st_makepoint(:lng, :lat), 4326)::geography, :radiusMeters)
                       and (:pickup = false or ml.pickup_enabled)

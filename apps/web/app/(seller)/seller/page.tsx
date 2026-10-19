@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MerchantForm, MerchantList } from "@/features/merchant/merchant-form";
-import { SellerBillingOnboarding } from "@/features/seller/seller-billing-onboarding";
 import { listMyMerchantsForServer } from "@/features/merchant/merchant-server-api";
 import { requireUser } from "@/lib/auth/require-user";
 import {
@@ -54,7 +53,6 @@ export default async function SellerPage() {
           <div className="seller-onboarding-layout">
             <div className="seller-onboarding-layout__main">
               <div className="seller-form-wrapper">
-                <SellerBillingOnboarding />
                 <MerchantForm billingOnboarding />
               </div>
             </div>
@@ -163,7 +161,6 @@ export default async function SellerPage() {
                 <strong>Khởi tạo gian hàng bổ sung</strong>
                 <p className="seller-muted">Tạo thêm cửa hàng để phân tách các ngành hàng hoặc dịch vụ khác nhau trong khu căn hộ. Mỗi cửa hàng có quyền thuê bao và thời hạn riêng.</p>
               </div>
-              <SellerBillingOnboarding />
               <MerchantForm billingOnboarding />
             </div>
           </details>

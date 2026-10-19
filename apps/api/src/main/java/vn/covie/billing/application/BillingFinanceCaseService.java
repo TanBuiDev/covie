@@ -68,6 +68,9 @@ public class BillingFinanceCaseService {
             values (?,?,?,?,'REQUESTED',?,?,?)
             """,id,invoiceId,merchantId,request.kind(),request.reason().trim(),owner,
             Timestamp.from(clock.now()));
+        audit.securityEvent(owner,"BILLING_FINANCE_CASE_REQUESTED","BILLING_FINANCE_CASE",id,
+            requestIds.current(),Map.of("merchantId",merchantId.toString(),
+                "invoiceId",invoiceId.toString(),"kind",request.kind()));
         outbox.append(new OutboxEventIntent("BILLING_FINANCE_CASE_REQUESTED","BILLING_FINANCE_CASE",
             id,Map.of("merchantId",merchantId.toString(),"invoiceId",invoiceId.toString(),"kind",request.kind())));
         return details(id);

@@ -52,6 +52,44 @@ public class BillingController {
         return catalog.currentPolicy();
     }
 
+    @GetMapping("/api/v1/admin/billing/plans")
+    public ResponseEntity<List<BillingCatalogService.PlanOffer>> latestPlans() {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(catalog.latestPublishedPlans());
+    }
+
+    @GetMapping("/api/v1/admin/billing/policy/latest")
+    public ResponseEntity<BillingCatalogService.Policy> latestPolicy() {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(catalog.latestPublishedPolicy());
+    }
+
+    @GetMapping("/api/v1/admin/billing/plans/{planCode}/prices/history")
+    public ResponseEntity<List<BillingCatalogService.PriceHistory>> priceHistory(@PathVariable String planCode,
+            @RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "0") int offset) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(catalog.priceHistory(planCode, limit, offset));
+    }
+
+    @GetMapping("/api/v1/admin/billing/policy/history")
+    public ResponseEntity<List<BillingCatalogService.PolicyHistory>> policyHistory(
+            @RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "0") int offset) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(catalog.policyHistory(limit, offset));
+    }
+
+    @PostMapping("/api/v1/admin/billing/plans/{planCode}/prices/preview")
+    public ResponseEntity<BillingCatalogService.PricePublicationPreview> previewPrice(@PathVariable String planCode,
+            @RequestHeader("If-Match") String ifMatch, @RequestBody BillingCatalogService.PriceChange request) {
+        admin.requireAdmin();
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(catalog.previewPrice(planCode, request, BillingCatalogService.parseIfMatch(ifMatch)));
+    }
+
+    @PostMapping("/api/v1/admin/billing/policy/preview")
+    public ResponseEntity<BillingCatalogService.PolicyPublicationPreview> previewPolicy(
+            @RequestHeader("If-Match") String ifMatch, @RequestBody BillingCatalogService.PolicyChange request) {
+        admin.requireAdmin();
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(catalog.previewPolicy(request, BillingCatalogService.parseIfMatch(ifMatch)));
+    }
+
     @PostMapping("/api/v1/admin/billing/plans")
     public BillingCatalogService.PlanOffer createPlan(
             @RequestBody BillingCatalogService.NewPlan request) {

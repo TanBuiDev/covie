@@ -5,11 +5,14 @@ import { CreditCard, ArrowSquareOut, ArrowClockwise, ShieldCheck } from "@phosph
 import { requestBrowserApi } from "@/lib/api/api-client";
 import { readApiError } from "@/lib/api/api-error";
 import type { components } from "@covie/api-client";
+import { BillingExpiry, BillingRemainingDays } from "./billing-expiry";
+import { BillingPaymentDetails } from "./billing-payment-details";
 
 type Plan = Required<components["schemas"]["PlanOffer"]>;
 type Eligibility = components["schemas"]["Eligibility"];
 type Invoice = Required<components["schemas"]["InvoiceSummary"]>;
 type Checkout = Required<components["schemas"]["CheckoutResult"]>;
+type PaymentStatus = components["schemas"]["PaymentStatus"];
 type Subscription = { status: string; planCode: string | null; cancelAtPeriodEnd: boolean;
   periodStart: string | null; periodEnd: string | null };
 type VoucherQuote = { code: string | null; discountVnd: number; amountDueVnd: number;
@@ -17,7 +20,7 @@ type VoucherQuote = { code: string | null; discountVnd: number; amountDueVnd: nu
 
 
 const money = (amount: number) => new Intl.NumberFormat("vi-VN").format(amount) + "đ";
-const date = (value: string) => new Intl.DateTimeFormat("vi-VN", { dateStyle: "short" }).format(new Date(value));
+const date = (value: string) => new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(value));
 
 export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: string; merchantName: string }) {
   const base = `/api/v1/merchants/${encodeURIComponent(merchantId)}/billing`;
@@ -29,11 +32,21 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherQuote, setVoucherQuote] = useState<(VoucherQuote & { planCode: string; enteredCode: string })>();
   const [checkout, setCheckout] = useState<Checkout>();
+  const [recoveredPayment, setRecoveredPayment] = useState<PaymentStatus>();
   const [loading, setLoading] = useState(true);
+  const [initialLoadFailed, setInitialLoadFailed] = useState(false);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState("");
   const idempotency = useRef<string | null>(null);
+  const checkoutFailure = useRef<string | undefined>(undefined);
   const active = useRef(true);
+  const pendingInvoice = invoices.find(invoice => invoice.status === "PENDING_PAYMENT");
+  const trackedInvoiceId = pendingInvoice?.invoiceId
+    ?? (checkout?.invoiceStatus === "PENDING_PAYMENT" ? checkout.invoiceId : undefined);
+  const displayedPayment = pendingInvoice
+    ? (recoveredPayment?.invoiceId === pendingInvoice.invoiceId ? recoveredPayment : undefined)
+    : checkout ?? recoveredPayment;
+  const displayedInvoice = invoices.find(invoice => invoice.invoiceId === displayedPayment?.invoiceId);
 
   const load = useCallback(async () => {
     const [planRes, entitlementRes, invoiceRes, subscriptionRes] = await Promise.all([
@@ -56,27 +69,60 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
 
   useEffect(() => {
     active.current = true;
-    load().catch(cause => { if (active.current) setError(cause instanceof Error ? cause.message : "Không thể tải hóa đơn"); })
+    load().catch(cause => { if (active.current) {
+      setInitialLoadFailed(true);
+      setError(cause instanceof Error ? cause.message : "Không thể tải hóa đơn");
+    } })
       .finally(() => { if (active.current) setLoading(false); });
     return () => { active.current = false; };
   }, [load]);
 
+  async function retryInitialLoad() {
+    if (loading || paying) return;
+    setLoading(true); setError("");
+    try {
+      await load();
+      if (active.current) setInitialLoadFailed(false);
+    } catch (cause) {
+      if (active.current) setError(cause instanceof Error ? cause.message : "Không thể tải hóa đơn");
+    } finally { if (active.current) setLoading(false); }
+  }
+
   useEffect(() => {
-    if (!checkout?.invoiceId || checkout.invoiceStatus === "PAID") return;
-    const interval = setInterval(async () => {
+    if (!trackedInvoiceId) return;
+    const invoiceId = trackedInvoiceId;
+    let disposed = false;
+    let inFlight = false;
+    async function refreshPayment() {
+      if (inFlight) return;
+      inFlight = true;
       try {
-        const response = await requestBrowserApi("GET", base + "/invoices/" + checkout.invoiceId);
+        const response = await requestBrowserApi("GET", base + "/invoices/" + encodeURIComponent(invoiceId));
         if (!response.ok) return;
-        const state = await response.json() as { invoiceStatus: string };
-        if (active.current && state.invoiceStatus === "PAID") {
-          setCheckout(current => current ? { ...current, invoiceStatus: "PAID" } : current);
-          idempotency.current = null;
-          void load();
+        const state = await response.json() as PaymentStatus;
+        if (!disposed && active.current && state.invoiceId === trackedInvoiceId) {
+          setRecoveredPayment(state);
+          const invoiceStatus = state.invoiceStatus;
+          if (invoiceStatus && invoiceStatus !== "PENDING_PAYMENT") {
+            if (invoiceStatus === "PAID") {
+              const obsoleteError = checkoutFailure.current;
+              setError(current => current === obsoleteError ? "" : current);
+              checkoutFailure.current = undefined;
+            }
+            setCheckout(current => current && current.invoiceId === state.invoiceId
+              ? { ...current, invoiceStatus } : current);
+            idempotency.current = null;
+            await load();
+          }
         }
-      } catch { /* temporary network errors do not authorize payment */ }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [base, checkout?.invoiceId, checkout?.invoiceStatus, load]);
+      } catch {
+        return;
+      } finally { inFlight = false; }
+    }
+    void refreshPayment();
+    const interval = setInterval(() => void refreshPayment(), 5000);
+    return () => { disposed = true; clearInterval(interval); };
+  }, [base, trackedInvoiceId, load]);
 
   async function cancelRenewal() {
     if (paying || !window.confirm("Đánh dấu kết thúc thuê bao sau kỳ hiện tại? Bạn sẽ không bị thu tiền tự động; quyền đã trả phí vẫn được giữ.")) return;
@@ -136,7 +182,7 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
   }
 
   async function createCheckout() {
-    if (paying || !selected) return;
+    if (paying || !selected || trackedInvoiceId) return;
     const code = voucherCode.trim().toUpperCase();
     if (!voucherQuote || voucherQuote.enteredCode !== code || voucherQuote.planCode !== selected
       || new Date(voucherQuote.quoteExpiresAt).getTime() <= Date.now()) {
@@ -162,7 +208,10 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
       setCheckout(link);
       void load();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể tạo link thanh toán");
+      const message = cause instanceof Error ? cause.message : "Không thể tạo link thanh toán";
+      checkoutFailure.current = message;
+      setError(message);
+      await load().catch(() => undefined);
     } finally { setPaying(false); }
   }
 
@@ -174,7 +223,11 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
         <p>{merchantName} — quản lý phí mở bán, kỳ hạn và lịch sử thanh toán.</p>
       </header>
       {error ? <p role="alert" className="admin-error">{error}</p> : null}
-      {loading ? <p role="status">Đang tải thuê bao…</p> : (
+      {loading ? <p role="status">Đang tải thuê bao…</p> : initialLoadFailed ? (
+        <button type="button" className="admin-button admin-button--secondary" onClick={() => void retryInitialLoad()}>
+          Tải lại dữ liệu thuê bao
+        </button>
+      ) : (
         <>
           <section className="admin-surface">
             <h2>Quyền mở bán</h2>
@@ -182,6 +235,7 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
               ? (eligibility.canSell ? "Cửa hàng đang có quyền mở bán." : "Chưa có thuê bao hợp lệ để mở bán.")
               : "Chế độ thu phí chưa được kích hoạt cho các cửa hàng hiện tại."}</p>
             {eligibility?.expiry ? <p>Quyền thuê bao có hiệu lực tới: {date(eligibility.expiry)}.</p> : null}
+            <BillingRemainingDays expiresAt={eligibility?.expiry ?? subscription?.periodEnd ?? undefined} />
             {subscription && subscription.status !== "NONE" ? (
               <>
                 <p>Gói hiện tại: {subscription.planCode} — trạng thái: {subscription.status}.</p>
@@ -200,8 +254,11 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
                 ) : null}
               </>
             ) : null}
-            <p>CoVie chỉ xác nhận thanh toán sau khi nhận được webhook hợp lệ từ payOS.</p>
-            <button className="admin-button admin-button--secondary" type="button" onClick={() => void load()}
+            <p>CoVie chỉ xác nhận thanh toán sau khi nhận được xác nhận hợp lệ từ máy chủ payOS.</p>
+            <button className="admin-button admin-button--secondary" type="button" onClick={() => {
+              setError("");
+              void load().catch(cause => setError(cause instanceof Error ? cause.message : "Không thể tải lại trạng thái"));
+            }}
               aria-label="Tải lại trạng thái thanh toán"><ArrowClockwise size={17} /> Làm mới</button>
           </section>
           <section className="admin-surface">
@@ -236,34 +293,46 @@ export function SellerBillingPanel({ merchantId, merchantName }: { merchantId: s
                   <p role="status">
                     {voucherQuote.code ? `Giảm ${money(voucherQuote.discountVnd)}. ` : ""}
                     <strong>Phải thanh toán: {money(voucherQuote.amountDueVnd)}</strong>
-                    <span> — báo giá hết hạn lúc {new Date(voucherQuote.quoteExpiresAt).toLocaleTimeString("vi-VN")}</span>
+                    <span> — báo giá hết hạn lúc {new Date(voucherQuote.quoteExpiresAt).toLocaleTimeString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</span>
+                    <span> <BillingExpiry key={voucherQuote.quoteId} expiresAt={voucherQuote.quoteExpiresAt} label="Báo giá còn hiệu lực" /></span>
                   </p>
                 ) : null}
                 <p>Thanh toán từng lần bằng chuyển khoản VietQR qua payOS. CoVie chưa tự động trừ tiền gia hạn; chỉ chủ cửa hàng được tạo giao dịch.</p>
-                <button className="admin-button admin-button--primary" disabled={paying} onClick={() => void createCheckout()}>
+                <button className="admin-button admin-button--primary" disabled={paying || !!trackedInvoiceId} onClick={() => void createCheckout()}>
                   {paying ? "Đang tạo link…" : "Tạo link thanh toán payOS"}
                 </button>
               </>
             )}
-            {checkout ? (
-              <div role="status" style={{ paddingTop: 16 }}>
-                <h3>{checkout.invoiceStatus === "PAID" ? "Đã xác nhận thanh toán" : "Đang chờ xác nhận"}</h3>
-                <p>Mã giao dịch #{checkout.orderCode} — {money(checkout.amountVnd)}. Hết hạn link: {date(checkout.expiresAt)}.</p>
-                {checkout.invoiceStatus !== "PAID" ? (
-                  <a className="admin-button admin-button--secondary" href={checkout.checkoutUrl}
+            {pendingInvoice && !displayedPayment ? <p role="status">Đang kiểm tra giao dịch chờ thanh toán. Không tạo thêm giao dịch mới.</p> : null}
+            {displayedPayment ? (
+              <div style={{ paddingTop: 16 }}>
+                <div role="status"><h3>{displayedPayment.invoiceStatus === "PAID" ? "Đã xác nhận thanh toán" : "Đang chờ xác nhận"}</h3></div>
+                <p>{displayedInvoice ? `Hóa đơn ${displayedInvoice.invoiceNumber}` : `Mã giao dịch #${checkout?.orderCode}`} — {money(displayedPayment.amountVnd ?? 0)}.
+                  {displayedPayment.expiresAt ? ` Hết hạn link: ${date(displayedPayment.expiresAt)}.` : ""}</p>
+                <BillingPaymentDetails key={displayedPayment.invoiceId} invoiceId={displayedPayment.invoiceId}
+                  reference={displayedInvoice?.invoiceNumber ?? (checkout ? `CB-${checkout.orderCode}` : displayedPayment.invoiceId)}
+                  status={displayedPayment.invoiceStatus} expiresAt={displayedPayment.expiresAt} checkout={checkout} />
+                {displayedPayment.invoiceStatus === "PENDING_PAYMENT" ? <p>
+                  <BillingExpiry key={displayedPayment.invoiceId} expiresAt={displayedPayment.expiresAt} label="Link thanh toán còn hiệu lực" />
+                  Đang chờ xác minh từ máy chủ. Nếu đã chuyển khoản nhưng chưa thấy cập nhật, hãy làm mới trạng thái và dùng mã hóa đơn để liên hệ hỗ trợ; không tạo thêm giao dịch.
+                </p> : null}
+                {displayedPayment.invoiceStatus === "PENDING_PAYMENT" && displayedPayment.checkoutUrl?.startsWith("https://pay.payos.vn/") ? (
+                  <a className="admin-button admin-button--secondary" href={displayedPayment.checkoutUrl}
                     target="_blank" rel="noopener noreferrer">
                     Mở payOS để thanh toán <ArrowSquareOut size={18} aria-hidden="true" />
                   </a>
-                ) : <p><ShieldCheck size={20} aria-hidden="true" /> CoVie đã nhận xác nhận thanh toán từ máy chủ.</p>}
+                ) : displayedPayment.invoiceStatus === "PAID"
+                  ? <p><ShieldCheck size={20} aria-hidden="true" /> CoVie đã nhận xác nhận thanh toán từ máy chủ.</p>
+                  : <p>Giao dịch chưa có link khả dụng. CoVie sẽ cập nhật sau khi đối soát với payOS.</p>}
               </div>
             ) : null}
           </section>
           <section className="admin-surface">
             <h2>Lịch sử hóa đơn</h2>
             {invoices.length === 0 ? <p>Chưa có hóa đơn thuê bao.</p> : (
-              <div style={{ overflowX: "auto" }}>
-                <table className="admin-table">
-                  <thead><tr><th>Mã hóa đơn</th><th>Số tiền</th><th>Kỳ hạn</th><th>Trạng thái</th><th>Hỗ trợ</th></tr></thead>
+              <div className="admin-table-scroll" role="region" aria-label="Lịch sử hóa đơn thuê bao" tabIndex={0}>
+                <table className="admin-data-table">
+                  <thead><tr><th scope="col">Mã hóa đơn</th><th scope="col">Số tiền</th><th scope="col">Kỳ hạn</th><th scope="col">Trạng thái</th><th scope="col">Hỗ trợ</th></tr></thead>
                   <tbody>{invoices.map(invoice => (
                     <tr key={invoice.invoiceId}>
                       <td>{invoice.invoiceNumber}</td><td>{money(invoice.amountVnd)}</td>

@@ -17,7 +17,7 @@ import vn.covie.realtime.SseSignal;
 public class BillingNotificationHandler implements OutboxEventHandler {
     private static final Set<String> EVENTS = Set.of(
         "BILLING_RENEWAL_REMINDER","SELLER_SUBSCRIPTION_PAYMENT_SETTLED",
-        "BILLING_SUBSCRIPTION_EXPIRED");
+        "BILLING_SUBSCRIPTION_EXPIRED", "BILLING_PRICE_PUBLISHED");
     private final JdbcTemplate jdbc;
     private final NotificationService notifications;
 
@@ -28,6 +28,7 @@ public class BillingNotificationHandler implements OutboxEventHandler {
     @Override public boolean supports(String eventType){return EVENTS.contains(eventType);}
 
     @Override public List<SseSignal> handle(OutboxEventContext event){
+        if ("BILLING_PRICE_PUBLISHED".equals(event.eventType())) return pricePublished(event);
         UUID merchantId;
         try {
             merchantId = UUID.fromString(event.payload().path("merchantId").asText());
@@ -56,4 +57,41 @@ public class BillingNotificationHandler implements OutboxEventHandler {
         }
         return result;
     }
+
+    private List<SseSignal> pricePublished(OutboxEventContext event) {
+        var price = jdbc.queryForObject("""
+            select plan_code, revision, price_vnd, cycle_months, effective_at
+            from billing_plan_versions where id=?
+            """, (row, index) -> new PriceNotice(row.getString("plan_code"), row.getInt("revision"),
+                row.getLong("price_vnd"), row.getInt("cycle_months"),
+                row.getTimestamp("effective_at").toInstant()), event.aggregateId());
+        if (price == null) throw new IllegalStateException("Missing published price version");
+        Map<String, Object> payload = Map.of("noticeKind", "PRICE_CHANGED", "planVersionId", event.aggregateId().toString(),
+            "planCode", price.planCode(), "revision", price.revision(), "priceVnd", price.priceVnd(),
+            "cycleMonths", price.cycleMonths(), "effectiveAt", price.effectiveAt().toString(), "deepLink", "/seller");
+        var result = new ArrayList<SseSignal>();
+        UUID after = null;
+        while (true) {
+            var owners = jdbc.query("""
+                select distinct membership.user_id from merchant_memberships membership
+                join merchant_subscriptions subscription on subscription.merchant_id=membership.merchant_profile_id
+                where subscription.plan_code=? and membership.role='OWNER' and membership.membership_status='ACTIVE'
+                  and (?::uuid is null or membership.user_id>?)
+                order by membership.user_id limit 100
+                """, (row, index) -> (UUID) row.getObject(1), price.planCode(), after, after);
+            if (owners.isEmpty()) break;
+            for (UUID owner : owners) {
+                var created = notifications.createFromOutbox(event.eventId(), owner, NotificationType.BILLING_RENEWAL_REMINDER,
+                    "Bảng giá thuê bao được cập nhật", "Xem giá và lịch hiệu lực mới. Kỳ đã thanh toán không thay đổi; không tự động thu phí.",
+                    "BILLING_PLAN_VERSION", event.aggregateId(), payload);
+                if (created.created()) result.add(new SseSignal(owner, "notification.created",
+                    Map.of("notificationId", created.notificationId().toString())));
+            }
+            after = owners.getLast();
+        }
+        return result;
+    }
+
+    private record PriceNotice(String planCode, int revision, long priceVnd, int cycleMonths,
+                               java.time.Instant effectiveAt) {}
 }

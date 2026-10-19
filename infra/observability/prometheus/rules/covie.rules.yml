@@ -60,4 +60,29 @@ groups:
         for: 15m
         labels: { severity: page }
         annotations: { summary: "Latest verified PostgreSQL backup is older than 26 hours" }
+      - alert: CoVieBillingMetricsUnavailable
+        expr: (up{job="covie-api"} == 1) unless on(job,instance) ((covie_billing_database_last_success_unixtime{job="covie-api"} > 0) and (time() - covie_billing_database_last_success_unixtime{job="covie-api"} < 120))
+        for: 2m
+        labels: { severity: warn }
+        annotations: { summary: "Billing database metrics are missing or stale" }
+      - alert: CoVieBillingReconciliationChecksStale
+        expr: covie_billing_reconciliation_oldest_check_age_seconds{job="covie-api"} > 1800 and on(job,instance) (covie_billing_reconciliation_enabled{job="covie-api"} == 1)
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "Enabled billing reconciliation has stale pending-invoice checks" }
+      - alert: CoVieBillingCheckoutFailures
+        expr: sum by(job,instance) (increase(covie_billing_operations_seconds_count{job="covie-api",operation="checkout",outcome="failed"}[5m])) > 0 and on(job,instance) (covie_billing_payment_creation_enabled{job="covie-api"} == 1)
+        for: 1m
+        labels: { severity: warn }
+        annotations: { summary: "Enabled billing checkout requests are failing" }
+      - alert: CoVieBillingReconciliationRequiresReview
+        expr: covie_billing_reconciliation_review_required{job="covie-api"} > 0 and on(job,instance) (covie_billing_reconciliation_enabled{job="covie-api"} == 1)
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "Enabled billing reconciliation has pending discrepancies or provider failures" }
+      - alert: CoVieBillingWebhookRejections
+        expr: sum by(job,instance) (increase(covie_billing_operations_seconds_count{job="covie-api",operation="webhook",outcome="rejected"}[5m])) > 10
+        for: 2m
+        labels: { severity: warn }
+        annotations: { summary: "Billing webhook rejections exceed the pilot threshold" }
 

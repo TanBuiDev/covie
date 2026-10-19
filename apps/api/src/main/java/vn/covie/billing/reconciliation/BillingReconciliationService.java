@@ -62,6 +62,14 @@ public class BillingReconciliationService {
     }
 
     public Observation queryProvider(Candidate candidate) {
+        return queryProvider(candidate, true);
+    }
+
+    public Observation inspectProvider(Candidate candidate) {
+        return queryProvider(candidate, false);
+    }
+
+    private Observation queryProvider(Candidate candidate, boolean applyChanges) {
         if (!gateway.canLookup()) return new Observation(candidate.invoiceId(), "UNAVAILABLE", "PROVIDER_FAILURE");
         final JsonNode response;
         try {
@@ -75,6 +83,13 @@ public class BillingReconciliationService {
             return new Observation(candidate.invoiceId(), "UNVERIFIED", "PROVIDER_FAILURE");
         }
         Observation observed = compare(candidate, response);
+        if (!applyChanges) {
+            if ("NONE".equals(observed.discrepancy())
+                    && ("EXPIRED".equals(observed.providerStatus()) || "CANCELLED".equals(observed.providerStatus()))
+                    && response.path("data").path("amountPaid").asLong(-1) != 0)
+                return new Observation(candidate.invoiceId(), observed.providerStatus(), "MANUAL_REVIEW_REQUIRED");
+            return observed;
+        }
         if (candidate.linkId() == null && "NONE".equals(observed.discrepancy())
                 && "PENDING".equals(observed.providerStatus())) {
             // payOS GET exposes a signed ID but not the hosted checkout URL.

@@ -337,8 +337,9 @@ export function AdminAuditLog() {
       {!loading && !error ? (
         <>
           {rows.length ? (
-            <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+            <div className="admin-audit-scroll" role="region" aria-label="Nhật ký quản trị có thể cuộn ngang" tabIndex={0} style={{ display: "grid", gap: "8px", minWidth: 0 }}>
               <div
+                className="admin-audit-columns"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "minmax(130px, 180px) minmax(130px, 180px) minmax(150px, 190px) minmax(130px, 170px) minmax(220px, 1fr)",

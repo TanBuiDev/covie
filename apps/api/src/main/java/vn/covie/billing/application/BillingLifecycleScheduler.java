@@ -22,6 +22,7 @@ import vn.covie.shared.time.AppClock;
 public class BillingLifecycleScheduler {
     private final JdbcTemplate jdbc;
     private final AppClock clock;
+    private final vn.covie.audit.AuditLogWriter audit;
     private SystemSettingResolver settings;
     private OutboxEventWriter outbox;
 
@@ -31,9 +32,10 @@ public class BillingLifecycleScheduler {
         this.outbox = outbox;
     }
 
-    public BillingLifecycleScheduler(JdbcTemplate jdbc, AppClock clock) {
+    public BillingLifecycleScheduler(JdbcTemplate jdbc, AppClock clock, vn.covie.audit.AuditLogWriter audit) {
         this.jdbc = jdbc;
         this.clock = clock;
+        this.audit = audit;
     }
 
     @Scheduled(cron = "${COVIE_BILLING_LIFECYCLE_CRON:0 5 * * * *}")
@@ -56,6 +58,12 @@ public class BillingLifecycleScheduler {
             returning merchant_id,status
             """, (rs,n)->new Change((UUID)rs.getObject("merchant_id"),rs.getString("status")),
             now,now,now,now);
+        String correlation = "billing-lifecycle-" + UUID.randomUUID();
+        for (Change change : changes) {
+            audit.systemEvent("BILLING_SUBSCRIPTION_" + change.status(),"BILLING_SUBSCRIPTION",
+                change.merchantId(),correlation,Map.of("merchantId",change.merchantId().toString(),
+                    "status",change.status(),"source","BILLING_LIFECYCLE_SCHEDULER"));
+        }
         if (outbox != null && settings != null
                 && settings.bool("billing.reminders_enabled",SystemSettingContext.globalOnly())) {
             for(Change change:changes) {

@@ -79,7 +79,22 @@ class OpenApiExportTest extends PostgresIntegrationTest {
                 .path("NeedDetailResponse").path("properties").path("allowedActions");
         assertThat(needAllowedActions.path("type").asText()).isEqualTo("array");
         assertThat(needAllowedActions.path("items").path("enum").toString()).contains("\"CANCEL\"");
+        JsonNode manualReconciliation = paths.path("/api/v1/admin/billing/invoices/{invoiceId}/reconciliation").path("post");
+        assertThat(manualReconciliation.isMissingNode()).isFalse();
+        JsonNode keyHeader = java.util.stream.StreamSupport.stream(manualReconciliation.path("parameters").spliterator(), false)
+            .filter(parameter -> parameter.path("name").asText().equals("Idempotency-Key")).findFirst().orElseThrow();
+        assertThat(keyHeader.path("required").asBoolean()).isTrue();
+        JsonNode reconciliationRequest = document.path("components").path("schemas").path("AdminBillingReconciliationRequest");
+        assertThat(reconciliationRequest.path("required").toString()).contains("\"reason\"");
+        assertThat(reconciliationRequest.path("properties").path("reason").path("maxLength").asInt()).isEqualTo(400);
+        assertThat(document.path("components").path("schemas").path("Invoice").path("properties")
+            .path("allowedActions").path("type").asText()).isEqualTo("array");
         String output = System.getProperty("covie.openapi.output", "target/openapi/openapi.json");
+        JsonNode legacyPreview = document.path("components").path("schemas").path("Preview").path("properties");
+        assertThat(legacyPreview.path("shadow").path("$ref").asText()).isEqualTo("#/components/schemas/LegacyBillingShadowPreview");
+        JsonNode shadow = document.path("components").path("schemas").path("LegacyBillingShadowPreview").path("properties");
+        assertThat(shadow.fieldNames()).toIterable().containsExactlyInAnyOrder("decisionScope", "observedAt",
+            "enforcementEnabled", "evaluatedMerchants", "currentlyAllowed", "wouldAllow", "wouldDeny");
         Path outputPath = Path.of(output).toAbsolutePath().normalize();
         Files.createDirectories(outputPath.getParent());
         Files.writeString(outputPath, objectMapper.writeValueAsString(canonicalize(document)));

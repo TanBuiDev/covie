@@ -2,12 +2,34 @@ import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { EventEmitter } from "node:events";
+import type { Page } from "@playwright/test";
 import { describe, expect, it, vi } from "vitest";
 import { parseVisualCases } from "@/e2e/support/visual-cases";
-import { mergeEvidenceManifest, stabilizeVisualCapture, validateEvidenceDiagnostics, writeEvidenceFragment, type VisualEvidenceRecord } from "@/e2e/support/visual-evidence";
+import { collectPageDiagnostics, mergeEvidenceManifest, stabilizeVisualCapture, validateEvidenceDiagnostics, writeEvidenceFragment, type VisualEvidenceRecord } from "@/e2e/support/visual-evidence";
 
 const catalogPath = path.resolve(process.cwd(), "../../docs/visual-acceptance-cases.csv");
 const catalog = readFileSync(catalogPath, "utf8");
+
+it("allows only explicitly named guest 401 resources while retaining other errors", () => {
+  const page = new EventEmitter() as EventEmitter & Page;
+  const unauthorized = "Failed to load resource: the server responded with a status of 401 (Unauthorized)";
+  const serverError = "Failed to load resource: the server responded with a status of 500 (Internal Server Error)";
+  const message = (text: string, url: string) => ({ type: () => "error", text: () => text, location: () => ({ url }) });
+  const diagnostics = collectPageDiagnostics(page, ["http://localhost:3000/api/v1/me/carts"]);
+  page.emit("console", message(unauthorized, "http://localhost:3000/api/v1/me/carts"));
+  page.emit("console", message(unauthorized, "http://localhost:3000/api/v1/catalog/items"));
+  page.emit("console", message(serverError, "http://localhost:3000/api/v1/me/carts"));
+  page.emit("pageerror", new Error("Actual page exception"));
+  expect(diagnostics.consoleErrors).toEqual([unauthorized, serverError]);
+  expect(diagnostics.pageErrors).toEqual(["Actual page exception"]);
+  diagnostics.dispose();
+  expect(page.listenerCount("console")).toBe(0);
+  const strict = collectPageDiagnostics(page);
+  page.emit("console", message(unauthorized, "http://localhost:3000/api/v1/me/carts"));
+  expect(strict.consoleErrors).toEqual([unauthorized]);
+  strict.dispose();
+});
 
 describe("visual acceptance case catalog", () => {
   it("parses the authoritative 81 cases into 201 unique capture tokens", () => {

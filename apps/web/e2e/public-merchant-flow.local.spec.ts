@@ -15,6 +15,10 @@ const fixturePath = path.resolve(process.cwd(), "../../.local/dev/ui-fixture.jso
 const catalogPath = path.resolve(process.cwd(), "../../docs/visual-acceptance-cases.csv");
 const acceptanceDirectory = path.resolve(process.cwd(), "../../.local/dev/visual-review/acceptance-2026-09-13");
 const enabled = process.env.COVIE_UI_FIXTURE === "1" && existsSync(fixturePath);
+const expectedGuestUnauthorizedUrls = [
+  "http://localhost:3000/api/v1/me/carts",
+  "http://localhost:3000/api/v1/auth/ssr-refresh?client=1",
+];
 
 test.skip(!enabled, "Run pnpm ui:verify-local with the local Docker stack running.");
 test.setTimeout(120_000);
@@ -32,7 +36,7 @@ test("Public merchant profiles capture authoritative capability and catalog stat
   ) {
     const visualCase = visualCases.find((entry) => entry.caseId === caseId);
     expect(visualCase, `Missing visual case ${caseId}`).toBeTruthy();
-    const diagnostics = collectPageDiagnostics(page);
+    const diagnostics = collectPageDiagnostics(page, expectedGuestUnauthorizedUrls);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(actualRoute);
     await prepare();
@@ -58,7 +62,7 @@ test("Public merchant profiles capture authoritative capability and catalog stat
   const productRoute = `/merchants/${fixture.merchantId}`;
   const loadingCase = visualCases.find((entry) => entry.caseId === "pub-009-loading");
   expect(loadingCase, "Missing visual case pub-009-loading").toBeTruthy();
-  const loadingDiagnostics = collectPageDiagnostics(page);
+  const loadingDiagnostics = collectPageDiagnostics(page, expectedGuestUnauthorizedUrls);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(productRoute);
   await expect(page.getByRole("heading", { name: "Cửa hàng", exact: true, level: 1 })).toBeVisible();
@@ -70,6 +74,17 @@ test("Public merchant profiles capture authoritative capability and catalog stat
     latency: 10_000,
     downloadThroughput: -1,
     uploadThroughput: -1,
+  });
+  await page.addInitScript(() => {
+    if (!new URL(location.href).searchParams.has("loadingProbe")) return;
+    const observer = new MutationObserver(() => {
+      const busyMain = document.querySelector<HTMLElement>("main[aria-busy='true']");
+      if (!busyMain?.offsetParent || busyMain.querySelectorAll("[data-skeleton]").length < 6) return;
+      observer.disconnect();
+      window.stop();
+      document.body.replaceWith(document.body.cloneNode(true));
+    });
+    observer.observe(document, { childList: true, subtree: true });
   });
   await page.goto(`${productRoute}?loadingProbe=${crypto.randomUUID()}`, { waitUntil: "commit" });
   await page.evaluate(async () => {

@@ -1,5 +1,10 @@
 # CoVie Seller Billing — BIL-001–030 acceptance matrix
 
+**Historical WIP ID warning:** these IDs describe a different QA checklist from
+section12 of the approved v1.0 plan. Do not treat them as the original acceptance
+IDs. Current original-ID mapping/local execution lives in
+`acceptance-original-bil-v1-local-2026-10-17.md`; this file is retained for provenance.
+
 **Scope:** seller pays, buyer remains free. **Branch:** `feat/seller-billing-subscription`. **Release status:** DRAFT / NOT APPROVED. No live money tests have been authorized.
 
 Legend: `SOURCE` means implementation exists but **does not mean E2E passed**; `UNIT/PG` means a corresponding test source exists and needs latest-head CI confirmation; `LOCAL` requires operator-approved local/staging tests; `BLOCKED` requires work/approval before release.

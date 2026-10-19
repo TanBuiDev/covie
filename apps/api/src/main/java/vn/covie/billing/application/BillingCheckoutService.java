@@ -71,9 +71,15 @@ public class BillingCheckoutService {
         if (reservation == null) throw new IllegalStateException("Billing reservation failed.");
         if (reservation.existing() != null) return reservation.existing();
         // No DB transaction holds merchant locks during a potentially slow network call.
-        var link = payos.createPaymentLink(merchantId, reservation.orderCode(),
-            reservation.amountVnd(), PayosGateway.paymentDescription(reservation.orderCode()),
-            reservation.expiresAt().getEpochSecond());
+        PayosGateway.PaymentLink link;
+        try {
+            link = payos.createPaymentLink(merchantId, reservation.orderCode(),
+                reservation.amountVnd(), PayosGateway.paymentDescription(reservation.orderCode()),
+                reservation.expiresAt().getEpochSecond());
+        } catch (PayosGateway.ProviderUnavailableException unavailable) {
+            throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE,
+                "Payment initialization is pending. Check its status or request reconciliation.");
+        }
         transactions.executeWithoutResult(tx -> {
             int updated = jdbc.update("""
                 update billing_payment_attempts
@@ -110,9 +116,11 @@ public class BillingCheckoutService {
             throw error(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Merchant not found.");
         }
         String coupon = BillingVoucherService.normalize(request.voucherCode());
-        // Preserve the historical fingerprint for checkout requests without promotions.
-        String fingerprint = sha256(request.planCode()
+        String historicalFingerprint = sha256(request.planCode()
             + (coupon == null ? "" : "|VOUCHER|" + coupon));
+        String fingerprint = sha256("CHECKOUT_V2|" + request.planCode() + "|" + coupon
+            + "|" + request.expectedAmountVnd() + "|" + request.expectedPlanRevision()
+            + "|" + request.quoteId());
         var old = jdbc.query("""
                 select i.id, i.request_fingerprint, i.status, a.checkout_url, a.qr_payload, i.expires_at,
                        i.payos_order_code, i.amount_vnd
@@ -126,8 +134,14 @@ public class BillingCheckoutService {
         if (!old.isEmpty()) {
             PreviousPayment prior = old.getFirst();
             if (!prior.fingerprint().equals(fingerprint)) {
+                if (prior.fingerprint().equals(historicalFingerprint)) {
+                    throw new ApiException(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.CONFLICT,
+                        "Không thể xác minh đầy đủ yêu cầu thanh toán cũ. Hãy xem trạng thái hóa đơn hiện có.",
+                        Map.of("invoiceId", prior.invoiceId(), "statusPath",
+                            "/api/v1/merchants/" + merchantId + "/billing/invoices/" + prior.invoiceId()));
+                }
                 throw error(ErrorCode.IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_REQUEST, HttpStatus.CONFLICT,
-                    "Idempotency-Key was already used with another plan.");
+                    "Idempotency-Key was already used with another request.");
             }
             if (prior.checkoutUrl() == null) {
                 throw error(ErrorCode.BILLING_PAYMENT_UNAVAILABLE, HttpStatus.CONFLICT, "Payment initialization pending.");

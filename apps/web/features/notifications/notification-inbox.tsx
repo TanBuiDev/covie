@@ -18,7 +18,7 @@ import {
 } from "@phosphor-icons/react";
 import { inbox, markAllRead, markRead, type Notification } from "./notification-api";
 import { notificationDeepLink } from "./notification-deep-link";
-import { notificationLabel } from "./notification-types";
+import { notificationBillingSummary, notificationLabel } from "./notification-types";
 import styles from "./notification-inbox.module.css";
 
 function getNotificationIcon(type?: string) {
@@ -221,6 +221,7 @@ export function NotificationInbox() {
             const href = notificationDeepLink(notification.data);
             const unread = !notification.read;
             const { icon: IconComp, color } = getNotificationIcon(notification.type);
+            const billingSummary = notificationBillingSummary(notification.type, notification.data);
 
             return (
               <li key={notification.id}>
@@ -229,7 +230,7 @@ export function NotificationInbox() {
                   disabled={loading || Boolean(pending)}
                   type="button"
                   onClick={() => void openNotification(notification)}
-                  aria-label={`${notificationLabel(notification.type ?? "")}. ${
+                  aria-label={`${notificationLabel(notification.type ?? "", notification.data)}. ${
                     href ? "Mở chi tiết" : unread ? "Đánh dấu đã đọc" : "Đã đọc"
                   }`}
                 >
@@ -239,9 +240,10 @@ export function NotificationInbox() {
 
                   <span className={styles.content}>
                     <span className={styles.titleRow}>
-                      <strong>{notificationLabel(notification.type ?? "")}</strong>
+                      <strong>{notificationLabel(notification.type ?? "", notification.data)}</strong>
                       {unread ? <span className={styles.indicator} aria-hidden="true" /> : null}
                     </span>
+                    {billingSummary ? <span>{billingSummary}</span> : null}
                     <small>
                       {notification.createdAt
                         ? new Date(notification.createdAt).toLocaleString("vi-VN")

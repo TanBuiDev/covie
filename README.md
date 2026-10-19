@@ -53,7 +53,16 @@ pnpm ui:verify-local
 
 This runs `/` → `/search` → Product `/items/[itemId]` → Shop `/merchants/[merchantId]` → Address List `/me/addresses` → Service and Resale `/items/[itemId]` states → `/cart` → `/cart/[cartId]` → `/checkout` → `/checkout/success/[orderId]` and then checks `/orders`. The generated local password is stored only in ignored `.local/dev/ui-fixture.json`; viewport screenshots are written to ignored `.local/dev/visual-review/`. Re-running the command abandons only the deterministic fixture buyer's active carts, so unrelated local data is preserved.
 
-To seed without running Playwright, use `pnpm ui:seed-local`. Regression checks for the seed and launcher are:
+To seed without running Playwright, use `pnpm ui:seed-local`.
+For the owner-approved upgraded UI where matching the historical Figma frames is no
+longer required, use `pnpm ui:verify-local -CurrentDesign`. This still executes every
+Buyer/Public/Seller/Admin journey and validates all201 screenshot identities, PNG
+dimensions, hashes, route/state assertions, overflow and unexpected errors. Its
+manifest explicitly records Figma comparison as `NOT_APPLICABLE_OWNER_WAIVER` and
+all unperformed manual comparisons as `PENDING`, never as reviewed passes. The
+default command remains strict and requires the hash-bound historical Figma ledger.
+
+Regression checks for the seed and launcher are:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/seed-ui-fixture.test.ps1
@@ -80,10 +89,13 @@ The standard API port is `8080`. This workspace uses `8081` because an unrelated
 
 ### Terminal 2 — web app
 
+Use a separate terminal and do not import the backend `.env.local` into Next.js.
+The managed `pnpm dev` launcher isolates payOS variables when it starts Web.
+For manual startup, remove any inherited payOS/release variables first:
+
 ```powershell
-Get-Content .env.local | Where-Object { $_ -match '^\s*[^#\s][^=]*=' } | ForEach-Object {
-  $name, $value = $_ -split '=', 2
-  Set-Item -Path "Env:$name" -Value $value
+Get-ChildItem Env: | Where-Object { $_.Name -like 'PAYOS_*' -or $_.Name -eq 'COVIE_BILLING_RELEASE_APPROVED' } | ForEach-Object {
+  Remove-Item -LiteralPath ("Env:" + $_.Name)
 }
 $env:API_INTERNAL_BASE_URL = 'http://localhost:8081'
 $env:NEXT_PUBLIC_APP_URL = 'http://localhost:3000'

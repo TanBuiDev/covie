@@ -180,6 +180,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/billing/invoices/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["exportInvoices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/invoices/{invoiceId}/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reconcile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/billing/legacy/grant": {
         parameters: {
             query?: never;
@@ -251,7 +283,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["latestPlans"];
         put?: never;
         post: operations["createPlan"];
         delete?: never;
@@ -270,6 +302,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["publishPrice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/plans/{planCode}/prices/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["priceHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/plans/{planCode}/prices/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewPrice"];
         delete?: never;
         options?: never;
         head?: never;
@@ -302,6 +366,54 @@ export interface paths {
         get: operations["policy"];
         put?: never;
         post: operations["publishPolicy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/policy/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["policyHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/policy/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["latestPolicy"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/policy/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewPolicy"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2891,6 +3003,20 @@ export interface components {
             metadata?: unknown;
             requestId?: string;
         };
+        AdminBillingReconciliationRequest: {
+            reason: string;
+        };
+        AdminBillingReconciliationResponse: {
+            /** Format: date-time */
+            checkedAt?: string;
+            discrepancy?: string;
+            /** Format: uuid */
+            invoiceId?: string;
+            invoiceStatus?: string;
+            /** Format: uuid */
+            operationId?: string;
+            providerStatus?: string;
+        };
         AdminMerchantCommandResult: {
             /** Format: uuid */
             merchantId?: string;
@@ -3681,6 +3807,7 @@ export interface components {
             version?: number;
         };
         Invoice: {
+            allowedActions?: string[];
             /** Format: int64 */
             amountVnd?: number;
             /** Format: date-time */
@@ -3710,6 +3837,20 @@ export interface components {
         };
         IssueRequest: {
             reasonText: string;
+        };
+        LegacyBillingShadowPreview: {
+            /** Format: int32 */
+            currentlyAllowed?: number;
+            decisionScope?: string;
+            enforcementEnabled?: boolean;
+            /** Format: int32 */
+            evaluatedMerchants?: number;
+            /** Format: date-time */
+            observedAt?: string;
+            /** Format: int32 */
+            wouldAllow?: number;
+            /** Format: int32 */
+            wouldDeny?: number;
         };
         LocationAreaResponse: {
             /** @enum {string} */
@@ -4529,6 +4670,19 @@ export interface components {
             /** Format: int32 */
             trialDays?: number;
         };
+        PolicyHistory: {
+            /** Format: date-time */
+            publishedAt?: string;
+            version?: components["schemas"]["Policy"];
+        };
+        PolicyPublicationPreview: {
+            /** Format: date-time */
+            observedAt?: string;
+            previous?: components["schemas"]["Policy"];
+            proposed?: components["schemas"]["PolicyChange"];
+            /** Format: int64 */
+            referencingMerchants?: number;
+        };
         Preview: {
             /** Format: date-time */
             createdBefore?: string;
@@ -4536,6 +4690,7 @@ export interface components {
             eligibleMerchants?: number;
             /** Format: int32 */
             previouslyGranted?: number;
+            shadow?: components["schemas"]["LegacyBillingShadowPreview"];
         };
         PriceChange: {
             /** Format: int32 */
@@ -4544,6 +4699,20 @@ export interface components {
             effectiveAt?: string;
             /** Format: int64 */
             priceVnd?: number;
+        };
+        PriceHistory: {
+            /** Format: date-time */
+            publishedAt?: string;
+            retired?: boolean;
+            version?: components["schemas"]["PlanOffer"];
+        };
+        PricePublicationPreview: {
+            /** Format: date-time */
+            observedAt?: string;
+            previous?: components["schemas"]["PlanOffer"];
+            proposed?: components["schemas"]["PriceChange"];
+            /** Format: int64 */
+            referencingMerchants?: number;
         };
         PublicAdResponse: {
             body?: string;
@@ -4896,6 +5065,7 @@ export interface components {
         };
         Subscription: {
             cancelAtPeriodEnd?: boolean;
+            currentOwnerUserIds?: string[];
             /** Format: date-time */
             graceUntil?: string;
             /** Format: uuid */
@@ -5461,6 +5631,58 @@ export interface operations {
             };
         };
     };
+    exportInvoices: {
+        parameters: {
+            query?: {
+                merchantId?: string;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    reconcile: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminBillingReconciliationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminBillingReconciliationResponse"];
+                };
+            };
+        };
+    };
     grant: {
         parameters: {
             query?: never;
@@ -5575,6 +5797,26 @@ export interface operations {
             };
         };
     };
+    latestPlans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PlanOffer"][];
+                };
+            };
+        };
+    };
     createPlan: {
         parameters: {
             query?: never;
@@ -5623,6 +5865,59 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PlanOffer"];
+                };
+            };
+        };
+    };
+    priceHistory: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                planCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PriceHistory"][];
+                };
+            };
+        };
+    };
+    previewPrice: {
+        parameters: {
+            query?: never;
+            header: {
+                "If-Match": string;
+            };
+            path: {
+                planCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PricePublicationPreview"];
                 };
             };
         };
@@ -5693,9 +5988,79 @@ export interface operations {
             };
         };
     };
+    policyHistory: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyHistory"][];
+                };
+            };
+        };
+    };
+    latestPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Policy"];
+                };
+            };
+        };
+    };
+    previewPolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                "If-Match": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PolicyChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyPublicationPreview"];
+                };
+            };
+        };
+    };
     subscriptions: {
         parameters: {
             query?: {
+                merchantId?: string;
                 limit?: number;
                 offset?: number;
             };

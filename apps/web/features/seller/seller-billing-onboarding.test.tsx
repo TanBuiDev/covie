@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { SellerBillingOnboarding } from "./seller-billing-onboarding";
 
@@ -8,6 +8,19 @@ vi.mock("@/lib/api/api-client", () => ({ requestBrowserApi: mocks.request }));
 const plan = { code: "SELLER_STANDARD", name: "CoVie Seller", priceVnd: 10000, cycleMonths: 1 };
 
 beforeEach(() => { mocks.request.mockReset(); });
+
+it("keeps registration unready on policy failure and retries only the policy GET", async () => {
+  const ready = vi.fn();
+  mocks.request.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(new Response(JSON.stringify({
+    enforcementEnabled: false, registrationEnabled: true, plans: [plan],
+  })));
+  render(<SellerBillingOnboarding onRegistrationReady={ready} />);
+  fireEvent.click(await screen.findByRole("button", { name: "Tải lại chính sách thuê bao" }));
+  await waitFor(() => expect(ready).toHaveBeenCalledWith(true));
+  expect(mocks.request.mock.calls).toEqual([
+    ["GET", "/api/v1/billing/onboarding"], ["GET", "/api/v1/billing/onboarding"],
+  ]);
+});
 
 it("discloses current server price and does not imply buyers pay a subscription", async () => {
   mocks.request.mockResolvedValue(new Response(JSON.stringify({

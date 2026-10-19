@@ -2,15 +2,22 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { AdminPageHeader, AdminSurface, formatAdminMoney } from "./admin-ui";
+import { AdminPageHeader, AdminSurface, formatAdminDate, formatAdminMoney } from "./admin-ui";
 import { requestBrowserApi } from "@/lib/api/api-client";
-import { readApiError } from "@/lib/api/api-error";
+import { CovieApiError, readApiError } from "@/lib/api/api-error";
 import type { components } from "@covie/api-client";
+import styles from "./admin-billing-screen.module.css";
+import { AdminBillingReconciliation } from "./admin-billing-reconciliation";
+import { AdminBillingInvoiceExport } from "./admin-billing-invoice-export";
+import { AdminBillingHistory } from "./admin-billing-history";
+import { AdminBillingSubscriptions } from "./admin-billing-subscriptions";
 
 type Plan = Required<components["schemas"]["PlanOffer"]>;
 type Policy = Required<components["schemas"]["Policy"]>;
+type PricePreview = Required<components["schemas"]["PricePublicationPreview"]>;
+type PolicyPreview = Required<components["schemas"]["PolicyPublicationPreview"]>;
 type Overview = { collectedVnd: number; paidInvoices: number; pendingInvoices: number; entitledShops: number; reconciliationAlerts: number };
-type BillingInvoice = { id: string; merchantId: string; invoiceNumber: string; status: string; amountVnd: number; createdAt: string; paidAt?: string };
+type BillingInvoice = Required<components["schemas"]["Invoice"]>;
 type FinanceCase = { id: string; invoiceId: string; merchantId: string; kind: string; status: string; reason: string; createdAt: string; resolutionNote?: string };
 type Voucher = { code: string; planCode: string | null; discountType: "FIXED" | "PERCENT";
   discountValue: number; maxRedemptions: number; perMerchantLimit: number;
@@ -61,11 +68,13 @@ export function AdminBillingScreen() {
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [initialLoadFailed, setInitialLoadFailed] = useState(false);
+  const [publicationStale, setPublicationStale] = useState(false);
 
   const load = useCallback(async () => {
     const [priceRes, policyRes, overviewRes, invoiceRes, caseRes, voucherRes, roleRes] = await Promise.all([
-      requestBrowserApi("GET", "/api/v1/billing/plans"),
-      requestBrowserApi("GET", "/api/v1/admin/billing/policy"),
+      requestBrowserApi("GET", "/api/v1/admin/billing/plans"),
+      requestBrowserApi("GET", "/api/v1/admin/billing/policy/latest"),
       requestBrowserApi("GET", "/api/v1/admin/billing/overview"),
       requestBrowserApi("GET", "/api/v1/admin/billing/invoices?limit=20"),
       requestBrowserApi("GET", "/api/v1/admin/billing/finance-cases?limit=30"),
@@ -107,20 +116,33 @@ export function AdminBillingScreen() {
     let valid = true;
     Promise.resolve().then(() => {
       if (!valid) return;
-      load().catch(cause => { if (valid) setError(cause instanceof Error ? cause.message : "Không tải được chính sách"); })
+      load().catch(cause => { if (valid) {
+        setInitialLoadFailed(true);
+        setError(cause instanceof Error ? cause.message : "Không tải được chính sách");
+      } })
         .finally(() => { if (valid) setLoading(false); });
     });
     return () => { valid = false; };
   }, [load]);
 
+  async function retryInitialLoad() {
+    if (loading) return;
+    setLoading(true); setError("");
+    try {
+      await load();
+      setInitialLoadFailed(false);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không tải được chính sách");
+    } finally { setLoading(false); }
+  }
+
   async function save(kind: "price" | "policy") {
-    if (saving) return;
+    if (saving || publicationStale) return;
     setError(""); setNotice("");
     const date = new Date(effectiveAt);
     if (!effectiveAt || Number.isNaN(date.getTime()) || date <= new Date()) {
       setError("Chọn ngày giờ có hiệu lực trong tương lai."); return;
     }
-    if (!window.confirm("Bạn chắc chắn muốn công bố phiên bản chính sách/giá mới? Không thể sửa phiên bản đã phát hành.")) return;
     setSaving(true);
     try {
       const url = kind === "price"
@@ -133,12 +155,53 @@ export function AdminBillingScreen() {
         ? plans.find(plan => plan.code === selectedCode)?.revision
         : policy?.revision;
       if (!expectedRevision) throw new Error("Không xác định được phiên bản. Vui lòng tải lại.");
-      await requireJson(await requestBrowserApi("POST", url, body,
-        { "If-Match": `"${expectedRevision}"` }));
+      const headers = { "If-Match": `"${expectedRevision}"` };
+      const response = await requestBrowserApi("POST", `${url}/preview`, body, headers);
+      let values: string;
+      let cohort: number;
+      let observedAt: string;
+      if (kind === "price") {
+        const preview = await requireJson<PricePreview>(response);
+        values = `Gói ${selectedCode}, bản đã công bố ${preview.previous.revision}: `
+          + `${formatAdminMoney(preview.previous.priceVnd ?? 0)} / ${preview.previous.cycleMonths} tháng → `
+          + `${formatAdminMoney(preview.proposed.priceVnd ?? 0)} / ${preview.proposed.cycleMonths} tháng.\n`
+          + `Có hiệu lực từ: ${formatAdminDate(preview.proposed.effectiveAt)}`;
+        cohort = preview.referencingMerchants;
+        observedAt = preview.observedAt;
+      } else {
+        const preview = await requireJson<PolicyPreview>(response);
+        values = `Bản đã công bố ${preview.previous.revision}: ${preview.previous.onboardingMode}, `
+          + `dùng thử ${preview.previous.trialDays} ngày, ân hạn ${preview.previous.graceDays} ngày → `
+          + `${preview.proposed.onboardingMode}, dùng thử ${preview.proposed.trialDays} ngày, `
+          + `ân hạn ${preview.proposed.graceDays} ngày.\nCó hiệu lực từ: ${formatAdminDate(preview.proposed.effectiveAt)}`;
+        cohort = preview.referencingMerchants;
+        observedAt = preview.observedAt;
+      }
+      const message = `${values}\nHồ sơ thuê bao hiện có (mọi trạng thái): ${cohort}, ghi nhận ${formatAdminDate(observedAt)}.\n`
+        + "Đây là nhóm tham chiếu, không phải dự báo chính xác số shop sẽ chịu tác động; không gồm shop chưa có thuê bao. "
+        + "Không tự thay đổi hóa đơn, kỳ đã trả hoặc trial/ân hạn đã chốt. Bản đã công bố có thể chưa tới ngày hiệu lực.\n"
+        + "Xác nhận công bố? Không thể sửa phiên bản đã phát hành.";
+      if (!window.confirm(message)) return;
+      await requireJson(await requestBrowserApi("POST", url, body, headers));
       setNotice("Đã tạo phiên bản mới; giá và chính sách có hiệu lực theo lịch đã chọn.");
       await load();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Không thể lưu chính sách"); }
+    } catch (cause) {
+      if (cause instanceof CovieApiError && cause.status === 409) setPublicationStale(true);
+      setError(cause instanceof Error ? cause.message : "Không thể lưu chính sách");
+    }
     finally { setSaving(false); }
+  }
+
+  async function reloadPublication() {
+    if (saving) return;
+    setSaving(true); setError("");
+    try {
+      await load();
+      setPublicationStale(false);
+      setNotice("Đã tải phiên bản mới nhất. Kiểm tra lại thông số và ngày hiệu lực trước khi công bố.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không tải được phiên bản");
+    } finally { setSaving(false); }
   }
 
   async function createPlan() {
@@ -299,33 +362,38 @@ export function AdminBillingScreen() {
     } finally { setSaving(false); }
   }
 
-  return <div className="admin-page-stack">
+  return <div className={`admin-page-stack ${styles.screen}`}>
     <AdminPageHeader title="Thuê bao Seller" subtitle="Bảng giá và chính sách kinh doanh do máy chủ quản lý theo phiên bản." />
     <p><Link href="/admin/settings?section=billing">Cấu hình kiểm soát thu phí, nhắc gia hạn, phân quyền và giới hạn tạo giao dịch</Link></p>
     {error ? <p role="alert" className="admin-error">{error}</p> : null}
     {notice ? <p role="status">{notice}</p> : null}
-    {loading ? <p>Đang tải Billing…</p> : (
+    {loading ? <p role="status">Đang tải Billing…</p> : initialLoadFailed ? (
+      <button type="button" className="admin-button admin-button--secondary" onClick={() => void retryInitialLoad()}>
+        Tải lại dữ liệu Billing
+      </button>
+    ) : (
       <>
         {financeForbidden ? <p role="alert">
           Tài khoản này chưa được cấp quyền đọc dữ liệu tài chính. Bạn vẫn có thể quản lý bảng giá và chính sách Seller.
         </p> : null}
         <AdminSurface>
           <h2>Tổng quan thu phí Seller</h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
+          {financeForbidden ? <p>Chưa được cấp quyền xem tổng quan tài chính.</p> : <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
             <p>Đã thu: <strong>{formatAdminMoney(overview?.collectedVnd ?? 0)}</strong></p>
             <p>Hóa đơn đã trả: <strong>{overview?.paidInvoices ?? 0}</strong></p>
             <p>Đang chờ: <strong>{overview?.pendingInvoices ?? 0}</strong></p>
             <p>Cửa hàng có quyền bán: <strong>{overview?.entitledShops ?? 0}</strong></p>
             <p>Cảnh báo đối soát: <strong>{overview?.reconciliationAlerts ?? 0}</strong></p>
-          </div>
+          </div>}
           <p>Số liệu thu phí dịch vụ cửa hàng, không bao gồm doanh thu đơn hàng buyer.</p>
         </AdminSurface>
         <AdminSurface>
           <h2>Giao dịch gần đây</h2>
-          {invoices.length === 0 ? <p>Chưa có giao dịch thuê bao.</p> : (
-            <div style={{ overflowX: "auto" }}>
-              <table className="admin-table">
-                <thead><tr><th>Hóa đơn</th><th>Cửa hàng</th><th>Số tiền</th><th>Trạng thái</th></tr></thead>
+          {!financeForbidden ? <AdminBillingInvoiceExport /> : null}
+          {financeForbidden ? <p>Chưa được cấp quyền xem giao dịch thuê bao.</p> : invoices.length === 0 ? <p>Chưa có giao dịch thuê bao.</p> : (
+            <div className="admin-table-scroll" role="region" aria-label="Danh sách giao dịch thuê bao" tabIndex={0}>
+              <table className="admin-data-table">
+                <thead><tr><th scope="col">Hóa đơn</th><th scope="col">Cửa hàng</th><th scope="col">Số tiền</th><th scope="col">Trạng thái</th></tr></thead>
                 <tbody>{invoices.map(invoice => (
                   <tr key={invoice.id}>
                     <td>{invoice.invoiceNumber}</td><td>{invoice.merchantId}</td>
@@ -335,6 +403,7 @@ export function AdminBillingScreen() {
               </table>
             </div>
           )}
+          <AdminBillingReconciliation invoices={invoices} onComplete={load} />
         </AdminSurface>
         <AdminSurface>
           <h2>Phân quyền quản trị tài chính</h2>
@@ -352,8 +421,8 @@ export function AdminBillingScreen() {
           <button className="admin-button admin-button--secondary" type="button" disabled={saving}
             onClick={() => void assignFinanceRole()}>Cấp vai trò tài chính</button>
           {financeAssignments.length === 0 ? <p>Chưa có phân quyền tài chính riêng.</p> : (
-            <div style={{ overflowX: "auto" }}>
-              <table className="admin-table"><thead><tr><th>User ID</th><th>Vai trò</th><th>Quản lý</th></tr></thead>
+            <div className="admin-table-scroll" role="region" aria-label="Danh sách phân quyền tài chính" tabIndex={0}>
+              <table className="admin-data-table"><thead><tr><th scope="col">User ID</th><th scope="col">Vai trò</th><th scope="col">Quản lý</th></tr></thead>
                 <tbody>{financeAssignments.map(value => <tr key={value.userId}>
                   <td>{value.userId}</td><td>{value.role}</td>
                   <td><button className="admin-button admin-button--secondary" type="button"
@@ -367,10 +436,10 @@ export function AdminBillingScreen() {
         <AdminSurface>
           <h2>Yêu cầu hoàn phí và tranh chấp</h2>
           <p>Hoàn tiền thực tế được xác minh ngoài CoVie trước khi Admin xác nhận. Không có API tự chuyển tiền.</p>
-          {cases.length === 0 ? <p>Không có hồ sơ cần xem.</p> : (
-            <div style={{ overflowX: "auto" }}>
-              <table className="admin-table">
-                <thead><tr><th>Hóa đơn</th><th>Loại</th><th>Lý do</th><th>Trạng thái</th><th>Xử lý</th></tr></thead>
+          {financeForbidden ? <p>Chưa được cấp quyền xem hồ sơ tài chính.</p> : cases.length === 0 ? <p>Không có hồ sơ cần xem.</p> : (
+            <div className="admin-table-scroll" role="region" aria-label="Danh sách hồ sơ hoàn phí và tranh chấp" tabIndex={0}>
+              <table className="admin-data-table">
+                <thead><tr><th scope="col">Hóa đơn</th><th scope="col">Loại</th><th scope="col">Lý do</th><th scope="col">Trạng thái</th><th scope="col">Xử lý</th></tr></thead>
                 <tbody>{cases.map(item => (
                   <tr key={item.id}>
                     <td>{item.invoiceId}</td><td>{item.kind}</td><td>{item.reason}</td>
@@ -411,10 +480,10 @@ export function AdminBillingScreen() {
             onClick={() => void grantFreeAccess()}>Cấp quyền có thời hạn</button>
         </AdminSurface>
         <AdminSurface>
-          <h2>Bảng giá hiện có hiệu lực</h2>
+          <h2>Bảng giá công bố mới nhất</h2>
           {plans.length === 0 ? <p>Không có gói đang bán.</p> : plans.map(plan => (
             <p key={plan.id}><strong>{plan.name}</strong>: {formatAdminMoney(plan.priceVnd)} /
-              {plan.cycleMonths} tháng, phiên bản {plan.revision}</p>
+              {plan.cycleMonths} tháng, phiên bản {plan.revision}; có hiệu lực từ {formatAdminDate(plan.effectiveAt)}</p>
           ))}
           <div className="admin-field"><label htmlFor="billing-plan">Chọn gói muốn cập nhật</label>
             <select id="billing-plan" value={selectedCode} onChange={event => {
@@ -489,9 +558,9 @@ export function AdminBillingScreen() {
           <button className="admin-button admin-button--primary" type="button"
             disabled={saving} onClick={() => void createVoucher()}>Tạo voucher thuê bao</button>
           {vouchers.length === 0 ? <p>Chưa có mã giảm phí thuê bao.</p> : (
-            <div style={{ overflowX: "auto" }}>
-              <table className="admin-table">
-                <thead><tr><th>Mã</th><th>Giảm</th><th>Giới hạn</th><th>Trạng thái</th><th>Quản lý</th></tr></thead>
+            <div className="admin-table-scroll" role="region" aria-label="Danh sách mã giảm giá thuê bao" tabIndex={0}>
+              <table className="admin-data-table">
+                <thead><tr><th scope="col">Mã</th><th scope="col">Giảm</th><th scope="col">Giới hạn</th><th scope="col">Trạng thái</th><th scope="col">Quản lý</th></tr></thead>
                 <tbody>{vouchers.map(v => <tr key={v.code}>
                   <td>{v.code}</td>
                   <td>{v.discountType === "PERCENT"
@@ -508,7 +577,8 @@ export function AdminBillingScreen() {
         </AdminSurface>
         <AdminSurface>
           <h2>Chính sách mở cửa hàng</h2>
-          <p>Phiên bản {policy?.revision} — {policy?.onboardingMode === "TRIAL" ? "Dùng thử" : "Thanh toán trước"}.</p>
+          <p>Bản công bố mới nhất {policy?.revision} — {policy?.onboardingMode === "TRIAL" ? "Dùng thử" : "Thanh toán trước"}.
+            Có hiệu lực từ {formatAdminDate(policy?.effectiveAt)}; có thể chưa tới ngày áp dụng.</p>
           <div className="admin-field"><label htmlFor="billing-policy">Chính sách</label>
             <select id="billing-policy" value={mode} onChange={e => setMode(e.target.value)}>
               <option value="PAY_BEFORE_SELL">Thanh toán trước khi mở bán</option>
@@ -522,16 +592,21 @@ export function AdminBillingScreen() {
         <AdminSurface>
           <h2>Công bố phiên bản mới</h2>
           <p>Chọn thời điểm áp dụng. Hóa đơn hiện hữu giữ nguyên bản giá đã xác nhận.</p>
+          <p>Thông số đang hiển thị là bản công bố mới nhất, gồm cả phiên bản đã lên lịch.</p>
+          {publicationStale && <button className="admin-button admin-button--secondary" disabled={saving}
+            onClick={() => void reloadPublication()}>Tải lại phiên bản để xem lại</button>}
           <div className="admin-field"><label htmlFor="billing-effective">Có hiệu lực từ</label>
             <input id="billing-effective" type="datetime-local" value={effectiveAt}
               onChange={e => setEffectiveAt(e.target.value)} /></div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button className="admin-button admin-button--primary" disabled={saving || !selectedCode}
+            <button className="admin-button admin-button--primary" disabled={saving || publicationStale || !selectedCode}
               onClick={() => void save("price")}>{saving ? "Đang lưu…" : "Công bố giá mới"}</button>
-            <button className="admin-button admin-button--secondary" disabled={saving}
+            <button className="admin-button admin-button--secondary" disabled={saving || publicationStale}
               onClick={() => void save("policy")}>{saving ? "Đang lưu…" : "Công bố chính sách mới"}</button>
           </div>
         </AdminSurface>
+        <AdminBillingHistory />
+        {!financeForbidden && <AdminBillingSubscriptions />}
       </>
     )}
   </div>;

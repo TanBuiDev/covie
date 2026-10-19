@@ -14,7 +14,8 @@ class BillingProviderRecoveryTest {
     private final PayosGateway gateway = mock(PayosGateway.class);
     private BillingWebhookService service() {
         return new BillingWebhookService(mock(JdbcTemplate.class),json,gateway,
-            new PayosSignature(json),()->java.time.Instant.EPOCH,mock(OutboxEventWriter.class));
+            new PayosSignature(json),()->java.time.Instant.EPOCH,mock(OutboxEventWriter.class),
+            mock(vn.covie.audit.AuditLogWriter.class),mock(vn.covie.shared.web.RequestIdAccessor.class));
     }
 
     @Test void forgedProviderStatusCannotGrantEntitlement() throws Exception {
