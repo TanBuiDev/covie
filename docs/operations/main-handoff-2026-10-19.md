@@ -143,3 +143,40 @@ Seller/upload/publish/guest flow passed78.58s in a copied development Web runtim
 Neither result is staging, production deployment, real payment or new-binary proof.
 Seven source-bound CodeQL false positives were individually dismissed with API
 receipts; the aggregate check succeeded without disabling queries or changing rules.
+
+## Completed source handoff receipt
+
+PR39 merged with a merge commit29e449ce00f0333047806c593189616bde5ec10c.
+All nine checks on exact candidateefee4bf9 succeeded, including full remote backend
+1176 reported/0 failures/0 errors/19 skips (8m39s), frontend/contract, source security,
+secret history and CodeQL. The merge tree equals the verified candidate tree. The
+subsequent main push checks are separate from the successful pre-merge gate.
+
+The changed probe runner also passed actual network-disabled MP4/WebM probe/decode
+and invalid-file checks1/1 (7.815s). An initial invocation without the opt-in property
+skipped that case and is not counted as proof. No new packaged runtime or full image
+scan is claimed for this reader change.
+
+PR31 and compatible dependency PR32/33/34/36/37/38 are actually merged by ancestry.
+PR30 was closed as superseded with its identical plan blob retained. PR35 was closed
+unmerged for demonstrated TypeScript7 incompatibility; TypeScript remains5.9.
+The old demo branch was retired without merging its divergent implementation or
+compressed seed. Its41 branch-only commits and four dirty files remain recoverable.
+
+After preservation was rechecked, the primary checkout moved to the exact main tree
+using an explicit660-path restore allowlist, not a hard reset or clean. Seven old
+untracked Social migration files were moved into the private backup's displaced
+directory; leaving them in canonical migration discovery would cause collisions.
+All384 original primary files remain separately backed up. Other dirty worktrees,
+ignored data, stashes and archive refs were retained. No normal stack or recovered
+database was started. No secrets, local logs, bundles or database dumps were pushed.
+
+Local and remote branch inventories then each contained only main. This final
+documentation receipt uses a short-lived reviewed branch; verify its own merge,
+primary fast-forward and branch removal on its PR rather than assuming future
+administrative actions from this committed snapshot.
+
+Normal feature/financial flags remain OFF. No deployment or real payment occurred.
+Production dependency audit remains0 findings; the disclosed high dev-only Braces
+advisory is not hidden. Raw CodeQL/source-secret findings and bounded scan scopes
+remain described above. Repository handoff is not production activation evidence.

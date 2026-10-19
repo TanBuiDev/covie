@@ -1,5 +1,11 @@
 # Main handoff integration implementation plan
 
+**Execution status2026-10-19:** Source integration and original branch retirement
+completed through PR39; the concrete completion receipt and verification limits are
+in `docs/operations/main-handoff-2026-10-19.md`. The unchecked items below are the
+original execution checkpoint snapshot, not outstanding implementation instructions.
+Final documentation-only receipt merge/branch retirement is recorded on its PR.
+
 > For agentic workers: execute this approved handoff in isolated worktrees with verified backups and review checkpoints.
 
 **Goal:** Publish only reviewed project sources, integrate approved functionality into main, and retire non-main branches without losing private or unpublished work.
