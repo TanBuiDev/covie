@@ -10,6 +10,10 @@ const api = vi.hoisted(() => ({
 }));
 
 vi.mock("@/features/catalog/catalog-api", () => api);
+vi.mock("@/features/marketplace-view/social-api", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/features/marketplace-view/social-api")>(),
+  fetchSocialSummaries: vi.fn().mockResolvedValue({}),
+}));
 
 const categories = [
   { id: "food", name: "Đồ ăn", slug: "do-an", catalogType: "PRODUCT" as const, sortOrder: 1 },
