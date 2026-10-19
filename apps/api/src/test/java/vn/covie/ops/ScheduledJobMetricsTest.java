@@ -22,7 +22,7 @@ class ScheduledJobMetricsTest {
                 assertThat(registry.get("covie.scheduler.failures").tag("job", job.tag()).counter().count()).isZero();
                 assertThat(registry.get("covie.scheduler.duration").tag("job", job.tag()).timer().totalTime(java.util.concurrent.TimeUnit.MILLISECONDS)).isEqualTo(250);
             }
-            assertThat(calls.get()).isEqualTo(5);
+            assertThat(calls.get()).isEqualTo(6);
             assertThat(registry.getMeters()).allSatisfy(meter -> assertThat(meter.getId().getTags()).hasSize(1));
         } finally { registry.close(); }
     }

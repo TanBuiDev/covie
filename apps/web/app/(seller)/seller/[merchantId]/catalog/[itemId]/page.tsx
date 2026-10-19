@@ -23,7 +23,8 @@ export default async function CatalogEditPage({ params }: {
         </Link>
       </p>
       <CatalogEditForm key={revisionKey}
-        merchantId={merchantId} item={detail.item} etag={detail.etag} categories={categories} />
+        merchantId={merchantId} item={detail.item} etag={detail.etag} categories={categories}
+        socialAuthoringEnabled={process.env.COVIE_SOCIAL_V2_CAPTION_AUTHORING_ENABLED === "true"} />
     </section>
   );
 }

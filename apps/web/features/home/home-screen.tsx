@@ -5,16 +5,11 @@ import { AdSlot } from "@/features/ads/ad-slot";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { components } from "@covie/api-client";
 import {
-  BowlFood,
   CaretLeft,
   CaretRight,
-  Clock,
-  Coffee,
-  Handshake,
   Lightning,
   MapPin,
   Package,
-  Recycle,
   ShieldCheck,
   ShoppingBag,
   SquaresFour,
@@ -41,13 +36,6 @@ type Category = components["schemas"]["CategorySummary"];
 type CatalogItem = components["schemas"]["CatalogItemSummaryResponse"];
 type SectionState = { status: "loading" | "ready" | "error"; items: CatalogItem[] };
 
-const QUICK_TAGS = [
-  { label: "Cà phê", icon: Coffee, href: "/search?q=Cà+phê" },
-  { label: "Đồ ăn", icon: BowlFood, href: "/search?q=Đồ+ăn" },
-  { label: "Sửa máy lạnh", icon: Wrench, href: "/search?type=SERVICE&q=máy+lạnh" },
-  { label: "Đồ thanh lý", icon: Recycle, href: "/search?type=PRODUCT&listingKind=RESALE" },
-  { label: "Quanh bạn", icon: Lightning, href: "/search?sort=DISTANCE" },
-];
 
 const DISCOVERY_SHORTCUTS = [
   { label: "Tất cả", icon: SquaresFour, href: "/search" },
@@ -205,7 +193,6 @@ export function HomeScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesStatus, setCategoriesStatus] = useState<"loading" | "ready" | "error">("loading");
   const [showLocationChooser, setShowLocationChooser] = useState(false);
-  const [needQuery, setNeedQuery] = useState("");
   const initialSections = useMemo<Record<HomeSectionKey, SectionState>>(() => ({
     nearby: { status: "loading", items: [] },
     services: { status: "loading", items: [] },
@@ -286,76 +273,15 @@ export function HomeScreen() {
 
   return (
     <div className={styles.home}>
+      <AdSlot placement="HOME_HERO" className={styles.heroAdSlot} />
       <div className={styles.searchContainer}>
         <Link className={styles.search} href="/search" aria-label="Tìm món đồ, dịch vụ...">
           <CoVieIcon name="search" /><span>Tìm món đồ, dịch vụ...</span><CoVieIcon className={styles.filterIcon} name="filter" />
         </Link>
-        <div className={styles.quickTags} aria-label="Gợi ý tìm kiếm nhanh">
-          {QUICK_TAGS.map((tag) => {
-            const Icon = tag.icon;
-            return (
-              <Link key={tag.label} href={tag.href} className={styles.quickTag}>
-                <Icon size={14} weight="duotone" aria-hidden="true" />
-                <span>{tag.label}</span>
-              </Link>
-            );
-          })}
-        </div>
       </div>
 
-      {hydrated && location && (
-        <section className={styles.contextBanner} aria-label="Khu vực chợ hiện tại">
-          <div className={styles.pulseBar}>
-            <span className={styles.pulseDot} aria-hidden="true" />
-            <span className={styles.pulseLiveLabel}>CHỢ NỘI KHU ĐANG HOẠT ĐỘNG</span>
-            <span className={styles.pulseSep}>&bull;</span>
-            <span className={styles.pulseNotice}>
-              <Lightning size={12} weight="fill" aria-hidden="true" /> 15 phút nhận hàng &bull; Thợ &amp; quán ăn sẵn sàng phục vụ
-            </span>
-          </div>
-          <div className={styles.contextHeader}>
-            <div className={styles.contextBadge}>
-              <CoVieIcon name="location" />
-              <span>{location.label ?? "Khu vực lân cận"}</span>
-            </div>
-            <div className={styles.contextMetrics}>
-              <span className={styles.contextPill}>
-                <Lightning size={13} weight="fill" aria-hidden="true" /> Giao nhanh nội khu
-              </span>
-              <span className={styles.openNowPill}>
-                <Clock size={13} weight="duotone" aria-hidden="true" /> Đang mở cửa
-              </span>
-            </div>
-          </div>
-          <h1 className={styles.contextTitle}>Chợ cư dân quanh bạn hôm nay có gì?</h1>
-          <p className={styles.contextSubtitle}>
-            Món ăn nóng hổi, dịch vụ tại nhà và đồ thanh lý giá tốt từ hàng xóm
-          </p>
-          <div className={styles.contextHighlights}>
-            <div className={styles.contextHighlightItem}>
-              <span className={`${styles.highlightIcon} ${styles.highlightFoodIcon}`}>
-                <BowlFood size={18} weight="duotone" aria-hidden="true" />
-              </span>
-              <span>Đồ ăn &amp; nước uống giao tận cửa</span>
-            </div>
-            <div className={styles.contextHighlightItem}>
-              <span className={`${styles.highlightIcon} ${styles.highlightServiceIcon}`}>
-                <Wrench size={18} weight="duotone" aria-hidden="true" />
-              </span>
-              <span>Thợ sửa chữa, vệ sinh tại nhà</span>
-            </div>
-            <div className={styles.contextHighlightItem}>
-              <span className={`${styles.highlightIcon} ${styles.highlightResaleIcon}`}>
-                <Recycle size={18} weight="duotone" aria-hidden="true" />
-              </span>
-              <span>Pass đồ cũ giá hời cùng toà</span>
-            </div>
-          </div>
-        </section>
-      )}
-
       <section className={styles.categories} aria-labelledby="categories-title">
-        <div className={styles.sectionHeading}><h2 id="categories-title">Khám phá danh mục</h2></div>
+        <div className={styles.sectionHeading}><h1 id="categories-title">Khám phá danh mục</h1></div>
         {categoriesStatus === "loading" && <div className={styles.categorySkeletons} aria-label="Đang tải danh mục"><i /><i /><i /><i /></div>}
         {categoriesStatus === "error" && (
           <div className={styles.inlineState} role="alert"><p>Không thể tải danh mục.</p><button type="button" onClick={() => { setCategoriesStatus("loading"); void loadCategories(); }}>Thử lại</button></div>
@@ -374,26 +300,24 @@ export function HomeScreen() {
       </section>
 
       {hydrated && location && (
-        <div className={styles.discoveryShortcuts} aria-label="Bộ lọc nhanh">
-          {DISCOVERY_SHORTCUTS.map((shortcut) => {
-            const Icon = shortcut.icon;
-            return (
-              <Link key={shortcut.label} href={shortcut.href} className={styles.shortcutPill}>
-                <Icon size={16} weight="duotone" aria-hidden="true" />
-                <span>{shortcut.label}</span>
-              </Link>
-            );
-          })}
+        <div className={styles.discoveryControls}>
+          <div className={styles.discoveryShortcuts} aria-label="Bộ lọc nhanh">
+            {DISCOVERY_SHORTCUTS.map((shortcut) => {
+              const Icon = shortcut.icon;
+              return (
+                <Link key={shortcut.label} href={shortcut.href} className={styles.shortcutPill}>
+                  <Icon size={16} weight="duotone" aria-hidden="true" />
+                  <span>{shortcut.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+          <div className={styles.marketplaceModeToolbar}>
+            <span>Hiển thị sản phẩm</span>
+            <MarketplaceViewToggle mode={viewMode} onModeChange={setViewMode} />
+          </div>
         </div>
       )}
-
-      {hydrated && location && (
-        <div className={styles.marketplaceModeToolbar}>
-          <span>Hiển thị sản phẩm</span>
-          <MarketplaceViewToggle mode={viewMode} onModeChange={setViewMode} />
-        </div>
-      )}
-      <AdSlot placement="HOME_HERO" />
       {!hydrated && <div className={styles.pageLoading} aria-label="Đang tải trang chủ" />}
       {hydrated && !location && (
         <section className={styles.locationState} aria-labelledby="location-state-title">
@@ -419,65 +343,6 @@ export function HomeScreen() {
         }} />
       )}
 
-      {hydrated && location && (
-        <section className={styles.needSpotlight} aria-labelledby="need-spotlight-title">
-          <div className={styles.needBadge}>
-            <CoVieIcon name="need" />
-            <span>Nhu cầu cư dân &bull; Khớp lệnh trực tiếp</span>
-          </div>
-          <div className={styles.needBody}>
-            <div className={styles.needText}>
-              <h2 id="need-spotlight-title">Bạn đang cần tìm món đồ hay thợ sửa gấp?</h2>
-              <p>Đăng nhu cầu &ldquo;Cần mua&rdquo; để các quán ăn, cửa hàng và thợ quanh toà nhà gửi báo giá ngay.</p>
-            </div>
-
-            <form action="/needs/new" method="GET" className={styles.needQuickForm}>
-              <input
-                type="text"
-                name="q"
-                className={styles.needInput}
-                value={needQuery}
-                onChange={(e) => setNeedQuery(e.target.value)}
-                placeholder="Gõ món đồ hoặc dịch vụ cần tìm (ví dụ: Bún bò toà S5, thợ điện...)"
-                aria-label="Nhu cầu cần tìm"
-              />
-              <button type="submit" className={styles.needSubmitBtn}>
-                Đăng nhu cầu ngay
-              </button>
-            </form>
-
-            <div className={styles.needTrustHighlights}>
-              <div className={styles.needHighlightItem}>
-                <span className={styles.needHighlightIcon}>
-                  <Lightning size={15} weight="fill" aria-hidden="true" />
-                </span>
-                <span>Trung bình 15 phút nhận báo giá</span>
-              </div>
-              <div className={styles.needHighlightItem}>
-                <span className={styles.needHighlightIcon}>
-                  <Handshake size={16} weight="duotone" aria-hidden="true" />
-                </span>
-                <span>Kết nối trực tiếp thợ &amp; quán nội khu</span>
-              </div>
-              <div className={styles.needHighlightItem}>
-                <span className={styles.needHighlightIcon}>
-                  <ShieldCheck size={16} weight="duotone" aria-hidden="true" />
-                </span>
-                <span>Bảo mật SĐT cá nhân</span>
-              </div>
-            </div>
-
-            <div className={styles.needActions}>
-              <Link href="/needs/new" className={styles.needBtnPrimary}>
-                + Đăng nhu cầu đầy đủ
-              </Link>
-              <Link href="/needs" className={styles.needBtnSecondary}>
-                Xem tin cần mua quanh đây
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
 
       {hydrated && location && (
         <><AdSlot placement="IN_FEED" /><FeaturedMerchantsSection merchants={featuredMerchants} /></>
@@ -501,15 +366,15 @@ export function HomeScreen() {
         <section className={styles.sellerBanner} aria-labelledby="seller-banner-title">
           <div className={styles.sellerBannerContent}>
             <div className={styles.sellerBannerIcon} aria-hidden="true">
-              <Package size={28} weight="duotone" />
+              <Storefront size={28} weight="duotone" />
             </div>
             <div className={styles.sellerBannerText}>
-              <h2 id="seller-banner-title">Dọn nhà cuối tuần? Pass đồ cùng CoVie</h2>
-              <p>Thanh lý đồ không dùng cho hàng xóm cùng toà nhà hoặc mở gian hàng kinh doanh trong 1 phút.</p>
+              <h2 id="seller-banner-title">Mở cửa hàng cùng CoVie: Bán hàng, thanh lý & dịch vụ</h2>
+              <p>Tạo gian hàng kinh doanh, thanh lý đồ không dùng hoặc cung cấp dịch vụ tiện ích cho cư dân cùng toà nhà chỉ trong 1 phút.</p>
             </div>
           </div>
           <Link href="/seller" className={styles.sellerBannerCta}>
-            Mở quầy / Pass đồ
+            Cửa hàng
           </Link>
         </section>
       )}

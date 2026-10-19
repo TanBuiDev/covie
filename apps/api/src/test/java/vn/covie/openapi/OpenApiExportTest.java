@@ -17,9 +17,66 @@ import vn.covie.support.PostgresIntegrationTest;
 
 @AutoConfigureMockMvc
 class OpenApiExportTest extends PostgresIntegrationTest {
+    @Test void sellerDecisionReasonIsAnOptionalReadOnlyCode() throws Exception {
+        var document=objectMapper.readTree(mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        var schema=document.path("components").path("schemas").path("CatalogItemManagementDetailResponse");
+        var reason=schema.path("properties").path("moderationReasonCode");
+        assertThat(reason.path("type").asText()).isEqualTo("string");
+        assertThat(reason.path("maxLength").asInt()).isEqualTo(60);
+        assertThat(reason.path("readOnly").asBoolean()).isTrue();
+        assertThat(schema.path("required").toString()).doesNotContain("moderationReasonCode");
+        assertThat(schema.path("properties").has("moderationNote")).isFalse();
+    }
+    @Test void adminSummaryExposesActualCaptionPresenceOnly() throws Exception {
+        var document=objectMapper.readTree(mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        var properties=document.path("components").path("schemas").path("AdminCatalogItemSummaryResponse").path("properties");
+        assertThat(properties.path("hasCaption").path("type").asText()).isEqualTo("boolean");
+        assertThat(properties.has("socialCaption")).isFalse();
+        assertThat(properties.path("hasVideo").path("type").asText()).isEqualTo("boolean");
+    }
+    @Test void activityLimitIsAnIntegerAndTypeIsRequired() throws Exception {
+        var document=objectMapper.readTree(mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        var parameters=document.path("paths").path("/api/v1/me/social/activity").path("get").path("parameters");
+        assertThat(parameters.size()).isEqualTo(3);
+        for (var parameter : parameters) {
+            if (parameter.path("name").asText().equals("limit")) {
+                var schema=parameter.path("schema");
+                assertThat(schema.path("type").asText()).isEqualTo("integer");
+                assertThat(schema.path("default").isInt()).isTrue();
+                assertThat(schema.path("default").asInt()).isEqualTo(20);
+                assertThat(schema.path("minimum").asInt()).isEqualTo(1);
+                assertThat(schema.path("maximum").asInt()).isEqualTo(50);
+            }
+            if (parameter.path("name").asText().equals("type")) assertThat(parameter.path("required").asBoolean()).isTrue();
+        }
+    }
     @Autowired
     MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    void previewAndAdminMediaKeepSeparateOpenApiContracts() throws Exception {
+        var document=objectMapper.readTree(mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        var schemas=document.path("components").path("schemas");
+        var parameters=document.path("paths").path("/api/v1/catalog/social-previews").path("get").path("parameters");
+        assertThat(parameters.size()).isEqualTo(1);
+        var batch=parameters.get(0);
+        assertThat(batch.path("name").asText()).isEqualTo("itemIds");
+        assertThat(batch.path("required").asBoolean()).isTrue();
+        assertThat(batch.path("schema").path("minItems").asInt()).isEqualTo(1);
+        assertThat(batch.path("schema").path("maxItems").asInt()).isEqualTo(40);
+        String adminRef=schemas.path("AdminCatalogItemDetailResponse").path("properties").path("media").path("items").path("$ref").asText();
+        String previewRef=schemas.path("SocialItemPreview").path("properties").path("media").path("items").path("$ref").asText();
+        assertThat(previewRef).isNotEqualTo(adminRef);
+        var admin=schemas.path(adminRef.substring(adminRef.lastIndexOf('/')+1)).path("properties");
+        for (String field : new String[]{"id","contentType","status","sortOrder","cover","url"}) assertThat(admin.has(field)).as("Admin media %s",field).isTrue();
+        var preview=schemas.path(previewRef.substring(previewRef.lastIndexOf('/')+1)).path("properties");
+        for (String field : new String[]{"id","mimeType","sortOrder","isCover","url"}) assertThat(preview.has(field)).as("Preview media %s",field).isTrue();
+    }
 
     @Test
     void exportsOpenApiDocument() throws Exception {

@@ -280,8 +280,8 @@
 }
 
 .navLinkActive {
-  background: #ecfdf5 !important;
-  color: #065f46 !important;
+  background: var(--clarity-action-subtle, #eff6ff) !important;
+  color: var(--clarity-action-primary, #2459e0) !important;
   font-weight: 600;
 }
 
@@ -292,11 +292,11 @@
   bottom: 8px;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: #059669;
+  background: var(--clarity-action-primary, #2459e0);
 }
 
 .navLinkActive .navIcon {
-  color: #059669;
+  color: var(--clarity-action-primary, #2459e0);
 }
 
 .navIcon {

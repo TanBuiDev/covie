@@ -1,5 +1,6 @@
-import { requestBrowserApi } from "@/lib/api/api-client";
-import { readApiError, type CovieApiError } from "@/lib/api/api-error";
+import type { components } from "@covie/api-client";
+import { createApiClient, requestBrowserApi } from "@/lib/api/api-client";
+import { parsedApiError, readApiError, type CovieApiError } from "@/lib/api/api-error";
 
 export type SocialSummary = {
   itemId: string;
@@ -32,6 +33,18 @@ export async function fetchSocialSummaries(ids: string[]): Promise<Record<string
   const query = new URLSearchParams();
   for (const id of Array.from(new Set(ids))) query.append("itemIds", id);
   return json(await requestBrowserApi("GET", "/api/v1/catalog/social-summary?" + query));
+}
+
+export type SocialPreview = components["schemas"]["SocialItemPreview"];
+
+export async function fetchSocialPreviews(ids: string[]): Promise<Record<string, SocialPreview>> {
+  if (ids.length === 0) return {};
+  if (ids.length > 40) throw new Error("Tối đa 40 sản phẩm mỗi lần yêu cầu.");
+  const { data, response, error } = await createApiClient().GET("/api/v1/catalog/social-previews", {
+    params: { query: { itemIds: Array.from(new Set(ids)) } }, cache: "no-store",
+  });
+  if (!response.ok || !data) throw await parsedApiError(response, error);
+  return data;
 }
 
 // Serialize competing like/save updates for the same product within a tab.

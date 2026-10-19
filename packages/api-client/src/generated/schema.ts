@@ -91,7 +91,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_21"];
+        get: operations["list_22"];
         put?: never;
         post?: never;
         delete?: never;
@@ -123,7 +123,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_20"];
+        get: operations["list_21"];
         put?: never;
         post?: never;
         delete?: never;
@@ -462,6 +462,54 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["disable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_20"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog-items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["detail_8"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog-items/{itemId}/moderation-cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["moderationCases"];
+        put?: never;
+        post: operations["openCase"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1196,6 +1244,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/social-previews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["previews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalog/social-summary": {
         parameters: {
             query?: never;
@@ -1792,6 +1856,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/social/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["activity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/media/uploads": {
         parameters: {
             query?: never;
@@ -1821,6 +1901,24 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/media/{mediaId}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read verified catalog video with current public or private access */
+        get: operations["read"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /** Read verified catalog video with current public or private access */
+        head: operations["read_1"];
         patch?: never;
         trace?: never;
     };
@@ -3017,6 +3115,59 @@ export interface components {
             operationId?: string;
             providerStatus?: string;
         };
+        AdminCatalogCaseOpenedResponse: {
+            /** Format: uuid */
+            caseId?: string;
+            created?: boolean;
+        };
+        AdminCatalogCasePageResponse: {
+            hasMore?: boolean;
+            items?: components["schemas"]["ModerationCaseSummaryResponse"][];
+            nextCursor?: string;
+            /** Format: int64 */
+            total?: number;
+        };
+        AdminCatalogItemDetailResponse: {
+            description?: string;
+            item?: components["schemas"]["AdminCatalogItemSummaryResponse"];
+            locations?: components["schemas"]["Location"][];
+            media?: components["schemas"]["Media"][];
+            moderationCaseNextCursor?: string;
+            /** Format: int64 */
+            moderationCaseTotal?: number;
+            moderationCases?: components["schemas"]["ModerationCaseSummaryResponse"][];
+            socialCaption?: string;
+        };
+        AdminCatalogItemSummaryResponse: {
+            /** Format: uuid */
+            categoryId?: string;
+            categoryName?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            deletedAt?: string;
+            /** @description Whether a stored social caption is present (non-null), independent of the commercial description. */
+            hasCaption?: boolean;
+            /** @description Whether the item has an associated, non-deleted CATALOG_VIDEO asset, independent of video playback activation. */
+            hasVideo?: boolean;
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            listingKind?: "STANDARD" | "RESALE";
+            /** @enum {string} */
+            listingStatus?: "DRAFT" | "ACTIVE" | "PAUSED" | "DELETED";
+            /** Format: uuid */
+            merchantId?: string;
+            merchantName?: string;
+            /** @enum {string} */
+            moderationStatus?: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED" | "HIDDEN";
+            name?: string;
+            primaryMedia?: components["schemas"]["PublicMediaResponse"];
+            /** @enum {string} */
+            type?: "PRODUCT" | "SERVICE";
+            /** Format: date-time */
+            updatedAt?: string;
+        };
         AdminMerchantCommandResult: {
             /** Format: uuid */
             merchantId?: string;
@@ -3070,6 +3221,15 @@ export interface components {
             type?: "PRODUCT" | "SERVICE";
             /** Format: date-time */
             updatedAt?: string;
+        };
+        AdminPageResponseAdminCatalogItemSummaryResponse: {
+            items?: components["schemas"]["AdminCatalogItemSummaryResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            total?: number;
         };
         AdminPageResponseAdminMerchantSummaryResponse: {
             items?: components["schemas"]["AdminMerchantSummaryResponse"][];
@@ -3317,10 +3477,13 @@ export interface components {
             listingStatus?: "DRAFT" | "ACTIVE" | "PAUSED" | "DELETED";
             locationOffers?: components["schemas"]["CatalogManagementLocationOfferResponse"][];
             media?: components["schemas"]["CatalogManagementMediaResponse"][];
+            /** @description Current HIDE or REJECT decision reason code for members allowed to manage catalog structure; absent otherwise. */
+            readonly moderationReasonCode?: string;
             /** @enum {string} */
             moderationStatus?: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED" | "HIDDEN";
             name?: string;
             optionGroups?: components["schemas"]["CatalogManagementOptionGroupResponse"][];
+            socialCaption?: string;
             tags?: string[];
             /** @enum {string} */
             type?: "PRODUCT" | "SERVICE";
@@ -3340,6 +3503,7 @@ export interface components {
             listingStatus?: "DRAFT" | "ACTIVE" | "PAUSED" | "DELETED";
             locationOffers?: components["schemas"]["LocationOfferResponse"][];
             name?: string;
+            socialCaption?: string;
             /** @enum {string} */
             type?: "PRODUCT" | "SERVICE";
             variants?: components["schemas"]["VariantResponse"][];
@@ -3414,6 +3578,7 @@ export interface components {
             status?: "PENDING_UPLOAD" | "READY" | "FAILED" | "DELETED";
             /** Format: uri */
             url?: string;
+            video?: components["schemas"]["CatalogVideoMetadata"];
         };
         CatalogManagementOptionGroupResponse: {
             /** Format: uuid */
@@ -3444,6 +3609,15 @@ export interface components {
             status?: "ACTIVE" | "PAUSED" | "DELETED";
             /** Format: int64 */
             version?: number;
+        };
+        CatalogVideoMetadata: {
+            codec?: string;
+            /** Format: int64 */
+            durationMillis?: number;
+            /** Format: int32 */
+            height?: number;
+            /** Format: int32 */
+            width?: number;
         };
         CategoryDetail: {
             attributes?: components["schemas"]["AttributeDefinition"][];
@@ -3555,6 +3729,8 @@ export interface components {
             mediaIds?: string[];
             name: string;
             options?: components["schemas"]["OptionGroupCreateRequest"][];
+            /** @description Optional plaintext social caption, maximum 3000 UTF-16 units. */
+            socialCaption?: string | null;
             tags?: string[];
             /** @enum {string} */
             type: "PRODUCT" | "SERVICE";
@@ -3571,7 +3747,7 @@ export interface components {
             /** Format: int64 */
             fileSize?: number;
             /** @enum {string} */
-            purpose: "USER_AVATAR" | "MERCHANT_LOGO" | "MERCHANT_COVER" | "MERCHANT_CONTACT_QR" | "CATALOG_IMAGE" | "AD_BANNER";
+            purpose: "USER_AVATAR" | "MERCHANT_LOGO" | "MERCHANT_COVER" | "MERCHANT_CONTACT_QR" | "CATALOG_IMAGE" | "CATALOG_VIDEO" | "AD_BANNER";
         };
         CreateMerchantRequest: {
             description?: string;
@@ -3852,6 +4028,12 @@ export interface components {
             /** Format: int32 */
             wouldDeny?: number;
         };
+        Location: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            status?: string;
+        };
         LocationAreaResponse: {
             /** @enum {string} */
             areaType?: "COMMUNITY" | "ZONE" | "CLUSTER" | "BUILDING" | "WARD";
@@ -3913,6 +4095,18 @@ export interface components {
             /** Format: int64 */
             version?: number;
         };
+        Media: {
+            contentType?: string;
+            cover?: boolean;
+            /** Format: uuid */
+            id?: string;
+            /** Format: int32 */
+            sortOrder?: number;
+            status?: string;
+            /** Format: uri */
+            url?: string;
+            video?: components["schemas"]["CatalogVideoMetadata"];
+        };
         MediaResponse: {
             contentType?: string;
             /** Format: int64 */
@@ -3920,7 +4114,7 @@ export interface components {
             /** Format: uuid */
             mediaId?: string;
             /** @enum {string} */
-            purpose?: "USER_AVATAR" | "MERCHANT_LOGO" | "MERCHANT_COVER" | "MERCHANT_CONTACT_QR" | "CATALOG_IMAGE" | "AD_BANNER";
+            purpose?: "USER_AVATAR" | "MERCHANT_LOGO" | "MERCHANT_COVER" | "MERCHANT_CONTACT_QR" | "CATALOG_IMAGE" | "CATALOG_VIDEO" | "AD_BANNER";
             /** Format: uri */
             url?: string;
             /** Format: date-time */
@@ -4740,6 +4934,7 @@ export interface components {
             id?: string;
             /** Format: uri */
             url?: string;
+            video?: components["schemas"]["CatalogVideoMetadata"];
         };
         PublicMerchantCapabilitiesResponse: {
             catalogTypes?: ("PRODUCT" | "SERVICE")[];
@@ -5012,6 +5207,24 @@ export interface components {
             /** Format: int64 */
             thresholdValue?: number;
         };
+        SocialActivityEntry: {
+            /** Format: date-time */
+            activityAt?: string;
+            commentExcerpt?: string;
+            /** Format: uuid */
+            commentId?: string;
+            /** Format: uri */
+            coverUrl?: string;
+            itemAvailable?: boolean;
+            /** Format: uuid */
+            itemId?: string;
+            itemName?: string;
+            merchantName?: string;
+        };
+        SocialActivityPage: {
+            items?: components["schemas"]["SocialActivityEntry"][];
+            nextCursor?: string;
+        };
         SocialComment: {
             authorName?: string;
             body?: string;
@@ -5028,6 +5241,12 @@ export interface components {
             /** Format: uuid */
             nextCursor?: string;
         };
+        SocialItemPreview: {
+            /** Format: uuid */
+            itemId?: string;
+            media?: components["schemas"]["SocialPreviewMedia"][];
+            socialCaption?: string;
+        };
         SocialItemSummary: {
             /** Format: int64 */
             comments?: number;
@@ -5037,6 +5256,17 @@ export interface components {
             /** Format: int64 */
             likes?: number;
             saved?: boolean;
+        };
+        SocialPreviewMedia: {
+            /** Format: uuid */
+            id?: string;
+            isCover?: boolean;
+            mimeType?: string;
+            /** Format: int32 */
+            sortOrder?: number;
+            /** Format: uri */
+            url?: string;
+            video?: components["schemas"]["CatalogVideoMetadata"];
         };
         SortObject: {
             empty?: boolean;
@@ -5167,6 +5397,8 @@ export interface components {
             name?: string;
             /** Format: uuid */
             primaryCategoryId?: string;
+            /** @description Maximum 3000 UTF-16 units. Omitted retains; null or blank clears. */
+            socialCaption?: string | null;
             tags?: string[];
         };
         UpdateContactMethodRequest: {
@@ -5468,7 +5700,7 @@ export interface operations {
             };
         };
     };
-    list_21: {
+    list_22: {
         parameters: {
             query?: never;
             header?: never;
@@ -5534,7 +5766,7 @@ export interface operations {
             };
         };
     };
-    list_20: {
+    list_21: {
         parameters: {
             query?: {
                 status?: string;
@@ -6142,6 +6374,111 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    list_20: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+                q?: string;
+                type?: "PRODUCT" | "SERVICE";
+                listingKind?: "STANDARD" | "RESALE";
+                listingStatus?: "DRAFT" | "ACTIVE" | "PAUSED" | "DELETED";
+                moderationStatus?: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED" | "HIDDEN";
+                merchantId?: string;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminPageResponseAdminCatalogItemSummaryResponse"];
+                };
+            };
+        };
+    };
+    detail_8: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminCatalogItemDetailResponse"];
+                };
+            };
+        };
+    };
+    moderationCases: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminCatalogCasePageResponse"];
+                };
+            };
+        };
+    };
+    openCase: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminCatalogCaseOpenedResponse"];
+                };
             };
         };
     };
@@ -7262,6 +7599,30 @@ export interface operations {
             };
         };
     };
+    previews: {
+        parameters: {
+            query: {
+                itemIds: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: components["schemas"]["SocialItemPreview"];
+                    };
+                };
+            };
+        };
+    };
     summary_1: {
         parameters: {
             query: {
@@ -8318,6 +8679,30 @@ export interface operations {
             };
         };
     };
+    activity: {
+        parameters: {
+            query: {
+                type: "LIKED" | "SAVED" | "COMMENTED";
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SocialActivityPage"];
+                };
+            };
+        };
+    };
     createUpload: {
         parameters: {
             query?: never;
@@ -8363,6 +8748,114 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["MediaResponse"];
                 };
+            };
+        };
+    };
+    read: {
+        parameters: {
+            query?: never;
+            header?: {
+                Range?: string;
+            };
+            path: {
+                mediaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Full video or HEAD metadata */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "video/*": string;
+                };
+            };
+            /** @description Single byte range */
+            206: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "video/*": string;
+                };
+            };
+            /** @description Unavailable or unreadable video */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unsupported or unsatisfiable byte range */
+            416: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Storage unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    read_1: {
+        parameters: {
+            query?: never;
+            header?: {
+                Range?: string;
+            };
+            path: {
+                mediaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Full video or HEAD metadata */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "video/*": string;
+                };
+            };
+            /** @description Single byte range */
+            206: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "video/*": string;
+                };
+            };
+            /** @description Unavailable or unreadable video */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unsupported or unsatisfiable byte range */
+            416: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Storage unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

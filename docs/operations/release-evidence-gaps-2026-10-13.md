@@ -36,3 +36,9 @@ Focused persisted regression: infra/scripts/tests/release-rehearsal-gate.sh. Act
 ## Workflow parser verification completed
 
 Resolved the parser limitation using the already installed node_modules/.pnpm/js-yaml@4.3.2/node_modules/js-yaml (no downloads). Parsed .github/workflows/release.yml successfully; asserted that staging deploy exists, rehearsal follows it, and deploy-production depends on deploy-staging. This is local YAML/structure verification, not GitHub Actions execution or deployment evidence. The earlier missing-parser note is historical and no longer an outstanding source verification gap.
+
+## Current-state checkpoint after merge and SSR verification
+
+Main8df8c516 CI38388224661 and CodeQL workflow38388224862 are completedSUCCESS. Existing SSR opt-in2cases executed on clean-mainNext16.4.0 build with disposable PG/Redis/headlessChrome:2PASS0skip at2026-10-13 18:13:11+07. No source fix required. Braces/micromatch/fast-glob absent from203parsed standalone package manifests including symlink traversal; immutable runtime image scan still required.
+
+Remaining release evidence depends on a real staging configuration: HTTPS/domain/certificates and proxy cookie checks, normal Google onboarding/accounts, private object storage/CORS, deployed latency/load, off-host backup and separate restore DB, digest rollback and monitoring notification delivery. No VPS/domain/staging resources have been supplied in this session; services on the ordinary local environment remain stopped. Do not substitute ordinary CI, standalone package inspection or local browser routing for these requirements. No current Java/API mismatch is established by these missing environment checks. Preserve verified business modules and leave the overall completion claim unproven.

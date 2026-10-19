@@ -34,7 +34,7 @@ class BillingReminderBatchIntegrationTest {
     @BeforeAll static void setup() {
         PG.start();
         var ds=new DriverManagerDataSource(PG.getJdbcUrl(),PG.getUsername(),PG.getPassword());
-        Flyway.configure().dataSource(ds).locations("classpath:db/migration").load().migrate();
+        Flyway.configure().dataSource(ds).configuration(java.util.Map.of("flyway.postgresql.transactional.lock", "false")).locations("classpath:db/migration").load().migrate();
         jdbc=new JdbcTemplate(ds);
     }
     @AfterAll static void shutdown() { PG.stop(); }

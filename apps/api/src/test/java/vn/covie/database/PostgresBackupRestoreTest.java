@@ -24,17 +24,20 @@ class PostgresBackupRestoreTest {
                 .withUsername("test").withPassword("test-only")) {
             postgres.start();
             var source = new DriverManagerDataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
-            Flyway.configure().dataSource(source).locations("classpath:db/migration").load().migrate();
+            Flyway.configure().dataSource(source).configuration(java.util.Map.of("flyway.postgresql.transactional.lock", "false")).locations("classpath:db/migration")
+                    .configuration(Map.of("flyway.postgresql.transactional.lock","false")).load().migrate();
             var jdbc = new JdbcTemplate(source);
             UUID user = UUID.randomUUID(), address = UUID.randomUUID();
             jdbc.update("insert into users(id,display_name,account_status,created_at,updated_at) values (?,'Backup user','ACTIVE',now(),now())", user);
             jdbc.update("insert into user_addresses(id,user_id,label,recipient_name,phone,address_text,geo_point,pin_source,is_default,status,created_at,updated_at,version) values (?,?,'Home','Backup recipient','0900000001','Backup street',ST_GeogFromText('SRID=4326;POINT(106.7 10.8)'),'GPS',true,'ACTIVE',now(),now(),0)", address, user);
+            seedMixedSocialData(jdbc, user);
             BillingFixture billing = seedBilling(jdbc, user);
             var expectedData = snapshot(jdbc);
             var expectedUser = jdbc.queryForMap("select * from users where id=?", user);
             String addressQuery = "select id,user_id,label,recipient_name,phone,address_text,ST_AsText(geo_point::geometry) as point,pin_source,is_default,status,created_at,updated_at,version from user_addresses where id=?";
             var expectedAddress = jdbc.queryForMap(addressQuery, address);
             var expectedCounts = counts(jdbc);
+            var expectedRows = rows(jdbc);
             for (String script : new String[]{"postgres-backup.sh", "postgres-restore.sh", "verify-backup.sh", "verify-dump.sh"}) {
                 String content = Files.readString(Path.of("../../infra/backup", script)).replace("\r\n", "\n");
                 postgres.copyFileToContainer(Transferable.of(content.getBytes(StandardCharsets.UTF_8), 0644), "/tmp/" + script);
@@ -65,7 +68,8 @@ class PostgresBackupRestoreTest {
             assertThat(restored.queryForMap(addressQuery, address)).isEqualTo(expectedAddress);
             assertThat(counts(restored)).isEqualTo(expectedCounts);
             assertThat(snapshot(restored)).isEqualTo(expectedData);
-            var flyway = Flyway.configure().dataSource(target).locations("classpath:db/migration").load();
+            assertThat(rows(restored)).isEqualTo(expectedRows);
+            var flyway = Flyway.configure().dataSource(target).configuration(java.util.Map.of("flyway.postgresql.transactional.lock", "false")).locations("classpath:db/migration").load();
             flyway.validate();
             assertThat(flyway.migrate().migrationsExecuted).isZero();
             for (int restart = 0; restart < 2; restart++) {
@@ -99,10 +103,35 @@ class PostgresBackupRestoreTest {
             assertThat(counts(jdbc)).isEqualTo(expectedCounts);
             assertThat(jdbc.queryForMap("select * from users where id=?", user)).isEqualTo(expectedUser);
             assertThat(snapshot(jdbc)).isEqualTo(expectedData);
+            assertThat(rows(jdbc)).isEqualTo(expectedRows);
         }
     }
 
+    private void seedMixedSocialData(JdbcTemplate jdbc, UUID user) {
+        UUID merchant = UUID.randomUUID(), category = UUID.randomUUID(), item = UUID.randomUUID();
+        UUID image = UUID.randomUUID(), video = UUID.randomUUID(), orphan = UUID.randomUUID();
+        jdbc.update("insert into merchant_profiles(id,name,slug,merchant_status,moderation_status,created_at,updated_at) values (?,'Restore shop',?,'ACTIVE','NOT_REQUIRED',now(),now())", merchant, "restore-" + merchant);
+        jdbc.update("insert into categories(id,name,slug,catalog_type,status,sort_order) values (?,'Restore category',?,'PRODUCT','ACTIVE',0)", category, "restore-" + category);
+        jdbc.update("insert into catalog_items(id,merchant_profile_id,item_type,listing_kind,primary_category_id,name,slug,description,social_caption,listing_status,moderation_status,created_at,updated_at,version) values (?,?,'PRODUCT','STANDARD',?,'Restore item',?,'Commercial description',?,'ACTIVE','NOT_REQUIRED',now(),now(),7)", item, merchant, category, "restore-" + item, "Caption riêng\n<script>literal</script>");
+        jdbc.update("insert into media_assets(id,owner_user_id,storage_provider,storage_key,upload_purpose,mime_type,size_bytes,media_status,upload_expires_at,verified_at,created_at) values (?,?,'MINIO',?,'CATALOG_IMAGE','image/png',128,'READY',now(),now(),now())", image, user, "restore/" + image);
+        jdbc.update("insert into media_assets(id,owner_user_id,storage_provider,storage_key,upload_purpose,mime_type,size_bytes,media_status,upload_expires_at,verified_at,created_at,width,height,video_duration_ms,video_codec) values (?,?,'MINIO',?,'CATALOG_VIDEO','video/mp4',1024,'READY',now(),now(),now(),160,120,4000,'h264')", video, user, "restore/" + video);
+        jdbc.update("insert into media_assets(id,owner_user_id,storage_provider,storage_key,upload_purpose,mime_type,size_bytes,media_status,upload_expires_at,created_at,storage_cleanup_attempted_at,storage_deleted_at) values (?,?,'MINIO',?,'CATALOG_VIDEO','video/webm',512,'DELETED',now()-interval '8 days',now()-interval '8 days',now()-interval '1 hour',now()-interval '30 minutes')", orphan, user, "restore/" + orphan);
+        jdbc.update("insert into catalog_item_media(catalog_item_id,media_asset_id,media_type,sort_order,is_primary) values (?,?,'IMAGE',0,true),(?,?,'VIDEO',1,false)", item, image, item, video);
+        jdbc.update("insert into catalog_social_reactions(catalog_item_id,user_id,kind) values (?,?,'LIKE'),(?,?,'SAVE')", item, user, item, user);
+        jdbc.update("insert into catalog_social_comments(id,catalog_item_id,author_user_id,body,status) values (?,?,?,'Restored Social comment','ACTIVE')", UUID.randomUUID(), item, user);
+    }
+
+    private Map<String, java.util.List<String>> rows(JdbcTemplate jdbc) {
+        var snapshot = new LinkedHashMap<String, java.util.List<String>>();
+        for (String table : jdbc.queryForList("select tablename from pg_tables where schemaname='public' and tablename<>'spatial_ref_sys' order by tablename", String.class)) {
+            String relation = "\"" + table.replace("\"", "\"\"") + "\"";
+            snapshot.put(table, jdbc.queryForList("select to_jsonb(original)::text from " + relation + " original order by 1", String.class));
+        }
+        return snapshot;
+    }
+
     private void verifyRestoredRuntime(String jdbcUrl, UUID user, UUID address, BillingFixture billing) throws Exception {
+
         try (var context = new org.springframework.boot.builder.SpringApplicationBuilder(vn.covie.CovieApplication.class)
                 .run("--spring.profiles.active=test", "--server.port=0", "--management.server.port=0",
                         "--spring.datasource.url=" + jdbcUrl, "--spring.datasource.username=test",

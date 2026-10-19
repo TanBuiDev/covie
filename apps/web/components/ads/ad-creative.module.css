@@ -49,10 +49,10 @@
 .flashHalo {
   position: absolute;
   z-index: 0;
-  width: 230px;
+  width: 280px;
   height: 280px;
   top: 95px;
-  left: -35px;
+  left: 0;
   border-radius: 50%;
   background: radial-gradient(circle, rgb(249 218 122 / 26%), transparent 65%);
   animation: adBreath 3.6s ease-in-out infinite;
@@ -517,10 +517,10 @@
 .horizontal p { margin: 0; max-width: 70%; font-size: 14px; line-height: 1.6; }
 .horizontal .art { position: absolute; right: 20px; top: 48px; color: inherit; opacity: .22; }
 .horizontal .cta { margin-top: 8px; }
-.vertical { width: 220px !important; height: 600px; padding: 48px 18px 36px; align-items: center; justify-content: space-between; flex-direction: column; text-align: center; }
-.vertical strong { font-size: 24px; line-height: 1.25; }
-.vertical p { font-size: 13px; line-height: 1.55; max-width: 186px; }
-.vertical .cta { width: calc(100% - 16px); max-width: 180px; padding: 10px 16px; margin-bottom: 8px; }
+.vertical { width: 280px !important; height: 600px; padding: 48px 24px 36px; align-items: center; justify-content: space-between; flex-direction: column; text-align: center; }
+.vertical strong { font-size: 26px; line-height: 1.25; }
+.vertical p { font-size: 14px; line-height: 1.55; max-width: 236px; }
+.vertical .cta { width: calc(100% - 16px); max-width: 230px; padding: 12px 20px; font-size: 13px; margin-bottom: 8px; }
 .cta { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border-radius: 10px; background: #fff; color: #064e3b; font-size: 12px; font-weight: 700; }
 .paused, .paused * { animation-play-state: paused !important; }
 .mediaCreative {
@@ -594,7 +594,7 @@
 .mediaCopy .cta:hover svg {
   transform: translate(2px, -2px);
 }
-.mediaCreative.vertical { width: 220px; height: 600px; padding: 0; justify-content: flex-start; }
+.mediaCreative.vertical { width: 280px; height: 600px; padding: 0; justify-content: flex-start; }
 .mediaCreative.vertical img, .mediaCreative.vertical video { max-height: 400px; flex: 1; min-height: 0; }
 .mediaCreative.vertical strong { font-size: 16px; }
 .mediaCreative.vertical .mediaCopy { padding: 14px 12px; }

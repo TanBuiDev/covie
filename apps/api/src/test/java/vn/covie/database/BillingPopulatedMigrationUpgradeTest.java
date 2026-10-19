@@ -24,7 +24,7 @@ class BillingPopulatedMigrationUpgradeTest {
                 .withUsername("test").withPassword("test-only")) {
             postgres.start();
             var source = new DriverManagerDataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
-            Flyway.configure().dataSource(source).locations("classpath:db/migration").target(version).load().migrate();
+            Flyway.configure().dataSource(source).configuration(java.util.Map.of("flyway.postgresql.transactional.lock", "false")).locations("classpath:db/migration").target(version).load().migrate();
             var jdbc = new JdbcTemplate(source);
             UUID user = UUID.randomUUID(), merchant = UUID.randomUUID(), category = UUID.randomUUID(), item = UUID.randomUUID();
             jdbc.update("insert into users(id,display_name,account_status,created_at,updated_at) values (?,'Migration owner','ACTIVE',now(),now())", user);
@@ -40,7 +40,7 @@ class BillingPopulatedMigrationUpgradeTest {
             }
             if (version.equals("030")) seedFinancialHistory(jdbc, user, merchant);
             Map<String, String> before = snapshot(jdbc);
-            var latest = Flyway.configure().dataSource(source).locations("classpath:db/migration").load();
+            var latest = Flyway.configure().dataSource(source).configuration(java.util.Map.of("flyway.postgresql.transactional.lock", "false")).locations("classpath:db/migration").load();
             assertThat(latest.migrate().migrationsExecuted).isPositive();
             latest.validate();
             assertThat(snapshot(jdbc)).containsAllEntriesOf(before);

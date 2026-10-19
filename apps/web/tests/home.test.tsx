@@ -123,7 +123,7 @@ describe("PUB-001 Home", () => {
     expect(screen.getByRole("button", { name: "Thử lại dịch vụ gần bạn" })).toBeInTheDocument();
   });
 
-  it("renders Phase 2 discovery shortcuts and need matching spotlight with prefill action", async () => {
+  it("renders Phase 2 discovery shortcuts", async () => {
     api.listPublicCategories.mockResolvedValue(categories);
     api.discoverCatalogItems.mockResolvedValue(discoveryPage("Bánh mì chả lụa", "PRODUCT"));
 
@@ -135,27 +135,13 @@ describe("PUB-001 Home", () => {
     expect(within(shortcuts).getByRole("link", { name: "Đang mở cửa" })).toBeInTheDocument();
     expect(within(shortcuts).getByRole("link", { name: "Đồ thanh lý" })).toBeInTheDocument();
     expect(within(shortcuts).getByRole("link", { name: "Dịch vụ tại nhà" })).toBeInTheDocument();
-
-    // Need matching spotlight
-    expect(screen.getByRole("heading", { name: "Bạn đang cần tìm món đồ hay thợ sửa gấp?" })).toBeInTheDocument();
-    const needInput = screen.getByRole("textbox", { name: "Nhu cầu cần tìm" });
-    expect(needInput).toBeInTheDocument();
-    expect(needInput.closest("form")).toHaveAttribute("action", "/needs/new");
-    expect(screen.getByRole("button", { name: "Đăng nhu cầu ngay" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "+ Đăng nhu cầu đầy đủ" })).toHaveAttribute("href", "/needs/new");
-    expect(screen.getByRole("link", { name: "Xem tin cần mua quanh đây" })).toHaveAttribute("href", "/needs");
   });
 
-  it("renders Phase 3 community pulse bar and featured neighborhood merchants with quick CTAs", async () => {
+  it("renders featured neighborhood merchants with quick CTAs", async () => {
     api.listPublicCategories.mockResolvedValue(categories);
     api.discoverCatalogItems.mockResolvedValue(discoveryPage("Bánh mì chả lụa", "PRODUCT"));
 
     renderHome({ kind: "coordinates", lat: 10.84, lng: 106.81, label: "Vinhomes Grand Park" });
-
-    // Community pulse & context metrics
-    expect(await screen.findByText("CHỢ NỘI KHU ĐANG HOẠT ĐỘNG")).toBeInTheDocument();
-    const contextBanner = screen.getByLabelText("Khu vực chợ hiện tại");
-    expect(within(contextBanner).getByText(/Đang mở cửa/)).toBeInTheDocument();
 
     // Featured neighborhood merchants section
     const merchantsSection = await screen.findByRole("region", { name: "Gian hàng & Thợ uy tín gần bạn" });

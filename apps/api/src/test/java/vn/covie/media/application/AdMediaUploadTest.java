@@ -33,7 +33,7 @@ class AdMediaUploadTest {
         when(storage.presignPut(any(), any(), anyLong(), any())).thenReturn(new PresignedUpload(java.net.URI.create("https://upload.test"), "PUT", java.time.Instant.EPOCH, java.util.Map.of()));
         var users=mock(vn.covie.users.persistence.UserRepository.class);
         when(users.findByIdForUpdate(owner)).thenReturn(java.util.Optional.of(vn.covie.users.model.UserEntity.active(owner,"Owner",java.time.Instant.EPOCH)));
-        var service = new MediaUploadService(actors, repository, storage, properties, null, null, null, ids, clock, null, null, users);
+        var service = new MediaUploadService(actors, repository, storage, properties, null, null, null, ids, clock, null, null, users, null);
         service.createUpload(new CreateMediaUploadRequest(MediaPurpose.AD_BANNER, "video/mp4", 20L * 1024 * 1024));
         verify(storage).presignPut("users/%s/%s.mp4".formatted(owner, id), "video/mp4", 20L * 1024 * 1024, Duration.ofMinutes(5));
         verify(repository).saveAndFlush(any());
@@ -42,7 +42,7 @@ class AdMediaUploadTest {
         var actors = mock(CurrentActorProvider.class);
         when(actors.currentActor()).thenReturn(new CurrentActor(UUID.randomUUID(), java.util.Set.of(), UUID.randomUUID()));
         var properties = new StorageProperties("bucket", "region", null, null, false, Duration.ofMinutes(5), 10 * 1024 * 1024, 5);
-        var service = new MediaUploadService(actors, null, null, properties, null, null, null, null, null, null, null, null);
+        var service = new MediaUploadService(actors, null, null, properties, null, null, null, null, null, null, null, null, null);
         assertThatThrownBy(() -> service.createUpload(new CreateMediaUploadRequest(MediaPurpose.CATALOG_IMAGE, "video/mp4", 100)))
             .isInstanceOf(ApiException.class).satisfies(e -> assertThat(((ApiException)e).code()).isEqualTo(ErrorCode.MEDIA_TYPE_NOT_SUPPORTED));
         assertThatThrownBy(() -> service.createUpload(new CreateMediaUploadRequest(MediaPurpose.valueOf("AD_BANNER"), "video/mp4", 50L * 1024 * 1024 + 1)))

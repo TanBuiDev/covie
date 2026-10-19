@@ -88,7 +88,7 @@ describe("BuyerDesktopHeader", () => {
     expect(screen.queryByTestId("desktop-location-chooser")).not.toBeInTheDocument();
 
     // Seller CTA
-    const sellerCta = screen.getByRole("link", { name: /Mở quầy \/ Pass đồ/i });
+    const sellerCta = screen.getByRole("link", { name: /Cửa hàng/i });
     expect(sellerCta).toHaveAttribute("href", "/seller");
 
     // Notifications & Cart with badge

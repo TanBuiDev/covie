@@ -21,6 +21,7 @@ ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 COPY --from=build --chown=10001:10001 /workspace/apps/web/.next/standalone ./
 COPY --from=build --chown=10001:10001 /workspace/apps/web/.next/static ./apps/web/.next/static
+COPY --from=build --chown=10001:10001 /workspace/apps/web/public ./apps/web/public
 USER 10001:10001
 EXPOSE 3000
 CMD ["node","apps/web/server.js"]

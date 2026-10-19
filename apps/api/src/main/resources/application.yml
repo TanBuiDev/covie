@@ -29,6 +29,8 @@ spring:
           time_zone: UTC
   flyway:
     enabled: true
+    postgresql:
+      transactional-lock: false
   jackson:
     default-property-inclusion: non_null
 

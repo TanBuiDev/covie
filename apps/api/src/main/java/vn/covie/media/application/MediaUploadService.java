@@ -42,26 +42,31 @@ public class MediaUploadService {
     private final AuditLogWriter audit;
     private final RequestIdAccessor requestIds;
     private final vn.covie.users.persistence.UserRepository users;
+    private final CatalogVideoUploadPolicy videos;
 
     public MediaUploadService(CurrentActorProvider actors, MediaAssetRepository repository, ObjectStorage storage,
             StorageProperties properties, MediaMagicSniffer magic, MediaUrlResolver urls, IdempotencyExecutor idempotency,
             UuidV7Generator ids, AppClock clock, AuditLogWriter audit, RequestIdAccessor requestIds,
-            vn.covie.users.persistence.UserRepository users) {
+            vn.covie.users.persistence.UserRepository users, CatalogVideoUploadPolicy videos) {
         this.actors = actors; this.repository = repository; this.storage = storage; this.properties = properties;
         this.magic = magic; this.urls = urls; this.idempotency = idempotency; this.ids = ids; this.clock = clock;
         this.audit = audit; this.requestIds = requestIds;
         this.users = users;
+        this.videos = videos;
     }
 
     @org.springframework.transaction.annotation.Transactional
     public MediaUploadResponse createUpload(CreateMediaUploadRequest request) {
         CurrentActor actor = actors.currentActor();
+        boolean catalogVideo = request.purpose() == vn.covie.media.model.MediaPurpose.CATALOG_VIDEO;
+        if (catalogVideo) videos.requireEnabled();
         String contentType = normalizeSupportedType(request.contentType(), request.purpose());
         long maxBytes = contentType.startsWith("video/") ? properties.maxVideoBytes() : properties.maxImageBytes();
         if (request.fileSize() <= 0 || request.fileSize() > maxBytes) throw new ApiException(ErrorCode.MEDIA_UPLOAD_VERIFICATION_FAILED,
                 HttpStatus.UNPROCESSABLE_ENTITY, "Media exceeds the configured size limit.");
         users.findByIdForUpdate(actor.userId()).orElseThrow(() -> new ApiException(
                 ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Resource not found."));
+        if (catalogVideo) videos.requireUpload(actor);
         if (repository.countByOwnerUserIdAndMediaStatus(actor.userId(), MediaStatus.PENDING_UPLOAD)
                 >= properties.maxPendingUploadsPerUser()) throw new ApiException(ErrorCode.MEDIA_UPLOAD_LIMIT_REACHED,
                 HttpStatus.TOO_MANY_REQUESTS, "Media upload limit reached.");
@@ -84,16 +89,28 @@ public class MediaUploadService {
             try { storage.deleteIfExists(outcome.failedStorageKey()); } catch (RuntimeException ignored) { }
         }
         if (outcome.response() == null) throw verificationFailed();
+        if (outcome.response().purpose() == vn.covie.media.model.MediaPurpose.CATALOG_VIDEO) videos.requireEnabled();
         return outcome.response();
     }
 
     private IdempotencyExecutor.StoredResponse<CompletionOutcome> completeInTransaction(UUID mediaId, CurrentActor actor) {
         MediaAssetEntity asset = ownedForUpdate(mediaId, actor.userId());
+        boolean catalogVideo = asset.getPurpose() == vn.covie.media.model.MediaPurpose.CATALOG_VIDEO;
+        if (catalogVideo) videos.requireUpload(actor);
         if (asset.getMediaStatus() == MediaStatus.READY) {
             return new IdempotencyExecutor.StoredResponse<>(200, CompletionOutcome.ready(response(asset)));
         }
         if (asset.getMediaStatus() == MediaStatus.PENDING_UPLOAD) {
             if (objectMatches(asset)) {
+                if (catalogVideo) {
+                    var metadata = videos.verify(asset);
+                    if (metadata.isEmpty()) {
+                        boolean changed = asset.markFailed();
+                        return new IdempotencyExecutor.StoredResponse<>(422, CompletionOutcome.failed(changed ? asset.getStorageKey() : null));
+                    }
+                    var verified = metadata.get();
+                    asset.recordVideoMetadata(verified.width(), verified.height(), verified.durationMillis(), verified.codec());
+                }
                 asset.markReady(clock.now().truncatedTo(ChronoUnit.MICROS));
                 audit.securityEvent(actor.userId(), "MEDIA_UPLOAD_COMPLETED", "MEDIA", asset.getId(), requestIds.current(), Map.of());
                 return new IdempotencyExecutor.StoredResponse<>(200, CompletionOutcome.ready(response(asset)));
@@ -110,7 +127,10 @@ public class MediaUploadService {
             return metadata.contentLength() == asset.getSizeBytes()
                     && normalizeStoredType(metadata.contentType()).equals(asset.getMimeType())
                     && magic.matches(asset.getMimeType(), storage.readPrefix(asset.getStorageKey(), asset.getMimeType().startsWith("video/") ? 4096 : 32));
-        } catch (RuntimeException exception) { return false; }
+        } catch (RuntimeException exception) {
+            if (asset.getPurpose() == vn.covie.media.model.MediaPurpose.CATALOG_VIDEO) throw CatalogVideoUploadPolicy.unavailable();
+            return false;
+        }
     }
 
     private MediaAssetEntity owned(UUID mediaId, UUID userId) {
@@ -122,6 +142,9 @@ public class MediaUploadService {
                 ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Resource not found."));
     }
     private MediaResponse response(MediaAssetEntity asset) {
+        if (asset.getPurpose() == vn.covie.media.model.MediaPurpose.CATALOG_VIDEO)
+            return new MediaResponse(asset.getId(), asset.getPurpose(), asset.getMimeType(), asset.getSizeBytes(),
+                    videos.contentUrl(asset.getId()), asset.getVerifiedAt());
         return new MediaResponse(asset.getId(), asset.getPurpose(), asset.getMimeType(), asset.getSizeBytes(),
                 urls.publicUrl(asset), asset.getVerifiedAt());
     }
@@ -133,8 +156,11 @@ public class MediaUploadService {
     }
     private static String normalizeSupportedType(String type, vn.covie.media.model.MediaPurpose purpose) {
         String normalized = normalizeStoredType(type);
-        boolean video = purpose == vn.covie.media.model.MediaPurpose.AD_BANNER
+        boolean catalogVideo = purpose == vn.covie.media.model.MediaPurpose.CATALOG_VIDEO;
+        boolean video = (purpose == vn.covie.media.model.MediaPurpose.AD_BANNER || catalogVideo)
                 && (normalized.equals("video/mp4") || normalized.equals("video/webm"));
+        if (catalogVideo && !video) throw new ApiException(ErrorCode.MEDIA_TYPE_NOT_SUPPORTED,
+                HttpStatus.UNPROCESSABLE_ENTITY, "Catalog video must be MP4 or WebM.");
         if (!video && !normalized.equals("image/jpeg") && !normalized.equals("image/png") && !normalized.equals("image/webp"))
             throw new ApiException(ErrorCode.MEDIA_TYPE_NOT_SUPPORTED, HttpStatus.UNPROCESSABLE_ENTITY, "Media type is not supported.");
         return normalized;

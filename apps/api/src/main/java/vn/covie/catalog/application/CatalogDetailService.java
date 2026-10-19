@@ -166,9 +166,12 @@ public class CatalogDetailService {
     }
 
     private List<PublicMediaResponse> media(UUID itemId) {
-        return itemMedia.findAllMediaAssetsByCatalogItemId(itemId).stream()
+        var assets = mediaUrls.catalogVideoEnabled() ? itemMedia.findAllGalleryAssociationsByCatalogItemId(itemId).stream()
+                .map(vn.covie.catalog.model.CatalogItemMediaEntity::getMediaAsset).toList() : itemMedia.findAllMediaAssetsByCatalogItemId(itemId);
+        return assets.stream()
                 .filter(asset -> asset.getMediaStatus() == MediaStatus.READY)
-                .map(asset -> new PublicMediaResponse(asset.getId(), asset.getMimeType(), mediaUrls.publicUrl(asset)))
+                .filter(mediaUrls::includeCatalogMedia)
+                .map(asset -> new PublicMediaResponse(asset.getId(), asset.getMimeType(), mediaUrls.publicUrl(asset),vn.covie.media.api.dto.CatalogVideoMetadata.from(asset)))
                 .toList();
     }
 

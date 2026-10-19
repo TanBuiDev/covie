@@ -143,6 +143,10 @@
   padding: 16px;
 }
 
+.seller-catalog-editor__feedback {
+  align-self: start;
+}
+
 .seller-catalog-editor__summary h1,
 .seller-catalog-editor__panel h2,
 .seller-catalog-editor__resource h3 { margin: 0; }
@@ -1034,4 +1038,275 @@
   border-color: #94a3b8;
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+/* SELLER BARCODE LOOKUP */
+.seller-barcode-lookup {
+  background: var(--seller-bg-subtle, #f8fafc);
+  border: 1px solid var(--seller-border, #e2e8f0);
+  border-radius: var(--seller-radius-md, 10px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.seller-barcode-lookup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.seller-barcode-lookup__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--seller-text-primary, #0f172a);
+}
+
+.seller-barcode-lookup__desc {
+  font-size: 12px;
+  color: var(--seller-text-secondary, #64748b);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.seller-barcode-lookup__row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.seller-barcode-lookup__input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.seller-barcode-lookup__input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.seller-barcode-lookup__action-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.seller-barcode-lookup__result {
+  background: var(--seller-surface, #ffffff);
+  border: 1px solid var(--seller-border, #e2e8f0);
+  border-radius: var(--seller-radius-md, 8px);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.seller-barcode-lookup__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .seller-barcode-lookup__row {
+    flex-direction: column;
+  }
+  .seller-barcode-lookup__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.seller-barcode-lookup__field-label {
+  font-size: 12px;
+  color: var(--seller-text-secondary, #64748b);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.seller-barcode-lookup__field-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--seller-text-primary, #0f172a);
+  word-break: break-word;
+}
+
+.seller-barcode-lookup__warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  color: #92400e;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 8px 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.seller-barcode-lookup__warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.seller-barcode-lookup__attribution {
+  font-size: 11px;
+  color: var(--seller-text-secondary, #64748b);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.seller-barcode-lookup__link {
+  color: #047857;
+  text-decoration: underline;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.seller-barcode-lookup__apply-box {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--seller-border-subtle, #f1f5f9);
+}
+
+/* SELLER CAMERA SCANNER MODAL */
+.seller-camera-modal {
+  background: var(--seller-surface, #ffffff);
+  border: 1px solid var(--seller-border, #e2e8f0);
+  border-radius: var(--seller-radius-lg, 16px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 2rem);
+  max-width: 480px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  z-index: 101;
+}
+
+.seller-camera-modal__header {
+  align-items: center;
+  background: var(--seller-surface, #ffffff);
+  border-bottom: 1px solid var(--seller-border, #e2e8f0);
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 18px;
+}
+
+.seller-camera-modal__title {
+  align-items: center;
+  color: var(--seller-text-primary, #0f172a);
+  display: flex;
+  font-size: 15px;
+  font-weight: 700;
+  gap: 8px;
+  margin: 0;
+}
+
+.seller-camera-modal__close-btn {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--seller-text-secondary, #64748b);
+  cursor: pointer;
+  display: inline-flex;
+  padding: 4px;
+}
+
+.seller-camera-modal__close-btn:hover {
+  background: var(--seller-bg-subtle, #f1f5f9);
+  color: var(--seller-text-primary, #0f172a);
+}
+
+.seller-camera-modal__body {
+  background: #090d16;
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+  overflow: hidden;
+  position: relative;
+}
+
+.seller-camera-modal__video {
+  height: 100%;
+  max-height: 340px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.seller-camera-modal__overlay {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  inset: 0;
+  justify-content: center;
+  pointer-events: none;
+  position: absolute;
+}
+
+.seller-camera-modal__viewfinder {
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  height: 140px;
+  position: relative;
+  width: 240px;
+}
+
+.seller-camera-modal__reticle {
+  background: linear-gradient(90deg, transparent, #10b981, transparent);
+  height: 2px;
+  inset: 50% 0 auto 0;
+  position: absolute;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.seller-camera-modal__hint {
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 16px;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  z-index: 2;
+}
+
+.seller-camera-modal__tips {
+  color: #e2e8f0;
+  font-size: 11px;
+  margin: 6px auto 0;
+  max-width: 320px;
+  padding: 0 12px;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  z-index: 2;
+}
+
+.seller-camera-modal__footer {
+  align-items: center;
+  background: var(--seller-surface, #ffffff);
+  border-top: 1px solid var(--seller-border, #e2e8f0);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 18px;
+}
+
+.seller-camera-modal__error-box {
+  background: #fff;
+  padding: 24px 18px;
+  text-align: center;
 }

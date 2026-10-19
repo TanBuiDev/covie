@@ -1,0 +1,7 @@
+.editor { display: grid; gap: 12px; min-width: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 0; }
+.entry { display: grid; gap: 8px; min-width: 0; padding: 12px; border: 1px solid var(--semantic-border-default, #e2e8f0); border-radius: 12px; background: var(--semantic-bg-surface, white); }
+.entry img { width: 100%; object-fit: contain; }
+.entry strong, .entry small { overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions button { min-width: 44px; min-height: 44px; padding: 8px; }

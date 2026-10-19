@@ -1,7 +1,7 @@
 "use client";
 
 import type { components } from "@covie/api-client";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { CovieApiError } from "@/lib/api/api-error";
@@ -20,6 +20,10 @@ import {
 } from "@phosphor-icons/react";
 import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { createCatalogItem, getCategoryDetail } from "./catalog-api";
+import { SellerBarcodeLookup } from "./seller-barcode-lookup";
+import { SocialCaptionField } from "./social-caption-field";
+import { CatalogSocialPreview } from "./catalog-social-preview";
+import { CatalogMediaEditor, useCatalogGallery } from "./catalog-media-editor";
 
 type Category = components["schemas"]["CategorySummary"];
 type CategoryDetail = components["schemas"]["CategoryDetail"];
@@ -184,13 +188,19 @@ export function CatalogCreateForm({
   merchantId,
   categories,
   locations,
+  socialAuthoringEnabled = false,
 }: {
   merchantId: string;
   categories: Category[];
   locations: Location[];
+  socialAuthoringEnabled?: boolean;
 }) {
   const router = useRouter();
+  const hydrated = useSyncExternalStore(() => () => undefined, () => true, () => false);
+  const mediaAuthoringEnabled = socialAuthoringEnabled || process.env.NEXT_PUBLIC_COVIE_SOCIAL_V2_VIDEO_ENABLED === "true";
+  const socialHydrating = mediaAuthoringEnabled && !hydrated;
   const idempotencyKeyRef = useRef<string | undefined>(undefined);
+  const gallery = useCatalogGallery([], invalidateIntent);
   const [type, setType] = useState<CatalogType>("PRODUCT");
   const [listingKind, setListingKind] = useState<ListingKind>("STANDARD");
   const [inventoryMode, setInventoryMode] = useState<InventoryMode>("UNTRACKED");
@@ -280,9 +290,11 @@ export function CatalogCreateForm({
       const perVariantServiceOffer = type === "SERVICE" && hasOptions;
       const sharedPrice = perVariantServiceOffer ? undefined : integerField(form, "price");
       const attributes = categoryAttributeValues(form, categoryDetail.attributes ?? []);
+      const socialCaption = String(form.get("socialCaption") ?? "");
+      if (socialAuthoringEnabled && socialCaption.length > 3000) throw new Error("Caption không được vượt quá 3.000 UTF-16 units.");
 
-      const mediaIds: string[] = [];
-      for (const [index, file] of files.entries()) {
+      const mediaIds: string[] = mediaAuthoringEnabled ? await gallery.resolveMediaIds(setProgress) : [];
+      for (const [index, file] of (mediaAuthoringEnabled ? [] : files).entries()) {
         setProgress(`Đang tải ảnh ${index + 1}/${files.length}…`);
         try {
           const uploaded = await uploadImage(file, "CATALOG_IMAGE");
@@ -325,6 +337,7 @@ export function CatalogCreateForm({
         categoryId,
         name: String(form.get("name") ?? "").trim(),
         description: String(form.get("description") ?? "").trim() || undefined,
+        ...(socialAuthoringEnabled ? { socialCaption: socialCaption.trim() || null } : {}),
         tags: String(form.get("tags") ?? "").split(",").map((value) => value.trim()).filter(Boolean),
         mediaIds,
         attributes,
@@ -359,7 +372,9 @@ export function CatalogCreateForm({
     }
   }
 
+  const [name, setName] = useState("");
   const [previewName, setPreviewName] = useState("");
+  const [previewCaption, setPreviewCaption] = useState("");
   const [previewPrice, setPreviewPrice] = useState<number>();
   const [previewPrepTime, setPreviewPrepTime] = useState<number>(0);
 
@@ -463,6 +478,19 @@ export function CatalogCreateForm({
               </div>
             </div>
 
+            {type === "PRODUCT" ? (
+              <SellerBarcodeLookup
+                mode="create"
+                disabled={pending}
+                currentProductName={name}
+                onApplyProductName={(appliedName) => {
+                  setName(appliedName);
+                  setPreviewName(appliedName);
+                  invalidateIntent();
+                }}
+              />
+            ) : null}
+
             <label>
               <span className="seller-field-title">
                 Tên <span className="seller-required-star" aria-hidden="true">*</span>
@@ -473,8 +501,13 @@ export function CatalogCreateForm({
                 autoComplete="off"
                 maxLength={240}
                 required
+                value={name}
                 placeholder="Ví dụ: Cà phê muối 500ml, Bánh mì chảo, Vệ sinh máy lạnh..."
-                onChange={(e) => setPreviewName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setPreviewName(e.target.value);
+                  invalidateIntent();
+                }}
               />
             </label>
 
@@ -487,6 +520,8 @@ export function CatalogCreateForm({
                 placeholder="Mô tả định lượng, thành phần, hương vị hoặc các lưu ý khi đặt món/dịch vụ..."
               />
             </label>
+
+            {socialAuthoringEnabled && <SocialCaptionField disabled={pending || socialHydrating} onChange={value => { setPreviewCaption(value); invalidateIntent(); }} />}
 
             <label>
               <span className="seller-field-title">Thẻ tìm kiếm (Tags)</span>
@@ -508,6 +543,7 @@ export function CatalogCreateForm({
               </div>
             </div>
 
+            {mediaAuthoringEnabled ? <CatalogMediaEditor gallery={gallery} disabled={pending || socialHydrating} /> : <>
             <label className="seller-catalog-upload-zone">
               <UploadSimple size={28} weight="bold" color="#047857" aria-hidden="true" />
               <div>
@@ -560,6 +596,7 @@ export function CatalogCreateForm({
                 </div>
               </div>
             ) : null}
+            </>}
           </section>
 
           {/* CARD 4: GIÁ BÁN & VẬN HÀNH */}
@@ -729,7 +766,7 @@ export function CatalogCreateForm({
             {message ? <p role="alert" className="warning-banner" style={{ margin: "0 0 12px" }}>{message}</p> : null}
             <button
               type="submit"
-              disabled={pending || !canSubmit}
+              disabled={pending || !canSubmit || socialHydrating}
               className="seller-studio-submit-btn"
               style={{ width: "fit-content", minWidth: "200px" }}
             >
@@ -742,6 +779,7 @@ export function CatalogCreateForm({
 
       <aside className="seller-catalog-create-aside">
         {/* LIVE CARD PREVIEW */}
+        {mediaAuthoringEnabled ? <CatalogSocialPreview name={previewName} caption={previewCaption} entries={gallery.entries} /> :
         <div className="seller-live-preview-box" aria-hidden="true">
           <div className="seller-live-preview-box__header">
             <Sparkle size={16} weight="fill" className="seller-live-preview-box__sparkle" />
@@ -786,6 +824,7 @@ export function CatalogCreateForm({
           </div>
         </div>
 
+        }
         {/* TIPS CHECKLIST */}
         <div className="seller-create-tips-card" aria-hidden="true">
           <div className="seller-create-tips-card__header">

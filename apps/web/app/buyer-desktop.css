@@ -3547,6 +3547,11 @@
     padding: 12px 32px;
   }
 
+  .buyer-desktop-header__center,
+  .buyer-desktop-search {
+    min-width: 0;
+  }
+
   .buyer-desktop-brand,
   .buyer-desktop-location-wrap {
     flex: 0 0 auto;

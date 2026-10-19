@@ -61,6 +61,20 @@ class MediaUploadServiceIntegrationTest extends PostgresIntegrationTest {
     }
 
     @Test
+    void catalogVideoFlagOffRejectsPresignAndCompletionWithoutStorageReads() {
+        assertThatThrownBy(() -> uploads.createUpload(new CreateMediaUploadRequest(MediaPurpose.CATALOG_VIDEO, "video/mp4", 24)))
+                .isInstanceOf(ApiException.class).satisfies(failure -> assertThat(((ApiException) failure).status()).isEqualTo(org.springframework.http.HttpStatus.NOT_FOUND));
+        UUID id = UUID.randomUUID();
+        media.saveAndFlush(MediaAssetEntity.pending(id, owner, "users/" + owner + "/disabled-video.mp4", MediaPurpose.CATALOG_VIDEO,
+                "video/mp4", 24, Instant.now().plusSeconds(600), Instant.now()));
+        assertThatThrownBy(() -> uploads.complete(id, "disabled-video"))
+                .isInstanceOf(ApiException.class).satisfies(failure -> assertThat(((ApiException) failure).status()).isEqualTo(org.springframework.http.HttpStatus.NOT_FOUND));
+        assertThat(media.findById(id).orElseThrow().getMediaStatus()).isEqualTo(MediaStatus.PENDING_UPLOAD);
+        org.mockito.Mockito.verify(storage, org.mockito.Mockito.never()).head(any());
+        assertThat(jdbc.queryForObject("select count(*) from idempotency_records where actor_id=?", Long.class, owner)).isZero();
+    }
+
+    @Test
     void completesVerifiedAdVideoButRejectsContainerMismatch() {
         byte[] mp4 = new byte[] {0,0,0,20,102,116,121,112,105,115,111,109,0,0,0,0,109,112,52,50};
         var upload = uploads.createUpload(new CreateMediaUploadRequest(MediaPurpose.AD_BANNER, "video/mp4", mp4.length));

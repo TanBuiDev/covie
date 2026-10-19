@@ -37,7 +37,7 @@ class BillingVoucherIntegrationTest {
         POSTGRES.start();
         var datasource = new DriverManagerDataSource(POSTGRES.getJdbcUrl(),
             POSTGRES.getUsername(), POSTGRES.getPassword());
-        Flyway.configure().dataSource(datasource).locations("classpath:db/migration").load().migrate();
+        Flyway.configure().dataSource(datasource).configuration(java.util.Map.of("flyway.postgresql.transactional.lock", "false")).locations("classpath:db/migration").load().migrate();
         jdbc = new JdbcTemplate(datasource);
         transactions = new TransactionTemplate(new DataSourceTransactionManager(datasource));
         vouchers = new BillingVoucherService(jdbc,Instant::now,

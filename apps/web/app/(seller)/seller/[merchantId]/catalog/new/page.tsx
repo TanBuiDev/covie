@@ -19,7 +19,8 @@ export default async function NewCatalogPage({ params }: { params: Promise<{ mer
           <span>Quay lại danh mục</span>
         </Link>
       </p>
-      <CatalogCreateForm merchantId={merchantId} categories={categories} locations={locations} />
+      <CatalogCreateForm merchantId={merchantId} categories={categories} locations={locations}
+        socialAuthoringEnabled={process.env.COVIE_SOCIAL_V2_CAPTION_AUTHORING_ENABLED === "true"} />
     </section>
   );
 }

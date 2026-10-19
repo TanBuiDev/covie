@@ -15,7 +15,7 @@ Branch: `feature/social-product-card-phase2`
 
 1. Review the PR commit and deploy its immutable digest-pinned API/Web images to isolated staging. Back up staging and apply Flyway V018/V019.
 2. Seed a published catalog item under an active merchant and an exact search URL path with valid location; create independent buyer, seller and admin test accounts.
-3. Supply `COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST` (candidate immutable manifest) and `COVIE_SOCIAL_PHASE4_ACTIVE_MANIFEST` (operator-trusted capture from deployed staging). The runner checks byte equality, GIT_SHA against checkout, API/Web image digests and V019.
+3. Supply `COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST` (candidate immutable manifest) and `COVIE_SOCIAL_PHASE4_ACTIVE_MANIFEST` (operator-trusted capture from deployed staging). The runner checks byte equality, GIT_SHA against checkout, API/Web image digests and a highest Flyway revision of V019 or later. Local syntax/control-flow regression: `bash infra/scripts/tests/social-phase4-runner-gate.sh`; this uses isolated stubs and does not prove staging acceptance.
 4. Supply `COVIE_STAGING_BASE_URL` (HTTPS staging, never production), `COVIE_SOCIAL_PHASE4_ITEM_ID`, `COVIE_SOCIAL_LOAD_ITEM_IDS` (1–40 distinct public UUIDs), `COVIE_SOCIAL_E2E_ITEM_NAME`, `COVIE_SOCIAL_E2E_SEARCH_PATH`, plus `STAGING_BUYER_EMAIL/PASSWORD`, `STAGING_SELLER_EMAIL/PASSWORD` and `STAGING_ADMIN_EMAIL/PASSWORD` via the runner environment, not committed files.
 5. Use disposable test identities. Explicitly set `COVIE_SOCIAL_PHASE4_CONFIRM=STAGING_ONLY` and `COVIE_SOCIAL_E2E_MUTATIONS_OK=1`, then run:
 

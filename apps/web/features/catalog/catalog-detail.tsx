@@ -29,6 +29,7 @@ import { ReviewList } from "@/features/reviews/review-list";
 import { CovieApiError } from "@/lib/api/api-error";
 import styles from "./catalog-detail.module.css";
 import resaleStyles from "./catalog-resale.module.css";
+import { SocialPostContent } from "@/features/marketplace-view/social-post-content";
 
 type CatalogDetailData = components["schemas"]["CatalogItemDetailResponse"];
 type Rating = components["schemas"]["RatingSummary"];
@@ -163,12 +164,21 @@ export function CatalogDetail({ item }: { item: CatalogDetailData }) {
   const reportType = service ? "Dịch vụ" : resale ? "Thanh lý" : "Sản phẩm";
   const reportMeta = [reportType, item.merchant?.name, item.resolvedLocation?.name].filter(Boolean).join(" · ");
 
-  const activePhoto = item.media?.[activeMediaIndex] ?? item.media?.[0];
-  const photoCountText = item.media?.length
-    ? `Ảnh thực tế · ${activeMediaIndex + 1}/${item.media.length}`
+  const videoEnabled = process.env.NEXT_PUBLIC_COVIE_SOCIAL_V2_VIDEO_ENABLED === "true";
+  const visibleMedia = videoEnabled ? item.media : item.media?.filter(entry => !entry.contentType?.startsWith("video/"));
+  const activePhoto = visibleMedia?.[activeMediaIndex] ?? visibleMedia?.[0];
+  const photoCountText = visibleMedia?.length
+    ? `Ảnh thực tế · ${activeMediaIndex + 1}/${visibleMedia.length}`
     : "Chưa có ảnh thực tế";
 
-  const media = resale ? (
+  const media = videoEnabled && visibleMedia?.some(entry => entry.contentType?.startsWith("video/")) ? (
+    <div className={styles.galleryWrapper}>
+      <SocialPostContent name={item.name ?? "Nội dung Catalog"} media={visibleMedia.map((entry,index) => ({
+        id: entry.id, url: entry.url, mimeType: entry.contentType, video: entry.video, sortOrder: index,
+        isCover: index === visibleMedia.findIndex(candidate => !candidate.contentType?.startsWith("video/")),
+      }))} />
+    </div>
+  ) : resale ? (
     <div className={resaleStyles.resaleMedia}>
       <div className={resaleStyles.resalePhoto}>
         {activePhoto?.url && (
@@ -182,9 +192,9 @@ export function CatalogDetail({ item }: { item: CatalogDetailData }) {
         )}
       </div>
       <small>{photoCountText}</small>
-      {item.media && item.media.length > 1 && (
+      {visibleMedia && visibleMedia.length > 1 && (
         <div className={resaleStyles.thumbnailStrip} role="tablist" aria-label="Danh sách ảnh thực tế">
-          {item.media.map((m, idx) => (
+          {visibleMedia.map((m, idx) => (
             <button
               key={m.id ?? idx}
               type="button"
@@ -219,15 +229,15 @@ export function CatalogDetail({ item }: { item: CatalogDetailData }) {
             priority
           />
         )}
-        {item.media && item.media.length > 1 && (
+        {visibleMedia && visibleMedia.length > 1 && (
           <span className={styles.photoBadge}>
-            {activeMediaIndex + 1}/{item.media.length}
+            {activeMediaIndex + 1}/{visibleMedia.length}
           </span>
         )}
       </div>
-      {item.media && item.media.length > 1 && (
+      {visibleMedia && visibleMedia.length > 1 && (
         <div className={styles.thumbnailStrip} role="tablist" aria-label="Danh sách hình ảnh">
-          {item.media.map((m, idx) => (
+          {visibleMedia.map((m, idx) => (
             <button
               key={m.id ?? idx}
               type="button"

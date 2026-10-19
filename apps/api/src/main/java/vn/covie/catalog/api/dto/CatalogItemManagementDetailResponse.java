@@ -29,7 +29,11 @@ public record CatalogItemManagementDetailResponse(
         List<CatalogManagementMediaResponse> media,
         List<CatalogManagementOptionGroupResponse> optionGroups,
         List<CatalogManagementVariantResponse> variants,
-        List<CatalogManagementLocationOfferResponse> locationOffers) {
+        List<CatalogManagementLocationOfferResponse> locationOffers,
+        String socialCaption,
+        @io.swagger.v3.oas.annotations.media.Schema(maxLength=60,accessMode=io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY,
+                description="Current HIDE or REJECT decision reason code for members allowed to manage catalog structure; absent otherwise.")
+        String moderationReasonCode) {
 
     public enum ItemAction { UPDATE, CREATE_VARIANT, PUBLISH, PAUSE, ACTIVATE, ARCHIVE }
     public enum VariantAction { UPDATE, DELETE }
@@ -39,7 +43,9 @@ public record CatalogItemManagementDetailResponse(
             BigDecimal valueNumber, Boolean valueBoolean, UUID optionId) {}
 
     public record CatalogManagementMediaResponse(UUID id, String contentType, MediaStatus status, URI url, int sortOrder,
-            boolean primary) {}
+            boolean primary,
+            @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+            vn.covie.media.api.dto.CatalogVideoMetadata video) {}
 
     public record CatalogManagementOptionGroupResponse(UUID id, String name, int sortOrder,
             List<CatalogManagementOptionValueResponse> values) {}

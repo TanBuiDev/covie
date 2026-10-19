@@ -1,0 +1,61 @@
+{
+  "uid": "covie-social-v2",
+  "title": "CoVie Social V2",
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": false,
+  "tags": ["covie", "social"],
+  "time": {"from": "now-6h", "to": "now"},
+  "panels": [
+    {
+      "title": "Social preview p95 (seconds)", "type": "timeseries",
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 7},
+      "targets": [{"expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"covie-api\",uri=\"/api/v1/catalog/social-previews\",method=\"GET\"}[5m])))"}]
+    },
+    {
+      "title": "Social preview non-2xx ratio", "type": "timeseries",
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 7},
+      "targets": [{"expr": "sum(rate(http_server_requests_seconds_count{job=\"covie-api\",uri=\"/api/v1/catalog/social-previews\",status!~\"2..\"}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{job=\"covie-api\",uri=\"/api/v1/catalog/social-previews\"}[5m])), 0.000001)"}]
+    },
+    {
+      "title": "Media upload and completion non-2xx requests per second", "type": "timeseries",
+      "gridPos": {"x": 0, "y": 7, "w": 12, "h": 7},
+      "targets": [{"expr": "sum by (uri,status) (rate(http_server_requests_seconds_count{job=\"covie-api\",method=\"POST\",uri=~\"/api/v1/media/uploads|/api/v1/media/[{]mediaId[}]/complete\",status!~\"2..\"}[5m]))", "legendFormat": "{{uri}} {{status}}"}]
+    },
+    {
+      "title": "Video delivery failures per second (includes interrupted bodies)", "type": "timeseries",
+      "gridPos": {"x": 12, "y": 7, "w": 12, "h": 7},
+      "targets": [{"expr": "sum(rate(covie_catalog_video_delivery_failures_total{job=\"covie-api\"}[5m]))"}]
+    },
+    {
+      "title": "Registered READY media bytes (metadata, not provider usage)", "type": "timeseries",
+      "gridPos": {"x": 0, "y": 14, "w": 12, "h": 7},
+      "targets": [{"expr": "max(covie_media_ready_declared_bytes{job=\"covie-api\"})"}]
+    },
+    {
+      "title": "Open moderation cases", "type": "stat",
+      "gridPos": {"x": 12, "y": 14, "w": 6, "h": 7},
+      "targets": [{"expr": "max(covie_moderation_open_cases{job=\"covie-api\"})"}]
+    },
+    {
+      "title": "Oldest open moderation case (seconds)", "type": "stat",
+      "gridPos": {"x": 18, "y": 14, "w": 6, "h": 7},
+      "targets": [{"expr": "max(covie_moderation_oldest_open_seconds{job=\"covie-api\"})"}]
+    },
+    {
+      "title": "Report submission requests per second", "type": "timeseries",
+      "gridPos": {"x": 0, "y": 21, "w": 12, "h": 7},
+      "targets": [{"expr": "sum(rate(http_server_requests_seconds_count{job=\"covie-api\",uri=\"/api/v1/reports\",method=\"POST\"}[5m]))"}]
+    },
+    {
+      "title": "Moderation command conflicts per second", "type": "timeseries",
+      "gridPos": {"x": 12, "y": 21, "w": 12, "h": 7},
+      "targets": [{"expr": "sum by (uri,status) (rate(http_server_requests_seconds_count{job=\"covie-api\",method=\"POST\",uri=~\"/api/v1/admin/moderation-cases/.+\",status=~\"409|412\"}[5m]))", "legendFormat": "{{uri}} {{status}}"}]
+    },
+    {
+      "title": "Comment and report 429 responses per second", "type": "timeseries",
+      "gridPos": {"x": 0, "y": 28, "w": 12, "h": 7},
+      "targets": [{"expr": "sum by (uri) (rate(http_server_requests_seconds_count{job=\"covie-api\",method=\"POST\",uri=~\"/api/v1/me/catalog/items/[{]itemId[}]/comments|/api/v1/reports\",status=\"429\"}[5m]))", "legendFormat": "{{uri}}"}]
+    }
+  ]
+}

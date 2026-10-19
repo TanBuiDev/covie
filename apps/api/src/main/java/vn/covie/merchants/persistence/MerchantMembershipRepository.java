@@ -24,6 +24,15 @@ public interface MerchantMembershipRepository extends JpaRepository<MerchantMemb
             """)
     Optional<MerchantMembershipEntity> findActive(@Param("merchantId") UUID merchantId, @Param("userId") UUID userId);
 
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("""
+            select membership from MerchantMembershipEntity membership
+            where membership.merchantProfileId = :merchantId
+              and membership.userId = :userId
+              and membership.membershipStatus = vn.covie.merchants.model.MembershipStatus.ACTIVE
+            """)
+    Optional<MerchantMembershipEntity> findActiveForMutation(@Param("merchantId") UUID merchantId, @Param("userId") UUID userId);
+
     @Query("""
             select new vn.covie.merchants.api.dto.MerchantSummaryResponse(
                 profile.id, profile.name, profile.slug, profile.merchantStatus, membership.role, profile.version)

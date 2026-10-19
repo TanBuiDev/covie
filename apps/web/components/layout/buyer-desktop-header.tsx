@@ -215,7 +215,7 @@ export function BuyerDesktopHeader() {
           <div className="buyer-desktop-actions">
             <Link href="/seller" className="buyer-desktop-seller-btn">
               <Storefront size={16} weight="duotone" aria-hidden="true" />
-              <span>Mở quầy / Pass đồ</span>
+              <span>Cửa hàng</span>
             </Link>
 
             <Link href="/me/notifications" className="buyer-desktop-icon-btn" aria-label="Thông báo">

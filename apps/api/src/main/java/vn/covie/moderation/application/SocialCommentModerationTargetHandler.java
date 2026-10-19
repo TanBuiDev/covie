@@ -21,7 +21,7 @@ public class SocialCommentModerationTargetHandler implements ModerationTargetHan
     @Override @Transactional(readOnly=true)
     public ModerationTargetSnapshot inspect(UUID id) { return snapshot(id,status(id,false)); }
 
-    @Override @Transactional
+    @Override @Transactional(noRollbackFor=ApiException.class)
     public ModerationTargetMutationResult apply(UUID id, ModerationActionType action, Instant now) {
         String before = status(id,true);
         if (action == ModerationActionType.HIDE && !"ACTIVE".equals(before)

@@ -22,6 +22,8 @@ public class AuthSecurityConfiguration {
     @Bean SecurityFilterChain securityFilterChain(HttpSecurity http, CookieCsrfTokenRepository csrf, BrowserCsrfRequestMatcher csrfMatcher, BrowserCookieCsrfFilter browserCsrf, CookieOrHeaderBearerTokenResolver resolver, ApiAuthenticationEntryPoint entryPoint, ApiAccessDeniedHandler denied, ActiveSessionFilter active, vn.covie.auth.oauth.GoogleOAuthSuccessHandler googleOAuthSuccessHandler, vn.covie.auth.oauth.GoogleOAuthFailureHandler googleOAuthFailureHandler) throws Exception {
         http.authorizeHttpRequests(auth -> auth
             .requestMatchers(HttpMethod.GET,"/api/v1/health","/api/v1/auth/csrf","/api/v1/auth/google/status","/api/v1/auth/google/start").permitAll()
+            .requestMatchers(HttpMethod.GET,"/api/v1/media/*/content").permitAll()
+            .requestMatchers(HttpMethod.HEAD,"/api/v1/media/*/content").permitAll()
             .requestMatchers(HttpMethod.GET,
                 "/api/v1/location-areas",
                 "/api/v1/ads/active",

@@ -23,7 +23,7 @@ class Plan08SchemaMigrationTest {
         try (Connection connection = POSTGRES.createConnection("")) {
             Flyway.configure()
                     .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
-                    .locations("classpath:db/migration")
+                    .configuration(java.util.Map.of("flyway.postgresql.transactional.lock", "false")).locations("classpath:db/migration")
                     .load()
                     .migrate();
             assertThat(currentFlywayVersion(connection)).isGreaterThanOrEqualTo("013");

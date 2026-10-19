@@ -67,7 +67,7 @@ class PackagedBillingRestartIT {
                 owned.add(first);
                 ready(first, callbackClient, origin);
                 var jdbc = new JdbcTemplate(new DriverManagerDataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword()));
-                assertThat(jdbc.queryForObject("select max(version::integer) from flyway_schema_history where success", Integer.class)).isEqualTo(34);
+                assertThat(jdbc.queryForObject("select max(version::integer) from flyway_schema_history where success", Integer.class)).isEqualTo(40);
                 billingSnapshot(callbackClient, origin, "PENDING_PAYMENT", 0, output.resolve("initial-metrics.prom"));
                 UUID user = UUID.randomUUID();
                 String password = UUID.randomUUID() + "!";

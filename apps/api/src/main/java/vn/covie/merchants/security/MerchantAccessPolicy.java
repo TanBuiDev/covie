@@ -34,8 +34,17 @@ public final class MerchantAccessPolicy {
     }
 
     public MerchantAccess require(UUID merchantId, MerchantCapability capability) {
+        return require(merchantId,capability,false);
+    }
+
+    public MerchantAccess requireForMutation(UUID merchantId, MerchantCapability capability) {
+        return require(merchantId,capability,true);
+    }
+
+    private MerchantAccess require(UUID merchantId, MerchantCapability capability, boolean lock) {
         CurrentActor actor = actors.currentActor();
-        MerchantMembershipEntity membership = memberships.findActive(merchantId, actor.userId())
+        MerchantMembershipEntity membership = (lock ? memberships.findActiveForMutation(merchantId, actor.userId())
+                : memberships.findActive(merchantId, actor.userId()))
                 .orElseThrow(MerchantAccessPolicy::notFound);
         if (membership.role() == MerchantRole.STAFF
                 && !memberLocations.existsActiveLocationAssignment(membership.getId())) {

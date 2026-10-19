@@ -41,7 +41,6 @@ async function commitCart(page: Page, kind: "product" | "service"): Promise<stri
   await page.getByRole("link", { name: linkName, exact: true }).first().click();
   await page.getByRole("link", { name: "Tiếp tục đặt hàng", exact: true }).click();
   if (kind === "product") await page.getByRole("radio", { name: "SELLER_DELIVERY" }).check();
-  await page.getByRole("button", { name: "Xem trước", exact: true }).click();
   await expect(page.getByRole("button", { name: "Đặt hàng", exact: true }).first()).toBeVisible();
   await page.getByRole("button", { name: "Đặt hàng", exact: true }).first().click();
   await expect(page).toHaveURL(/\/checkout\/success\/[0-9a-f-]+$/i, { timeout: 30_000 });
@@ -75,7 +74,7 @@ test("normal-auth Guest, Buyer, Seller and Admin P0 staging journey", async ({ b
     await guest.goto("/");
     await expect(guest.getByRole("heading", { name: "Khám phá danh mục" })).toBeVisible();
     await guest.goto("/search");
-    await expect(guest.getByText("Tìm quanh vị trí bạn đã chọn")).toBeVisible();
+    await expect(guest.getByRole("tablist", { name: "Phân loại kết quả" })).toBeVisible();
 
     await loginStagingRole(seller, "seller", config);
     await seller.goto("/seller");

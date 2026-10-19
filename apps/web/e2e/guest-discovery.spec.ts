@@ -7,7 +7,7 @@ test("guest can open the marketplace shell and navigate to search", async ({ pag
   await expect(navigation).toBeVisible();
   await navigation.getByRole("link", { name: "Khám phá" }).click();
   await expect(page).toHaveURL(/\/search$/);
-  await expect(page.getByText("Tìm quanh vị trí bạn đã chọn")).toBeVisible();
+  await expect(page.getByRole("tablist", { name: "Phân loại kết quả" })).toBeVisible();
 });
 
 test("retired explore route redirects guests to search", async ({ page }) => {

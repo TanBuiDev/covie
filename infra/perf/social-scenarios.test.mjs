@@ -24,6 +24,37 @@ try {
       assert.throws(() => resolveScenario("public-social-summary"));
     }
   });
+  test("V2 preview load uses the actual bounded repeated-ID read contract", () => {
+    const ids = Array.from({ length: 40 }, (_, index) => "11111111-1111-4111-8111-" + String(index + 1).padStart(12, "0"));
+    process.env.COVIE_SOCIAL_LOAD_ITEM_IDS = ids.join(",");
+    const scenario = resolveScenario("public-social-previews");
+    assert.equal(scenario.method, "GET");
+    assert.equal(scenario.path.split("?")[0], "/api/v1/catalog/social-previews");
+    assert.deepEqual(new URLSearchParams(scenario.path.split("?")[1]).getAll("itemIds"), ids);
+    assert.equal(scenario.authCookie, undefined);
+    for (const value of ["bad", a + "," + a, [...ids, b].join(",")]) {
+      process.env.COVIE_SOCIAL_LOAD_ITEM_IDS = value;
+      assert.throws(() => resolveScenario("public-social-previews"));
+    }
+  });
+  test("V2 activity load requires a cookie and selects each actual type without userId", () => {
+    const previousCookie = process.env.COVIE_LOAD_AUTH_COOKIE;
+    try {
+      delete process.env.COVIE_LOAD_AUTH_COOKIE;
+      assert.throws(() => resolveScenario("private-social-activity-liked"), /requires COVIE_LOAD_AUTH_COOKIE/);
+      process.env.COVIE_LOAD_AUTH_COOKIE = "covie_at=fixture-only-not-a-token";
+      for (const type of ["LIKED", "SAVED", "COMMENTED"]) {
+        const scenario = resolveScenario("private-social-activity-" + type.toLowerCase());
+        assert.equal(scenario.method, "GET");
+        assert.equal(scenario.path, "/api/v1/me/social/activity?type=" + type + "&limit=20");
+        assert.equal(scenario.authCookie, process.env.COVIE_LOAD_AUTH_COOKIE);
+        assert.equal(scenario.expected[0], 200);
+      }
+    } finally {
+      if (previousCookie === undefined) delete process.env.COVIE_LOAD_AUTH_COOKIE;
+      else process.env.COVIE_LOAD_AUTH_COOKIE = previousCookie;
+    }
+  });
 } finally {
   if (previous === undefined) delete process.env.COVIE_SOCIAL_LOAD_ITEM_IDS;
   else process.env.COVIE_SOCIAL_LOAD_ITEM_IDS = previous;

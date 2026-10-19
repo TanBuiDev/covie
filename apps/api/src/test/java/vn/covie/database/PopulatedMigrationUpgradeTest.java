@@ -15,7 +15,7 @@ class PopulatedMigrationUpgradeTest {
                 .withDatabaseName("migration_upgrade_test").withUsername("test").withPassword("test-only")) {
             postgres.start();
             var source=new DriverManagerDataSource(postgres.getJdbcUrl(),postgres.getUsername(),postgres.getPassword());
-            var initial=Flyway.configure().dataSource(source).locations("classpath:db/migration").target("013").load();
+            var initial=Flyway.configure().dataSource(source).configuration(java.util.Map.of("flyway.postgresql.transactional.lock", "false")).locations("classpath:db/migration").target("013").load();
             initial.migrate();
             var jdbc=new JdbcTemplate(source);
             UUID user=UUID.randomUUID(),address=UUID.randomUUID();
@@ -31,10 +31,10 @@ class PopulatedMigrationUpgradeTest {
             var beforeOrder=jdbc.queryForMap("select * from orders where id=?",order);
             String fulfillmentColumns="order_id,service_address_id,service_address_snapshot::text,provider_location_snapshot::text,buyer_contact_snapshot::text,merchant_contact_snapshot::text,created_at,provider_marked_performed_at,awaiting_buyer_confirmation_at,auto_complete_at";
             var beforeFulfillment=jdbc.queryForMap("select "+fulfillmentColumns+" from service_fulfillments where order_id=?",order);
-            var latest=Flyway.configure().dataSource(source).locations("classpath:db/migration").load();
-            assertThat(latest.migrate().migrationsExecuted).isEqualTo(21);
+            var latest=Flyway.configure().dataSource(source).configuration(java.util.Map.of("flyway.postgresql.transactional.lock", "false")).locations("classpath:db/migration").load();
+            assertThat(latest.migrate().migrationsExecuted).isEqualTo(27);
             latest.validate();
-            assertThat(latest.info().current().getVersion().toString()).isEqualTo("034");
+            assertThat(latest.info().current().getVersion().toString()).isEqualTo("040");
             assertThat(jdbc.queryForMap("select id,display_name,account_status,created_at,updated_at,version from users where id=?",user)).isEqualTo(beforeUser);
             assertThat(jdbc.queryForObject("select phone from users where id=?",String.class,user)).isNull();
             assertThat(jdbc.queryForMap("select id,user_id,label,recipient_name,phone,address_text,ST_AsText(geo_point::geometry) as point,pin_source,is_default,status,created_at,updated_at,version from user_addresses where id=?",address)).isEqualTo(beforeAddress);
