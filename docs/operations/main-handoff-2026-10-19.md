@@ -180,3 +180,13 @@ Normal feature/financial flags remain OFF. No deployment or real payment occurre
 Production dependency audit remains0 findings; the disclosed high dev-only Braces
 advisory is not hidden. Raw CodeQL/source-secret findings and bounded scan scopes
 remain described above. Repository handoff is not production activation evidence.
+
+The post-merge main frontend run passed all685 test assertions but failed on two
+unhandled rejections from `tests/home.test.tsx`: its previously unmocked Social
+summary HTTP requests settled after jsdom teardown, when `window` was gone. The
+Home fixture now resolves that dependency locally, matching its existing mocked
+catalog discovery. No production lifecycle/summary code or assertions were changed.
+Home plus the dedicated Social interaction suite passed12/12 in8.96s, with no
+unhandled errors. The receipt PR includes this test-only isolation correction;
+its fresh checks must pass before merge. The prior post-merge frontend failure is
+retained as a fact, not relabeled green or bypassed with a blind rerun.
