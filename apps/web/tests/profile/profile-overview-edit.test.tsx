@@ -38,3 +38,9 @@ it("does not retain another account's private profile when server identity chang
   expect(screen.queryByRole("form")).toBeNull();
   expect(screen.queryByText(user.phone)).toBeNull();
 });
+it("only exposes the activity entry when explicitly enabled", () => {
+  const view = render(<ProfileOverview user={user} />);
+  expect(screen.queryByRole("link", { name: /Hoạt động của tôi/ })).toBeNull();
+  view.rerender(<ProfileOverview user={user} activityAvailable />);
+  expect(screen.getByRole("link", { name: /Hoạt động của tôi/ })).toHaveAttribute("href", "/me/activity");
+});

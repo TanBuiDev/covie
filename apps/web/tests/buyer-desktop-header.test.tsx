@@ -29,6 +29,32 @@ vi.mock("@/features/location/location-chooser", () => ({
 }));
 
 describe("BuyerDesktopHeader", () => {
+  it("keeps sticky content below the measured header and releases observation on unmount", () => {
+    let notifyResize: (() => void) | undefined;
+    const disconnect = vi.fn();
+    const observe = vi.fn();
+    vi.stubGlobal("ResizeObserver", class {
+      constructor(callback: () => void) { notifyResize = callback; }
+      observe = observe;
+      disconnect = disconnect;
+    });
+    const bounds = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ height: 115 } as DOMRect);
+    try {
+      const { unmount } = render(<BuyerDesktopHeader />);
+      expect(document.documentElement.style.getPropertyValue("--buyer-desktop-header-height")).toBe("115px");
+      expect(observe).toHaveBeenCalledWith(document.querySelector(".buyer-desktop-header"));
+      bounds.mockReturnValue({ height: 73 } as DOMRect);
+      notifyResize?.();
+      expect(document.documentElement.style.getPropertyValue("--buyer-desktop-header-height")).toBe("73px");
+      unmount();
+      expect(disconnect).toHaveBeenCalledOnce();
+      expect(document.documentElement.style.getPropertyValue("--buyer-desktop-header-height")).toBe("");
+    } finally {
+      bounds.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("reflects URL keywords and preserves filters when searching from the laptop header", () => {
     const { rerender } = render(<BuyerDesktopHeader />);
     expect(screen.getByRole("searchbox")).toHaveValue("cơm");
@@ -62,7 +88,7 @@ describe("BuyerDesktopHeader", () => {
     expect(screen.queryByTestId("desktop-location-chooser")).not.toBeInTheDocument();
 
     // Seller CTA
-    const sellerCta = screen.getByRole("link", { name: /Mở quầy \/ Pass đồ/i });
+    const sellerCta = screen.getByRole("link", { name: /Cửa hàng/i });
     expect(sellerCta).toHaveAttribute("href", "/seller");
 
     // Notifications & Cart with badge

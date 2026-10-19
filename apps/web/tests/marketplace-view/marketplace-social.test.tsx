@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MarketplaceProductCard } from "@/features/marketplace-view/marketplace-product-card";
 import { SocialFeedProvider } from "@/features/marketplace-view/social-feed";
 import type { components } from "@covie/api-client";
+import type { SocialSummary } from "@/features/marketplace-view/social-api";
 
 const api = vi.hoisted(() => ({
   fetchSocialSummaries: vi.fn(),
@@ -115,5 +116,56 @@ describe("Phase 2 social card", () => {
     expect(await screen.findByText("Không thể thực hiện. Kiểm tra kết nối và thử lại.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Thích Bánh mì CoVie" }))
       .toHaveAttribute("aria-pressed", "false");
+  });
+
+  it.each([false, true])("keeps confirmed Like across older focus reads without resurrecting omitted items: omitted=$0", async omitted => {
+    const visible = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    const now = vi.spyOn(Date, "now");
+    try {
+      const initial: SocialSummary = { itemId: item.id!, likes: 4, comments: 0, liked: false, saved: false };
+      const confirmed: SocialSummary = { ...initial, likes: 5, liked: true };
+      const initialMap = { [item.id!]: initial };
+      let finishLike!: (summary: SocialSummary) => void;
+      const olderReads: Array<(summary: Record<string, SocialSummary>) => void> = [];
+      api.fetchSocialSummaries.mockResolvedValueOnce(initialMap).mockResolvedValueOnce(initialMap)
+        .mockImplementation(() => new Promise(resolve => olderReads.push(resolve)));
+      api.changeSocialReaction.mockImplementation(() => new Promise(resolve => { finishLike = resolve; }));
+      render(<>
+        <SocialFeedProvider itemIds={[item.id!]} enabled><MarketplaceProductCard item={item} mode="social" /></SocialFeedProvider>
+        <SocialFeedProvider itemIds={[item.id!]} enabled><MarketplaceProductCard item={item} mode="social" /></SocialFeedProvider>
+      </>);
+      const likes = await screen.findAllByRole("button", { name: "Thích Bánh mì CoVie" });
+      await waitFor(() => expect(likes.every(button => !button.hasAttribute("disabled"))).toBe(true));
+      fireEvent.click(likes[0]!);
+      fireEvent(window, new Event("focus"));
+      await waitFor(() => expect(api.fetchSocialSummaries).toHaveBeenCalledTimes(4));
+      await act(async () => finishLike(confirmed));
+      await act(async () => olderReads.forEach(resolve => resolve(omitted ? {} : initialMap)));
+      if (omitted) {
+        await waitFor(() => {
+          const unavailable = screen.getAllByRole("button", { name: "Thích Bánh mì CoVie" });
+          expect(unavailable).toHaveLength(2);
+          for (const button of unavailable) expect(button).toBeDisabled();
+        });
+        expect(api.changeSocialReaction).toHaveBeenCalledTimes(1);
+        return;
+      }
+      await waitFor(() => expect(screen.getAllByRole("button", { name: "Bỏ thích Bánh mì CoVie" })).toHaveLength(2));
+      for (const button of screen.getAllByRole("button", { name: "Bỏ thích Bánh mì CoVie" })) {
+        expect(button).toHaveAttribute("aria-pressed", "true");
+        expect(button).toHaveTextContent("5");
+      }
+      expect(api.changeSocialReaction).toHaveBeenCalledTimes(1);
+      api.fetchSocialSummaries.mockResolvedValue({ [item.id!]: { ...confirmed, likes: 6 } });
+      now.mockReturnValue(Date.now() + 31000);
+      fireEvent(window, new Event("focus"));
+      await waitFor(() => expect(api.fetchSocialSummaries).toHaveBeenCalledTimes(6));
+      await waitFor(() => {
+        for (const button of screen.getAllByRole("button", { name: "Bỏ thích Bánh mì CoVie" })) expect(button).toHaveTextContent("6");
+      });
+    } finally {
+      visible.mockRestore();
+      now.mockRestore();
+    }
   });
 });

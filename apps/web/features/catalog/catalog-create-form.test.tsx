@@ -1,16 +1,43 @@
 import type { components } from "@covie/api-client";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CatalogCreateForm } from "./catalog-create-form";
 
 type Category = components["schemas"]["CategorySummary"];
 type CategoryDetail = components["schemas"]["CategoryDetail"];
 type Location = components["schemas"]["MerchantLocationResponse"];
+
+it("uses the mixed gallery with video ON while keeping caption authoring OFF", () => {
+  vi.stubEnv("NEXT_PUBLIC_COVIE_SOCIAL_V2_VIDEO_ENABLED", "true");
+  try {
+    render(<CatalogCreateForm merchantId="merchant-1" categories={productCategories} locations={locations} />);
+    expect(screen.getByLabelText("Ảnh và video Social")).toHaveAttribute("accept", expect.stringContaining("video/mp4"));
+    expect(screen.queryByRole("textbox", { name: "Caption Social" })).toBeNull();
+  } finally { vi.unstubAllEnvs(); }
+});
 type CreateCatalogItemRequest = components["schemas"]["CreateCatalogItemRequest"];
+
+it("previews the current caption and reordered local images without uploading or creating", () => {
+  const urls = vi.spyOn(URL, "createObjectURL").mockImplementation(file => `blob:${(file as File).name}`);
+  render(<CatalogCreateForm merchantId="merchant-1" categories={productCategories} locations={locations} socialAuthoringEnabled />);
+  fireEvent.change(screen.getByLabelText("Tên"), { target: { value: "Bánh mới" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Caption" }), { target: { value: "  Caption nháp\n<script>văn bản</script>  " } });
+  fireEvent.change(screen.getByLabelText("Ảnh Social"), { target: { files: [new File(["a"], "a.png", { type: "image/png" }), new File(["b"], "b.png", { type: "image/png" })] } });
+  const preview = within(screen.getByRole("region", { name: "Xem trước bài đăng Social" }));
+  expect(preview.getByText("Caption nháp <script>văn bản</script>")).toBeInTheDocument();
+  expect(preview.getByAltText("Bánh mới — Ảnh 1/2")).toHaveAttribute("src", "blob:a.png");
+  fireEvent.click(screen.getByRole("button", { name: "Làm bìa b.png" }));
+  expect(preview.getByAltText("Bánh mới — Ảnh 1/2")).toHaveAttribute("src", "blob:b.png");
+  expect(preview.queryByRole("link")).toBeNull();
+  expect(mocks.uploadImage).not.toHaveBeenCalled();
+  expect(mocks.createCatalogItem).not.toHaveBeenCalled();
+  urls.mockRestore();
+});
 
 const mocks = vi.hoisted(() => ({
   createCatalogItem: vi.fn<(merchantId: string, idempotencyKey: string, input: CreateCatalogItemRequest) => Promise<unknown>>(),
   getCategoryDetail: vi.fn<(categoryId: string) => Promise<CategoryDetail>>(),
+  lookupBarcode: vi.fn<(gtin: string) => Promise<unknown>>(),
   uploadImage: vi.fn<(file: File, purpose: "CATALOG_IMAGE") => Promise<{ mediaId?: string }>>(),
   push: vi.fn<(href: string) => void>(),
   refresh: vi.fn<() => void>(),
@@ -23,10 +50,12 @@ vi.mock("next/navigation", () => ({
 vi.mock("./catalog-api", () => ({
   createCatalogItem: mocks.createCatalogItem,
   getCategoryDetail: mocks.getCategoryDetail,
+  lookupBarcode: mocks.lookupBarcode,
 }));
 
 vi.mock("@/features/media/direct-image-upload", () => ({
   uploadImage: mocks.uploadImage,
+  validateImageFile: vi.fn(),
 }));
 
 const serviceCategories: Category[] = [{
@@ -70,6 +99,7 @@ function firstCreateCall() {
 beforeEach(() => {
   mocks.createCatalogItem.mockReset();
   mocks.getCategoryDetail.mockReset();
+  mocks.lookupBarcode.mockReset();
   mocks.uploadImage.mockReset();
   mocks.push.mockReset();
   mocks.refresh.mockReset();
@@ -80,6 +110,50 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("CatalogCreateForm Seller Mobile contracts", () => {
+  it("orders the cover and retries only the failed Social upload while retaining the draft", async () => {
+    vi.stubGlobal("URL", class extends URL { static override createObjectURL = vi.fn(() => "blob:social-" + crypto.randomUUID()); static override revokeObjectURL = vi.fn(); });
+    mocks.getCategoryDetail.mockResolvedValue({ id: "cat-resale", attributes: [] });
+    const first = new File(["a"], "a.png", { type: "image/png" });
+    const cover = new File(["b"], "b.png", { type: "image/png" });
+    mocks.uploadImage.mockResolvedValueOnce({ mediaId: "cover-id" }).mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce({ mediaId: "first-id" });
+    mocks.createCatalogItem.mockRejectedValueOnce(new Error("Create response lost")).mockResolvedValueOnce({ id: "created" });
+    const view = render(<CatalogCreateForm merchantId="merchant-1" categories={productCategories} locations={locations} socialAuthoringEnabled />);
+    fillBaseFields({ categoryId: "cat-resale", name: "Giữ bản nháp" });
+    fireEvent.change(screen.getByLabelText("Giá chính xác (VND)"), { target: { value: "25000" } });
+    fireEvent.change(screen.getByLabelText("Ảnh Social"), { target: { files: [first, cover] } });
+    fireEvent.click(screen.getByRole("button", { name: "Làm bìa b.png" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Tạo nội dung" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "Tạo nội dung" }));
+    await screen.findByRole("alert");
+    expect(mocks.createCatalogItem).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Tên")).toHaveValue("Giữ bản nháp");
+    fireEvent.click(screen.getByRole("button", { name: "Tạo nội dung" }));
+    await screen.findByText("Create response lost");
+    fireEvent.click(screen.getByRole("button", { name: "Tạo nội dung" }));
+    await waitFor(() => expect(mocks.createCatalogItem).toHaveBeenCalledTimes(2));
+    expect(mocks.uploadImage.mock.calls.map(([file]) => file.name)).toEqual(["b.png", "a.png", "a.png"]);
+    expect(firstCreateCall()[2].mediaIds).toEqual(["cover-id", "first-id"]);
+    expect(mocks.createCatalogItem.mock.calls[1]).toEqual(mocks.createCatalogItem.mock.calls[0]);
+    view.unmount();
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);
+  });
+
+  it("sends a separately authored social caption only when its feature is enabled", async () => {
+    mocks.getCategoryDetail.mockResolvedValue({ id: "cat-resale", attributes: [] });
+    render(<CatalogCreateForm merchantId="merchant-1" categories={productCategories} locations={locations} socialAuthoringEnabled />);
+    fillBaseFields({ categoryId: "cat-resale" });
+    fireEvent.change(screen.getByLabelText("Giá chính xác (VND)"), { target: { value: "25000" } });
+    const caption = screen.getByRole("textbox", { name: "Caption" });
+    fireEvent.change(caption, { target: { value: "  Caption riêng\nDòng tiếp theo  " } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Mô tả" }), { target: { value: "Mô tả thương mại" } });
+    await waitFor(() => expect(mocks.getCategoryDetail).toHaveBeenCalledWith("cat-resale"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Tạo nội dung" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "Tạo nội dung" }));
+    await waitFor(() => expect(mocks.createCatalogItem).toHaveBeenCalled());
+    expect(firstCreateCall()[2]).toEqual(expect.objectContaining({ socialCaption: "Caption riêng\nDòng tiếp theo", description: "Mô tả thương mại" }));
+  });
+
   it("creates one independently priced and available location offer per service variant", async () => {
     const detail: CategoryDetail = {
       id: "cat-service",
@@ -95,6 +169,7 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
     fillBaseFields({ categoryId: "cat-service", name: "Vệ sinh máy lạnh" });
 
     await waitFor(() => expect(mocks.getCategoryDetail).toHaveBeenCalledWith("cat-service"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Tạo nội dung" })).toBeEnabled());
 
     fireEvent.click(screen.getByLabelText("Dịch vụ có nhiều gói"));
     fireEvent.change(screen.getByLabelText("Tên lựa chọn"), { target: { value: "Số máy" } });
@@ -201,6 +276,9 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
     fillBaseFields({ categoryId: "cat-resale", name: "Nồi chiên không dầu" });
 
     await waitFor(() => expect(screen.getByLabelText(/^Tình trạng/)).toBeInTheDocument());
+    // Category detail is set before its asynchronous loading flag is cleared.
+    // A visible selector alone does not mean the submit button is enabled.
+    await waitFor(() => expect(screen.getByRole("button", { name: "Tạo nội dung" })).toBeEnabled());
 
     fireEvent.change(screen.getByLabelText(/^Tình trạng/), { target: { value: "condition-good" } });
     fireEvent.change(screen.getByLabelText("Tháng đã sử dụng"), { target: { value: "8" } });
@@ -263,5 +341,61 @@ describe("CatalogCreateForm Seller Mobile contracts", () => {
     expect(screen.getByLabelText("Tên")).toHaveValue("Nồi chiên giữ nguyên");
     expect((screen.getByLabelText("Ảnh catalog") as HTMLInputElement).files).toHaveLength(1);
     expect(mocks.createCatalogItem).not.toHaveBeenCalled();
+  });
+
+  it("does not render barcode lookup when type is SERVICE", () => {
+    render(<CatalogCreateForm merchantId="merchant-1" categories={serviceCategories} locations={locations} />);
+    fireEvent.change(screen.getByLabelText("Loại"), { target: { value: "SERVICE" } });
+    expect(screen.queryByLabelText("Mã vạch GTIN/EAN")).not.toBeInTheDocument();
+  });
+
+  it("renders barcode lookup for PRODUCT and applies suggested name into form submission and preview", async () => {
+    mocks.getCategoryDetail.mockResolvedValue({
+      id: "cat-resale",
+      name: "Đồ gia dụng",
+      catalogType: "PRODUCT",
+      attributes: [],
+    } satisfies CategoryDetail);
+
+    mocks.lookupBarcode.mockResolvedValue({
+      gtin: "8934673501354",
+      gtin14: "08934673501354",
+      productName: "Sữa TH true milk ít đường bịch 220ml",
+      needsReview: false,
+    });
+
+    render(<CatalogCreateForm merchantId="merchant-1" categories={productCategories} locations={locations} />);
+
+    // Barcode input is visible for PRODUCT
+    expect(screen.getByLabelText("Mã vạch GTIN/EAN")).toBeInTheDocument();
+
+    // Perform barcode lookup
+    fireEvent.change(screen.getByLabelText("Mã vạch GTIN/EAN"), { target: { value: "8934673501354" } });
+    fireEvent.click(screen.getByRole("button", { name: "Tra cứu" }));
+
+    await waitFor(() => {
+      expect(mocks.lookupBarcode).toHaveBeenCalledWith("8934673501354");
+    });
+
+    // Apply suggested name
+    fireEvent.click(screen.getByRole("button", { name: "Áp dụng tên gợi ý" }));
+
+    // Name input is updated
+    expect(screen.getByLabelText("Tên")).toHaveValue("Sữa TH true milk ít đường bịch 220ml");
+
+    // Preview title is updated
+    expect(screen.getByText("Sữa TH true milk ít đường bịch 220ml")).toBeInTheDocument();
+
+    // Complete remaining fields and submit
+    fireEvent.change(screen.getByLabelText("Danh mục"), { target: { value: "cat-resale" } });
+    fireEvent.change(screen.getByLabelText("Điểm bán"), { target: { value: "loc-1" } });
+    await waitFor(() => expect(mocks.getCategoryDetail).toHaveBeenCalledWith("cat-resale"));
+    fireEvent.change(screen.getByLabelText("Giá chính xác (VND)"), { target: { value: "15000" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Tạo nội dung" }));
+
+    await waitFor(() => expect(mocks.createCatalogItem).toHaveBeenCalledTimes(1));
+    const body = firstCreateCall()[2];
+    expect(body.name).toBe("Sữa TH true milk ít đường bịch 220ml");
   });
 });

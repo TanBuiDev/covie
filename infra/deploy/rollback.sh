@@ -27,6 +27,19 @@ web_image="$(value WEB_IMAGE)"
   echo "Previous release is not digest-pinned" >&2; exit 1;
 }
 
+source_manifest="${COVIE_ROLLBACK_FROM_MANIFEST:-$current}"
+[[ -r "$source_manifest" ]] || { echo "Rollback source manifest is required" >&2; exit 1; }
+source_highest="$(sed -n 's/^HIGHEST_FLYWAY=//p' "$source_manifest")"
+[[ "$source_highest" =~ ^V[0-9]{3,6}$ ]] || { echo "Invalid rollback source migration identity" >&2; exit 1; }
+if (( 10#${source_highest#V} >= 23 )); then
+  compatible_api="$(sed -n 's/^ROLLBACK_API_IMAGE=//p' "$source_manifest")"
+  evidence_sha="$(sed -n 's/^ROLLBACK_EVIDENCE_SHA256=//p' "$source_manifest")"
+  [[ "$compatible_api" == "$api_image" && "$evidence_sha" =~ ^[0-9a-f]{64}$ ]] || {
+    echo "Rollback blocked: video-era source requires a rehearsed target API digest and evidence hash. Keep the compatible API with video flags OFF; do not delete media or revert migrations." >&2
+    exit 1
+  }
+fi
+
 export COVIE_API_IMAGE="$api_image" COVIE_WEB_IMAGE="$web_image"
 export COVIE_ENV_FILE="$env_file" COVIE_JWT_SECRET_DIR="$jwt_dir" COVIE_TLS_CERT_DIR="$tls_dir"
 

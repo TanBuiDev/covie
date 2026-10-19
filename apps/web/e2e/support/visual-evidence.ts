@@ -39,12 +39,15 @@ export function validateEvidenceDiagnostics(diagnostics: EvidenceDiagnostics) {
   if (diagnostics.consoleErrors.length) throw new Error(`Unexpected console error: ${diagnostics.consoleErrors.join(" | ")}`);
 }
 
-export function collectPageDiagnostics(page: Page) {
+export function collectPageDiagnostics(page: Page, expectedUnauthorizedUrls: readonly string[] = []) {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
   const onPageError = (error: Error) => pageErrors.push(error.message);
   const onConsole = (message: ConsoleMessage) => {
-    if (message.type() === "error") consoleErrors.push(message.text());
+    if (message.type() !== "error") return;
+    if (message.text() === "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+        && expectedUnauthorizedUrls.includes(message.location().url)) return;
+    consoleErrors.push(message.text());
   };
   page.on("pageerror", onPageError);
   page.on("console", onConsole);

@@ -14,6 +14,7 @@ RUN cd apps/api \
     && cp "$JAR" /workspace/app.jar
 
 FROM eclipse-temurin:25-jre-alpine
+RUN apk add --no-cache ffmpeg
 WORKDIR /app
 COPY --from=build /workspace/app.jar /app/app.jar
 USER 10001:10001

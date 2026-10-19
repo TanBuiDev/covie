@@ -33,6 +33,11 @@ for script in infra/deploy/*.sh infra/backup/*.sh infra/scripts/*.sh; do
   bash -n "$script"
 done
 bash infra/scripts/tests/release-rehearsal-gate.sh
+bash infra/scripts/tests/staging-rehearsal-snapshot-gate.sh
+bash infra/scripts/tests/web-image-artifact-gate.sh
+bash infra/scripts/tests/api-image-artifact-gate.sh
+bash infra/scripts/tests/rollback-compatibility-gate.sh
+bash infra/scripts/tests/rollback-manifest-gate.sh
 node infra/perf/run-load.mjs --help >/dev/null
 
 highest="$(find apps/api/src/main/resources/db/migration -maxdepth 1 -type f -name 'V*.sql' -exec basename {} \; \

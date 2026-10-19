@@ -10,6 +10,8 @@ import java.util.UUID;
 import org.locationtech.jts.geom.Point;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.billing.application.BillingEntitlementService;
 import vn.covie.catalog.api.dto.publicview.CatalogItemDetailResponse;
 import vn.covie.catalog.api.dto.publicview.PublicMediaResponse;
 import vn.covie.catalog.api.dto.publicview.PublicOfferResponse;
@@ -60,6 +62,11 @@ public class CatalogDetailService {
     private final LocationContextResolver contexts;
     private final PublicMerchantViewService merchantViews;
     private final MediaUrlResolver mediaUrls;
+    private BillingEntitlementService billing;
+
+    @Autowired public void setBillingEntitlements(BillingEntitlementService billing) {
+        this.billing = java.util.Objects.requireNonNull(billing);
+    }
 
     public CatalogDetailService(CatalogItemRepository items, VariantRepository variants,
             LocationVariantRepository offers, MerchantLocationRepository locations,
@@ -82,6 +89,10 @@ public class CatalogDetailService {
     public CatalogItemDetailResponse get(UUID itemId, UUID locationId, UUID addressId, Double lat, Double lng) {
         CatalogItemEntity item = requireVisibleItem(itemId);
         MerchantProfileEntity merchant = merchantViews.requireVisible(item.getMerchantProfileId());
+        if (billing != null) {
+            var eligible = billing.evaluate(merchant.getId());
+            if (eligible.enforced() && !eligible.canSell()) throw notFound();
+        }
         List<VariantEntity> activeVariants = variants.findAllByCatalogItemIdAndDeletedAtIsNullOrderBySortOrderAscIdAsc(itemId)
                 .stream().filter(variant -> variant.getVariantStatus() == VariantStatus.ACTIVE).toList();
         Map<UUID, VariantEntity> variantsById = activeVariants.stream()
@@ -155,9 +166,12 @@ public class CatalogDetailService {
     }
 
     private List<PublicMediaResponse> media(UUID itemId) {
-        return itemMedia.findAllMediaAssetsByCatalogItemId(itemId).stream()
+        var assets = mediaUrls.catalogVideoEnabled() ? itemMedia.findAllGalleryAssociationsByCatalogItemId(itemId).stream()
+                .map(vn.covie.catalog.model.CatalogItemMediaEntity::getMediaAsset).toList() : itemMedia.findAllMediaAssetsByCatalogItemId(itemId);
+        return assets.stream()
                 .filter(asset -> asset.getMediaStatus() == MediaStatus.READY)
-                .map(asset -> new PublicMediaResponse(asset.getId(), asset.getMimeType(), mediaUrls.publicUrl(asset)))
+                .filter(mediaUrls::includeCatalogMedia)
+                .map(asset -> new PublicMediaResponse(asset.getId(), asset.getMimeType(), mediaUrls.publicUrl(asset),vn.covie.media.api.dto.CatalogVideoMetadata.from(asset)))
                 .toList();
     }
 
@@ -183,12 +197,19 @@ public class CatalogDetailService {
                 offersAtResolvedLocation.put(offer.getVariantId(), offer);
             }
         }
+        Map<UUID, List<UUID>> optionValuesByVariant = new HashMap<>();
+        if (!activeVariants.isEmpty()) {
+            for (var association : variantOptions.findAllByIdVariantIdIn(
+                    activeVariants.stream().map(VariantEntity::getId).toList())) {
+                optionValuesByVariant.computeIfAbsent(association.getId().getVariantId(), unused -> new ArrayList<>())
+                        .add(association.getId().getOptionValueId());
+            }
+        }
         return activeVariants.stream().map(variant -> {
             LocationVariantEntity offer = offersAtResolvedLocation.get(variant.getId());
             PublicOfferResponse publicOffer = offer == null ? null : new PublicOfferResponse(offer.getId(),
                     offer.isAvailable(), new Money(offer.getPrice(), offer.getCurrencyCode()), offer.getPreparationTimeMinutes());
-            List<UUID> optionValueIds = variantOptions.findAllByIdVariantId(variant.getId()).stream()
-                    .map(association -> association.getId().getOptionValueId()).toList();
+            List<UUID> optionValueIds = optionValuesByVariant.getOrDefault(variant.getId(), List.of());
             return new PublicVariantResponse(variant.getId(), variant.getVariantName(), variant.isDefaultVariant(),
                     optionValueIds, publicOffer);
         }).toList();

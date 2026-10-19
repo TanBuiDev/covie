@@ -5,7 +5,7 @@ export default async function MePage() {
   const user = await requireUser("/me");
   return (
     <main className="profile-surface">
-      <ProfileOverview user={user} notificationsAvailable />
+      <ProfileOverview user={user} notificationsAvailable activityAvailable={process.env.COVIE_SOCIAL_V2_ACTIVITY_ENABLED === "true"} />
     </main>
   );
 }

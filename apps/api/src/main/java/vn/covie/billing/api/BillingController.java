@@ -1,0 +1,123 @@
+package vn.covie.billing.api;
+
+import java.util.List;
+import java.util.UUID;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import vn.covie.admin.security.AdminAccessPolicy;
+import vn.covie.auth.security.CurrentActorProvider;
+import vn.covie.billing.application.BillingCatalogService;
+import vn.covie.billing.application.BillingEntitlementService;
+import vn.covie.merchants.model.MerchantRole;
+import vn.covie.merchants.persistence.MerchantMembershipRepository;
+import vn.covie.shared.web.ApiException;
+import vn.covie.shared.web.ErrorCode;
+import org.springframework.http.HttpStatus;
+
+/** Read contracts and guarded Admin publications; PSP/payment endpoints intentionally absent until provider ADR. */
+@RestController
+public class BillingController {
+    private final BillingCatalogService catalog;
+    private final BillingEntitlementService entitlements;
+    private final MerchantMembershipRepository memberships;
+    private final CurrentActorProvider actors;
+    private final AdminAccessPolicy admin;
+
+    public BillingController(BillingCatalogService catalog, BillingEntitlementService entitlements,
+                             MerchantMembershipRepository memberships, CurrentActorProvider actors,
+                             AdminAccessPolicy admin) {
+        this.catalog = catalog;
+        this.entitlements = entitlements;
+        this.memberships = memberships;
+        this.actors = actors;
+        this.admin = admin;
+    }
+
+    @GetMapping("/api/v1/billing/plans")
+    public List<BillingCatalogService.PlanOffer> plans() {
+        return catalog.availablePlans();
+    }
+
+    @GetMapping("/api/v1/merchants/{merchantId}/billing/summary")
+    public ResponseEntity<BillingEntitlementService.Eligibility> summary(@PathVariable UUID merchantId) {
+        requireMember(merchantId);
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(entitlements.evaluate(merchantId));
+    }
+
+    @GetMapping("/api/v1/admin/billing/policy")
+    public BillingCatalogService.Policy policy() {
+        admin.requireAdmin();
+        return catalog.currentPolicy();
+    }
+
+    @GetMapping("/api/v1/admin/billing/plans")
+    public ResponseEntity<List<BillingCatalogService.PlanOffer>> latestPlans() {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(catalog.latestPublishedPlans());
+    }
+
+    @GetMapping("/api/v1/admin/billing/policy/latest")
+    public ResponseEntity<BillingCatalogService.Policy> latestPolicy() {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(catalog.latestPublishedPolicy());
+    }
+
+    @GetMapping("/api/v1/admin/billing/plans/{planCode}/prices/history")
+    public ResponseEntity<List<BillingCatalogService.PriceHistory>> priceHistory(@PathVariable String planCode,
+            @RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "0") int offset) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(catalog.priceHistory(planCode, limit, offset));
+    }
+
+    @GetMapping("/api/v1/admin/billing/policy/history")
+    public ResponseEntity<List<BillingCatalogService.PolicyHistory>> policyHistory(
+            @RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "0") int offset) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(catalog.policyHistory(limit, offset));
+    }
+
+    @PostMapping("/api/v1/admin/billing/plans/{planCode}/prices/preview")
+    public ResponseEntity<BillingCatalogService.PricePublicationPreview> previewPrice(@PathVariable String planCode,
+            @RequestHeader("If-Match") String ifMatch, @RequestBody BillingCatalogService.PriceChange request) {
+        admin.requireAdmin();
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(catalog.previewPrice(planCode, request, BillingCatalogService.parseIfMatch(ifMatch)));
+    }
+
+    @PostMapping("/api/v1/admin/billing/policy/preview")
+    public ResponseEntity<BillingCatalogService.PolicyPublicationPreview> previewPolicy(
+            @RequestHeader("If-Match") String ifMatch, @RequestBody BillingCatalogService.PolicyChange request) {
+        admin.requireAdmin();
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(catalog.previewPolicy(request, BillingCatalogService.parseIfMatch(ifMatch)));
+    }
+
+    @PostMapping("/api/v1/admin/billing/plans")
+    public BillingCatalogService.PlanOffer createPlan(
+            @RequestBody BillingCatalogService.NewPlan request) {
+        return catalog.createPlan(request);
+    }
+
+    @PostMapping("/api/v1/admin/billing/plans/{planCode}/retire")
+    public ResponseEntity<Void> retirePlan(@PathVariable String planCode) {
+        catalog.retirePlan(planCode);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/api/v1/admin/billing/plans/{planCode}/prices")
+    public BillingCatalogService.PlanOffer publishPrice(@PathVariable String planCode,
+                                      @RequestHeader("If-Match") String ifMatch,
+                                      @RequestBody BillingCatalogService.PriceChange request) {
+        return catalog.publishPrice(planCode, request, BillingCatalogService.parseIfMatch(ifMatch));
+    }
+
+    @PostMapping("/api/v1/admin/billing/policy")
+    public BillingCatalogService.Policy publishPolicy(@RequestHeader("If-Match") String ifMatch,
+            @RequestBody BillingCatalogService.PolicyChange request) {
+        return catalog.publishPolicy(request, BillingCatalogService.parseIfMatch(ifMatch));
+    }
+
+    private void requireMember(UUID merchantId) {
+        memberships.findActive(merchantId, actors.currentActor().userId())
+            .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND,
+                HttpStatus.NOT_FOUND, "Merchant was not found."));
+    }
+}

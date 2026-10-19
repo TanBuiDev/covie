@@ -38,4 +38,45 @@ if ($seedMatches[1].Index -le $populatedIndex -or $seedMatches[1].Index -ge $buy
   throw 'Combined UI verification must isolate checkout mutations by reseeding between the populated journey and Buyer visual capture.'
 }
 
-Write-Output 'verify-ui-flow orchestration checks passed'
+$global:CovieUiVerifyRecordedCommands = [System.Collections.Generic.List[string]]::new()
+$global:CovieUiVerifyRecordedModes = [System.Collections.Generic.List[string]]::new()
+$previousMode = [Environment]::GetEnvironmentVariable('COVIE_UI_CURRENT_DESIGN')
+function global:pnpm {
+  $global:CovieUiVerifyRecordedCommands.Add(($args -join ' '))
+  $global:CovieUiVerifyRecordedModes.Add([Environment]::GetEnvironmentVariable('COVIE_UI_CURRENT_DESIGN'))
+  $global:LASTEXITCODE = 0
+}
+try {
+  & $scriptPath -PostgresContainer 'billing-owned-ui-fixture'
+  $seedCalls = @($global:CovieUiVerifyRecordedCommands | Where-Object { $_ -like 'ui:seed-local*' })
+  if ($seedCalls.Count -ne 2 -or @($seedCalls | Where-Object { $_ -ne 'ui:seed-local -PostgresContainer billing-owned-ui-fixture' }).Count -ne 0) {
+    throw 'Both seed invocations must receive the explicit owned PostgreSQL container.'
+  }
+  $global:CovieUiVerifyRecordedCommands.Clear()
+  & $scriptPath
+  $seedCalls = @($global:CovieUiVerifyRecordedCommands | Where-Object { $_ -like 'ui:seed-local*' })
+  if ($seedCalls.Count -ne 2 -or @($seedCalls | Where-Object { $_ -ne 'ui:seed-local' }).Count -ne 0) {
+    throw 'Default UI orchestration must preserve the seed script default without inventing a target.'
+  }
+  $env:COVIE_UI_CURRENT_DESIGN = 'previous-value'
+  $global:CovieUiVerifyRecordedModes.Clear()
+  & $scriptPath -CurrentDesign
+  if (@($global:CovieUiVerifyRecordedModes | Where-Object { $_ -ne '1' }).Count -ne 0) {
+    throw 'Explicit current-design mode must propagate to every child command.'
+  }
+  if ($env:COVIE_UI_CURRENT_DESIGN -ne 'previous-value') { throw 'Current-design mode must restore the parent environment.' }
+  $global:CovieUiVerifyRecordedModes.Clear()
+  & $scriptPath
+  if (@($global:CovieUiVerifyRecordedModes | Where-Object { -not [string]::IsNullOrEmpty($_) }).Count -ne 0) {
+    throw 'Default verification must retain strict Figma acceptance regardless of inherited mode.'
+  }
+  if ($env:COVIE_UI_CURRENT_DESIGN -ne 'previous-value') { throw 'Strict mode must restore the parent environment.' }
+} finally {
+  if ($null -eq $previousMode) { Remove-Item Env:COVIE_UI_CURRENT_DESIGN -ErrorAction SilentlyContinue }
+  else { $env:COVIE_UI_CURRENT_DESIGN = $previousMode }
+  Remove-Item Function:\pnpm
+  Remove-Variable CovieUiVerifyRecordedCommands -Scope Global
+  Remove-Variable CovieUiVerifyRecordedModes -Scope Global
+}
+
+Write-Output 'verify-ui-flow orchestration and owned-container propagation checks passed'

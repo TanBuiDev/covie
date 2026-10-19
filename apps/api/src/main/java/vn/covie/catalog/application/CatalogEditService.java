@@ -10,9 +10,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.auth.security.CurrentActorProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.covie.billing.application.BillingEntitlementService;
 import vn.covie.catalog.api.dto.create.AttributeValueRequest;
 import vn.covie.catalog.api.dto.edit.CreateVariantRequest;
 import vn.covie.catalog.api.dto.edit.UpdateCatalogItemRequest;
@@ -69,6 +72,18 @@ public class CatalogEditService {
     private final MediaAttachmentPolicy media; private final CatalogSearchDocumentService search;
     private final UuidV7Generator ids; private final AppClock clock; private final InventoryModeCoordinator inventory;
     private final CatalogManagementActionPolicy actions;
+    private BillingEntitlementService billingEntitlements;
+
+    /** Mandatory Spring injection; isolated unit tests retain the existing constructor. */
+    @Autowired
+    public void setBillingEntitlements(BillingEntitlementService billingEntitlements) {
+        this.billingEntitlements = java.util.Objects.requireNonNull(billingEntitlements);
+    }
+
+    private final boolean captionEnabled;
+    private final boolean videoEnabled;
+    private final vn.covie.catalog.policy.CatalogPublishPolicy publishPolicy;
+    private final vn.covie.shared.moderation.ModerationCaseWriter moderationCases;
 
     public CatalogEditService(CurrentActorProvider actors, MerchantAccessPolicy access, CatalogItemRepository items,
             CatalogItemAttributeValueRepository attributes, CatalogItemTagRepository itemTags, TagRepository tags,
@@ -77,18 +92,38 @@ public class CatalogEditService {
             OptionGroupRepository optionGroups, OptionValueRepository optionValues, LocationVariantRepository locationVariants,
             MerchantLocationRepository locations, MediaAttachmentPolicy media, CatalogSearchDocumentService search,
             UuidV7Generator ids, AppClock clock, InventoryModeCoordinator inventory,
-            CatalogManagementActionPolicy actions) {
+            CatalogManagementActionPolicy actions,
+            @Value("${covie.social-v2.caption-authoring-enabled:false}") boolean captionEnabled,
+            vn.covie.catalog.policy.CatalogPublishPolicy publishPolicy,
+            vn.covie.shared.moderation.ModerationCaseWriter moderationCases,
+            @Value("${covie.social-v2.video-enabled:false}") boolean videoEnabled) {
         this.actors=actors; this.access=access; this.items=items; this.attributes=attributes; this.itemTags=itemTags; this.tags=tags;
         this.itemMedia=itemMedia; this.categoryAttributes=categoryAttributes; this.validator=validator; this.variants=variants;
         this.variantOptions=variantOptions; this.optionGroups=optionGroups; this.optionValues=optionValues;
         this.locationVariants=locationVariants; this.locations=locations; this.media=media; this.search=search; this.ids=ids; this.clock=clock; this.inventory=inventory; this.actions=actions;
+        this.captionEnabled=captionEnabled; this.publishPolicy=publishPolicy; this.moderationCases=moderationCases;
+        this.videoEnabled=videoEnabled;
     }
 
     @Transactional
     public EditResult updateItem(UUID merchantId, UUID itemId, String ifMatch, UpdateCatalogItemRequest request) {
-        access.require(merchantId, MerchantCapability.MANAGE_CATALOG_STRUCTURE);
+        if ((captionEnabled && request.socialCaptionWasSupplied()) || ((captionEnabled || videoEnabled) && request.mediaIds()!=null)) {
+            access.requireForMutation(merchantId, MerchantCapability.MANAGE_CATALOG_STRUCTURE);
+        } else {
+            access.require(merchantId, MerchantCapability.MANAGE_CATALOG_STRUCTURE);
+        }
         CatalogItemEntity item = item(merchantId, itemId);
         VersionPrecondition.require(VersionPrecondition.parseRequired(ifMatch), item.getVersion());
+        if (request.socialCaptionWasSupplied() && !captionEnabled) {
+            throw new ApiException(ErrorCode.RESOURCE_NOT_FOUND,HttpStatus.NOT_FOUND,"Resource not found.");
+        }
+        String caption=request.socialCaptionWasSupplied()?nullable(request.socialCaption()):item.getSocialCaption();
+        if (caption!=null && caption.length()>3000) throw reject(ErrorCode.VALIDATION_FAILED,"Caption must not exceed 3000 UTF-16 units.");
+        boolean captionChanged=request.socialCaptionWasSupplied() && !java.util.Objects.equals(caption,item.getSocialCaption());
+        boolean mediaChanged=(captionEnabled || videoEnabled) && request.mediaIds()!=null && !request.mediaIds().stream().distinct().toList()
+                .equals(itemMedia.findAllGalleryAssociationsByCatalogItemId(itemId).stream().map(entry -> entry.getId().getMediaAssetId()).toList());
+        if (mediaChanged && request.mediaIds().stream().distinct().count()>10)
+            throw reject(ErrorCode.VALIDATION_FAILED,"Catalog media must not exceed 10 distinct assets.");
         UUID categoryId = request.primaryCategoryId() == null ? item.getPrimaryCategoryId() : request.primaryCategoryId();
         boolean categoryChanged = !categoryId.equals(item.getPrimaryCategoryId());
         boolean replacingAttributes = request.attributes() != null || categoryChanged;
@@ -99,9 +134,22 @@ public class CatalogEditService {
         String name = request.name() == null ? item.getName() : required(request.name());
         String description = request.description() == null ? item.getDescription() : nullable(request.description());
         item.update(categoryId, name, description, now);
+        if (request.socialCaptionWasSupplied()) item.updateSocialCaption(caption,now);
         if (replacingAttributes) replaceAttributes(item, normalized.values());
         if (request.tags() != null) replaceTags(item, request.tags(), now);
-        if (request.mediaIds() != null) replaceMedia(item, request.mediaIds(), actors.currentActor().userId());
+        if (request.mediaIds() != null && (!(captionEnabled || videoEnabled) || mediaChanged)) replaceMedia(item, request.mediaIds(), actors.currentActor().userId());
+        if ((captionChanged || mediaChanged)
+                && (item.getListingStatus()==vn.covie.catalog.model.ListingStatus.ACTIVE
+                    || item.getListingStatus()==vn.covie.catalog.model.ListingStatus.PAUSED)
+                && (item.getModerationStatus()==vn.covie.catalog.model.CatalogModerationStatus.APPROVED
+                    || item.getModerationStatus()==vn.covie.catalog.model.CatalogModerationStatus.NOT_REQUIRED
+                    || item.getModerationStatus()==vn.covie.catalog.model.CatalogModerationStatus.HIDDEN
+                    || item.getModerationStatus()==vn.covie.catalog.model.CatalogModerationStatus.REJECTED)
+                && publishPolicy.decide(item)==vn.covie.catalog.policy.CatalogPublishDecision.REQUIRE_MODERATION) {
+            item.requireModeration(now);
+            moderationCases.openPreApproval(new vn.covie.shared.moderation.ModerationTargetRef(
+                    vn.covie.moderation.model.ModerationTargetType.CATALOG_ITEM,itemId),"SOCIAL_CONTENT_EDIT_REQUIRES_MODERATION");
+        }
         CatalogItemEntity saved = items.saveAndFlush(item);
         if (request.name() != null || request.description() != null || categoryChanged || request.tags() != null) search.rebuild(itemId);
         return new EditResult(saved.getId(), saved.getVersion());
@@ -170,6 +218,7 @@ public class CatalogEditService {
         VersionPrecondition.require(VersionPrecondition.parseRequired(ifMatch), offer.getVersion());
         long price = request.price() == null ? offer.getPrice() : request.price();
         boolean available = request.available() == null ? offer.isAvailable() : request.available();
+        if (available && billingEntitlements != null) billingEntitlements.requireCanSell(merchantId);
         InventoryMode inventoryMode = request.inventoryMode() == null ? offer.getInventoryMode() : request.inventoryMode();
         Integer preparation = request.preparationTimeMinutesWasSupplied()
                 ? request.preparationTimeMinutes() : offer.getPreparationTimeMinutes();
@@ -210,15 +259,26 @@ public class CatalogEditService {
         for (CatalogItemMediaEntity association : itemMedia.findAllAssociationsByCatalogItemId(item.getId())) {
             existing.put(association.getId().getMediaAssetId(), association);
         }
-        Set<UUID> ids = new HashSet<>(); int order = 0;
-        for (UUID mediaId : requested) {
-            if (!ids.add(mediaId)) continue;
+        var allowed = videoEnabled ? Set.of(MediaPurpose.CATALOG_IMAGE,MediaPurpose.CATALOG_VIDEO) : Set.of(MediaPurpose.CATALOG_IMAGE);
+        var ordered = requested.stream().distinct().toList();
+        Map<UUID,MediaAssetEntity> newAssets = new HashMap<>();
+        for (UUID mediaId : ordered) if (!existing.containsKey(mediaId)) newAssets.put(mediaId,media.requireReadyOwned(mediaId,actorId,allowed));
+        long videos = ordered.stream().map(id -> existing.containsKey(id) ? existing.get(id).getMediaAsset() : newAssets.get(id))
+                .filter(asset -> asset.getPurpose()==MediaPurpose.CATALOG_VIDEO).count();
+        if (videos>1) throw reject(ErrorCode.MEDIA_NOT_ATTACHABLE,"Catalog media must not exceed one video.");
+        boolean coverChosen = false;
+        int order = 0;
+        for (UUID mediaId : ordered) {
             CatalogItemMediaEntity association = existing.remove(mediaId);
+            var asset = association == null ? newAssets.get(mediaId) : association.getMediaAsset();
+            boolean video = asset.getPurpose()==MediaPurpose.CATALOG_VIDEO;
+            boolean cover = !video && !coverChosen;
+            if (cover) coverChosen = true;
             if (association == null) {
-                MediaAssetEntity asset = media.requireReadyOwned(mediaId, actorId, Set.of(MediaPurpose.CATALOG_IMAGE));
-                association = CatalogItemMediaEntity.image(item, asset, order, order == 0);
+                if (video) asset = media.lockReadyOwnedCatalogVideo(mediaId,actorId);
+                association = video ? CatalogItemMediaEntity.video(item,asset,order) : CatalogItemMediaEntity.image(item, asset, order, cover);
             } else {
-                association.reorder(order, order == 0);
+                association.reorder(order, cover);
             }
             itemMedia.save(association);
             order++;

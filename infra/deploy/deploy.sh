@@ -62,7 +62,7 @@ rollback_on_error() {
   local status=$?
   if (( status != 0 )) && [[ -f "$previous" ]] && [[ "${COVIE_ROLLBACK_IN_PROGRESS:-false}" != "true" ]]; then
     echo "Deployment failed; attempting application rollback" >&2
-    COVIE_ROLLBACK_IN_PROGRESS=true "$repo_root/infra/deploy/rollback.sh" || true
+    COVIE_ROLLBACK_IN_PROGRESS=true COVIE_ROLLBACK_FROM_MANIFEST="$manifest" "$repo_root/infra/deploy/rollback.sh" || true
   fi
   exit "$status"
 }

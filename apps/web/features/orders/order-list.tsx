@@ -463,7 +463,7 @@ export function OrderList({
   const completedCount = allOrders.filter((o) => o.status === "COMPLETED").length;
 
   return (
-    <section className="seller-stack" aria-label="Danh sách đơn hàng">
+    <section className="seller-stack seller-order-page" aria-label="Danh sách đơn hàng">
       {merchantId && locations.length ? (
         <div className="seller-order-location-filter">
           <SelectDropdown<string>

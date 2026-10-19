@@ -434,9 +434,16 @@ class OrderCancellationControllerIntegrationTest extends PostgresIntegrationTest
     }
 
     private void dispatch(Fixture fixture) {
-        for (int attempt = 0; attempt < 200; attempt++) {
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(15);
+        while (System.nanoTime() < deadline) {
             if (jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=? and status<>'PUBLISHED'", Long.class, fixture.orderId()) == 0) break;
-            outboxProcessor.processOne();
+            if (!outboxProcessor.processOne()) {
+                try { Thread.sleep(10); }
+                catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new AssertionError("Interrupted while waiting for fixture outbox publication", exception);
+                }
+            }
         }
         assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=? and status<>'PUBLISHED'", Long.class, fixture.orderId())).isZero();
     }

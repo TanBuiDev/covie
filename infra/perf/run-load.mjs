@@ -48,6 +48,10 @@ const statusCounts = new Map();
 let total = 0;
 let networkErrors = 0;
 let successful = 0;
+let completedResponses = 0;
+let completedBodyBytes = 0;
+let smallestBodyBytes = Infinity;
+let largestBodyBytes = 0;
 
 async function worker() {
   while (performance.now() < deadline) {
@@ -61,7 +65,14 @@ async function worker() {
         redirect: "manual",
         signal: AbortSignal.timeout(15_000),
       });
-      await response.body?.cancel();
+      let bodyBytes = 0;
+      if (response.body) {
+        for await (const chunk of response.body) bodyBytes += chunk.byteLength;
+      }
+      completedResponses++;
+      completedBodyBytes += bodyBytes;
+      smallestBodyBytes = Math.min(smallestBodyBytes, bodyBytes);
+      largestBodyBytes = Math.max(largestBodyBytes, bodyBytes);
       const elapsed = performance.now() - started;
       latencies.push(elapsed);
       total++;
@@ -89,6 +100,13 @@ const summary = {
   failed,
   networkErrors,
   errorRatio: Number(errorRatio.toFixed(4)),
+  responseBodyBytes: {
+    completedResponses,
+    total: completedBodyBytes,
+    min: completedResponses ? smallestBodyBytes : 0,
+    max: largestBodyBytes,
+    mean: completedResponses ? Math.round(completedBodyBytes / completedResponses) : 0,
+  },
   latencyMs: {
     p50: Math.round(percentile(latencies, 0.50)),
     p95: Math.round(percentile(latencies, 0.95)),

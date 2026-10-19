@@ -5,7 +5,38 @@ import { CovieApiError } from "@/lib/api/api-error";
 import type { components } from "@covie/api-client";
 
 const mocks = vi.hoisted(() => ({ addCartItem: vi.fn(), listCatalogReviews: vi.fn(), push: vi.fn(), back: vi.fn() }));
+
+it.each(["PRODUCT", "SERVICE", "RESALE"])("renders mixed %s media without decoding video URLs as images", kind => {
+  vi.stubEnv("NEXT_PUBLIC_COVIE_SOCIAL_V2_VIDEO_ENABLED", "true");
+  mocks.listCatalogReviews.mockResolvedValue({ rating: { reviewCount: 0 }, items: [] });
+  try {
+    const base = kind === "SERVICE" ? service : kind === "RESALE" ? resale : product;
+    const view = render(<CatalogDetail item={{ ...base, media: [
+      { id: "video", contentType: "video/mp4", url: "/api/v1/media/video/content" },
+      { id: "image", contentType: "image/png", url: "https://media.test/image.png" },
+    ] }} />);
+    expect(screen.getByRole("button", { name: `Phát video ${base.name}` })).toBeInTheDocument();
+    expect(view.container.querySelector('img[src*="/content"]')).toBeNull();
+    expect(view.container.querySelector("video")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Nội dung tiếp theo" }));
+    expect(screen.getByAltText(`${base.name} — Ảnh 2/2`)).toBeInTheDocument();
+  } finally { vi.unstubAllEnvs(); }
+});
 vi.mock("@/features/cart/cart-api", () => ({ addCartItem: mocks.addCartItem }));
+
+it("filters video from the existing image gallery while video is OFF", () => {
+  vi.stubEnv("NEXT_PUBLIC_COVIE_SOCIAL_V2_VIDEO_ENABLED", "false");
+  mocks.listCatalogReviews.mockResolvedValue({ rating: {}, items: [] });
+  try {
+    const view = render(<CatalogDetail item={{ ...product, media: [
+      { id: "video", contentType: "video/mp4", url: "/api/v1/media/video/content" },
+      { id: "image", contentType: "image/png", url: "https://media.test/image.png" },
+    ] }} />);
+    expect(view.container.querySelector('img[src*="/content"]')).toBeNull();
+    expect(screen.getByAltText(product.name!)).toHaveAttribute("src", "https://media.test/image.png");
+    expect(screen.queryByRole("button", { name: /Phát video/ })).toBeNull();
+  } finally { vi.unstubAllEnvs(); }
+});
 vi.mock("@/features/reviews/review-api", () => ({ listCatalogReviews: mocks.listCatalogReviews }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push, back: mocks.back }) }));
 

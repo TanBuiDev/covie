@@ -18,7 +18,8 @@ class OutboxOperationalMetricsIntegrationTest {
                 .withUsername("test").withPassword("test-only")) {
             postgres.start();
             var source = new DriverManagerDataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
-            Flyway.configure().dataSource(source).locations("classpath:db/migration").load().migrate();
+            Flyway.configure().dataSource(source).configuration(java.util.Map.of("flyway.postgresql.transactional.lock", "false")).locations("classpath:db/migration")
+                    .configuration(java.util.Map.of("flyway.postgresql.transactional.lock","false")).load().migrate();
             var jdbc = new JdbcTemplate(source);
             var registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
             try {

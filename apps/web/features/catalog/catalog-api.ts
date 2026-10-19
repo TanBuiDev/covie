@@ -122,3 +122,13 @@ export async function runCatalogLifecycleAction(merchantId: string, itemId: stri
   await requireOk(response, error);
 }
 
+export async function lookupBarcode(gtin: string): Promise<components["schemas"]["BarcodeReferenceResponse"]> {
+  const client = createApiClient();
+  const { data, error, response } = await client.GET("/api/v1/barcodes/{gtin}", {
+    params: { path: { gtin } },
+  });
+  if (!response.ok || !data) {
+    throw await parsedApiError(response, error);
+  }
+  return data;
+}

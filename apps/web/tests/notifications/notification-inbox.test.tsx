@@ -6,6 +6,42 @@ const { inbox, markRead, markAllRead, push }=vi.hoisted(()=>({inbox:vi.fn(),mark
 vi.mock("@/features/notifications/notification-api",()=>({inbox,markRead,markAllRead}));
 vi.mock("next/navigation",()=>({useRouter:()=>({push})}));
 beforeEach(()=>{inbox.mockReset();markRead.mockReset();markAllRead.mockReset();push.mockReset();});
+it("opens the existing Billing owner destination after marking its reminder read", async () => {
+  const merchantId = "22222222-2222-4222-8222-222222222222";
+  const billingUrl = `/seller/${merchantId}/billing`;
+  inbox.mockResolvedValueOnce({ items: [{ id: "billing-reminder", type: "BILLING_RENEWAL_REMINDER",
+    read: false, data: { merchantId, billingUrl } }] });
+  markRead.mockResolvedValueOnce(undefined);
+  render(<NotificationInbox />);
+  fireEvent.click(await screen.findByText("Có cập nhật mới"));
+  await waitFor(() => expect(push).toHaveBeenCalledWith(billingUrl));
+  expect(markRead).toHaveBeenCalledOnce();
+  expect(markRead).toHaveBeenCalledWith("billing-reminder");
+  expect(screen.queryByText(/Kỳ đã thanh toán không thay đổi/)).not.toBeInTheDocument();
+});
+it("shows immutable public price notice facts without claiming an automatic charge", async () => {
+  inbox.mockResolvedValueOnce({ items: [{ id: "price-notice", type: "BILLING_RENEWAL_REMINDER", read: true,
+    data: { noticeKind: "PRICE_CHANGED", deepLink: "/seller", planCode: "FOUNDER", revision: 2, priceVnd: 15000,
+      cycleMonths: 1, effectiveAt: "2026-10-20T02:00:00Z" } }] });
+  render(<NotificationInbox />);
+  expect(await screen.findByText("Bảng giá thuê bao được cập nhật")).toBeInTheDocument();
+  expect(screen.getByText(/Gói FOUNDER, phiên bản 2/)).toHaveTextContent("15.000đ / 1 tháng");
+  expect(screen.getByText(/Gói FOUNDER, phiên bản 2/)).toHaveTextContent("09:00");
+  expect(screen.getByText(/Gói FOUNDER, phiên bản 2/)).toHaveTextContent("Kỳ đã thanh toán không thay đổi; không tự động thu phí.");
+  fireEvent.click(screen.getByRole("button", { name: "Bảng giá thuê bao được cập nhật. Mở chi tiết" }));
+  await waitFor(() => expect(push).toHaveBeenCalledWith("/seller"));
+  expect(markRead).not.toHaveBeenCalled();
+});
+it("does not expose arbitrary fallback content from a malformed price notice", async () => {
+  inbox.mockResolvedValueOnce({ items: [{ id: "invalid-price", type: "BILLING_RENEWAL_REMINDER", read: true,
+    title: "private provider diagnostic", body: "private provider diagnostic",
+    data: { noticeKind: "PRICE_CHANGED", planCode: "FOUNDER", revision: 2, priceVnd: "private provider diagnostic",
+      cycleMonths: 1, effectiveAt: "invalid", body: "private provider diagnostic" } }] });
+  render(<NotificationInbox />);
+  expect(await screen.findByText("Bảng giá thuê bao được cập nhật")).toBeInTheDocument();
+  expect(screen.queryByText(/private provider diagnostic/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Kỳ đã thanh toán không thay đổi/)).not.toBeInTheDocument();
+});
 it("does not claim the whole inbox is read while another cursor page exists",async()=>{
   inbox.mockResolvedValueOnce({items:[{id:"n1",type:"ORDER_CONFIRMED",read:true,data:{}}],nextCursor:"cursor"});
   render(<NotificationInbox/>);

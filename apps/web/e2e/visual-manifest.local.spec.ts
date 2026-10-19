@@ -10,6 +10,7 @@ const repositoryRoot = path.resolve(process.cwd(), "../..");
 const evidenceDirectory = path.join(repositoryRoot, ".local/dev/visual-review/acceptance-2026-09-13");
 const catalogPath = path.join(repositoryRoot, "docs/visual-acceptance-cases.csv");
 const manualReviewLedgerPath = path.join(repositoryRoot, "docs/visual-acceptance-manual-reviews.json");
+const currentDesign = process.env.COVIE_UI_CURRENT_DESIGN === "1";
 
 function sha256(filePath: string) {
   return createHash("sha256").update(readFileSync(filePath)).digest("hex");
@@ -27,8 +28,10 @@ test("merges and validates the complete visual acceptance manifest", async () =>
     evidenceDirectory,
     fragmentNames: ["buyer", "public", "seller", "admin"],
     visualCases,
-    manualReviewLedgerPath,
+    manualReviewLedgerPath: currentDesign ? undefined : manualReviewLedgerPath,
     metadata: {
+      figmaComparison: currentDesign ? "NOT_APPLICABLE_OWNER_WAIVER" : "FROZEN_FIGMA",
+      manualReviewScope: currentDesign ? "NOT_PERFORMED" : "HASH_BOUND_FIGMA_LEDGER",
       generatedAt: new Date().toISOString(),
       catalogSha256: createHash("sha256").update(catalogSource).digest("hex"),
       workingTree: {
@@ -54,8 +57,12 @@ test("merges and validates the complete visual acceptance manifest", async () =>
   expect(manifest.totals).toEqual({
     cases: 81,
     captures: 201,
-    manualReview: { pass: 201, fail: 0, pending: 0 },
+    manualReview: currentDesign ? { pass: 0, fail: 0, pending: 201 } : { pass: 201, fail: 0, pending: 0 },
   });
+  if (currentDesign) {
+    expect(manifest.figmaComparison).toBe("NOT_APPLICABLE_OWNER_WAIVER");
+    expect(manifest.manualReviewScope).toBe("NOT_PERFORMED");
+  }
   expect(manifest.records).toHaveLength(201);
   expect(new Set(manifest.records.map((record: { captureKey: string }) => record.captureKey)).size).toBe(201);
 });

@@ -1,0 +1,129 @@
+rule_files:
+  - ../rules/covie.rules.yml
+evaluation_interval: 1m
+tests:
+  - name: fresh failed checks remain visible until a verified retry clears them
+    interval: 1m
+    input_series:
+      - series: 'covie_billing_reconciliation_enabled{job="covie-api"}'
+        values: '1+0x10'
+      - series: 'covie_billing_reconciliation_review_required{job="covie-api"}'
+        values: '0 1 1 1 1 1 1 0'
+      - series: 'covie_billing_reconciliation_oldest_check_age_seconds{job="covie-api"}'
+        values: '0+0x10'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: CoVieBillingReconciliationRequiresReview
+        exp_alerts:
+          - exp_labels: { job: covie-api, severity: warn }
+            exp_annotations: { summary: "Enabled billing reconciliation has pending discrepancies or provider failures" }
+      - eval_time: 7m
+        alertname: CoVieBillingReconciliationRequiresReview
+        exp_alerts: []
+  - name: stale snapshot cannot borrow a fresh snapshot from another instance
+    interval: 1m
+    input_series:
+      - series: 'up{job="covie-api",instance="stale"}'
+        values: '1+0x8'
+      - series: 'covie_billing_database_last_success_unixtime{job="covie-api",instance="stale"}'
+        values: '1+0x8'
+      - series: 'covie_billing_database_last_success_unixtime{job="covie-api",instance="fresh"}'
+        values: '0+60x8'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: CoVieBillingMetricsUnavailable
+        exp_alerts:
+          - exp_labels: { job: covie-api, instance: stale, severity: warn }
+            exp_annotations: { summary: "Billing database metrics are missing or stale" }
+  - name: billing snapshot unavailable then recovers
+    interval: 1m
+    input_series:
+      - series: 'up{job="covie-api"}'
+        values: '1+0x8'
+      - series: 'covie_billing_database_last_success_unixtime{job="covie-api"}'
+        values: '0 0 0 180 240 300 360'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: CoVieBillingMetricsUnavailable
+        exp_alerts:
+          - exp_labels: { job: covie-api, severity: warn }
+            exp_annotations: { summary: "Billing database metrics are missing or stale" }
+      - eval_time: 3m
+        alertname: CoVieBillingMetricsUnavailable
+        exp_alerts: []
+  - name: absent billing snapshot is not silently healthy
+    interval: 1m
+    input_series:
+      - series: 'up{job="covie-api"}'
+        values: '1+0x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: CoVieBillingMetricsUnavailable
+        exp_alerts:
+          - exp_labels: { job: covie-api, severity: warn }
+            exp_annotations: { summary: "Billing database metrics are missing or stale" }
+  - name: enabled reconciliation check age fires then clears
+    interval: 1m
+    input_series:
+      - series: 'covie_billing_reconciliation_enabled{job="covie-api"}'
+        values: '1+0x10'
+      - series: 'covie_billing_reconciliation_oldest_check_age_seconds{job="covie-api"}'
+        values: '0 2000 2000 2000 2000 2000 2000 0'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: CoVieBillingReconciliationChecksStale
+        exp_alerts:
+          - exp_labels: { job: covie-api, severity: warn }
+            exp_annotations: { summary: "Enabled billing reconciliation has stale pending-invoice checks" }
+      - eval_time: 7m
+        alertname: CoVieBillingReconciliationChecksStale
+        exp_alerts: []
+  - name: intentionally paused payment jobs stay quiet
+    interval: 1m
+    input_series:
+      - series: 'covie_billing_reconciliation_enabled{job="covie-api"}'
+        values: '0+0x12'
+      - series: 'covie_billing_reconciliation_oldest_check_age_seconds{job="covie-api"}'
+        values: '99999+0x12'
+      - series: 'covie_billing_reconciliation_review_required{job="covie-api"}'
+        values: '20+0x12'
+      - series: 'covie_billing_payment_creation_enabled{job="covie-api"}'
+        values: '0+0x12'
+      - series: 'covie_billing_operations_seconds_count{job="covie-api",operation="checkout",outcome="failed"}'
+        values: '0+20x12'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CoVieBillingReconciliationChecksStale
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: CoVieBillingCheckoutFailures
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: CoVieBillingReconciliationRequiresReview
+        exp_alerts: []
+  - name: enabled failed checkout requests and rejected webhooks fire then recover
+    interval: 1m
+    input_series:
+      - series: 'covie_billing_payment_creation_enabled{job="covie-api"}'
+        values: '1+0x10'
+      - series: 'covie_billing_operations_seconds_count{job="covie-api",operation="checkout",outcome="failed"}'
+        values: '0 1 1 1 1 1 1 1'
+      - series: 'covie_billing_operations_seconds_count{job="covie-api",operation="webhook",outcome="rejected"}'
+        values: '0 20 20 20 20 20 20 20'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: CoVieBillingCheckoutFailures
+        exp_alerts:
+          - exp_labels: { job: covie-api, severity: warn }
+            exp_annotations: { summary: "Enabled billing checkout requests are failing" }
+      - eval_time: 3m
+        alertname: CoVieBillingWebhookRejections
+        exp_alerts:
+          - exp_labels: { job: covie-api, severity: warn }
+            exp_annotations: { summary: "Billing webhook rejections exceed the pilot threshold" }
+      - eval_time: 7m
+        alertname: CoVieBillingCheckoutFailures
+        exp_alerts: []
+      - eval_time: 7m
+        alertname: CoVieBillingWebhookRejections
+        exp_alerts: []

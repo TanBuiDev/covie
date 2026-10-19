@@ -3,12 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { CovieApiError } from "@/lib/api/api-error";
 import { BookmarkSimple, ChatCircle, Heart, MapPin, Package, ShareNetwork, Storefront, Tag, Wrench } from "@phosphor-icons/react";
 import type { components } from "@covie/api-client";
 import type { MarketplaceViewMode } from "./marketplace-view-preference";
 import { changeSocialReaction, isSignInRequired, socialErrorMessage } from "./social-api";
 import { useSocialFeed } from "./social-feed";
 import { SocialComments } from "./social-comments";
+import { SocialPostContent } from "./social-post-content";
 import styles from "./marketplace-view.module.css";
 
 type Item = components["schemas"]["CatalogItemSummaryResponse"];
@@ -38,7 +40,10 @@ export function MarketplaceProductCard({
   const [signIn, setSignIn] = useState(false);
   const [busy, setBusy] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const { summaries, loading: socialLoading, failed: socialFailed, updateSummary, retry } = useSocialFeed();
+  const { summaries, loading: socialLoading, failed: socialFailed, updateSummary, retry,
+    previewsEnabled, previews, previewsLoading, previewsFailed, retryPreviews, revalidatePreview } = useSocialFeed();
+  const preview = item.id ? previews[item.id] : undefined;
+  const usePreview = mode === "social" && previewsEnabled;
   const social = item.id ? summaries[item.id] : undefined;
   const service = item.type === "SERVICE";
   const resale = item.listingKind === "RESALE";
@@ -76,10 +81,23 @@ export function MarketplaceProductCard({
       const confirmed = await changeSocialReaction(item.id, kind, !selected);
       if (confirmed) updateSummary(confirmed);
     } catch (error) {
+      if (usePreview && error instanceof CovieApiError && error.status === 404) revalidatePreview(item.id);
       setSignIn(isSignInRequired(error));
       setSocialError(socialErrorMessage(error));
     } finally { setBusy(false); }
   }
+
+  if (usePreview && previewsLoading) return <article className={`${styles.card} ${styles.social}`} aria-busy="true">
+    <p className={`${styles.previewState} ${styles.previewLoadingHead}`} role="status">Đang tải nội dung bài đăng…</p>
+    <div className={styles.media} aria-hidden="true" />
+    <div className={styles.previewLoadingBody} aria-hidden="true" />
+  </article>;
+  if (usePreview && previewsFailed) return <article className={styles.card}>
+    <div className={styles.previewState} role="alert">Không tải được nội dung bài đăng.
+      <button type="button" onClick={retryPreviews} aria-label="Thử lại nội dung bài đăng">Thử lại</button>
+    </div>
+  </article>;
+  if (usePreview && !preview) return null;
 
   return (
     <article className={[styles.card, mode === "social" ? styles.social : styles.catalog].join(" ")}>
@@ -90,6 +108,7 @@ export function MarketplaceProductCard({
           {distance && <small>{distance}</small>}
         </header>
       )}
+      {usePreview && preview ? <SocialPostContent caption={preview.socialCaption} media={preview.media ?? []} name={name} href={url} kind={kind} /> :
       <Link className={styles.media} href={url} aria-label={"Xem " + name}>
         {item.primaryMedia?.url ? (
           <Image
@@ -106,7 +125,7 @@ export function MarketplaceProductCard({
           </span>
         )}
         <span className={styles.kind}>{kind}</span>
-      </Link>
+      </Link>}
       <div className={styles.body}>
         <h3 className={styles.title}><Link href={url}>{name}</Link></h3>
         <strong className={styles.price}>{formatMoney(item)}</strong>

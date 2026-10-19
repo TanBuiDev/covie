@@ -49,11 +49,13 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1366, height: 768 
         return true;
       }).map(node => ({ tag: node.tagName, className: node.className, right: node.getBoundingClientRect().right, width: node.getBoundingClientRect().width })).slice(0, 14) }));
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), JSON.stringify(overflow)).toBe(true);
-      const slot = page.locator('[data-ad-placement="IN_FEED"]').first();
-      await slot.scrollIntoViewIfNeeded();
-      await expect.poll(() => events.some(event => event.type === "IMPRESSION" && event.deliveryToken === "IN_FEED-0")).toBe(true);
-      await slot.getByRole("tab", { name: "Chuyển đến quảng cáo 2" }).click();
-      await expect(slot.getByRole("link", { name: "Gian hàng nổi bật — Xem ngay" })).toBeVisible();
+      if (path === "/") {
+        const slot = page.locator('[data-ad-placement="IN_FEED"]').first();
+        await slot.scrollIntoViewIfNeeded();
+        await expect.poll(() => events.some(event => event.type === "IMPRESSION" && event.deliveryToken === "IN_FEED-0")).toBe(true);
+        await slot.getByRole("tab", { name: "Chuyển đến quảng cáo 2" }).click();
+        await expect(slot.getByRole("link", { name: "Gian hàng nổi bật — Xem ngay" })).toBeVisible();
+      }
       await page.screenshot({ path: resolve(directory, `${path === "/" ? "home" : "search"}-${viewport.width}.png`) });
     }
     await page.locator('[data-ad-placement="IN_FEED"]').first().getByRole("link", { name: "Gian hàng nổi bật — Xem ngay" }).click();

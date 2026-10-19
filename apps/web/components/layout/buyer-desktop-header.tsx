@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import {
   Bell,
   CaretDown,
@@ -100,6 +100,24 @@ export function BuyerDesktopHeader() {
   const { location } = useBrowseLocation();
   const [locationOpen, setLocationOpen] = useState(false);
   const cartCount = useCartCount();
+  const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const updateHeight = () => {
+      document.documentElement.style.setProperty("--buyer-desktop-header-height", `${header.getBoundingClientRect().height}px`);
+    };
+    updateHeight();
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateHeight) : undefined;
+    observer?.observe(header);
+    window.addEventListener("resize", updateHeight);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateHeight);
+      document.documentElement.style.removeProperty("--buyer-desktop-header-height");
+    };
+  }, []);
 
   useEffect(() => {
     if (!locationOpen) return;
@@ -111,7 +129,7 @@ export function BuyerDesktopHeader() {
   }, [locationOpen]);
 
   return (
-    <header className="buyer-desktop-header">
+    <header className="buyer-desktop-header" ref={headerRef}>
       <div className="buyer-desktop-header__inner">
         {/* Left: Brand Logo & Location Pill */}
         <div className="buyer-desktop-header__left">
@@ -197,7 +215,7 @@ export function BuyerDesktopHeader() {
           <div className="buyer-desktop-actions">
             <Link href="/seller" className="buyer-desktop-seller-btn">
               <Storefront size={16} weight="duotone" aria-hidden="true" />
-              <span>Mở quầy / Pass đồ</span>
+              <span>Cửa hàng</span>
             </Link>
 
             <Link href="/me/notifications" className="buyer-desktop-icon-btn" aria-label="Thông báo">

@@ -58,13 +58,15 @@ test("populated Public Buyer P0 journey reaches checkout success on the first co
   await expect(page).toHaveURL(/\/$/);
 
   await page.getByRole("button", { name: "Chọn vị trí" }).click();
+  await page.getByRole("button", { name: /^Địa chỉ đã lưu/ }).click();
   await page.getByRole("radio", { name: /Nhà — S5\.03/ }).check();
   await page.getByRole("button", { name: "Dùng địa chỉ đã chọn" }).click();
   await expect(page.getByRole("heading", { name: "Rau củ theo mùa" })).toBeVisible();
   await captureResponsive(page, "pub-001-home");
 
   await page.getByRole("link", { name: "Tìm món đồ, dịch vụ..." }).click();
-  await expect(page.getByRole("heading", { name: "Khám phá" })).toBeVisible();
+  await expect(page).toHaveURL(/\/search$/);
+  await expect(page.getByRole("heading", { name: "Khám phá", exact: true, level: 1 })).toBeVisible();
   await page.getByRole("searchbox", { name: "Tìm món đồ, dịch vụ" }).fill("Rau củ");
   await page.getByRole("searchbox", { name: "Tìm món đồ, dịch vụ" }).press("Enter");
   await expect(page.getByRole("heading", { name: "Kết quả tìm kiếm" })).toBeVisible();
@@ -127,6 +129,9 @@ test("populated Public Buyer P0 journey reaches checkout success on the first co
 
   await page.setViewportSize({ width: 390, height: 844 });
   const createAddressForm = page.locator("form:visible");
+  await createAddressForm.getByText("Nâng cao: chọn nguồn và nhập tọa độ", { exact: true }).click();
+  await createAddressForm.getByLabel("Nguồn vị trí", { exact: true }).selectOption("SAVED");
+  await createAddressForm.getByLabel("Địa chỉ lấy điểm", { exact: true }).selectOption(fixture.addressId);
   await createAddressForm.getByLabel("Nhãn *").fill("Nhà E2E");
   await createAddressForm.getByLabel("Người nhận *").fill("Nguyễn Văn Minh");
   await createAddressForm.getByLabel("Số điện thoại *").fill("0909123456");
@@ -169,6 +174,9 @@ test("populated Public Buyer P0 journey reaches checkout success on the first co
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/me/addresses/new");
   const invalidAddressForm = page.locator("form:visible");
+  await invalidAddressForm.getByText("Nâng cao: chọn nguồn và nhập tọa độ", { exact: true }).click();
+  await invalidAddressForm.getByLabel("Nguồn vị trí", { exact: true }).selectOption("SAVED");
+  await invalidAddressForm.getByLabel("Địa chỉ lấy điểm", { exact: true }).selectOption(fixture.addressId);
   await invalidAddressForm.getByLabel("Nhãn *").fill("Nhà lỗi");
   await invalidAddressForm.getByLabel("Người nhận *").fill("Nguyễn Văn Minh");
   await invalidAddressForm.getByLabel("Số điện thoại *").fill("090");
@@ -189,10 +197,16 @@ test("populated Public Buyer P0 journey reaches checkout success on the first co
   await expect(page.getByRole("heading", { name: "Giỏ sản phẩm", exact: true })).toBeVisible();
   await captureResponsive(page, "buy-002-cart-detail");
 
-  await page.getByRole("link", { name: "Tiếp tục đặt hàng" }).click();
+  const [checkoutPreview] = await Promise.all([
+    page.waitForResponse((response) => response.request().method() === "POST"
+      && new URL(response.url()).pathname === "/api/v1/checkouts/preview"),
+    page.getByRole("link", { name: "Tiếp tục đặt hàng" }).click(),
+  ]);
+  expect(checkoutPreview.status()).toBe(200);
+  expect((await checkoutPreview.json()).checkoutToken).toBeTruthy();
+  await expect(page).toHaveURL((url) => url.pathname === "/checkout");
   await expect(page.getByRole("heading", { name: "Xác nhận đơn" })).toBeVisible();
-  await page.getByRole("button", { name: "Xem trước" }).click();
-  await expect(page.getByRole("button", { name: "Đặt hàng" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Đặt hàng", exact: true })).toBeEnabled();
   await expect(page.getByRole("navigation", { name: "Điều hướng chính" })).toHaveCount(0);
   await captureResponsive(page, "buy-005-checkout-preview");
 

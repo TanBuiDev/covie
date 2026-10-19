@@ -1,0 +1,24 @@
+.screen { max-width: 920px; min-height: calc(100dvh - 80px); margin: 0 auto; padding: 24px 16px 96px; color: var(--covie-text); }
+.header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.header h1 { font-size: 24px; line-height: 1.3; margin: 0; }
+.header p, .meta { color: var(--covie-muted); font-size: 14px; line-height: 1.5; }
+.header p { margin: 6px 0 0; }
+.back { display: flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border-radius: 12px; background: var(--covie-surface); }
+.tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--covie-subtle); margin-bottom: 20px; }
+.tabs a { display: flex; flex: 1; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: 8px; color: var(--covie-muted); text-decoration: none; font-weight: 600; font-size: 14px; }
+.tabs a[aria-selected="true"] { background: var(--covie-surface); color: var(--covie-accent); box-shadow: 0 1px 3px rgb(15 23 42 / 8%); }
+.screen a:focus-visible, .screen button:focus-visible, .screen [role="tabpanel"]:focus-visible { outline: 2px solid var(--covie-accent); outline-offset: 3px; }
+.screen button, .screen [role="alert"] a { min-height: 44px; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.row { display: flex; align-items: flex-start; gap: 16px; padding: 16px; background: var(--covie-surface); border: 1px solid var(--covie-border); border-radius: 16px; }
+.thumbnail { width: 80px; height: 80px; flex-shrink: 0; border-radius: 12px; background: var(--covie-subtle); color: var(--covie-muted); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+.content { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.itemName { font-weight: 600; color: inherit; text-decoration: none; }
+.itemName:hover { text-decoration: underline; }
+.meta { display: block; margin: 4px 0; }
+.excerpt { margin: 12px 0 0; white-space: pre-wrap; line-height: 1.6; }
+.more { display: block; margin: 20px auto; min-height: 44px; }
+.skeleton { height: 64px; border-radius: 12px; margin-top: 16px; background: var(--covie-subtle); }
+@media (max-width: 400px) { .tabs a { gap: 4px; font-size: 13px; } .row { gap: 12px; padding: 12px; } .thumbnail { width: 64px; height: 64px; } }
+@media (min-width: 768px) { .screen { padding: 40px 32px 80px; } }

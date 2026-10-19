@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public final class ScheduledJobMetrics {
     public enum Job {
-        OUTBOX("outbox"), ORDERS("orders"), NEEDS("needs"), RETENTION("retention"), SSE_HEARTBEAT("sse-heartbeat");
+        OUTBOX("outbox"), ORDERS("orders"), NEEDS("needs"), RETENTION("retention"), SSE_HEARTBEAT("sse-heartbeat"), CATALOG_VIDEO_CLEANUP("catalog-video-cleanup");
         private final String tag;
         Job(String tag) { this.tag = tag; }
         public String tag() { return tag; }

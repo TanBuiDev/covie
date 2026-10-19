@@ -11,6 +11,7 @@ public class CatalogItemEntity {
     @Enumerated(EnumType.STRING) @Column(name="listing_kind",nullable=false,length=20) private ListingKind listingKind;
     @Column(name="primary_category_id",nullable=false) private UUID primaryCategoryId; @Column(nullable=false,length=220) private String name; @Column(nullable=false,length=240) private String slug; @Column private String description;
     @Enumerated(EnumType.STRING) @Column(name="listing_status",nullable=false,length=30) private ListingStatus listingStatus;
+    @Column(name="social_caption") private String socialCaption;
     @Enumerated(EnumType.STRING) @Column(name="moderation_status",nullable=false,length=30) private CatalogModerationStatus moderationStatus;
     @Column(name="created_at",nullable=false) private Instant createdAt; @Column(name="updated_at",nullable=false) private Instant updatedAt; @Column(name="deleted_at") private Instant deletedAt; @Version @Column(nullable=false) private long version;
     protected CatalogItemEntity() {}
@@ -20,10 +21,12 @@ public class CatalogItemEntity {
     }
     public void publish(Instant now){listingStatus=ListingStatus.ACTIVE;moderationStatus=CatalogModerationStatus.NOT_REQUIRED;updatedAt=now;}
     public void requireModeration(Instant now){moderationStatus=CatalogModerationStatus.PENDING;updatedAt=now;}
-    public void approveModeration(Instant now){if(moderationStatus!=CatalogModerationStatus.PENDING)throw new IllegalStateException("Catalog item is not pending moderation.");moderationStatus=CatalogModerationStatus.APPROVED;listingStatus=ListingStatus.ACTIVE;updatedAt=now;}
+    public void approveModeration(Instant now){if(moderationStatus!=CatalogModerationStatus.PENDING)throw new IllegalStateException("Catalog item is not pending moderation.");moderationStatus=CatalogModerationStatus.APPROVED;if(listingStatus!=ListingStatus.PAUSED)listingStatus=ListingStatus.ACTIVE;updatedAt=now;}
     public void rejectModeration(Instant now){if(moderationStatus!=CatalogModerationStatus.PENDING)throw new IllegalStateException("Catalog item is not pending moderation.");moderationStatus=CatalogModerationStatus.REJECTED;updatedAt=now;}
     public void hide(Instant now){if(moderationStatus!=CatalogModerationStatus.NOT_REQUIRED&&moderationStatus!=CatalogModerationStatus.APPROVED)throw new IllegalStateException("Catalog item is not visible.");moderationStatus=CatalogModerationStatus.HIDDEN;updatedAt=now;}
     public void restoreVisibility(Instant now){if(moderationStatus!=CatalogModerationStatus.HIDDEN&&moderationStatus!=CatalogModerationStatus.REJECTED)throw new IllegalStateException("Catalog item cannot be restored.");moderationStatus=CatalogModerationStatus.APPROVED;updatedAt=now;}
+    public String getSocialCaption(){return socialCaption;}
+    public void updateSocialCaption(String value,Instant now){socialCaption=value;updatedAt=now;}
     public void pause(Instant now){listingStatus=ListingStatus.PAUSED;updatedAt=now;}
     public void activate(Instant now){listingStatus=ListingStatus.ACTIVE;updatedAt=now;}
     public void delete(Instant now){listingStatus=ListingStatus.DELETED;deletedAt=now;updatedAt=now;}

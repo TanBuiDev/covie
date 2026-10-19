@@ -1,0 +1,1 @@
+-- Admin-configurable reminder offsets (1 to 60 days); preserve existing dispatch keys.\nalter table billing_reminder_dispatches drop constraint if exists billing_reminder_dispatches_days_before_check;\nalter table billing_reminder_dispatches add constraint ck_billing_reminder_days_before check (days_before between 1 and 60);\n

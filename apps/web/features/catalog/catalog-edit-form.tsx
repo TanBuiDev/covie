@@ -2,7 +2,7 @@
 
 import type { components } from "@covie/api-client";
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import {
   Archive,
@@ -32,6 +32,13 @@ import {
   updateCatalogVariant,
   type CatalogLifecycleAction,
 } from "./catalog-api";
+import { SellerBarcodeLookup } from "./seller-barcode-lookup";
+import { SocialCaptionField } from "./social-caption-field";
+import { CatalogSocialPreview } from "./catalog-social-preview";
+import { SellerSocialComments } from "./seller-social-comments";
+import { confirmSocialDraftDiscard } from "./use-social-draft-navigation";
+import { CatalogMediaEditor, useCatalogGallery } from "./catalog-media-editor";
+import { SocialVideo } from "@/features/marketplace-view/social-video";
 
 type Detail = components["schemas"]["CatalogItemManagementDetailResponse"];
 type Category = components["schemas"]["CategorySummary"];
@@ -136,13 +143,18 @@ function sameAttributeRequests(left: AttributeRequest[], right: AttributeRequest
   return left.map(signature).sort().join("\u0000") === right.map(signature).sort().join("\u0000");
 }
 
-export function CatalogEditForm({ merchantId, item, etag, categories }: {
+export function CatalogEditForm({ merchantId, item, etag, categories, socialAuthoringEnabled = false }: {
   merchantId: string;
   item: Detail;
   etag: string | null;
   categories: Category[];
+  socialAuthoringEnabled?: boolean;
 }) {
   const router = useRouter();
+  const hydrated = useSyncExternalStore(() => () => undefined, () => true, () => false);
+  const mediaAuthoringEnabled = socialAuthoringEnabled || process.env.NEXT_PUBLIC_COVIE_SOCIAL_V2_VIDEO_ENABLED === "true";
+  const socialHydrating = mediaAuthoringEnabled && !hydrated;
+  const gallery = useCatalogGallery(item.media ?? []);
   const [pending, setPending] = useState(false);
   const [stale, setStale] = useState(false);
   const [message, setMessage] = useState<string>();
@@ -159,6 +171,14 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
   const itemId = item.id ?? "";
   const itemActions = new Set(item.allowedActions ?? []);
   const canEditItem = itemActions.has("UPDATE");
+  const [name, setName] = useState(item.name ?? "");
+  const [previewCaption, setPreviewCaption] = useState(item.socialCaption ?? "");
+  const [prevItemName, setPrevItemName] = useState(item.name);
+
+  if (item.name !== prevItemName) {
+    setPrevItemName(item.name);
+    setName(item.name ?? "");
+  }
 
   useEffect(() => {
     if (!canEditItem || !item.categoryId) return;
@@ -171,8 +191,9 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
     return () => { active = false; };
   }, [canEditItem, item.categoryId, categoryAttempt]);
 
-  async function mutate(action: () => Promise<unknown>) {
+  async function mutate(action: () => Promise<unknown>, savesSocialDraft = false) {
     if (pending || stale) return;
+    if (mediaAuthoringEnabled && !savesSocialDraft && !confirmSocialDraftDiscard()) return;
     setPending(true);
     setMessage(undefined);
     try {
@@ -200,6 +221,11 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
       if (name !== item.name) patch.name = name;
       const description = String(form.get("description") ?? "").trim();
       if (description !== (item.description ?? "")) patch.description = description;
+      if (socialAuthoringEnabled) {
+        const caption = String(form.get("socialCaption") ?? "");
+        if (caption.length > 3000) throw new Error("Caption không được vượt quá 3.000 UTF-16 units.");
+        if (caption.trim() !== (item.socialCaption ?? "")) patch.socialCaption = caption.trim() || null;
+      }
       const tags = String(form.get("tags") ?? "").split(",").map((value) => value.trim()).filter(Boolean);
       if (tags.join("\u0000") !== (item.tags ?? []).join("\u0000")) patch.tags = tags;
       if (categoryDetail && categoryDetail.id === item.categoryId) {
@@ -209,7 +235,8 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
           patch.attributes = submitted;
         }
       }
-      if (files.length) {
+      if (mediaAuthoringEnabled && gallery.changed) patch.mediaIds = await gallery.resolveMediaIds();
+      if (!mediaAuthoringEnabled && files.length) {
         const mediaIds = (item.media ?? []).map((media) => media.id).filter((id): id is string => Boolean(id));
         for (const file of files) {
           const uploaded = await uploadImage(file, "CATALOG_IMAGE");
@@ -220,7 +247,7 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
       }
       if (!Object.keys(patch).length) return;
       await updateCatalogItem(merchantId, itemId, etag, patch);
-    });
+    }, true);
   }
 
   function lifecycle(action: CatalogLifecycleAction) {
@@ -251,6 +278,12 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
         </div>
       </header>
 
+      {socialAuthoringEnabled && item.moderationReasonCode ? <p className="warning-banner" role="note" aria-label="Lý do kiểm duyệt">
+        <strong>Lý do kiểm duyệt:</strong> {item.moderationReasonCode}
+      </p> : null}
+
+      {socialAuthoringEnabled && item.id ? <SellerSocialComments key={item.id} itemId={item.id} /> : null}
+
       {message ? (
         <p className="warning-banner" role="alert">
           {message}
@@ -259,7 +292,9 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
 
       {stale ? (
         <div className="seller-catalog-editor__stale-bar">
-          <button type="button" className="seller-button seller-button--secondary" onClick={() => router.refresh()}>
+          <button type="button" className="seller-button seller-button--secondary" onClick={() => {
+            if (!mediaAuthoringEnabled || confirmSocialDraftDiscard()) router.refresh();
+          }}>
             <ArrowsClockwise size={16} weight="bold" aria-hidden="true" />
             <span>Tải dữ liệu mới</span>
           </button>
@@ -275,11 +310,28 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
 
         {itemActions.has("UPDATE") ? (
           <form className="seller-catalog-form" onSubmit={submitItem}>
+            {item.type === "PRODUCT" ? (
+              <SellerBarcodeLookup
+                mode="edit"
+                canApply={itemActions.has("UPDATE") && !pending && !stale}
+                disabled={pending || stale}
+                currentProductName={name}
+                onApplyProductName={(appliedName) => setName(appliedName)}
+              />
+            ) : null}
+
             <label>
               <span className="seller-field-title">
                 Tên <span className="seller-required-star" aria-hidden="true">*</span>
               </span>
-              <input name="name" defaultValue={item.name} maxLength={240} required disabled={pending || stale} />
+              <input
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={240}
+                required
+                disabled={pending || stale}
+              />
             </label>
 
             <label>
@@ -292,6 +344,9 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
               <span className="seller-field-title">Mô tả chi tiết</span>
               <textarea name="description" defaultValue={item.description} maxLength={4000} disabled={pending || stale} />
             </label>
+
+            {socialAuthoringEnabled && <SocialCaptionField key={etag ?? String(item.version)}
+              initialValue={item.socialCaption ?? ""} disabled={pending || stale || socialHydrating} onChange={setPreviewCaption} />}
 
             <label>
               <span className="seller-field-title">Thẻ tìm kiếm (Tags)</span>
@@ -395,7 +450,7 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
               <p className="seller-muted">Đang tải thuộc tính danh mục…</p>
             )}
 
-            <div style={{ marginTop: "16px", marginBottom: "16px" }}>
+            <div hidden={mediaAuthoringEnabled} style={{ marginTop: "16px", marginBottom: "16px" }}>
               <label className="seller-catalog-upload-zone">
                 <UploadSimple size={24} weight="bold" color="#047857" aria-hidden="true" />
                 <div>
@@ -445,7 +500,7 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
               ) : null}
             </div>
 
-            <button type="submit" disabled={pending || stale} className="seller-button seller-button--primary">
+            <button type="submit" disabled={pending || stale || socialHydrating} className="seller-button seller-button--primary">
               <FloppyDisk size={16} weight="bold" aria-hidden="true" />
               <span>Lưu thông tin</span>
             </button>
@@ -471,11 +526,14 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
           <h2>Ảnh</h2>
         </div>
 
-        {(item.media ?? []).length ? (
+        {mediaAuthoringEnabled && canEditItem ? <CatalogMediaEditor gallery={gallery} disabled={pending || stale || socialHydrating} /> : (item.media ?? []).length ? (
           <div className="seller-catalog-editor__media">
-            {(item.media ?? []).map((media, index) => media.id ? (
+            {(item.media ?? []).filter(media => !media.contentType?.startsWith("video/") || gallery.videoEnabled).map((media, index) => media.id ? (
               <figure key={media.id} className="seller-catalog-media-card">
-                {media.url ? (
+                {media.contentType?.startsWith("video/") ? <div style={{ width: 160, height: 120 }}>
+                  {media.status === "READY" && media.url ? <SocialVideo key={media.id} url={media.url} name={item.name ?? "Catalog"} />
+                    : <span aria-label={`Video ${index + 1} chưa sẵn sàng`}>Video chưa sẵn sàng</span>}
+                </div> : media.url ? (
                   <Image src={media.url} alt={`${item.name ?? "Catalog"} — ảnh ${index + 1}`} width={160} height={120} unoptimized />
                 ) : (
                   <div className="seller-catalog-placeholder" aria-label={`Ảnh ${index + 1} chưa sẵn sàng`} />
@@ -492,6 +550,7 @@ export function CatalogEditForm({ merchantId, item, etag, categories }: {
         )}
       </section>
 
+      {mediaAuthoringEnabled && <CatalogSocialPreview name={name} caption={previewCaption} entries={gallery.entries} />}
       {/* PANEL 3: BIẾN THỂ HOẶC GÓI DỊCH VỤ */}
       <section className="seller-catalog-editor__panel">
         <div className="seller-catalog-editor__panel-title">

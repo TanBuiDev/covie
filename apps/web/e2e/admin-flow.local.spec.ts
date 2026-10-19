@@ -22,7 +22,7 @@ const adminMainCases = new Map<string, string | RegExp>([
   ["adm-005", "Nội dung đăng bán"],
   ["adm-006", "Tra cứu đơn hàng"],
   ["adm-007", /^Lịch sử đơn /],
-  ["adm-008", "Cần mua"],
+  ["adm-008", "Cần mua & Nhu cầu cư dân"],
   ["adm-009", "Hàng đợi báo cáo"],
   ["adm-010-settings", "Kiểm duyệt · Đánh giá · Uy tín"],
   ["adm-013", "Thời hạn đơn hàng"],
@@ -34,6 +34,7 @@ const adminMainCases = new Map<string, string | RegExp>([
 
 test.skip(!enabled, "Run pnpm ui:verify-local with the local Docker stack running.");
 test.setTimeout(120_000);
+test.use({ serviceWorkers: "block" });
 
 test("Admin authenticates and captures the deterministic main-state journey", async ({ page }) => {
   const fixture = JSON.parse(readFileSync(fixturePath, "utf8")) as AdminFixture;
@@ -65,6 +66,18 @@ test("Admin authenticates and captures the deterministic main-state journey", as
     }
 
     for (const capture of visualCase!.captures) {
+      if (caseId === "adm-017") {
+        await page.setViewportSize({ width: capture.width, height: capture.height });
+        const scroller = page.getByRole("region", { name: "Nhật ký quản trị có thể cuộn ngang", exact: true });
+        await expect(scroller).toBeVisible();
+        if (capture.width <= 1180) {
+          await scroller.focus();
+          await page.keyboard.press("ArrowRight");
+          await expect.poll(() => scroller.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+          expect(await page.evaluate(() => scrollX)).toBe(0);
+          await scroller.evaluate((element) => element.scrollTo({ left: 0 }));
+        }
+      }
       records.push(await captureEvidence({
         page,
         capture,

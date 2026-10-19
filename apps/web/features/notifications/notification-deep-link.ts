@@ -1,4 +1,4 @@
-const DEEP_LINK_KEYS = ["deepLink", "href", "path", "route"] as const;
+const DEEP_LINK_KEYS = ["deepLink", "href", "path", "route", "billingUrl"] as const;
 
 function safeInternalPath(value: unknown): string | null {
   if (typeof value !== "string") return null;

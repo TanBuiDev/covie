@@ -95,6 +95,8 @@ class ProductionStartupIntegrationTest {
                 assertThat(scrape.body()).contains("covie_scheduler_runs_total", "covie_scheduler_failures_total",
                         "covie_scheduler_duration_seconds_count");
                 assertThat(scrape.body()).contains("covie_sse_connections");
+                assertThat(scrape.body()).contains("covie_moderation_open_cases", "covie_moderation_oldest_open_seconds",
+                        "covie_media_ready_declared_bytes", "covie_catalog_video_delivery_failures_total");
                 assertThat(scrape.body()).contains("covie_outbox_due", "covie_api_errors_total", "code=\"RESOURCE_VERSION_CONFLICT\"", "status=\"409\"");
                 for (String job : java.util.List.of("outbox", "orders", "needs", "retention", "sse-heartbeat")) {
                     assertThat(scrape.body()).contains("job=\"" + job + "\"");

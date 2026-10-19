@@ -19,11 +19,17 @@ public class MediaAssetEntity {
     @Enumerated(EnumType.STRING) @Column(name = "upload_purpose", nullable = false, length = 40) private MediaPurpose purpose;
     @Column(name = "mime_type", nullable = false, length = 120) private String mimeType;
     @Column(name = "size_bytes", nullable = false) private long sizeBytes;
+    @Column(name = "width") private Integer width;
+    @Column(name = "height") private Integer height;
+    @Column(name = "video_duration_ms") private Long videoDurationMillis;
+    @Column(name = "video_codec", length = 32) private String videoCodec;
     @Enumerated(EnumType.STRING) @Column(name = "media_status", nullable = false, length = 20) private MediaStatus mediaStatus;
     @Column(name = "upload_expires_at", nullable = false) private Instant uploadExpiresAt;
     @Column(name = "verified_at") private Instant verifiedAt;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "deleted_at") private Instant deletedAt;
+    @Column(name = "storage_cleanup_attempted_at") private Instant storageCleanupAttemptedAt;
+    @Column(name = "storage_deleted_at") private Instant storageDeletedAt;
 
     protected MediaAssetEntity() {}
 
@@ -37,7 +43,15 @@ public class MediaAssetEntity {
     }
 
     public void markReady(Instant now) {
+        if (purpose == MediaPurpose.CATALOG_VIDEO && (width == null || height == null || videoDurationMillis == null || videoCodec == null))
+            throw new IllegalStateException("Catalog video must be verified before READY.");
         if (mediaStatus == MediaStatus.PENDING_UPLOAD) { mediaStatus = MediaStatus.READY; verifiedAt = now; }
+    }
+    public void recordVideoMetadata(int width, int height, long durationMillis, String codec) {
+        if (purpose != MediaPurpose.CATALOG_VIDEO || mediaStatus != MediaStatus.PENDING_UPLOAD || width <= 0 || height <= 0
+                || durationMillis <= 0 || durationMillis > 60_000 || !java.util.Set.of("h264", "vp8", "vp9").contains(codec))
+            throw new IllegalArgumentException("Invalid catalog video metadata.");
+        this.width = width; this.height = height; this.videoDurationMillis = durationMillis; this.videoCodec = codec;
     }
     public boolean markFailed() {
         if (mediaStatus != MediaStatus.PENDING_UPLOAD) return false;
@@ -45,14 +59,25 @@ public class MediaAssetEntity {
         return true;
     }
     public void markDeleted(Instant now) { if (mediaStatus == MediaStatus.PENDING_UPLOAD) { mediaStatus = MediaStatus.DELETED; deletedAt = now; } }
+    public void claimVideoCleanup(Instant now) {
+        if (purpose != MediaPurpose.CATALOG_VIDEO || storageDeletedAt != null) throw new IllegalStateException("Video cleanup is not applicable.");
+        mediaStatus = MediaStatus.DELETED;
+        if (deletedAt == null) deletedAt = now;
+        storageCleanupAttemptedAt = now;
+    }
     public UUID getId() { return id; }
     public UUID getOwnerUserId() { return ownerUserId; }
     public String getStorageKey() { return storageKey; }
     public MediaPurpose getPurpose() { return purpose; }
     public String getMimeType() { return mimeType; }
     public long getSizeBytes() { return sizeBytes; }
+    public Integer getWidth() { return width; }
+    public Integer getHeight() { return height; }
+    public Long getVideoDurationMillis() { return videoDurationMillis; }
+    public String getVideoCodec() { return videoCodec; }
     public MediaStatus getMediaStatus() { return mediaStatus; }
     public Instant getUploadExpiresAt() { return uploadExpiresAt; }
     public Instant getVerifiedAt() { return verifiedAt; }
     public Instant getCreatedAt() { return createdAt; }
+    public Instant getDeletedAt() { return deletedAt; }
 }

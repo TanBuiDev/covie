@@ -46,91 +46,32 @@ candidate_sha="$(sed -n 's/^GIT_SHA=//p' "$COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST"
 [[ "$candidate_sha" == "$sha" ]] || {
   echo "Staging candidate GIT_SHA does not match tested checkout" >&2; exit 1;
 }
-grep -Eq '^API_IMAGE=.+@sha256:[0-9a-f]{64}
-printf 'phase=4\nhead=%s\nstaging_origin=%s\nstarted_utc=%s\nstatus=IN_PROGRESS\n'   "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
-
-bash "$repo_root/infra/scripts/social-phase4-smoke.sh" | tee "$evidence/readonly-smoke.log"
-node --test "$repo_root/infra/perf/social-scenarios.test.mjs" | tee "$evidence/perf-scenarios.log"
-for scenario in public-social-summary public-social-comments; do
-  node "$repo_root/infra/perf/run-load.mjs"     --base-url "$COVIE_STAGING_BASE_URL"     --scenario "$scenario"     --concurrency "${COVIE_SOCIAL_PHASE4_CONCURRENCY:-10}"     --duration "${COVIE_SOCIAL_PHASE4_DURATION:-30s}"     | tee "$evidence/perf-$scenario.json"
-done
-
-# The staging fixture refuses the production origin and uses cookie-based role login.
-# Set COVIE_SOCIAL_E2E_MUTATIONS_OK=1 only in a disposable staging account.
-pnpm --dir "$repo_root/apps/web" exec playwright test e2e/social-phase4.staging.spec.ts \
-  --project=chromium --workers=1 --reporter=list | tee "$evidence/playwright.log"
-if grep -Eq '[0-9]+ skipped|[0-9]+ did not run' "$evidence/playwright.log"; then
-  echo "Playwright skipped tests: acceptance is incomplete" >&2
-  exit 1
-fi
-printf 'phase=4\nhead=%s\nstaging_origin=%s\ncompleted_utc=%s\nstatus=AUTOMATED_PASS\n'   "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
-echo "Automated staging gate passed. Manual visual, moderation and rollback evidence remains mandatory."
-echo "Evidence path: $evidence"
- "$COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST" || {
+grep -Eq '^API_IMAGE=.+@sha256:[0-9a-f]{64}$' "$COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST" || {
   echo "Candidate API image is not digest-pinned" >&2; exit 1;
 }
-grep -Eq '^WEB_IMAGE=.+@sha256:[0-9a-f]{64}
-printf 'phase=4\nhead=%s\nstaging_origin=%s\nstarted_utc=%s\nstatus=IN_PROGRESS\n'   "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
-
-bash "$repo_root/infra/scripts/social-phase4-smoke.sh" | tee "$evidence/readonly-smoke.log"
-node --test "$repo_root/infra/perf/social-scenarios.test.mjs" | tee "$evidence/perf-scenarios.log"
-for scenario in public-social-summary public-social-comments; do
-  node "$repo_root/infra/perf/run-load.mjs"     --base-url "$COVIE_STAGING_BASE_URL"     --scenario "$scenario"     --concurrency "${COVIE_SOCIAL_PHASE4_CONCURRENCY:-10}"     --duration "${COVIE_SOCIAL_PHASE4_DURATION:-30s}"     | tee "$evidence/perf-$scenario.json"
-done
-
-# The staging fixture refuses the production origin and uses cookie-based role login.
-# Set COVIE_SOCIAL_E2E_MUTATIONS_OK=1 only in a disposable staging account.
-pnpm --dir "$repo_root/apps/web" exec playwright test e2e/social-phase4.staging.spec.ts \
-  --project=chromium --workers=1 --reporter=list | tee "$evidence/playwright.log"
-if grep -Eq '[0-9]+ skipped|[0-9]+ did not run' "$evidence/playwright.log"; then
-  echo "Playwright skipped tests: acceptance is incomplete" >&2
-  exit 1
-fi
-printf 'phase=4\nhead=%s\nstaging_origin=%s\ncompleted_utc=%s\nstatus=AUTOMATED_PASS\n'   "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
-echo "Automated staging gate passed. Manual visual, moderation and rollback evidence remains mandatory."
-echo "Evidence path: $evidence"
- "$COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST" || {
+grep -Eq '^WEB_IMAGE=.+@sha256:[0-9a-f]{64}$' "$COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST" || {
   echo "Candidate Web image is not digest-pinned" >&2; exit 1;
 }
-grep -Eq '^HIGHEST_FLYWAY=V019
-printf 'phase=4\nhead=%s\nstaging_origin=%s\nstarted_utc=%s\nstatus=IN_PROGRESS\n'   "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
-
-bash "$repo_root/infra/scripts/social-phase4-smoke.sh" | tee "$evidence/readonly-smoke.log"
-node --test "$repo_root/infra/perf/social-scenarios.test.mjs" | tee "$evidence/perf-scenarios.log"
-for scenario in public-social-summary public-social-comments; do
-  node "$repo_root/infra/perf/run-load.mjs"     --base-url "$COVIE_STAGING_BASE_URL"     --scenario "$scenario"     --concurrency "${COVIE_SOCIAL_PHASE4_CONCURRENCY:-10}"     --duration "${COVIE_SOCIAL_PHASE4_DURATION:-30s}"     | tee "$evidence/perf-$scenario.json"
-done
-
-# The staging fixture refuses the production origin and uses cookie-based role login.
-# Set COVIE_SOCIAL_E2E_MUTATIONS_OK=1 only in a disposable staging account.
-pnpm --dir "$repo_root/apps/web" exec playwright test e2e/social-phase4.staging.spec.ts \
-  --project=chromium --workers=1 --reporter=list | tee "$evidence/playwright.log"
-if grep -Eq '[0-9]+ skipped|[0-9]+ did not run' "$evidence/playwright.log"; then
-  echo "Playwright skipped tests: acceptance is incomplete" >&2
-  exit 1
-fi
-printf 'phase=4\nhead=%s\nstaging_origin=%s\ncompleted_utc=%s\nstatus=AUTOMATED_PASS\n'   "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
-echo "Automated staging gate passed. Manual visual, moderation and rollback evidence remains mandatory."
-echo "Evidence path: $evidence"
- "$COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST" || {
-  echo "V019 must be applied before social Phase 4 acceptance" >&2; exit 1;
+highest="$(sed -n 's/^HIGHEST_FLYWAY=//p' "$COVIE_SOCIAL_PHASE4_RELEASE_MANIFEST")"
+[[ "$highest" =~ ^V([0-9]{3,})$ ]] && ((10#${BASH_REMATCH[1]} >= 19)) || {
+  echo "V019 or later must be applied before social Phase 4 acceptance" >&2; exit 1;
 }
-printf 'phase=4\nhead=%s\nstaging_origin=%s\nstarted_utc=%s\nstatus=IN_PROGRESS\n'   "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
+printf 'phase=4\nhead=%s\nstaging_origin=%s\nstarted_utc=%s\nstatus=IN_PROGRESS\n' "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
 
 bash "$repo_root/infra/scripts/social-phase4-smoke.sh" | tee "$evidence/readonly-smoke.log"
 node --test "$repo_root/infra/perf/social-scenarios.test.mjs" | tee "$evidence/perf-scenarios.log"
 for scenario in public-social-summary public-social-comments; do
-  node "$repo_root/infra/perf/run-load.mjs"     --base-url "$COVIE_STAGING_BASE_URL"     --scenario "$scenario"     --concurrency "${COVIE_SOCIAL_PHASE4_CONCURRENCY:-10}"     --duration "${COVIE_SOCIAL_PHASE4_DURATION:-30s}"     | tee "$evidence/perf-$scenario.json"
+  node "$repo_root/infra/perf/run-load.mjs" --base-url "$COVIE_STAGING_BASE_URL" --scenario "$scenario" \
+    --concurrency "${COVIE_SOCIAL_PHASE4_CONCURRENCY:-10}" --duration "${COVIE_SOCIAL_PHASE4_DURATION:-30s}" \
+    | tee "$evidence/perf-$scenario.json"
 done
 
-# The staging fixture refuses the production origin and uses cookie-based role login.
-# Set COVIE_SOCIAL_E2E_MUTATIONS_OK=1 only in a disposable staging account.
 pnpm --dir "$repo_root/apps/web" exec playwright test e2e/social-phase4.staging.spec.ts \
   --project=chromium --workers=1 --reporter=list | tee "$evidence/playwright.log"
 if grep -Eq '[0-9]+ skipped|[0-9]+ did not run' "$evidence/playwright.log"; then
   echo "Playwright skipped tests: acceptance is incomplete" >&2
   exit 1
 fi
-printf 'phase=4\nhead=%s\nstaging_origin=%s\ncompleted_utc=%s\nstatus=AUTOMATED_PASS\n'   "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
+printf 'phase=4\nhead=%s\nstaging_origin=%s\ncompleted_utc=%s\nstatus=AUTOMATED_PASS\n' "$sha" "$COVIE_STAGING_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$evidence/manifest.txt"
 echo "Automated staging gate passed. Manual visual, moderation and rollback evidence remains mandatory."
 echo "Evidence path: $evidence"

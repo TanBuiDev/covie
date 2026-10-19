@@ -63,6 +63,18 @@ describe("AdSlot", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("removes a merchant link at delivery expiry without waiting for the next refresh", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-18T11:00:00Z"));
+    vi.mocked(listActiveAds).mockResolvedValue([{ ...first, deliveryExpiresAt: "2026-10-18T11:00:01Z" }] as never);
+    await act(async () => { render(<AdSlot placement="IN_FEED" />); });
+    expect(screen.getByRole("link", { name: "Cà phê quanh bạn — Xem ngay" })).toBeInTheDocument();
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(listActiveAds).toHaveBeenCalledTimes(1);
+    expect(trackAdEvent).not.toHaveBeenCalled();
+  });
+
   it("allows dismissing and restoring sidebar left rail banner", async () => {
     render(<AdSlot placement="SIDEBAR_LEFT" />);
     const dismissBtn = await screen.findByRole("button", { name: "Tạm ẩn quảng cáo" });

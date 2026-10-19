@@ -6,5 +6,6 @@ public enum MediaPurpose {
     MERCHANT_COVER,
     MERCHANT_CONTACT_QR,
     CATALOG_IMAGE,
+    CATALOG_VIDEO,
     AD_BANNER
 }

@@ -49,6 +49,7 @@ import vn.covie.shared.outbox.OutboxEventRepository;
 import vn.covie.users.model.UserEntity;
 import vn.covie.users.persistence.UserRepository;
 
+@org.springframework.boot.test.context.SpringBootTest(properties={"covie.social-v2.caption-authoring-enabled=true","covie.outbox.max-events-per-poll=0"})
 class MerchantCatalogCreateControllerIntegrationTest extends PostgresIntegrationTest {
     private static final Instant NOW = Instant.parse("2026-01-01T00:00:00Z");
     @Autowired WebApplicationContext web;
@@ -69,6 +70,118 @@ class MerchantCatalogCreateControllerIntegrationTest extends PostgresIntegration
     private MockMvc mockMvc;
 
     @BeforeEach void setUp() { mockMvc = MockMvcBuilders.webAppContextSetup(web).apply(springSecurity()).build(); }
+
+    @Test
+    void createsCaptionForProductServiceAndResaleWithExactReplayAndUnchangedCommerce() throws Exception {
+        var json=new com.fasterxml.jackson.databind.ObjectMapper();
+        for (String kind : List.of("PRODUCT","SERVICE","RESALE")) {
+            Actor owner=actor(); UUID merchantId=merchant(owner);
+            UUID locationId=locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(),merchantId,
+                    "Caption location","1 CoVie",10.8,106.7,NOW)).getId();
+            UUID categoryId=category(CategoryCatalogType.BOTH);
+            var request=(com.fasterxml.jackson.databind.node.ObjectNode)json.readTree(productBody(categoryId,locationId,"Caption item","UNTRACKED"));
+            if (kind.equals("SERVICE")) {
+                jdbc.update("update merchant_locations set service_enabled=true where id=?",locationId);
+                request.put("type","SERVICE");
+                ((com.fasterxml.jackson.databind.node.ObjectNode)request.path("locationOffers").get(0)).remove("inventoryMode");
+            }
+            if (kind.equals("RESALE")) request.put("listingKind","RESALE");
+            request.put("description","Commercial description");
+            request.put("socialCaption","  Social caption\nsecond line 😀  ");
+            String route="/api/v1/merchants/"+merchantId+"/catalog-items";
+            String bearer="Bearer "+issuer.issue(owner.userId(),new vn.covie.auth.model.DeviceMetadata("Caption create","catalog-test")).accessToken().value();
+            long countBefore=items.count();
+            if (kind.equals("PRODUCT")) {
+                var invalid=request.deepCopy().put("socialCaption","😀".repeat(1500)+"a");
+                mockMvc.perform(post(route).header("Authorization",bearer).header("Idempotency-Key",UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON).content(invalid.toString())).andExpect(status().isUnprocessableEntity());
+                assertThat(items.count()).isEqualTo(countBefore);
+            }
+            String key=UUID.randomUUID().toString();
+            String first=mockMvc.perform(post(route).header("Authorization",bearer).header("Idempotency-Key",key)
+                    .contentType(MediaType.APPLICATION_JSON).content(request.toString())).andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.socialCaption").value("Social caption\nsecond line 😀"))
+                    .andExpect(jsonPath("$.description").value("Commercial description"))
+                    .andExpect(jsonPath("$.listingStatus").value("DRAFT"))
+                    .andExpect(jsonPath("$.locationOffers[0].price").value(25000)).andReturn().getResponse().getContentAsString();
+            String replay=mockMvc.perform(post(route).header("Authorization",bearer).header("Idempotency-Key",key)
+                    .contentType(MediaType.APPLICATION_JSON).content(request.toString())).andExpect(status().isCreated())
+                    .andReturn().getResponse().getContentAsString();
+            assertThat(replay).isEqualTo(first);
+            mockMvc.perform(post(route).header("Authorization",bearer).header("Idempotency-Key",key)
+                    .contentType(MediaType.APPLICATION_JSON).content(request.deepCopy().put("socialCaption","Changed caption").toString()))
+                    .andExpect(status().isConflict());
+            UUID itemId=UUID.fromString(json.readTree(first).path("id").asText());
+            assertThat(items.count()).isEqualTo(countBefore+1);
+            assertThat(jdbc.queryForObject("select social_caption from catalog_items where id=?",String.class,itemId)).isEqualTo("Social caption\nsecond line 😀");
+            assertThat(jdbc.queryForObject("select description from catalog_items where id=?",String.class,itemId)).isEqualTo("Commercial description");
+            assertThat(jdbc.queryForObject("select count(*) from variants where catalog_item_id=?",Long.class,itemId)).isEqualTo(1);
+            assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=? and event_type='CATALOG_ITEM_CREATED'",Long.class,itemId)).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void revokedIssuedOwnerJwtCannotReplayOrCreateCaptionContent() throws Exception {
+        Actor owner=actor(); UUID merchantId=merchant(owner);
+        UUID locationId=locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(),merchantId,
+                "Revoked caption location","1 CoVie",10.8,106.7,NOW)).getId();
+        UUID categoryId=category(CategoryCatalogType.PRODUCT);
+        String body="{\"socialCaption\":\"Owner caption\","+productBody(categoryId,locationId,"Caption item","UNTRACKED").substring(1);
+        String route="/api/v1/merchants/"+merchantId+"/catalog-items";
+        String bearer="Bearer "+issuer.issue(owner.userId(),new vn.covie.auth.model.DeviceMetadata("Caption revocation","catalog-test")).accessToken().value();
+        String key=UUID.randomUUID().toString();
+        var created=mockMvc.perform(post(route).header("Authorization",bearer).header("Idempotency-Key",key)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated()).andReturn();
+        UUID itemId=UUID.fromString(new com.fasterxml.jackson.databind.ObjectMapper()
+                .readTree(created.getResponse().getContentAsString()).path("id").asText());
+        var itemBefore=jdbc.queryForMap("select * from catalog_items where id=?",itemId);
+        var offersBefore=jdbc.queryForList("select offer.* from location_variants offer join variants variant on variant.id=offer.variant_id where variant.catalog_item_id=? order by offer.id",itemId);
+        long itemCount=items.count();
+        var membership=memberships.findActive(merchantId,owner.userId()).orElseThrow();
+        membership.revoke(); memberships.saveAndFlush(membership);
+        for (String attemptedKey : List.of(key,UUID.randomUUID().toString())) {
+            mockMvc.perform(post(route).header("Authorization",bearer).header("Idempotency-Key",attemptedKey)
+                    .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isNotFound());
+        }
+        assertThat(items.count()).isEqualTo(itemCount);
+        assertThat(jdbc.queryForMap("select * from catalog_items where id=?",itemId)).isEqualTo(itemBefore);
+        assertThat(jdbc.queryForList("select offer.* from location_variants offer join variants variant on variant.id=offer.variant_id where variant.catalog_item_id=? order by offer.id",itemId)).isEqualTo(offersBefore);
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=? and event_type='CATALOG_ITEM_CREATED'",Long.class,itemId)).isEqualTo(1);
+    }
+
+    @Test
+    void v2CreateLimitsDistinctMediaAndPersistsRequestedOrderAndCover() throws Exception {
+        Actor owner=actor(); UUID merchantId=merchant(owner);
+        UUID locationId=locations.saveAndFlush(MerchantLocationEntity.create(UUID.randomUUID(),merchantId,
+                "Media limit location","1 CoVie",10.8,106.7,NOW)).getId();
+        UUID categoryId=category(CategoryCatalogType.PRODUCT);
+        var mediaIds=new java.util.ArrayList<UUID>();
+        for (int index=0;index<11;index++) mediaIds.add(readyMedia(owner.userId(),MediaPurpose.CATALOG_IMAGE).getId());
+        var json=new com.fasterxml.jackson.databind.ObjectMapper();
+        var request=(com.fasterxml.jackson.databind.node.ObjectNode)json.readTree(productBody(categoryId,locationId,"Media item","UNTRACKED"));
+        request.set("mediaIds",json.valueToTree(mediaIds));
+        String bearer="Bearer "+issuer.issue(owner.userId(),new vn.covie.auth.model.DeviceMetadata("Media limit","catalog-test")).accessToken().value();
+        String route="/api/v1/merchants/"+merchantId+"/catalog-items",key=UUID.randomUUID().toString();
+        long before=items.count();
+        mockMvc.perform(post(route).header("Authorization",bearer).header("Idempotency-Key",key)
+                .contentType(MediaType.APPLICATION_JSON).content(request.toString())).andExpect(status().isUnprocessableEntity());
+        assertThat(items.count()).isEqualTo(before);
+        assertThat(jdbc.queryForObject("select count(*) from idempotency_records where operation=?",Long.class,"CATALOG_ITEM_CREATE:"+merchantId)).isZero();
+        var ordered=new java.util.ArrayList<>(mediaIds.subList(0,10)); java.util.Collections.reverse(ordered);
+        var duplicated=new java.util.ArrayList<>(ordered); duplicated.add(ordered.getFirst());
+        request.set("mediaIds",json.valueToTree(duplicated));
+        String result=mockMvc.perform(post(route).header("Authorization",bearer).header("Idempotency-Key",key)
+                .contentType(MediaType.APPLICATION_JSON).content(request.toString())).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID itemId=UUID.fromString(json.readTree(result).path("id").asText());
+        assertThat(jdbc.queryForList("select media_asset_id from catalog_item_media where catalog_item_id=? order by sort_order",UUID.class,itemId)).isEqualTo(ordered);
+        assertThat(jdbc.queryForList("select sort_order from catalog_item_media where catalog_item_id=? order by sort_order",Integer.class,itemId))
+                .containsExactly(0,1,2,3,4,5,6,7,8,9);
+        assertThat(jdbc.queryForObject("select media_asset_id from catalog_item_media where catalog_item_id=? and is_primary",UUID.class,itemId)).isEqualTo(ordered.getFirst());
+        mockMvc.perform(get(route+"/"+itemId).header("Authorization",bearer)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.media.length()").value(10)).andExpect(jsonPath("$.media[0].id").value(ordered.getFirst().toString()))
+                .andExpect(jsonPath("$.media[0].primary").value(true)).andExpect(jsonPath("$.locationOffers[0].price").value(25000));
+    }
 
     @Test
     void createsProductDraftWithServerDefaultVariantAndIdempotentlyReplaysIt() throws Exception {

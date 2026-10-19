@@ -54,6 +54,19 @@ afterEach(() => {vi.clearAllMocks(); mocks.discoverCatalogItems.mockReset(); moc
 beforeEach(() => mocks.listPublicCategories.mockResolvedValue([]));
 
 describe("PUB-003/004 Search", () => {
+  it("names the desktop price bounds and preserves their applied filter values", async () => {
+    mocks.discoverCatalogItems.mockResolvedValue(pageWith("Kết quả giá có nhãn"));
+    renderSearch({q:"cơm"});
+    await screen.findByText("Kết quả giá có nhãn");
+    const minimum=screen.getByPlaceholderText("Từ (₫)");
+    const maximum=screen.getByPlaceholderText("Đến (₫)");
+    expect.soft(minimum).toHaveAccessibleName("Giá từ (₫)");
+    expect.soft(maximum).toHaveAccessibleName("Giá đến (₫)");
+    fireEvent.change(minimum,{target:{value:"10000"}});
+    fireEvent.change(maximum,{target:{value:"30000"}});
+    fireEvent.click(screen.getByRole("button",{name:"Áp dụng giá"}));
+    await waitFor(()=>expect(mocks.discoverCatalogItems).toHaveBeenLastCalledWith(expect.objectContaining({q:"cơm",minPrice:10000,maxPrice:30000})));
+  });
   it("keeps keyboard focus inside the filter dialog and restores it on Escape", async () => {
     mocks.discoverCatalogItems.mockResolvedValue(pageWith("Kết quả"));
     renderSearch({q:"cơm"});
@@ -146,7 +159,7 @@ describe("PUB-003/004 Search", () => {
     renderSearch({ sort: "RELEVANCE" });
 
     expect(screen.getByRole("heading", { name: "Khám phá" })).toBeInTheDocument();
-    expect(screen.getByText("Tìm quanh vị trí bạn đã chọn")).toBeInTheDocument();
+    expect(screen.getByRole("tablist", { name: "Phân loại kết quả" })).toBeInTheDocument();
     expect(screen.getByText("Vinhomes Grand Park")).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Tìm món đồ, dịch vụ" })).toBeInTheDocument();
     expect(await screen.findByText("Hàng gần bạn")).toBeInTheDocument();

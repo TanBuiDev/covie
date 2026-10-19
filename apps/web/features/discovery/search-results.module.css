@@ -2,6 +2,7 @@
   min-height: calc(100dvh - var(--consumer-nav-height, 64px));
   background: #ffffff;
   color: #0f172a;
+  scrollbar-gutter: stable;
 }
 
 .appBar {
@@ -276,139 +277,6 @@
   background: #fee2e2;
 }
 
-/* Explore Hero */
-.exploreHero {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 14px;
-}
-
-.hint {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #059669;
-  border-radius: 12px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 3px rgb(15 23 42 / 4%);
-}
-
-.hint strong {
-  display: block;
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.hint p {
-  font-size: 13px;
-  line-height: 19px;
-  color: #475569;
-  margin: 4px 0 0;
-}
-
-.popularCategories {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 1px 3px rgb(15 23 42 / 3%);
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.sectionIcon {
-  color: #059669;
-}
-
-.sectionHeader h3 {
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-.categoryGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-.categoryTile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 8px;
-  padding: 10px 6px;
-  border-radius: 12px;
-  border: 1px solid #f1f5f9;
-  background: #f8fafc;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.categoryTile:hover {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
-  transform: translateY(-1px);
-}
-
-.categoryTileLabel {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #334155;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.trendingKeywords {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.trendingLabel {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.trendingList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.trendingChip {
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  border-radius: 999px;
-  padding: 5px 12px;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: #334155;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.trendingChip:hover {
-  background: #ecfdf5;
-  border-color: #059669;
-  color: #047857;
-}
-
 /* 2-Column Search Layout on Desktop */
 .searchLayout {
   display: block;
@@ -422,6 +290,13 @@
 .mainArea {
   min-width: 0;
   width: 100%;
+  min-height: 760px;
+}
+
+.gridFetching {
+  opacity: 0.65;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
 }
 
 /* Result Type Tabs Row */
@@ -624,6 +499,7 @@
 
 .toolbarRight {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   margin-left: auto;
@@ -669,6 +545,10 @@
   color: #64748b;
   font-size: 13px;
   font-weight: 600;
+}
+
+.sort > span {
+  white-space: nowrap;
 }
 
 .sort select {
@@ -1537,4 +1417,3 @@
     transition: none;
   }
 }
-.adFeed { grid-column: 1 / -1; min-width: 0; }

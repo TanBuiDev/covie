@@ -10,6 +10,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.catalog.api.dto.CatalogItemManagementDetailResponse;
@@ -57,6 +59,8 @@ public class CatalogManagementQueryService {
     private final MerchantLocationRepository locations;
     private final MediaUrlResolver mediaUrls;
     private final CatalogManagementActionPolicy actions;
+    private final JdbcTemplate jdbc;
+    private final boolean socialAuthoringEnabled;
 
     public CatalogManagementQueryService(MerchantAccessPolicy access, CatalogItemRepository items,
             CategoryAttributeRepository categoryAttributes,
@@ -70,7 +74,8 @@ public class CatalogManagementQueryService {
             LocationVariantRepository offers,
             MerchantLocationRepository locations,
             MediaUrlResolver mediaUrls,
-            CatalogManagementActionPolicy actions) {
+            CatalogManagementActionPolicy actions, JdbcTemplate jdbc,
+            @Value("${covie.social-v2.caption-authoring-enabled:false}") boolean socialAuthoringEnabled) {
         this.access = access;
         this.items = items;
         this.categoryAttributes = categoryAttributes;
@@ -85,6 +90,8 @@ public class CatalogManagementQueryService {
         this.locations = locations;
         this.mediaUrls = mediaUrls;
         this.actions = actions;
+        this.jdbc = jdbc;
+        this.socialAuthoringEnabled = socialAuthoringEnabled;
     }
 
     @Transactional(readOnly = true)
@@ -168,15 +175,33 @@ public class CatalogManagementQueryService {
                 item.getPrimaryCategoryId(), item.getName(), item.getDescription(), item.getListingStatus(),
                 item.getModerationStatus(), item.getVersion(), actions.itemActions(merchantAccess, item), attributes,
                 tags.findTagNamesByCatalogItemId(itemId),
-                media.findAllAssociationsByCatalogItemId(itemId).stream()
+                (mediaUrls.catalogVideoEnabled() ? media.findAllGalleryAssociationsByCatalogItemId(itemId) : media.findAllAssociationsByCatalogItemId(itemId)).stream()
+                        .filter(association -> mediaUrls.includeCatalogMedia(association.getMediaAsset()))
                         .map(association -> new CatalogItemManagementDetailResponse.CatalogManagementMediaResponse(
                                 association.getMediaAsset().getId(), association.getMediaAsset().getMimeType(),
                                 association.getMediaAsset().getMediaStatus(),
                                 association.getMediaAsset().getMediaStatus() == MediaStatus.READY
                                         ? mediaUrls.publicUrl(association.getMediaAsset()) : null,
-                                association.getSortOrder(), association.isPrimary()))
+                                association.getSortOrder(), association.isPrimary(),vn.covie.media.api.dto.CatalogVideoMetadata.from(association.getMediaAsset())))
                         .toList(),
-                optionGroupResponses, variantResponses, offerResponses);
+                optionGroupResponses, variantResponses, offerResponses,item.getSocialCaption(),moderationReason(merchantAccess,item));
+    }
+
+    private String moderationReason(MerchantAccess merchantAccess, CatalogItemEntity item) {
+        if (!socialAuthoringEnabled || !MerchantAccessPolicy.allows(merchantAccess.role(),MerchantCapability.MANAGE_CATALOG_STRUCTURE)) return null;
+        String action=switch (item.getModerationStatus()) {
+            case HIDDEN -> "HIDE";
+            case REJECTED -> "REJECT";
+            default -> null;
+        };
+        if (action==null) return null;
+        return jdbc.query("""
+                select decision.reason_code from moderation_actions decision
+                join moderation_cases related on related.id=decision.moderation_case_id
+                where related.target_type='CATALOG_ITEM' and related.target_catalog_item_id=?
+                  and decision.action_type=?
+                order by decision.created_at desc,decision.id desc limit 1
+                """,result -> result.next()?result.getString(1):null,item.getId(),action);
     }
 
     private Set<UUID> visibleLocationIds(MerchantAccess merchantAccess, UUID merchantId,

@@ -71,4 +71,5 @@ function visit(dir) {
 visit('infra/observability/grafana');
 NODE
 
+node infra/scripts/tests/social-observability-assets.test.mjs
 echo "Monitoring configuration validation passed"

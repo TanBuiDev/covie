@@ -1,8 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { AdSlot } from "@/features/ads/ad-slot";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { discoverCatalogItems, listPublicCategories, type CatalogDiscoveryFilters } from "@/features/catalog/catalog-api";
 import { toDiscoveryLocation } from "@/features/location/location-context";
 import { useBrowseLocation } from "@/features/location/use-browse-location";
@@ -61,6 +60,23 @@ export type SearchInitialFilters = {
   shipping?: string;
 };
 
+export function areFiltersEqual(a: SearchInitialFilters, b: SearchInitialFilters): boolean {
+  return (
+    (a.q || undefined) === (b.q || undefined) &&
+    (a.type || "") === (b.type || "") &&
+    (a.categoryId || undefined) === (b.categoryId || undefined) &&
+    (a.sort || "RELEVANCE") === (b.sort || "RELEVANCE") &&
+    (a.listingKind || "") === (b.listingKind || "") &&
+    (a.radiusMeters || undefined) === (b.radiusMeters || undefined) &&
+    Boolean(a.openNow) === Boolean(b.openNow) &&
+    (a.minPrice ?? undefined) === (b.minPrice ?? undefined) &&
+    (a.maxPrice ?? undefined) === (b.maxPrice ?? undefined) &&
+    Boolean(a.pickup) === Boolean(b.pickup) &&
+    Boolean(a.canServe) === Boolean(b.canServe) &&
+    (a.shipping || undefined) === (b.shipping || undefined)
+  );
+}
+
 const hasIntent = (f: SearchInitialFilters) =>
   Boolean(
     f.q ||
@@ -77,21 +93,7 @@ const hasIntent = (f: SearchInitialFilters) =>
   );
 
 export function SearchResults({ initial }: { initial: SearchInitialFilters }) {
-  const queryKey = JSON.stringify([
-    initial.q ?? "",
-    initial.type ?? "",
-    initial.categoryId ?? "",
-    initial.sort ?? "RELEVANCE",
-    initial.listingKind ?? "",
-    initial.radiusMeters ?? null,
-    initial.openNow ?? false,
-    initial.minPrice ?? null,
-    initial.maxPrice ?? null,
-    initial.pickup ?? false,
-    initial.canServe ?? false,
-    initial.shipping ?? "",
-  ]);
-  return <SearchResultsState key={queryKey} initial={initial} />;
+  return <SearchResultsState initial={initial} />;
 }
 
 function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
@@ -111,9 +113,13 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
   const { mode: viewMode, changeMode: setViewMode } = useMarketplaceView("catalog");
   const requestGeneration = useRef(0);
   const dialogRef = useRef<HTMLElement>(null);
-  const [categoryName, setCategoryName] = useState("Danh mục");
   const [categories, setCategories] = useState<components["schemas"]["CategorySummary"][]>([]);
   const [categoryError, setCategoryError] = useState(false);
+
+  const categoryName = useMemo(() => {
+    const match = categories.find((category) => category.id === filters.categoryId);
+    return match?.name ?? "Danh mục";
+  }, [categories, filters.categoryId]);
 
   // Sidebar local price inputs
   const [sidebarMinPrice, setSidebarMinPrice] = useState(
@@ -122,6 +128,23 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
   const [sidebarMaxPrice, setSidebarMaxPrice] = useState(
     filters.maxPrice != null ? String(filters.maxPrice) : "",
   );
+
+  const currentFiltersRef = useRef<SearchInitialFilters>(filters);
+  useEffect(() => {
+    currentFiltersRef.current = filters;
+  }, [filters]);
+
+  useEffect(() => {
+    if (areFiltersEqual(currentFiltersRef.current, initial)) {
+      return;
+    }
+    currentFiltersRef.current = initial;
+    setFilters(initial);
+    setDraftFilter(initial);
+    setDraftQ(initial.q ?? "");
+    setSidebarMinPrice(initial.minPrice != null ? String(initial.minPrice) : "");
+    setSidebarMaxPrice(initial.maxPrice != null ? String(initial.maxPrice) : "");
+  }, [initial]);
 
   // Search history state
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -229,23 +252,20 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
     let cancelled = false;
     listPublicCategories()
       .then((cats) => {
-        const match = cats.find((category) => category.id === filters.categoryId);
         if (!cancelled) {
           setCategories(cats);
           setCategoryError(false);
-          setCategoryName(match?.name ?? "Danh mục");
         }
       })
       .catch(() => {
         if (!cancelled) {
           setCategoryError(true);
-          setCategoryName("Danh mục");
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [filters.categoryId]);
+  }, []);
 
   useEffect(() => {
     requestGeneration.current += 1;
@@ -342,10 +362,10 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
   }
 
   function update(next: SearchInitialFilters) {
+    currentFiltersRef.current = next;
     requestGeneration.current += 1;
     setLoadingMore(false);
     setMoreError(false);
-    setPage(undefined);
     setLoading(true);
     setError(false);
     setFilters(next);
@@ -462,63 +482,6 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
           )}
         </div>
 
-        {/* Explore Hero for Zero-Intent Search */}
-        {!searching && (
-          <div className={styles.exploreHero}>
-            <div className={styles.hint}>
-              <strong>Tìm quanh vị trí bạn đã chọn</strong>
-              <p>
-                Nhập từ khóa để tìm sản phẩm, dịch vụ hoặc đồ thanh lý. Vị trí không được đưa vào
-                URL tìm kiếm.
-              </p>
-            </div>
-
-            {categories.length > 0 && (
-              <div className={styles.popularCategories}>
-                <div className={styles.sectionHeader}>
-                  <Sparkle size={18} weight="duotone" className={styles.sectionIcon} />
-                  <h3>Danh mục khám phá</h3>
-                </div>
-                <div className={styles.categoryGrid}>
-                  {categories.slice(0, 8).map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      className={styles.categoryTile}
-                      onClick={() => update({ ...filters, categoryId: cat.id })}
-                    >
-                      <CategoryBadge category={cat} size="small" />
-                      <span className={styles.categoryTileLabel}>{cat.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className={styles.trendingKeywords}>
-              <span className={styles.trendingLabel}>Gợi ý cư dân hay tìm:</span>
-              <div className={styles.trendingList}>
-                {["Cà phê & Đồ uống", "Cơm trưa", "Sửa máy lạnh", "Pass đồ", "Giặt sấy", "Tạp hóa"].map(
-                  (tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      className={styles.trendingChip}
-                      onClick={() => {
-                        setDraftQ(tag);
-                        saveRecentSearch(tag);
-                        update({ ...filters, q: tag });
-                      }}
-                    >
-                      {tag}
-                    </button>
-                  ),
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* 2-Column Desktop Architecture with Left Sticky Sidebar */}
         <div className={styles.searchLayout}>
           {/* Desktop Left Sticky Sidebar (Active on Desktop when sheet is closed) */}
@@ -603,6 +566,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
                       type="number"
                       min="0"
                       placeholder="Từ (₫)"
+                      aria-label="Giá từ (₫)"
                       value={sidebarMinPrice}
                       onChange={(e) => setSidebarMinPrice(e.target.value)}
                     />
@@ -611,6 +575,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
                       type="number"
                       min="0"
                       placeholder="Đến (₫)"
+                      aria-label="Giá đến (₫)"
                       value={sidebarMaxPrice}
                       onChange={(e) => setSidebarMaxPrice(e.target.value)}
                     />
@@ -630,7 +595,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
                   <label className={styles.sidebarCheckboxLabel}>
                     <input
                       type="checkbox"
-                      checked={filters.openNow ?? false}
+                      checked={Boolean(filters.openNow)}
                       onChange={(e) => update({ ...filters, openNow: e.target.checked })}
                     />
                     <span>Đang mở cửa</span>
@@ -638,7 +603,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
                   <label className={styles.sidebarCheckboxLabel}>
                     <input
                       type="checkbox"
-                      checked={filters.canServe ?? false}
+                      checked={Boolean(filters.canServe)}
                       onChange={(e) => update({ ...filters, canServe: e.target.checked })}
                     />
                     <span>Giao tận nơi</span>
@@ -646,7 +611,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
                   <label className={styles.sidebarCheckboxLabel}>
                     <input
                       type="checkbox"
-                      checked={filters.pickup ?? false}
+                      checked={Boolean(filters.pickup)}
                       onChange={(e) => update({ ...filters, pickup: e.target.checked })}
                     />
                     <span>Nhận tại điểm bán</span>
@@ -715,8 +680,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
             </div>
 
             {/* Mobile Horizontal Quick-Filter Bar (Clean scrolling, no text clipping) */}
-            {searching && (
-              <div className={categoryStyles.filterBar}>
+            <div className={categoryStyles.filterBar}>
                 <div className={styles.chips}>
                   <button
                     className={categoryMode ? categoryStyles.selectedChip : undefined}
@@ -781,7 +745,6 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
                   )}
                 </button>
               </div>
-            )}
 
             {/* Active Filter Tags */}
             {activeFilterCount > 0 && (
@@ -947,7 +910,7 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
               </div>
             )}
 
-            {browsing && loading && (
+            {browsing && loading && !page && (
               <div className={styles.list} aria-label="Đang tải kết quả">
                 {[1, 2, 3, 4, 5, 6].map((n) => (
                   <div className={styles.skeleton} key={n} />
@@ -1000,16 +963,13 @@ function SearchResultsState({ initial }: { initial: SearchInitialFilters }) {
               </div>
             )}
 
-            {!loading && !error && (
+            {!error && page && (
               <SocialFeedProvider itemIds={(page?.items ?? []).flatMap((item) => item.id ? [item.id] : [])} enabled={viewMode === "social"}>
               <div
-                className={`${viewStyles.grid} ${viewMode === "social" ? viewStyles.gridSocial : viewStyles.gridCatalog}`}
+                className={`${viewStyles.grid} ${viewMode === "social" ? viewStyles.gridSocial : viewStyles.gridCatalog} ${loading ? styles.gridFetching : ""}`}
               >
-                {page?.items?.map((item, index, items) => (
-                  <Fragment key={item.id}>
-                    <MarketplaceProductCard item={item} mode={viewMode} />
-                    {index === Math.min(5, items.length - 1) && <div className={styles.adFeed}><AdSlot placement="IN_FEED" /></div>}
-                  </Fragment>
+                {page?.items?.map((item) => (
+                  <MarketplaceProductCard key={item.id} item={item} mode={viewMode} />
                 ))}
               </div>
               </SocialFeedProvider>

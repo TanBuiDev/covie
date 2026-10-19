@@ -31,6 +31,16 @@ web_sbom="${COVIE_WEB_SBOM:-build/sbom/web.cdx.json}"
 api_sbom_sha="$(sha256sum "$api_sbom" | awk '{print $1}')"
 web_sbom_sha="$(sha256sum "$web_sbom" | awk '{print $1}')"
 
+rollback_api="${COVIE_VERIFIED_ROLLBACK_API_IMAGE:-}"
+rollback_evidence="${COVIE_ROLLBACK_EVIDENCE:-}"
+rollback_evidence_sha=""
+if [[ -n "$rollback_api" || -n "$rollback_evidence" ]]; then
+  [[ "$rollback_api" =~ @sha256:[0-9a-f]{64}$ && -s "$rollback_evidence" ]] || {
+    echo "Verified rollback requires an immutable API digest and a nonempty rehearsal evidence file" >&2; exit 2;
+  }
+  rollback_evidence_sha="$(sha256sum "$rollback_evidence" | awk '{print $1}')"
+fi
+
 cat > "$out.tmp" <<EOF
 API_IMAGE=$COVIE_API_IMAGE
 WEB_IMAGE=$COVIE_WEB_IMAGE
@@ -40,6 +50,8 @@ HIGHEST_FLYWAY=V$(printf '%03d' "$highest")
 BUILD_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 API_SBOM_SHA256=$api_sbom_sha
 WEB_SBOM_SHA256=$web_sbom_sha
+ROLLBACK_API_IMAGE=$rollback_api
+ROLLBACK_EVIDENCE_SHA256=$rollback_evidence_sha
 EOF
 chmod 0644 "$out.tmp"
 mv "$out.tmp" "$out"

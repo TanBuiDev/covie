@@ -53,7 +53,7 @@ export default async function SellerPage() {
           <div className="seller-onboarding-layout">
             <div className="seller-onboarding-layout__main">
               <div className="seller-form-wrapper">
-                <MerchantForm />
+                <MerchantForm billingOnboarding />
               </div>
             </div>
 
@@ -81,8 +81,8 @@ export default async function SellerPage() {
                   <li className="seller-roadmap-step">
                     <span className="seller-roadmap-step__num">3</span>
                     <div className="seller-roadmap-step__content">
-                      <strong>Lên kệ món ăn &amp; sản phẩm</strong>
-                      <p>Đăng thực đơn hoặc mặt hàng đầu tiên để đón đơn ngay từ hàng xóm.</p>
+                      <strong>Kiểm tra thuê bao &amp; mở bán</strong>
+                      <p>Hoàn tất quyền thuê bao theo chính sách hiện hành, sau đó công bố món ăn, sản phẩm hoặc dịch vụ.</p>
                     </div>
                   </li>
                 </ol>
@@ -129,7 +129,7 @@ export default async function SellerPage() {
                 <div className="seller-faq-list">
                   <div className="seller-faq-item">
                     <span className="seller-faq-q">CoVie có thu phí sàn không?</span>
-                    <span className="seller-faq-a">Hoàn toàn 0% phí hoa hồng cho các giao dịch nội khu giữa cư dân.</span>
+                    <span className="seller-faq-a">CoVie hiện không thu hoa hồng đơn hàng; cửa hàng kinh doanh có thể phải trả phí thuê bao theo bảng giá được Admin công bố.</span>
                   </div>
                   <div className="seller-faq-item">
                     <span className="seller-faq-q">Khách hàng thanh toán thế nào?</span>
@@ -159,9 +159,9 @@ export default async function SellerPage() {
             <div className="seller-create-expand__form">
               <div className="seller-create-expand__intro">
                 <strong>Khởi tạo gian hàng bổ sung</strong>
-                <p className="seller-muted">Tạo thêm cửa hàng để phân tách các ngành hàng hoặc dịch vụ khác nhau trong khu căn hộ.</p>
+                <p className="seller-muted">Tạo thêm cửa hàng để phân tách các ngành hàng hoặc dịch vụ khác nhau trong khu căn hộ. Mỗi cửa hàng có quyền thuê bao và thời hạn riêng.</p>
               </div>
-              <MerchantForm />
+              <MerchantForm billingOnboarding />
             </div>
           </details>
         </section>

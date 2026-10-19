@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { AdminCatalogScreen } from "@/features/admin/admin-catalog-screen";
 import { AdminPageHeader, AdminStatusChip, AdminSurface } from "@/features/admin/admin-ui";
 import {
   ArrowRight,
@@ -11,6 +13,10 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 export default function ListingsPage() {
+  if (process.env.COVIE_SOCIAL_V2_ADMIN_READS_ENABLED === "true") {
+    return <Suspense fallback={<AdminSurface><p role="status">Đang tải nội dung…</p></AdminSurface>}><AdminCatalogScreen
+      caseOpeningEnabled={process.env.COVIE_SOCIAL_V2_ADMIN_CASE_OPENING_ENABLED === "true"} /></Suspense>;
+  }
   return (
     <div className="admin-page-stack">
       <AdminPageHeader
@@ -28,7 +34,7 @@ export default function ListingsPage() {
           <h2 style={{ margin: 0 }}>Nguyên tắc kiểm duyệt tin đăng CoVie</h2>
         </div>
         <p>
-          Repository hiện có moderation case API nhưng chưa có Admin listing-read contract độc lập. Không dựng listing detail từ dữ liệu mẫu; các báo cáo thực tế được xử lý tại hàng đợi Báo cáo.
+          Danh sách nội dung đăng bán chưa được bật trong môi trường này. Các báo cáo thực tế tiếp tục được xử lý tại hàng đợi Báo cáo.
         </p>
         <div className="admin-governance-pills" style={{ marginTop: "8px" }}>
           <span className="admin-governance-pill">

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CovieApiError } from "@/lib/api/api-error";
 import { CatalogEditForm } from "./catalog-edit-form";
@@ -12,11 +12,152 @@ const api = vi.hoisted(() => ({
   deleteCatalogVariant: vi.fn(),
   updateCatalogLocationOffer: vi.fn(),
   runCatalogLifecycleAction: vi.fn(),
+  lookupBarcode: vi.fn(),
+  fetchSocialComments: vi.fn(),
 }));
 const router = vi.hoisted(() => ({ refresh: vi.fn() }));
 
+it("renders a READY video as a manual player in the non-editable Seller view", () => {
+  vi.stubEnv("NEXT_PUBLIC_COVIE_SOCIAL_V2_VIDEO_ENABLED", "true");
+  try {
+    const view = render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, allowedActions: [], media: [
+      { id: "video", contentType: "video/mp4", status: "READY", url: "/api/v1/media/video/content" },
+    ] }} etag={'"v4"'} categories={[]} />);
+    expect(within(screen.getByRole("figure")).getByRole("button", { name: `Phát video ${item.name}` })).toBeInTheDocument();
+    expect(view.container.querySelector('img[src*="/content"]')).toBeNull();
+    expect(view.container.querySelector("video")).toBeNull();
+  } finally { vi.unstubAllEnvs(); }
+});
+
+it("saves mixed ordering with video ON and caption OFF without sending a caption", async () => {
+  vi.stubEnv("NEXT_PUBLIC_COVIE_SOCIAL_V2_VIDEO_ENABLED", "true");
+  try {
+    render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, media: [...item.media!,
+      { id: "video", contentType: "video/mp4", status: "READY", url: "/api/v1/media/video/content", sortOrder: 1, primary: false },
+    ] }} etag={'"v4"'} categories={[]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Đưa lên Video 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
+    await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledOnce());
+    expect(api.updateCatalogItem.mock.calls[0]?.[3]).toHaveProperty("mediaIds", ["video", "media-1"]);
+    expect(api.updateCatalogItem.mock.calls[0]?.[3]).not.toHaveProperty("socialCaption");
+  } finally { vi.unstubAllEnvs(); }
+});
+
+it.each([true, false])("renders only the supplied literal moderation reason with Social enabled=$0", socialAuthoringEnabled => {
+  const reasonItem = { ...item, moderationStatus: "HIDDEN" as const, moderationReasonCode: "<script>Literal decision reason</script>" };
+  const view = render(<CatalogEditForm merchantId="merchant-1" item={reasonItem} etag={'"v4"'} categories={[]} socialAuthoringEnabled={socialAuthoringEnabled} />);
+  const reason = screen.queryByRole("note", { name: "Lý do kiểm duyệt" });
+  if (socialAuthoringEnabled) {
+    expect(reason).toHaveTextContent("<script>Literal decision reason</script>");
+    expect(view.container.querySelector("script")).toBeNull();
+  } else expect(reason).toBeNull();
+});
+
+it("keeps the actual caption draft when the existing comment API denies an unpublished item", async () => {
+  api.fetchSocialComments.mockRejectedValue(new CovieApiError(404, "RESOURCE_NOT_FOUND", "Resource not found."));
+  render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[]} socialAuthoringEnabled />);
+  fireEvent.change(screen.getByRole("textbox", { name: "Caption" }), { target: { value: "Unsaved Seller caption" } });
+  const trigger = screen.getByRole("button", { name: "Xem bình luận" });
+  fireEvent.click(trigger);
+  expect(await screen.findByRole("alert")).toHaveTextContent("Không tải được bình luận.");
+  fireEvent.click(screen.getByRole("button", { name: "Đóng" }));
+  expect(trigger).toHaveFocus();
+  expect(screen.getByRole("textbox", { name: "Caption" })).toHaveValue("Unsaved Seller caption");
+  expect(api.fetchSocialComments).toHaveBeenCalledExactlyOnceWith("item-1");
+  expect(api.updateCatalogItem).not.toHaveBeenCalled();
+  expect(router.refresh).not.toHaveBeenCalled();
+});
+
+it.each([true, false])("shows the Seller comment entry only when Social authoring is enabled=$0", socialAuthoringEnabled => {
+  render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[]} socialAuthoringEnabled={socialAuthoringEnabled} />);
+  const entry = screen.queryByRole("button", { name: "Xem bình luận" });
+  if (socialAuthoringEnabled) expect(entry).toBeInTheDocument();
+  else expect(entry).toBeNull();
+  expect(screen.queryByRole("region", { name: "Bình luận sản phẩm" })).toBeNull();
+});
+
+it("retains a conflicting caption and guards the explicit stale-data reload", async () => {
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  api.updateCatalogItem.mockRejectedValueOnce(new CovieApiError(409, "RESOURCE_VERSION_CONFLICT", "Conflict"));
+  render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[]} socialAuthoringEnabled />);
+  fireEvent.change(screen.getByRole("textbox", { name: "Caption" }), { target: { value: "Nháp khi xung đột" } });
+  fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
+  const reload = await screen.findByRole("button", { name: "Tải dữ liệu mới" });
+  expect(confirm).not.toHaveBeenCalled();
+  fireEvent.click(reload);
+  expect(router.refresh).not.toHaveBeenCalled();
+  expect(screen.getByRole("textbox", { name: "Caption" })).toHaveValue("Nháp khi xung đột");
+  confirm.mockReturnValue(true);
+  fireEvent.click(reload);
+  expect(router.refresh).toHaveBeenCalledTimes(1);
+  expect(confirm).toHaveBeenCalledTimes(2);
+});
+
+it("guards independent offer refresh but never blocks saving the current caption", async () => {
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[]} socialAuthoringEnabled />);
+  fireEvent.change(screen.getByRole("textbox", { name: "Caption" }), { target: { value: "Caption nháp" } });
+  fireEvent.click(screen.getByRole("button", { name: "Lưu Điểm chính" }));
+  expect(confirm).toHaveBeenCalledTimes(1);
+  expect(api.updateCatalogLocationOffer).not.toHaveBeenCalled();
+  expect(router.refresh).not.toHaveBeenCalled();
+  expect(screen.getByRole("textbox", { name: "Caption" })).toHaveValue("Caption nháp");
+  confirm.mockReturnValue(true);
+  fireEvent.click(screen.getByRole("button", { name: "Lưu Điểm chính" }));
+  await waitFor(() => expect(router.refresh).toHaveBeenCalledTimes(1));
+  expect(api.updateCatalogLocationOffer).toHaveBeenCalledTimes(1);
+  confirm.mockReturnValue(false);
+  fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
+  await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledWith("merchant-1", "item-1", '"v4"', { socialCaption: "Caption nháp" }));
+  expect(confirm).toHaveBeenCalledTimes(2);
+});
+
+it("guards variant and lifecycle commands when only gallery changes are unsaved", () => {
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[]} socialAuthoringEnabled />);
+  fireEvent.click(screen.getByRole("button", { name: "Xóa Ảnh 1" }));
+  fireEvent.click(screen.getByRole("button", { name: "Lưu biến thể Mặc định" }));
+  fireEvent.click(screen.getByRole("button", { name: "Đăng bán" }));
+  expect(confirm).toHaveBeenCalledTimes(2);
+  expect(api.updateCatalogVariant).not.toHaveBeenCalled();
+  expect(api.runCatalogLifecycleAction).not.toHaveBeenCalled();
+  expect(router.refresh).not.toHaveBeenCalled();
+});
+
+it("previews only six READY images without truncating the editable legacy gallery", () => {
+  const media = Array.from({ length: 8 }, (_, index) => ({ id: `image-${index}`, contentType: "image/png",
+    status: index === 0 ? "PENDING_UPLOAD" as const : "READY" as const,
+    url: index === 0 ? undefined : `https://media.test/${index}.png`, sortOrder: index, primary: index === 0 }));
+  render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, media }} etag={'"v4"'} categories={[]} socialAuthoringEnabled />);
+  const preview = within(screen.getByRole("region", { name: "Xem trước bài đăng Social" }));
+  expect(preview.getByText("Ảnh 1/6")).toBeInTheDocument();
+  expect(preview.getByAltText("Cà phê hạt — Ảnh 1/6")).toHaveAttribute("src", "https://media.test/1.png");
+  for (let index = 0; index < 5; index++) fireEvent.click(preview.getByRole("button", { name: "Ảnh tiếp theo" }));
+  expect(preview.getByAltText("Cà phê hạt — Ảnh 6/6")).toHaveAttribute("src", "https://media.test/6.png");
+  expect(screen.getByRole("button", { name: "Xóa Ảnh 8" })).toBeInTheDocument();
+  expect(api.updateCatalogItem).not.toHaveBeenCalled();
+});
+
+it("previews confirmed caption then draft changes and undo without writing", () => {
+  render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, socialCaption: "Caption đã lưu" }} etag={'"v4"'} categories={[]} socialAuthoringEnabled />);
+  const preview = within(screen.getByRole("region", { name: "Xem trước bài đăng Social" }));
+  expect(preview.getByText("Caption đã lưu")).toBeInTheDocument();
+  expect(preview.getByAltText("Cà phê hạt — Ảnh 1/1")).toHaveAttribute("src", "https://media.test/coffee.png");
+  fireEvent.change(screen.getByRole("textbox", { name: "Caption" }), { target: { value: "Caption đang sửa" } });
+  expect(preview.getByText("Caption đang sửa")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Hoàn nguyên caption" }));
+  expect(preview.getByText("Caption đã lưu")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Xóa Ảnh 1" }));
+  expect(preview.getByText("Chưa có ảnh")).toBeInTheDocument();
+  expect(api.updateCatalogItem).not.toHaveBeenCalled();
+  expect(preview.queryByRole("link")).toBeNull();
+});
+
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 vi.mock("./catalog-api", () => api);
+vi.mock("@/features/marketplace-view/social-api", async original => ({
+  ...await original<typeof import("@/features/marketplace-view/social-api")>(), fetchSocialComments: api.fetchSocialComments,
+}));
 
 const item: components["schemas"]["CatalogItemManagementDetailResponse"] = {
   id: "item-1",
@@ -44,12 +185,58 @@ beforeEach(() => {
   ] });
   router.refresh.mockReset();
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("catalog edit form", () => {
+  it("keeps a legacy Social gallery unchanged when adding over the limit is rejected", async () => {
+    const media = Array.from({ length: 12 }, (_, index) => ({ id: "legacy-" + index, status: "READY" as const, sortOrder: index, primary: index === 0 }));
+    render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, media }} etag={'"v4"'} categories={[]} socialAuthoringEnabled />);
+    fireEvent.change(screen.getByLabelText("Ảnh Social"), { target: { files: [new File(["a"], "too-many.png", { type: "image/png" })] } });
+    expect(screen.getByRole("alert")).toHaveTextContent("Gallery hiện có được giữ nguyên");
+    expect(screen.getByText("12 / 10 ảnh")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Caption" }), { target: { value: "Caption only" } });
+    fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
+    await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledWith("merchant-1", "item-1", '"v4"', { socialCaption: "Caption only" }));
+  });
+
+  it("uses the selected existing Social cover order without resending commerce fields", async () => {
+    render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, media: [
+      ...item.media!, { id: "media-2", status: "READY", sortOrder: 1, primary: false, url: "https://example.test/second.png" },
+    ] }} etag={'"v4"'} categories={[]} socialAuthoringEnabled />);
+    fireEvent.click(screen.getByRole("button", { name: "Làm bìa Ảnh 2" }));
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Đưa xuống Ảnh 2" }));
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true);
+    const transfer = { setData: vi.fn() };
+    fireEvent.dragStart(screen.getByRole("img", { name: "Ảnh 2" }).closest("li")!, { dataTransfer: transfer });
+    fireEvent.drop(screen.getByRole("img", { name: "Ảnh 1" }).closest("li")!, { dataTransfer: transfer });
+    expect(transfer.setData).toHaveBeenCalledWith("text/plain", "media-2");
+    fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
+    await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledWith("merchant-1", "item-1", '"v4"',
+      { mediaIds: ["media-2", item.media![0]!.id] }));
+  });
+
+  it("edits and clears caption independently while preserving unsent commercial fields", async () => {
+    render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, socialCaption: "Caption đã lưu" }} etag={'"v4"'}
+      categories={[]} socialAuthoringEnabled />);
+    const caption = screen.getByRole("textbox", { name: "Caption" });
+    expect(caption).toHaveValue("Caption đã lưu");
+    fireEvent.click(screen.getByRole("button", { name: "Xóa caption" }));
+    expect(caption).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Hoàn nguyên caption" }));
+    expect(caption).toHaveValue("Caption đã lưu");
+    fireEvent.change(caption, { target: { value: "  Caption mới\nDòng hai  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
+    await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledWith("merchant-1", "item-1", '"v4"', { socialCaption: "Caption mới\nDòng hai" }));
+    fireEvent.click(screen.getByRole("button", { name: "Xóa caption" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
+    await waitFor(() => expect(api.updateCatalogItem).toHaveBeenLastCalledWith("merchant-1", "item-1", '"v4"', { socialCaption: null }));
+  });
+
   it("renders authoritative state and sends each resource's own version", async () => {
     render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[{ id: "category-1", name: "Đồ uống", catalogType: "PRODUCT" }]} />);
     expect(screen.getByText("Bản nháp")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Caption" })).not.toBeInTheDocument();
     expect(screen.getByText("Không cần kiểm duyệt")).toBeInTheDocument();
     expect(screen.getByText("origin: Đà Lạt")).toBeInTheDocument();
     expect(screen.getByAltText("Cà phê hạt — ảnh 1")).toBeInTheDocument();
@@ -67,10 +254,11 @@ describe("catalog edit form", () => {
   });
 
   it("mounts no edit control when the server returns no scoped action", () => {
-    render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, allowedActions: [], variants: [{ ...item.variants![0]!, allowedActions: [] }], locationOffers: [{ ...item.locationOffers![0]!, allowedActions: [] }] }} etag={'"v4"'} categories={[]} />);
+    render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, allowedActions: [], variants: [{ ...item.variants![0]!, allowedActions: [] }], locationOffers: [{ ...item.locationOffers![0]!, allowedActions: [] }] }} etag={'"v4"'} categories={[]} socialAuthoringEnabled />);
     expect(screen.queryByRole("button", { name: "Lưu thông tin" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Lưu Điểm chính" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Đăng bán" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Caption" })).not.toBeInTheDocument();
   });
 
   it("requires archive confirmation and sends the item ETag only after approval", async () => {
@@ -114,13 +302,18 @@ describe("catalog edit form", () => {
 
   it("keeps unsaved input and blocks mutations after a version conflict until reload", async () => {
     api.updateCatalogItem.mockRejectedValueOnce(new CovieApiError(409, "RESOURCE_VERSION_CONFLICT", "stale"));
-    render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[]} />);
+    render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[]} socialAuthoringEnabled />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Caption" }), { target: { value: "Caption chưa lưu" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Tên" }), { target: { value: "Tên chưa lưu" } });
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await screen.findByText(/đã thay đổi ở nơi khác/i);
+    expect(screen.getByRole("textbox", { name: "Caption" })).toHaveValue("Caption chưa lưu");
+    expect(screen.getByRole("textbox", { name: "Caption" })).toBeDisabled();
     expect(screen.getByRole("textbox", { name: "Tên" })).toHaveValue("Tên chưa lưu");
     expect(screen.getByRole("button", { name: "Lưu thông tin" })).toBeDisabled();
+    const confirmReload = vi.spyOn(window, "confirm").mockReturnValue(true);
     fireEvent.click(screen.getByRole("button", { name: "Tải dữ liệu mới" }));
+    expect(confirmReload).toHaveBeenCalledTimes(1);
     expect(router.refresh).toHaveBeenCalledTimes(1);
   });
 
@@ -184,6 +377,7 @@ describe("catalog edit form", () => {
     const select = await screen.findByLabelText("Mức rang");
     expect(select).toHaveValue("roast-light");
     fireEvent.change(select, { target: { value: "roast-dark" } });
+    await waitFor(() => expect(select).toHaveValue("roast-dark"));
     fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
     await waitFor(() => expect(api.updateCatalogItem).toHaveBeenCalledTimes(1));
     expect(api.updateCatalogItem.mock.calls[0]?.[3]).toHaveProperty("attributes", [
@@ -299,5 +493,57 @@ describe("catalog edit form", () => {
     fireEvent.click(screen.getByRole("button", { name: "Lưu Điểm chính" }));
     await waitFor(() => expect(api.updateCatalogLocationOffer).toHaveBeenCalledTimes(1));
     expect(api.updateCatalogLocationOffer.mock.calls[0]?.[4]).not.toHaveProperty("inventoryMode");
+  });
+
+  it("renders barcode lookup for PRODUCT and applies suggested name which sends in PATCH only upon saving", async () => {
+    api.lookupBarcode.mockResolvedValue({
+      gtin: "8934673501354",
+      gtin14: "08934673501354",
+      productName: "Cà phê Robusta Đắk Lắk 500g",
+      needsReview: false,
+    });
+
+    render(<CatalogEditForm merchantId="merchant-1" item={item} etag={'"v4"'} categories={[{ id: "category-1", name: "Đồ uống", catalogType: "PRODUCT" }]} />);
+
+    // Barcode input is visible
+    expect(screen.getByLabelText("Mã vạch GTIN/EAN")).toBeInTheDocument();
+
+    // Lookup barcode
+    fireEvent.change(screen.getByLabelText("Mã vạch GTIN/EAN"), { target: { value: "8934673501354" } });
+    fireEvent.click(screen.getByRole("button", { name: "Tra cứu" }));
+
+    await waitFor(() => {
+      expect(api.lookupBarcode).toHaveBeenCalledWith("8934673501354");
+    });
+
+    // Existing name is "Cà phê hạt", so applying triggers confirmation dialog
+    fireEvent.click(screen.getByRole("button", { name: "Áp dụng tên gợi ý" }));
+    expect(screen.getByText("Xác nhận thay thế tên sản phẩm")).toBeInTheDocument();
+
+    // Confirm replacement
+    fireEvent.click(screen.getByRole("button", { name: "Thay thế" }));
+
+    // Input is updated to new name
+    expect(screen.getByRole("textbox", { name: "Tên" })).toHaveValue("Cà phê Robusta Đắk Lắk 500g");
+
+    // PATCH has NOT been called yet! (lookup & apply must not create mutations directly)
+    expect(api.updateCatalogItem).not.toHaveBeenCalled();
+
+    // Now click "Lưu thông tin"
+    fireEvent.click(screen.getByRole("button", { name: "Lưu thông tin" }));
+
+    await waitFor(() => {
+      expect(api.updateCatalogItem).toHaveBeenCalledWith(
+        "merchant-1",
+        "item-1",
+        '"v4"',
+        expect.objectContaining({ name: "Cà phê Robusta Đắk Lắk 500g" }),
+      );
+    });
+  });
+
+  it("does not render barcode lookup for SERVICE edit form", () => {
+    render(<CatalogEditForm merchantId="merchant-1" item={{ ...item, type: "SERVICE" }} etag={'"v4"'} categories={[]} />);
+    expect(screen.queryByLabelText("Mã vạch GTIN/EAN")).not.toBeInTheDocument();
   });
 });

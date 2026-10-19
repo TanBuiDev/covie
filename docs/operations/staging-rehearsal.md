@@ -45,7 +45,7 @@ COVIE_RESTORE_DATABASE=covie_restore_rc1 \
 ./infra/scripts/run-staging-rehearsal.sh
 ```
 
-The script verifies Flyway, captures source invariants, runs public smoke/security/load, executes the supplied normal-auth P0 flow and controlled rate-limit/Redis failure checks, creates a logical backup, restores into the second database, compares critical invariant counts, runs a temporary API smoke against the restored database, executes the digest rollback drill and triggers/resolves staging alerts.
+The script verifies Flyway, runs public smoke/security/load, executes the supplied normal-auth P0 flow and controlled rate-limit/Redis failure checks, then captures source invariants immediately before creating the logical backup. The baseline must include the P0-created orders/reviews, not the pre-P0 database. It restores into the second database, compares critical invariant counts, runs a temporary API smoke against the restored database, executes the digest rollback drill and triggers/resolves staging alerts.
 
 ## P0 business evidence
 

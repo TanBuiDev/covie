@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.catalog.api.dto.CatalogItemManagementResponse;
@@ -71,6 +72,8 @@ public class CatalogCreateService {
     private final LocationVariantRepository locationVariants; private final CatalogSearchDocumentService search;
     private final IdempotencyExecutor idempotency; private final OutboxEventWriter outbox;
     private final UuidV7Generator ids; private final AppClock clock; private final InventoryModeCoordinator inventory;
+    private final boolean captionEnabled;
+    private final boolean videoEnabled;
 
     public CatalogCreateService(CurrentActorProvider actors, MerchantAccessPolicy access, MerchantProfileRepository merchants,
             MerchantLocationRepository locations, CatalogAggregateValidator validator, MediaAttachmentPolicy media,
@@ -78,24 +81,37 @@ public class CatalogCreateService {
             TagRepository tags, CatalogItemMediaRepository itemMedia, OptionGroupRepository optionGroups,
             OptionValueRepository optionValues, VariantRepository variants, VariantOptionValueRepository variantOptions,
             LocationVariantRepository locationVariants, CatalogSearchDocumentService search, IdempotencyExecutor idempotency,
-            OutboxEventWriter outbox, UuidV7Generator ids, AppClock clock, InventoryModeCoordinator inventory) {
+            OutboxEventWriter outbox, UuidV7Generator ids, AppClock clock, InventoryModeCoordinator inventory,
+            @Value("${covie.social-v2.caption-authoring-enabled:false}") boolean captionEnabled,
+            @Value("${covie.social-v2.video-enabled:false}") boolean videoEnabled) {
         this.actors=actors; this.access=access; this.merchants=merchants; this.locations=locations; this.validator=validator; this.media=media;
         this.items=items; this.attributeValues=attributeValues; this.itemTags=itemTags; this.tags=tags; this.itemMedia=itemMedia;
         this.optionGroups=optionGroups; this.optionValues=optionValues; this.variants=variants; this.variantOptions=variantOptions;
         this.locationVariants=locationVariants; this.search=search; this.idempotency=idempotency; this.outbox=outbox; this.ids=ids; this.clock=clock; this.inventory=inventory;
+        this.captionEnabled=captionEnabled;
+        this.videoEnabled=videoEnabled;
     }
 
     public IdempotencyExecutor.Execution<CatalogItemManagementResponse> create(UUID merchantId, String idempotencyKey,
             CreateCatalogItemRequest request) {
         UUID actorId = actors.currentActor().userId();
         requireCurrentMerchantAccessAndActivity(merchantId);
+        if (request.socialCaption()!=null && !captionEnabled) throw notFound();
+        if (request.socialCaption()!=null && request.socialCaption().length()>3000)
+            throw reject(ErrorCode.VALIDATION_FAILED,"Caption must not exceed 3000 UTF-16 units.");
         return idempotency.executeWithStatus(actorId, "CATALOG_ITEM_CREATE:" + merchantId, idempotencyKey, request,
                 CatalogItemManagementResponse.class, () -> new IdempotencyExecutor.StoredResponse<>(HttpStatus.CREATED.value(),
                         createInTransaction(merchantId, actorId, request)));
     }
 
     private CatalogItemManagementResponse createInTransaction(UUID merchantId, UUID actorId, CreateCatalogItemRequest request) {
-        access.require(merchantId, MerchantCapability.MANAGE_CATALOG_STRUCTURE);
+        if ((captionEnabled && request.socialCaption()!=null) || ((captionEnabled || videoEnabled) && request.mediaIds()!=null)) {
+            access.requireForMutation(merchantId, MerchantCapability.MANAGE_CATALOG_STRUCTURE);
+        } else {
+            access.require(merchantId, MerchantCapability.MANAGE_CATALOG_STRUCTURE);
+        }
+        if ((captionEnabled || videoEnabled) && request.mediaIds()!=null && request.mediaIds().stream().distinct().count()>10)
+            throw reject(ErrorCode.VALIDATION_FAILED,"Catalog media must not exceed 10 distinct assets.");
         var merchant = merchants.findActiveForUpdate(merchantId).orElseThrow(CatalogCreateService::notFound);
         if (merchant.getMerchantStatus() != MerchantStatus.ACTIVE) throw reject(ErrorCode.MERCHANT_ACTION_NOT_ALLOWED,
                 "Merchant is not active.");
@@ -105,6 +121,7 @@ public class CatalogCreateService {
         Instant now = clock.now(); UUID itemId = ids.generate();
         CatalogItemEntity item = items.save(CatalogItemEntity.create(itemId, merchantId, request.type(), request.listingKind(),
                 normalized.category().getId(), cleaned(request.name()), slug(request.name(), itemId), cleanNullable(request.description()), now));
+        if (request.socialCaption()!=null) item.updateSocialCaption(cleanNullable(request.socialCaption()),now);
         for (CatalogAggregateValidator.NormalizedAttribute value : normalized.values()) attributeValues.save(
                 CatalogItemAttributeValueEntity.create(ids.generate(), itemId, value.definition().getId(), value.request().valueText(),
                         value.request().valueNumber(), value.request().valueBoolean(), value.request().optionId()));
@@ -118,7 +135,7 @@ public class CatalogCreateService {
         outbox.append(new OutboxEventIntent("CATALOG_ITEM_CREATED", "CATALOG_ITEM", itemId,
                 Map.of("merchantId", merchantId.toString(), "catalogItemId", itemId.toString())));
         return new CatalogItemManagementResponse(itemId, item.getItemType(), item.getListingKind(), item.getPrimaryCategoryId(),
-                item.getName(), item.getDescription(), item.getListingStatus(), variantState.responses(), offers, item.getVersion());
+                item.getName(), item.getDescription(), item.getListingStatus(), variantState.responses(), offers, item.getVersion(),item.getSocialCaption());
     }
 
     private VariantState createOptionsAndVariants(CatalogItemEntity item, List<OptionGroupCreateRequest> requestedGroups,
@@ -201,9 +218,20 @@ public class CatalogCreateService {
         }
     }
     private void attachMedia(CatalogItemEntity item, List<UUID> mediaIds, UUID actorId) {
-        Set<UUID> unique = new HashSet<>(); int order=0; for (UUID mediaId : mediaIds == null ? List.<UUID>of() : mediaIds) {
-            if (!unique.add(mediaId)) continue; MediaAssetEntity asset=media.requireReadyOwned(mediaId, actorId, Set.of(MediaPurpose.CATALOG_IMAGE));
-            itemMedia.save(CatalogItemMediaEntity.image(item, asset, order, order++ == 0));
+        var allowed = videoEnabled ? Set.of(MediaPurpose.CATALOG_IMAGE, MediaPurpose.CATALOG_VIDEO) : Set.of(MediaPurpose.CATALOG_IMAGE);
+        var requested = (mediaIds == null ? List.<UUID>of() : mediaIds).stream().distinct()
+                .map(id -> media.requireReadyOwned(id, actorId, allowed)).toList();
+        if (requested.stream().filter(asset -> asset.getPurpose()==MediaPurpose.CATALOG_VIDEO).count()>1)
+            throw reject(ErrorCode.MEDIA_NOT_ATTACHABLE,"Catalog media must not exceed one video.");
+        boolean coverChosen = false;
+        int order = 0;
+        for (MediaAssetEntity candidate : requested) {
+            boolean video = candidate.getPurpose()==MediaPurpose.CATALOG_VIDEO;
+            var asset = video ? media.lockReadyOwnedCatalogVideo(candidate.getId(),actorId) : candidate;
+            boolean cover = !video && !coverChosen;
+            if (cover) coverChosen = true;
+            itemMedia.save(video ? CatalogItemMediaEntity.video(item,asset,order) : CatalogItemMediaEntity.image(item,asset,order,cover));
+            order++;
         }
     }
     private static void ensureUnique(List<String> keys, String message) { if (new HashSet<>(keys).size()!=keys.size()) throw variantReject(message); }

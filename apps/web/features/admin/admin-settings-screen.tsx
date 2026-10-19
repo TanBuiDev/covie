@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Clock,
+  CreditCard,
   HandHeart,
   LockKey,
   ShieldCheck,
@@ -13,13 +14,18 @@ import { AdminPageHeader, AdminStatusChip, AdminSurface } from "./admin-ui";
 import { loadAdminSettingDefinitions, loadAdminSettingDetail, updateGlobalAdminSetting } from "./admin-api";
 import { SettingsEditor, type AdminSettingDefinition } from "./settings-editor";
 
-export type AdminSettingsSection = "policy" | "orders" | "needs" | "advanced";
+export type AdminSettingsSection = "policy" | "orders" | "needs" | "advanced" | "billing";
 
 const sectionKeys: Record<AdminSettingsSection, Set<string>> = {
   policy: new Set(["moderation.mode", "review.enabled", "reputation.warning_threshold_basis_points"]),
   orders: new Set(["order.confirmation_timeout_minutes", "order.auto_complete_hours", "order.long_issue_timeout_hours", "pickup.no_show_grace_minutes"]),
   needs: new Set(["need_request.max_response_items_per_location"]),
   advanced: new Set(["moderation.hybrid_adverse_lookback_days", "reputation.minimum_eligible_orders_for_warning", "bulk.max_items"]),
+  billing: new Set([
+    "billing.enforcement_enabled", "billing.seller_registration_enabled",
+    "billing.reminders_enabled", "billing.checkout_hourly_limit",
+    "billing.finance_roles_enabled"
+  ]),
 };
 
 const titles: Record<AdminSettingsSection, [string, string]> = {
@@ -27,10 +33,12 @@ const titles: Record<AdminSettingsSection, [string, string]> = {
   orders: ["Thời hạn đơn hàng", "Cấu hình timeout và vòng đời do máy chủ định nghĩa"],
   needs: ["Ghép nối Cần mua", "Giới hạn phản hồi và matching do máy chủ định nghĩa"],
   advanced: ["Chính sách nâng cao", "Các tham số vận hành bổ sung trong registry hệ thống"],
+  billing: ["Cấu hình Seller Billing", "Cờ bật/tắt an toàn, nhắc gia hạn và giới hạn thanh toán thuê bao"],
 };
 
 function normalizeSection(value: string | undefined): AdminSettingsSection {
-  return value === "orders" || value === "needs" || value === "advanced" ? value : "policy";
+  return value === "orders" || value === "needs" || value === "advanced" || value === "billing"
+    ? value : "policy";
 }
 
 export function formatSettingEtag(version: number): string {
@@ -109,6 +117,14 @@ export function AdminSettingsScreen({ section: requestedSection }: { section?: s
           <span>Cần mua</span>
         </Link>
         <Link
+          href="/admin/settings?section=billing"
+          aria-current={section === "billing" ? "page" : undefined}
+          style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+        >
+          <CreditCard size={16} weight="duotone" />
+          <span>Seller Billing</span>
+        </Link>
+        <Link
           href="/admin/settings?section=advanced"
           aria-current={section === "advanced" ? "page" : undefined}
           style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
@@ -137,6 +153,16 @@ export function AdminSettingsScreen({ section: requestedSection }: { section?: s
           </span>
         </div>
       </AdminSurface>
+
+      {section === "billing" ? (
+        <AdminSurface className="admin-contract-note">
+          <h2>Cảnh báo triển khai thu phí</h2>
+          <p>Chỉ bật kiểm soát quyền bán khi đã bảo vệ cửa hàng cũ, nghiệm thu payOS, xác minh bảo mật GitHub và hoàn tất đợt pilot.</p>
+          <p>Chính sách thu phí trên trang này khác với cấu hình payOS phía backend. Bật enforcement không tự bật tạo link thanh toán; payOS vẫn cần phê duyệt phát hành riêng.</p>
+          <p>Chỉ bật phân quyền tài chính sau khi ít nhất một Admin APPROVER và OPERATOR đã được cấp quyền đúng cách.</p>
+          <Link href="/admin/billing">Quay lại quản lý bảng giá và giao dịch Seller</Link>
+        </AdminSurface>
+      ) : null}
 
       {loading ? (
         <AdminSurface>

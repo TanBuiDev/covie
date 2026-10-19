@@ -38,7 +38,27 @@ node infra/perf/run-load.mjs \
   --duration 120s
 ```
 
-Available scenarios are defined in `infra/perf/scenarios.mjs`. Authenticated Order-list load uses `COVIE_LOAD_AUTH_COOKIE`; item detail uses `COVIE_LOAD_ITEM_PATH`. The harness prints only aggregate status/latency data and never response bodies.
+Available scenarios are defined in `infra/perf/scenarios.mjs`. Authenticated Order-list and Social activity load use `COVIE_LOAD_AUTH_COOKIE`; item detail uses `COVIE_LOAD_ITEM_PATH`. The harness prints aggregate status/latency/body-size data, never cookies or response bodies. Supply disposable credentials through the approved local configuration, not command literals, chat or shared logs; send them only to the intended trusted staging origin.
+
+Latency now includes reading the complete response body, not only receiving headers. Truncated/timed-out bodies count as failed transfers even when headers said HTTP200. `responseBodyBytes` reports total/min/max/rounded mean bytes and completed-response count for fully consumed bodies, including non-200 responses. Partial failed bodies are not included in those size totals. Bytes are the decoded chunks exposed by Fetch, not compressed wire bytes or an estimate of object-storage/CDN transfer. Streaming consumption does not retain response bodies. Earlier header-only measurements are not directly comparable; collect a new baseline.
+
+### Social V2 read preparation
+
+- `public-social-previews`: repeated `itemIds` from `COVIE_SOCIAL_LOAD_ITEM_IDS`,1–40 distinct valid UUIDs; no auth cookie.
+- `private-social-activity-liked`, `private-social-activity-saved`, `private-social-activity-commented`: actual `/api/v1/me/social/activity` types with limit20, required `COVIE_LOAD_AUTH_COOKIE`, no client userId.
+
+These scenarios reuse the provisional Phase4 social-read objectives p95<=400ms and errors<1%, **not an approved V2 production SLO**. Keep flags OFF in normal environments. An authorized staging candidate must explicitly enable the relevant backend features before these reads can succeed; the harness never changes flags or creates data. A401/404 is not an accepted sample. This preparation does not extend the old Phase4 runner's two-scenario scope into full V2 acceptance.
+
+Before V2 load, independently verify the exact candidate/active deployment manifests and fixture visibility. Seed20–40 actual caption/media items for preview, and enough actual current Like/Save/ACTIVE comments for each activity type (including multiple comments/item). Check the returned representative IDs/counts and payload before interpreting performance; an empty200 response is not proof the rich fixture was exercised. Use disposable staging identities. Do not replace missing staging data with response mocks.
+
+```bash
+node --test infra/perf/social-scenarios.test.mjs infra/perf/run-load.test.mjs
+node infra/perf/run-load.mjs \
+  --base-url https://staging.covie.vn \
+  --scenario public-social-previews --concurrency 10 --duration 30s
+```
+
+Run each authenticated activity scenario separately with the configured disposable cookie; record which type, fixture and actor role were exercised without recording the cookie. The unit/loopback tests validate contract and measurement behavior only; they are not staging load results. DB pool/query count, browser network/long tasks/LCP/CLS/media/memory, load baseline and owner-approved SLO still require separate real-environment evidence under Social V2 plan11.5/12.4.
 
 Pilot objectives currently encoded:
 

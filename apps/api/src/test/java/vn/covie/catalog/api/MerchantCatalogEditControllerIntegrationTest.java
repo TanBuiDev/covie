@@ -65,6 +65,7 @@ import vn.covie.support.PostgresIntegrationTest;
 import vn.covie.users.model.UserEntity;
 import vn.covie.users.persistence.UserRepository;
 
+@org.springframework.boot.test.context.SpringBootTest(properties={"covie.social-v2.caption-authoring-enabled=true","covie.social-v2.previews-enabled=true","covie.outbox.max-events-per-poll=0"})
 class MerchantCatalogEditControllerIntegrationTest extends PostgresIntegrationTest {
     private static final Instant NOW = Instant.parse("2026-01-01T00:00:00Z");
     @Autowired WebApplicationContext web; @Autowired UserRepository users; @Autowired AuthSessionRepository sessions;
@@ -79,6 +80,373 @@ class MerchantCatalogEditControllerIntegrationTest extends PostgresIntegrationTe
     private MockMvc mockMvc;
 
     @BeforeEach void setUp() { mockMvc = MockMvcBuilders.webAppContextSetup(web).apply(springSecurity()).build(); }
+
+    @Test
+    void issuedSellerReadsOnlyCurrentDecisionReasonWithinCatalogManagementScope() throws Exception {
+        var jdbc=web.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        var issuer=web.getBean(vn.covie.auth.application.InitialSessionIssuer.class);
+        Actor admin=actor();
+        jdbc.update("insert into system_role_assignments(id,user_id,role,created_at) values (?,?,'ADMIN',now())",UUID.randomUUID(),admin.userId());
+        String administrator="Bearer "+issuer.issue(admin.userId(),new vn.covie.auth.model.DeviceMetadata("Test","Seller reason admin")).accessToken().value();
+        for (String action:List.of("HIDE","REJECT")) {
+            Actor owner=actor(),manager=actor(),staff=actor(),outsider=actor();
+            Fixture fixture=fixture(owner,MerchantRole.OWNER);
+            memberships.saveAndFlush(MerchantMembershipEntity.active(UUID.randomUUID(),fixture.merchantId(),manager.userId(),MerchantRole.MANAGER,NOW));
+            var staffMembership=memberships.saveAndFlush(MerchantMembershipEntity.active(UUID.randomUUID(),fixture.merchantId(),staff.userId(),MerchantRole.STAFF,NOW));
+            assignments.saveAndFlush(MerchantMemberLocationEntity.assign(UUID.randomUUID(),staffMembership.getId(),offers.findById(fixture.offerId()).orElseThrow().getMerchantLocationId(),NOW));
+            Fixture foreign=fixture(outsider,MerchantRole.OWNER);
+            UUID caseId=UUID.randomUUID(),foreignCase=UUID.randomUUID();
+            jdbc.update("update catalog_items set listing_status='ACTIVE',moderation_status=? where id=?",action.equals("HIDE")?"APPROVED":"PENDING",fixture.itemId());
+            jdbc.update("insert into moderation_cases(id,case_type,target_type,target_catalog_item_id,reason_code,case_status,opened_at) values (?,?,'CATALOG_ITEM',?,'OPEN_REASON_PRIVATE','OPEN',now())",caseId,action.equals("HIDE")?"SYSTEM_FLAG":"PRE_APPROVAL",fixture.itemId());
+            mockMvc.perform(post("/api/v1/admin/moderation-cases/"+caseId+(action.equals("HIDE")?"/hide-content":"/reject"))
+                    .header("Authorization",administrator).header("Idempotency-Key",UUID.randomUUID().toString())
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"reasonCode\":\"SPAM\",\"note\":\"ADMIN_NOTE_PRIVATE\"}"))
+                    .andExpect(status().isOk());
+            jdbc.update("insert into moderation_cases(id,case_type,target_type,target_catalog_item_id,reason_code,case_status,opened_at,resolved_at) values (?,'SYSTEM_FLAG','CATALOG_ITEM',?,'FOREIGN_PRIVATE','RESOLVED',now(),now())",foreignCase,foreign.itemId());
+            jdbc.update("insert into moderation_actions(id,moderation_case_id,action_type,actor_admin_user_id,reason_code,note,metadata,created_at) values (?,?,?,?,'FOREIGN_PRIVATE','FOREIGN_NOTE_PRIVATE','{}'::jsonb,now()+interval '1 hour')",UUID.randomUUID(),foreignCase,action,admin.userId());
+            var tokens=new java.util.LinkedHashMap<UUID,String>();
+            for (Actor actor:List.of(owner,manager,staff,outsider)) tokens.put(actor.userId(),"Bearer "+issuer.issue(actor.userId(),new vn.covie.auth.model.DeviceMetadata("Test","Seller reason")).accessToken().value());
+            var before=reasonReadSnapshot(jdbc);
+            for (Actor permitted:List.of(owner,manager)) {
+                String body=mockMvc.perform(get(itemPath(fixture)).header("Authorization",tokens.get(permitted.userId())))
+                        .andExpect(status().isOk()).andExpect(header().string("Cache-Control",org.hamcrest.Matchers.containsString("no-store")))
+                        .andExpect(jsonPath("$.moderationReasonCode").value("SPAM")).andReturn().getResponse().getContentAsString();
+                assertThat(body).doesNotContain("ADMIN_NOTE_PRIVATE","OPEN_REASON_PRIVATE","FOREIGN_PRIVATE","FOREIGN_NOTE_PRIVATE");
+            }
+            mockMvc.perform(get(itemPath(fixture)).header("Authorization",tokens.get(staff.userId())))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.moderationReasonCode").doesNotExist());
+            mockMvc.perform(get(itemPath(fixture)).header("Authorization",tokens.get(outsider.userId()))).andExpect(status().isNotFound());
+            mockMvc.perform(get(itemPath(fixture))).andExpect(status().isUnauthorized());
+            assertThat(reasonReadSnapshot(jdbc)).isEqualTo(before);
+            mockMvc.perform(post("/api/v1/admin/moderation-cases/"+caseId+"/restore-content")
+                    .header("Authorization",administrator).header("Idempotency-Key",UUID.randomUUID().toString()))
+                    .andExpect(status().isOk());
+            mockMvc.perform(get(itemPath(fixture)).header("Authorization",tokens.get(owner.userId())))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.moderationReasonCode").doesNotExist());
+            if (action.equals("HIDE")) {
+                UUID nextCase=UUID.randomUUID();
+                jdbc.update("insert into moderation_cases(id,case_type,target_type,target_catalog_item_id,reason_code,case_status,opened_at) values (?,'SYSTEM_FLAG','CATALOG_ITEM',?,'OPEN_REASON_PRIVATE','OPEN',now())",nextCase,fixture.itemId());
+                mockMvc.perform(post("/api/v1/admin/moderation-cases/"+nextCase+"/hide-content").header("Authorization",administrator)
+                        .header("Idempotency-Key",UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reasonCode\":\"UPDATED_REASON\",\"note\":\"ADMIN_NOTE_PRIVATE\"}"))
+                        .andExpect(status().isOk());
+                mockMvc.perform(get(itemPath(fixture)).header("Authorization",tokens.get(owner.userId())))
+                        .andExpect(status().isOk()).andExpect(jsonPath("$.moderationReasonCode").value("UPDATED_REASON"));
+            }
+        }
+    }
+
+    private java.util.Map<String,List<String>> reasonReadSnapshot(org.springframework.jdbc.core.JdbcTemplate jdbc) {
+        var result=new java.util.LinkedHashMap<String,List<String>>();
+        for (String table:List.of("catalog_items","variants","location_variants","catalog_item_media","moderation_cases","moderation_actions","audit_logs","outbox_events"))
+            result.put(table,jdbc.queryForList("select to_jsonb(original)::text from "+table+" original order by 1",String.class));
+        return result;
+    }
+
+    @Test
+    void captionPatchPreservesCommerceAndRechecksConfiguredModeration() throws Exception {
+        Actor owner=actor(); Fixture fixture=fixture(owner,MerchantRole.OWNER);
+        var item=items.findById(fixture.itemId()).orElseThrow();
+        item.update(item.getPrimaryCategoryId(),item.getName(),"Commercial description",NOW);
+        item.publish(NOW); item.requireModeration(NOW); item.approveModeration(NOW);
+        items.saveAndFlush(item);
+        var jdbc=web.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        var offerBefore=jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId());
+        String bearer="Bearer "+web.getBean(vn.covie.auth.application.InitialSessionIssuer.class)
+                .issue(owner.userId(),new vn.covie.auth.model.DeviceMetadata("Caption","catalog-test")).accessToken().value();
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v1\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"  Social caption\\nsecond line  \"}"))
+                .andExpect(status().isNoContent()).andExpect(header().string("ETag","\"v2\""));
+        mockMvc.perform(get(itemPath(fixture)).header("Authorization",bearer)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.socialCaption").value("Social caption\nsecond line"))
+                .andExpect(jsonPath("$.description").value("Commercial description"));
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v2\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Caption item\"}"))
+                .andExpect(status().isNoContent()).andExpect(header().string("ETag","\"v3\""));
+        assertThat(jdbc.queryForObject("select social_caption from catalog_items where id=?",String.class,fixture.itemId()))
+                .isEqualTo("Social caption\nsecond line");
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v3\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":null}"))
+                .andExpect(status().isNoContent()).andExpect(header().string("ETag","\"v4\""));
+        assertThat(jdbc.queryForObject("select social_caption from catalog_items where id=?",String.class,fixture.itemId())).isNull();
+        var beforeInvalid=jdbc.queryForMap("select * from catalog_items where id=?",fixture.itemId());
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v4\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\""+"a".repeat(3001)+"\"}"))
+                .andExpect(status().isUnprocessableEntity());
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v1\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"Stale\"}"))
+                .andExpect(status().isConflict());
+        assertThat(jdbc.queryForMap("select * from catalog_items where id=?",fixture.itemId())).isEqualTo(beforeInvalid);
+        web.getBean(vn.covie.settings.persistence.SystemSettingRepository.class).saveAndFlush(
+                vn.covie.settings.model.SystemSettingEntity.merchant(UUID.randomUUID(),"moderation.mode",
+                    vn.covie.settings.model.SettingValueType.ENUM,new com.fasterxml.jackson.databind.node.TextNode("PRE_APPROVAL"),
+                    fixture.merchantId(),owner.userId(),NOW));
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v4\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"Changed approved content\"}"))
+                .andExpect(status().isNoContent()).andExpect(header().string("ETag","\"v5\""));
+        assertThat(items.findById(fixture.itemId()).orElseThrow().getModerationStatus().name()).isEqualTo("PENDING");
+        assertThat(jdbc.queryForObject("select count(*) from moderation_cases where target_catalog_item_id=? and case_type='PRE_APPROVAL' and case_status='OPEN'",Long.class,fixture.itemId())).isEqualTo(1);
+        mockMvc.perform(get("/api/v1/catalog/items/"+fixture.itemId())).andExpect(status().isNotFound());
+        assertThat(jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId())).isEqualTo(offerBefore);
+        assertThat(items.findById(fixture.itemId()).orElseThrow().getDescription()).isEqualTo("Commercial description");
+    }
+
+    @Test
+    void restoreCannotPublishHiddenSocialEditsWithoutRequiredApproval() throws Exception {
+        Actor owner=actor(); Fixture fixture=fixture(owner,MerchantRole.OWNER);
+        var item=items.findById(fixture.itemId()).orElseThrow();
+        item.publish(NOW); item.requireModeration(NOW); item.approveModeration(NOW);
+        item.updateSocialCaption("Reviewed caption",NOW);
+        items.saveAndFlush(item);
+        var original=readyMedia(owner.userId()); var replacement=readyMedia(owner.userId());
+        itemMedia.saveAndFlush(CatalogItemMediaEntity.image(item,original,0,true));
+        var jdbc=web.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        var offerBefore=jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId());
+        web.getBean(vn.covie.settings.persistence.SystemSettingRepository.class).saveAndFlush(
+                vn.covie.settings.model.SystemSettingEntity.merchant(UUID.randomUUID(),"moderation.mode",
+                        vn.covie.settings.model.SettingValueType.ENUM,new com.fasterxml.jackson.databind.node.TextNode("PRE_APPROVAL"),
+                        fixture.merchantId(),owner.userId(),NOW));
+        Actor admin=actor();
+        web.getBean(vn.covie.users.persistence.SystemRoleAssignmentRepository.class).saveAndFlush(
+                vn.covie.users.model.SystemRoleAssignmentEntity.assign(UUID.randomUUID(),admin.userId(),vn.covie.shared.security.SystemRole.ADMIN,NOW));
+        var issuer=web.getBean(vn.covie.auth.application.InitialSessionIssuer.class);
+        String seller="Bearer "+issuer.issue(owner.userId(),new vn.covie.auth.model.DeviceMetadata("Test","Restore seller")).accessToken().value();
+        String administrator="Bearer "+issuer.issue(admin.userId(),new vn.covie.auth.model.DeviceMetadata("Test","Restore admin")).accessToken().value();
+        UUID caseId=UUID.randomUUID();
+        web.getBean(vn.covie.moderation.persistence.ModerationCaseRepository.class).saveAndFlush(
+                vn.covie.moderation.model.ModerationCaseEntity.systemFlag(caseId,
+                        new vn.covie.shared.moderation.ModerationTargetRef(vn.covie.moderation.model.ModerationTargetType.CATALOG_ITEM,fixture.itemId()),"SPAM","Restore fixture",NOW));
+        String route="/api/v1/admin/moderation-cases/"+caseId;
+        String preview="/api/v1/catalog/social-previews";
+        String itemJson="$['"+fixture.itemId()+"']";
+        mockMvc.perform(get(preview).param("itemIds",fixture.itemId().toString())).andExpect(status().isOk())
+                .andExpect(jsonPath(itemJson+".socialCaption").value("Reviewed caption"));
+        mockMvc.perform(post(route+"/hide-content").header("Authorization",administrator).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"reasonCode\":\"SPAM\"}")).andExpect(status().isOk());
+        var hidden=items.findById(fixture.itemId()).orElseThrow();
+        assertThat(hidden.getModerationStatus().name()).isEqualTo("HIDDEN");
+        mockMvc.perform(post(route+"/restore-content").header("Authorization",administrator).header("Idempotency-Key",UUID.randomUUID().toString()))
+                .andExpect(status().isOk());
+        mockMvc.perform(get(preview).param("itemIds",fixture.itemId().toString())).andExpect(status().isOk())
+                .andExpect(jsonPath(itemJson+".socialCaption").value("Reviewed caption"));
+        caseId=UUID.randomUUID();
+        web.getBean(vn.covie.moderation.persistence.ModerationCaseRepository.class).saveAndFlush(
+                vn.covie.moderation.model.ModerationCaseEntity.systemFlag(caseId,
+                        new vn.covie.shared.moderation.ModerationTargetRef(vn.covie.moderation.model.ModerationTargetType.CATALOG_ITEM,fixture.itemId()),"SPAM","Second hide fixture",NOW));
+        route="/api/v1/admin/moderation-cases/"+caseId;
+        mockMvc.perform(post(route+"/hide-content").header("Authorization",administrator).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"reasonCode\":\"SPAM\"}")).andExpect(status().isOk());
+        hidden=items.findById(fixture.itemId()).orElseThrow();
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",seller).header("If-Match","\"v"+hidden.getVersion()+"\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"Unreviewed replacement caption\",\"mediaIds\":[\""+replacement.getId()+"\"]}"))
+                .andExpect(status().isNoContent());
+        assertThat(items.findById(fixture.itemId()).orElseThrow().getModerationStatus().name()).isEqualTo("PENDING");
+        UUID approval=jdbc.queryForObject("select id from moderation_cases where target_catalog_item_id=? and case_type='PRE_APPROVAL' and case_status='OPEN'",UUID.class,fixture.itemId());
+        mockMvc.perform(get(preview).param("itemIds",fixture.itemId().toString())).andExpect(status().isOk())
+                .andExpect(jsonPath(itemJson).doesNotExist());
+        var pendingRow=jdbc.queryForMap("select * from catalog_items where id=?",fixture.itemId());
+        String restoreKey=UUID.randomUUID().toString();
+        for (int replay=0;replay<2;replay++) mockMvc.perform(post(route+"/restore-content").header("Authorization",administrator).header("Idempotency-Key",restoreKey)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"reasonCode\":\"RECHECK\"}"))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("MODERATION_TARGET_STATE_CONFLICT"));
+        assertThat(jdbc.queryForMap("select * from catalog_items where id=?",fixture.itemId())).isEqualTo(pendingRow);
+        assertThat(jdbc.queryForObject("select count(*) from moderation_actions where moderation_case_id=? and action_type='RESTORE'",Long.class,caseId)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from audit_logs where entity_id=? and action='MODERATION_RESTORE'",Long.class,caseId)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=? and payload->>'action'='RESTORE'",Long.class,caseId)).isZero();
+        mockMvc.perform(get(preview).param("itemIds",fixture.itemId().toString())).andExpect(status().isOk())
+                .andExpect(jsonPath(itemJson).doesNotExist());
+        mockMvc.perform(get("/api/v1/catalog/items/"+fixture.itemId())).andExpect(status().isNotFound());
+        String approvalKey=UUID.randomUUID().toString();
+        for (int replay=0;replay<2;replay++) mockMvc.perform(post("/api/v1/admin/moderation-cases/"+approval+"/approve")
+                .header("Authorization",administrator).header("Idempotency-Key",approvalKey)).andExpect(status().isOk());
+        mockMvc.perform(get(preview).param("itemIds",fixture.itemId().toString())).andExpect(status().isOk())
+                .andExpect(jsonPath(itemJson+".socialCaption").value("Unreviewed replacement caption"))
+                .andExpect(jsonPath(itemJson+".media[0].id").value(replacement.getId().toString()));
+        assertThat(jdbc.queryForObject("select count(*) from moderation_actions where moderation_case_id=? and action_type='APPROVE'",Long.class,approval)).isEqualTo(1);
+        assertThat(jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId())).isEqualTo(offerBefore);
+    }
+
+    @Test
+    void restoreCannotPublishRejectedSocialEditsWithoutRequiredApproval() throws Exception {
+        Actor owner=actor(); Fixture fixture=fixture(owner,MerchantRole.OWNER);
+        var item=items.findById(fixture.itemId()).orElseThrow();
+        item.publish(NOW); item.requireModeration(NOW); item.updateSocialCaption("Rejected caption",NOW);
+        items.saveAndFlush(item);
+        var original=readyMedia(owner.userId()); var replacement=readyMedia(owner.userId());
+        itemMedia.saveAndFlush(CatalogItemMediaEntity.image(item,original,0,true));
+        var jdbc=web.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        var offerBefore=jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId());
+        web.getBean(vn.covie.settings.persistence.SystemSettingRepository.class).saveAndFlush(
+                vn.covie.settings.model.SystemSettingEntity.merchant(UUID.randomUUID(),"moderation.mode",
+                        vn.covie.settings.model.SettingValueType.ENUM,new com.fasterxml.jackson.databind.node.TextNode("PRE_APPROVAL"),
+                        fixture.merchantId(),owner.userId(),NOW));
+        Actor admin=actor();
+        web.getBean(vn.covie.users.persistence.SystemRoleAssignmentRepository.class).saveAndFlush(
+                vn.covie.users.model.SystemRoleAssignmentEntity.assign(UUID.randomUUID(),admin.userId(),vn.covie.shared.security.SystemRole.ADMIN,NOW));
+        var issuer=web.getBean(vn.covie.auth.application.InitialSessionIssuer.class);
+        String seller="Bearer "+issuer.issue(owner.userId(),new vn.covie.auth.model.DeviceMetadata("Test","Rejected seller")).accessToken().value();
+        String administrator="Bearer "+issuer.issue(admin.userId(),new vn.covie.auth.model.DeviceMetadata("Test","Rejected admin")).accessToken().value();
+        UUID caseId=UUID.randomUUID();
+        web.getBean(vn.covie.moderation.persistence.ModerationCaseRepository.class).saveAndFlush(
+                vn.covie.moderation.model.ModerationCaseEntity.preApprovalCatalog(caseId,fixture.itemId(),NOW));
+        String route="/api/v1/admin/moderation-cases/"+caseId;
+        mockMvc.perform(post(route+"/reject").header("Authorization",administrator).header("Idempotency-Key",UUID.randomUUID().toString())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"reasonCode\":\"SPAM\"}")).andExpect(status().isOk());
+        var rejected=items.findById(fixture.itemId()).orElseThrow();
+        assertThat(rejected.getModerationStatus().name()).isEqualTo("REJECTED");
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",seller).header("If-Match","\"v"+rejected.getVersion()+"\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"New rejected caption\",\"mediaIds\":[\""+replacement.getId()+"\"]}"))
+                .andExpect(status().isNoContent());
+        var restore=mockMvc.perform(post(route+"/restore-content").header("Authorization",administrator).header("Idempotency-Key",UUID.randomUUID().toString()))
+                .andReturn().getResponse();
+        assertThat(restore.getStatus()).as(restore.getContentAsString()).isIn(200,409);
+        String itemJson="$['"+fixture.itemId()+"']";
+        mockMvc.perform(get("/api/v1/catalog/social-previews").param("itemIds",fixture.itemId().toString())).andExpect(status().isOk())
+                .andExpect(jsonPath(itemJson).doesNotExist());
+        assertThat(restore.getStatus()).isEqualTo(409);
+        assertThat(items.findById(fixture.itemId()).orElseThrow().getModerationStatus().name()).isEqualTo("PENDING");
+        UUID approval=jdbc.queryForObject("select id from moderation_cases where target_catalog_item_id=? and case_type='PRE_APPROVAL' and case_status='OPEN'",UUID.class,fixture.itemId());
+        mockMvc.perform(post("/api/v1/admin/moderation-cases/"+approval+"/approve").header("Authorization",administrator)
+                .header("Idempotency-Key",UUID.randomUUID().toString())).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/catalog/social-previews").param("itemIds",fixture.itemId().toString())).andExpect(status().isOk())
+                .andExpect(jsonPath(itemJson+".socialCaption").value("New rejected caption"))
+                .andExpect(jsonPath(itemJson+".media[0].id").value(replacement.getId().toString()));
+        assertThat(jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId())).isEqualTo(offerBefore);
+    }
+
+    @Test
+    void pausedCaptionNeedsApprovalWithoutAutomaticallyResumingTheListing() throws Exception {
+        Actor owner=actor(); Fixture fixture=fixture(owner,MerchantRole.OWNER);
+        var item=items.findById(fixture.itemId()).orElseThrow();
+        item.publish(NOW); item.requireModeration(NOW); item.approveModeration(NOW); item.pause(NOW);
+        items.saveAndFlush(item);
+        var jdbc=web.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        var offerBefore=jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId());
+        String bearer="Bearer "+web.getBean(vn.covie.auth.application.InitialSessionIssuer.class)
+                .issue(owner.userId(),new vn.covie.auth.model.DeviceMetadata("Paused caption","catalog-test")).accessToken().value();
+        web.getBean(vn.covie.settings.persistence.SystemSettingRepository.class).saveAndFlush(
+                vn.covie.settings.model.SystemSettingEntity.merchant(UUID.randomUUID(),"moderation.mode",
+                        vn.covie.settings.model.SettingValueType.ENUM,new com.fasterxml.jackson.databind.node.TextNode("PRE_APPROVAL"),
+                        fixture.merchantId(),owner.userId(),NOW));
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v1\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"Changed while paused\"}"))
+                .andExpect(status().isNoContent()).andExpect(header().string("ETag","\"v2\""));
+        var edited=items.findById(fixture.itemId()).orElseThrow();
+        assertThat(edited.getModerationStatus().name()).isEqualTo("PENDING");
+        assertThat(edited.getListingStatus().name()).isEqualTo("PAUSED");
+        mockMvc.perform(get(itemPath(fixture)).header("Authorization",bearer)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.allowedActions",org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem("ACTIVATE"))));
+        mockMvc.perform(post(itemPath(fixture)+"/activate").header("Authorization",bearer).header("If-Match","\"v2\""))
+                .andExpect(status().isUnprocessableEntity());
+        mockMvc.perform(get("/api/v1/catalog/items/"+fixture.itemId())).andExpect(status().isNotFound());
+        UUID caseId=jdbc.queryForObject("select id from moderation_cases where target_catalog_item_id=? and case_type='PRE_APPROVAL' and case_status='OPEN'",
+                UUID.class,fixture.itemId());
+        Actor admin=actor();
+        web.getBean(vn.covie.users.persistence.SystemRoleAssignmentRepository.class).saveAndFlush(
+                vn.covie.users.model.SystemRoleAssignmentEntity.assign(UUID.randomUUID(),admin.userId(),vn.covie.shared.security.SystemRole.ADMIN,NOW));
+        String adminBearer="Bearer "+web.getBean(vn.covie.auth.application.InitialSessionIssuer.class)
+                .issue(admin.userId(),new vn.covie.auth.model.DeviceMetadata("Paused approval","catalog-test")).accessToken().value();
+        String key=UUID.randomUUID().toString();
+        for (int replay=0;replay<2;replay++) {
+            mockMvc.perform(post("/api/v1/admin/moderation-cases/"+caseId+"/approve").header("Authorization",adminBearer)
+                    .header("Idempotency-Key",key)).andExpect(status().isOk());
+        }
+        var approved=items.findById(fixture.itemId()).orElseThrow();
+        assertThat(approved.getModerationStatus().name()).isEqualTo("APPROVED");
+        assertThat(approved.getListingStatus().name()).isEqualTo("PAUSED");
+        mockMvc.perform(get("/api/v1/catalog/items/"+fixture.itemId())).andExpect(status().isNotFound());
+        mockMvc.perform(post(itemPath(fixture)+"/activate").header("Authorization",bearer).header("If-Match","\"v3\""))
+                .andExpect(status().isNoContent()).andExpect(header().string("ETag","\"v4\""));
+        assertThat(items.findById(fixture.itemId()).orElseThrow().getListingStatus().name()).isEqualTo("ACTIVE");
+        mockMvc.perform(get("/api/v1/catalog/items/"+fixture.itemId())).andExpect(status().isOk());
+        assertThat(jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId())).isEqualTo(offerBefore);
+        assertThat(jdbc.queryForObject("select count(*) from moderation_actions where moderation_case_id=?",Long.class,caseId)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from audit_logs where entity_id=? and action='MODERATION_APPROVE'",Long.class,caseId)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=? and event_type='MODERATION_ACTION_APPLIED'",Long.class,caseId)).isEqualTo(1);
+    }
+
+    @Test
+    void issuedCaptionJwtRespectsMerchantScopeStaffCapabilityAndMembershipRevocation() throws Exception {
+        Actor owner=actor(); Fixture fixture=fixture(owner,MerchantRole.OWNER);
+        Actor manager=actor();
+        var membership=memberships.saveAndFlush(MerchantMembershipEntity.active(UUID.randomUUID(),fixture.merchantId(),
+                manager.userId(),MerchantRole.MANAGER,NOW));
+        var issuer=web.getBean(vn.covie.auth.application.InitialSessionIssuer.class);
+        String managerBearer="Bearer "+issuer.issue(manager.userId(),new vn.covie.auth.model.DeviceMetadata("Caption manager","catalog-test")).accessToken().value();
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",managerBearer).header("If-Match","\"v0\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"Manager caption\"}"))
+                .andExpect(status().isNoContent()).andExpect(header().string("ETag","\"v1\""));
+        var jdbc=web.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        var before=jdbc.queryForMap("select * from catalog_items where id=?",fixture.itemId());
+        assertThat(before.get("social_caption")).isEqualTo("Manager caption");
+        var offerBefore=jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId());
+        var variantBefore=jdbc.queryForMap("select * from variants where id=?",fixture.variantId());
+        var mediaBefore=jdbc.queryForList("select * from catalog_item_media where catalog_item_id=?",fixture.itemId());
+        Actor otherOwner=actor(); Fixture otherMerchant=fixture(otherOwner,MerchantRole.OWNER);
+        String outsiderBearer="Bearer "+issuer.issue(otherOwner.userId(),new vn.covie.auth.model.DeviceMetadata("Other caption merchant","catalog-test")).accessToken().value();
+        for (String route : List.of(itemPath(fixture),"/api/v1/merchants/"+otherMerchant.merchantId()+"/catalog-items/"+fixture.itemId())) {
+            mockMvc.perform(patch(route).header("Authorization",outsiderBearer).header("If-Match","\"v1\"")
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"Foreign write\"}"))
+                    .andExpect(status().isNotFound());
+            assertThat(jdbc.queryForMap("select * from catalog_items where id=?",fixture.itemId())).isEqualTo(before);
+        }
+        Actor staff=actor();
+        var staffMembership=memberships.saveAndFlush(MerchantMembershipEntity.active(UUID.randomUUID(),fixture.merchantId(),
+                staff.userId(),MerchantRole.STAFF,NOW));
+        assignments.saveAndFlush(MerchantMemberLocationEntity.assign(UUID.randomUUID(),staffMembership.getId(),
+                offers.findById(fixture.offerId()).orElseThrow().getMerchantLocationId(),NOW));
+        String staffBearer="Bearer "+issuer.issue(staff.userId(),new vn.covie.auth.model.DeviceMetadata("Caption staff","catalog-test")).accessToken().value();
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",staffBearer).header("If-Match","\"v1\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"Staff write\"}"))
+                .andExpect(status().isForbidden());
+        membership.revoke(); memberships.saveAndFlush(membership);
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",managerBearer).header("If-Match","\"v1\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"Revoked write\"}"))
+                .andExpect(status().isNotFound());
+        assertThat(jdbc.queryForMap("select * from catalog_items where id=?",fixture.itemId())).isEqualTo(before);
+        assertThat(jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId())).isEqualTo(offerBefore);
+        assertThat(jdbc.queryForMap("select * from variants where id=?",fixture.variantId())).isEqualTo(variantBefore);
+        assertThat(jdbc.queryForList("select * from catalog_item_media where catalog_item_id=?",fixture.itemId())).isEqualTo(mediaBefore);
+    }
+
+    @Test
+    void v2MediaEditPreservesUnchangedLegacyGalleryAndEnforcesNewOrderingLimit() throws Exception {
+        Actor owner=actor(); Fixture fixture=fixture(owner,MerchantRole.OWNER);
+        var mediaIds=new java.util.ArrayList<UUID>();
+        for (int index=0;index<12;index++) {
+            var asset=readyMedia(owner.userId()); mediaIds.add(asset.getId());
+            itemMedia.saveAndFlush(CatalogItemMediaEntity.image(items.findById(fixture.itemId()).orElseThrow(),asset,index*2,index==0));
+        }
+        var jdbc=web.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        var beforeMedia=jdbc.queryForList("select * from catalog_item_media where catalog_item_id=? order by sort_order",fixture.itemId());
+        var beforeOffer=jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId());
+        var json=new com.fasterxml.jackson.databind.ObjectMapper();
+        String bearer="Bearer "+web.getBean(vn.covie.auth.application.InitialSessionIssuer.class)
+                .issue(owner.userId(),new vn.covie.auth.model.DeviceMetadata("Legacy media","catalog-test")).accessToken().value();
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v0\"")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"socialCaption\":\"Caption only\"}"))
+                .andExpect(status().isNoContent());
+        assertThat(jdbc.queryForList("select * from catalog_item_media where catalog_item_id=? order by sort_order",fixture.itemId())).isEqualTo(beforeMedia);
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v1\"")
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of("name","Legacy item","mediaIds",mediaIds))))
+                .andExpect(status().isNoContent());
+        assertThat(jdbc.queryForList("select * from catalog_item_media where catalog_item_id=? order by sort_order",fixture.itemId())).isEqualTo(beforeMedia);
+        var beforeRejected=jdbc.queryForMap("select * from catalog_items where id=?",fixture.itemId());
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v2\"")
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of("mediaIds",mediaIds.subList(0,11)))))
+                .andExpect(status().isUnprocessableEntity());
+        assertThat(jdbc.queryForMap("select * from catalog_items where id=?",fixture.itemId())).isEqualTo(beforeRejected);
+        assertThat(jdbc.queryForList("select * from catalog_item_media where catalog_item_id=? order by sort_order",fixture.itemId())).isEqualTo(beforeMedia);
+        var ordered=new java.util.ArrayList<>(mediaIds.subList(0,10)); java.util.Collections.reverse(ordered);
+        mockMvc.perform(patch(itemPath(fixture)).header("Authorization",bearer).header("If-Match","\"v2\"")
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of("mediaIds",ordered))))
+                .andExpect(status().isNoContent()).andExpect(header().string("ETag","\"v3\""));
+        assertThat(jdbc.queryForList("select media_asset_id from catalog_item_media where catalog_item_id=? order by sort_order",UUID.class,fixture.itemId())).isEqualTo(ordered);
+        assertThat(jdbc.queryForObject("select media_asset_id from catalog_item_media where catalog_item_id=? and is_primary",UUID.class,fixture.itemId())).isEqualTo(ordered.getFirst());
+        mockMvc.perform(get(itemPath(fixture)).header("Authorization",bearer)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.media.length()").value(10)).andExpect(jsonPath("$.media[0].id").value(ordered.getFirst().toString()));
+        assertThat(jdbc.queryForMap("select * from location_variants where id=?",fixture.offerId())).isEqualTo(beforeOffer);
+    }
 
     @Test
     void editsEachResourceAgainstItsOwnEtag() throws Exception {

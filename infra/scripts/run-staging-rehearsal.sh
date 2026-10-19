@@ -32,7 +32,6 @@ echo "Target: $COVIE_STAGING_BASE_URL"
 echo "Source DB: $PGDATABASE; restore DB: $COVIE_RESTORE_DATABASE"
 
 "$root/infra/scripts/verify-clean-migration.sh"
-"$root/infra/scripts/verify-restored-invariants.sh" --snapshot "$evidence/db-invariants.env"
 "$root/infra/deploy/smoke.sh" "$COVIE_STAGING_BASE_URL"
 "$root/infra/scripts/security-scan.sh"
 
@@ -52,6 +51,7 @@ source_port="${PGPORT:-}"
 source_user="${PGUSER:-}"
 source_password="${PGPASSWORD:-}"
 export COVIE_BACKUP_DIR="$evidence/backup"
+"$root/infra/scripts/verify-restored-invariants.sh" --snapshot "$evidence/db-invariants.env"
 "$root/infra/backup/postgres-backup.sh"
 backup="$(find "$COVIE_BACKUP_DIR" -type f -name '*.dump' -print | sort | tail -1)"
 [[ -n "$backup" ]] || { echo "Backup artifact missing" >&2; exit 1; }

@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.covie.audit.AuditLogWriter;
+import vn.covie.billing.application.BillingTrialService;
+import vn.covie.settings.application.SystemSettingResolver;
+import vn.covie.settings.application.SystemSettingContext;
 import vn.covie.auth.security.CurrentActorProvider;
 import vn.covie.media.application.MediaAttachmentPolicy;
 import vn.covie.media.application.MediaUrlResolver;
@@ -47,6 +50,8 @@ public class MerchantApplicationService {
     private final RequestIdAccessor requestIds;
     private final MediaAssetRepository mediaAssets;
     private final MediaUrlResolver urls;
+    private final SystemSettingResolver settings;
+    private final BillingTrialService billingTrials;
 
     public MerchantApplicationService(CurrentActorProvider actors, MerchantProfileRepository merchants,
             MerchantMembershipRepository memberships, MerchantSlugService slugs, MerchantAccessPolicy access,
@@ -55,7 +60,6 @@ public class MerchantApplicationService {
         this(actors, merchants, memberships, slugs, access, media, ids, clock, audit, requestIds, null, null);
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
     public MerchantApplicationService(CurrentActorProvider actors, MerchantProfileRepository merchants,
             MerchantMembershipRepository memberships, MerchantSlugService slugs, MerchantAccessPolicy access,
             MediaAttachmentPolicy media, UuidV7Generator ids, AppClock clock, AuditLogWriter audit,
@@ -72,16 +76,49 @@ public class MerchantApplicationService {
         this.requestIds = requestIds;
         this.mediaAssets = mediaAssets;
         this.urls = urls;
+        this.settings = null;
+        this.billingTrials = null;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public MerchantApplicationService(CurrentActorProvider actors, MerchantProfileRepository merchants,
+            MerchantMembershipRepository memberships, MerchantSlugService slugs, MerchantAccessPolicy access,
+            MediaAttachmentPolicy media, UuidV7Generator ids, AppClock clock, AuditLogWriter audit,
+            RequestIdAccessor requestIds, MediaAssetRepository mediaAssets, MediaUrlResolver urls,
+            SystemSettingResolver settings, BillingTrialService billingTrials) {
+        this.actors = actors;
+        this.merchants = merchants;
+        this.memberships = memberships;
+        this.slugs = slugs;
+        this.access = access;
+        this.media = media;
+        this.ids = ids;
+        this.clock = clock;
+        this.audit = audit;
+        this.requestIds = requestIds;
+        this.mediaAssets = mediaAssets;
+        this.urls = urls;
+        this.settings = settings;
+        this.billingTrials = billingTrials;
     }
 
     @Transactional
     public MerchantSummaryResponse create(CreateMerchantRequest request) {
         CurrentActor actor = actors.currentActor();
+        if (settings != null &&
+                !settings.bool("billing.seller_registration_enabled", SystemSettingContext.globalOnly())) {
+            throw new ApiException(ErrorCode.MERCHANT_ACTION_NOT_ALLOWED, HttpStatus.CONFLICT,
+                "New seller registration is temporarily disabled.");
+        }
         Instant now = clock.now();
         MerchantProfileEntity merchant = createProfile(request, now);
         UUID merchantId = merchant.getId();
         merchants.save(merchant);
         memberships.save(MerchantMembershipEntity.active(ids.generate(), merchantId, actor.userId(), MerchantRole.OWNER, now));
+        if (billingTrials != null) {
+            merchants.flush();
+            billingTrials.grantEligibleTrial(merchantId, actor.userId());
+        }
         audit.securityEvent(actor.userId(), "MERCHANT_CREATED", "MERCHANT", merchantId, requestIds.current(), Map.of());
         return summary(merchant, MerchantRole.OWNER);
     }

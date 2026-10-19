@@ -42,6 +42,38 @@ export const scenarios = {
     p95Ms: 400,
     maxErrorRatio: 0.01,
   },
+  "public-social-previews": {
+    method: "GET",
+    pathFactory: () => "/api/v1/catalog/social-previews?" +
+      new URLSearchParams(socialIds().map((itemId) => ["itemIds", itemId])).toString(),
+    expected: [200],
+    p95Ms: 400,
+    maxErrorRatio: 0.01,
+  },
+  "private-social-activity-liked": {
+    method: "GET",
+    path: "/api/v1/me/social/activity?type=LIKED&limit=20",
+    expected: [200],
+    p95Ms: 400,
+    maxErrorRatio: 0.01,
+    authEnv: "COVIE_LOAD_AUTH_COOKIE",
+  },
+  "private-social-activity-saved": {
+    method: "GET",
+    path: "/api/v1/me/social/activity?type=SAVED&limit=20",
+    expected: [200],
+    p95Ms: 400,
+    maxErrorRatio: 0.01,
+    authEnv: "COVIE_LOAD_AUTH_COOKIE",
+  },
+  "private-social-activity-commented": {
+    method: "GET",
+    path: "/api/v1/me/social/activity?type=COMMENTED&limit=20",
+    expected: [200],
+    p95Ms: 400,
+    maxErrorRatio: 0.01,
+    authEnv: "COVIE_LOAD_AUTH_COOKIE",
+  },
   "order-list": {
     method: "GET",
     path: "/api/v1/me/orders?limit=20",

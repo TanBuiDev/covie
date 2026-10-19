@@ -7,6 +7,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { StatusChip, type StatusTone } from "@/components/ui/status-chip";
 import { uploadImage } from "@/features/media/direct-image-upload";
 import { CovieApiError } from "@/lib/api/api-error";
+import { requestBrowserApi } from "@/lib/api/api-client";
 import {
   ArrowRight,
   Check,
@@ -20,6 +21,7 @@ import {
 } from "@phosphor-icons/react";
 import type { Etagged } from "./merchant-api";
 import { createMerchant, updateMerchant } from "./merchant-api";
+import { SellerBillingOnboarding } from "@/features/seller/seller-billing-onboarding";
 
 type MerchantSummary = components["schemas"]["MerchantSummaryResponse"];
 
@@ -112,16 +114,20 @@ export function MerchantList({ merchants }: { merchants: MerchantSummary[] }) {
   );
 }
 
-export function MerchantForm({ merchant, onCreated, onReload }: {
+export function MerchantForm({ merchant, onCreated, onReload, billingOnboarding = false }: {
   merchant?: Etagged<components["schemas"]["MerchantManagementResponse"]>;
   onCreated?: () => void;
   onReload?: () => void;
+  billingOnboarding?: boolean;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState<string>();
   const [pending, setPending] = useState(false);
   const [showMedia, setShowMedia] = useState(false);
   const editing = Boolean(merchant?.data.id);
+  const [billingReady, setBillingReady] = useState(false);
+  const [billingAcknowledged, setBillingAcknowledged] = useState(false);
+  const requiresBillingAcknowledgement = billingOnboarding && !editing;
   const [previewName, setPreviewName] = useState(merchant?.data.name ?? "");
   const [previewDesc, setPreviewDesc] = useState(merchant?.data.description ?? "");
   const reload = onReload ?? (() => router.refresh());
@@ -183,6 +189,7 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
+    if (requiresBillingAcknowledgement && (!billingReady || !billingAcknowledged)) return;
     const form = new FormData(event.currentTarget);
 
     setPending(true);
@@ -227,8 +234,27 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
         ...(coverMediaId ? { coverMediaId } : {}),
       };
 
-      if (editing && merchant?.data.id) await updateMerchant(merchant.data.id, merchant.etag, input);
-      else await createMerchant(input);
+      if (editing && merchant?.data.id) {
+        await updateMerchant(merchant.data.id, merchant.etag, input);
+      } else {
+        const created = await createMerchant(input);
+        if (billingOnboarding && created.id) {
+          // Do not rely on UI for enforcement. Backend guards publishing/checkout.
+          // Navigate to payment only when Admin's effective policy requires it.
+          try {
+            const response = await requestBrowserApi("GET", "/api/v1/billing/onboarding");
+            if (response.ok) {
+              const rules = await response.json() as {
+                enforcementEnabled: boolean; onboardingMode: string;
+              };
+              if (rules.enforcementEnabled && rules.onboardingMode === "PAY_BEFORE_SELL") {
+                router.push(`/seller/${encodeURIComponent(created.id)}/billing`);
+                return;
+              }
+            }
+          } catch { /* Merchant was already created; keep its standard navigation on network errors. */ }
+        }
+      }
       setMessage(editing ? "Đã lưu thay đổi hồ sơ shop." : "Đã tạo cửa hàng.");
       saved();
     } catch (error) {
@@ -250,6 +276,7 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
   return (
     <form className={editing ? "seller-merchant-form" : undefined} onSubmit={submit} aria-busy={pending}>
       {!editing ? <h2>Tạo cửa hàng</h2> : null}
+      {requiresBillingAcknowledgement ? <SellerBillingOnboarding onRegistrationReady={setBillingReady} /> : null}
       {editing ? <h2 className="seller-settings-card-title seller-desktop-only">Hồ sơ shop công khai</h2> : null}
 
       <label>
@@ -536,7 +563,12 @@ export function MerchantForm({ merchant, onCreated, onReload }: {
       {message?.startsWith("Dữ liệu") ? (
         <button type="button" disabled={pending} onClick={reload}>Tải dữ liệu mới</button>
       ) : null}
-      <button type="submit" disabled={pending} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+      {requiresBillingAcknowledgement ? <label>
+        <input type="checkbox" name="billingAcknowledged" required disabled={pending || !billingReady}
+          checked={billingAcknowledged} onChange={event => setBillingAcknowledged(event.target.checked)} />
+        <span>Tôi đã đọc các điều kiện thuê bao hiển thị, giá/chu kỳ sẽ được xác nhận lại trong báo giá và không có tự động trừ tiền gia hạn.</span>
+      </label> : null}
+      <button type="submit" disabled={pending || (requiresBillingAcknowledgement && (!billingReady || !billingAcknowledged))} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
         {editing ? <FloppyDisk size={16} weight="bold" /> : <Storefront size={16} weight="bold" />}
         <span>{pending ? (uploadStatus || "Đang lưu…") : editing ? "Lưu thay đổi" : "Tạo cửa hàng"}</span>
       </button>

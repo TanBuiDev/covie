@@ -7,6 +7,7 @@ import type { components } from "@covie/api-client";
 import {
   ArrowRight,
   Bell,
+  ClockCounterClockwise,
   CaretRight,
   LockKey,
   MapPin,
@@ -75,16 +76,19 @@ const accountItems: MenuItem[] = [
 export function ProfileOverview({
   user,
   notificationsAvailable = false,
-}: { user: Me; notificationsAvailable?: boolean }) {
-  return <ProfileOverviewContent key={user.id ?? user.email ?? "profile"} user={user} notificationsAvailable={notificationsAvailable} />;
+  activityAvailable = false,
+}: { user: Me; notificationsAvailable?: boolean; activityAvailable?: boolean }) {
+  return <ProfileOverviewContent key={user.id ?? user.email ?? "profile"} user={user} notificationsAvailable={notificationsAvailable} activityAvailable={activityAvailable} />;
 }
 
 function ProfileOverviewContent({
   user: initialUser,
   notificationsAvailable = false,
+  activityAvailable = false,
 }: {
   user: Me;
   notificationsAvailable?: boolean;
+  activityAvailable?: boolean;
 }) {
   const [user, setUser] = useState(initialUser);
   const [editing, setEditing] = useState(false);
@@ -177,6 +181,11 @@ function ProfileOverviewContent({
           </div>
 
           <nav className={styles.menuGrid} aria-label="Quản lý tài khoản">
+            {activityAvailable && <Link className={`${styles.menuCard} ${styles["menuCard--emerald"]}`} href="/me/activity">
+              <div className={styles.menuIconBox}><ClockCounterClockwise size={22} weight="duotone" /></div>
+              <div className={styles.menuContent}><strong>Hoạt động của tôi</strong><small>Xem nội dung đang thích, lưu và bình luận của bạn.</small></div>
+              <CaretRight size={18} weight="bold" className={styles.menuChevron} aria-hidden="true" />
+            </Link>}
             {allItems.map((item) => {
               const IconComponent = item.icon;
               return (
