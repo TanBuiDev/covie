@@ -135,6 +135,7 @@ public class NeedResponseService {
         List<NeedResponseItemEntity> active = responseItems.findByNeedResponseIdAndItemStatusOrderByCreatedAtAsc(
                 responseId, NeedResponseItemStatus.ACTIVE);
         active.forEach(item -> item.retire(now));
+        responseItems.flush();
         response.replaceNote(request.note(), now);
         List<NeedResponseItemEntity> replacements = eligibleItems.stream()
                 .map(item -> itemFactory.active(responseId, item, now)).toList();

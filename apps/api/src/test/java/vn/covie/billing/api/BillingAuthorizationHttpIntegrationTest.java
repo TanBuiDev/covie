@@ -2034,6 +2034,34 @@ class BillingAuthorizationHttpIntegrationTest {
         JsonNode draft = json.readTree(created.body());
         assertThat(draft.path("listingStatus").asText()).isEqualTo("DRAFT");
         UUID item = UUID.fromString(draft.path("id").asText());
+        String merchantRoute = "/api/v1/merchants/" + merchant;
+        var profile = request("GET", merchantRoute, owner, null, null);
+        assertThat(profile.statusCode()).isEqualTo(200);
+        long profileVersion = json.readTree(profile.body()).path("version").asLong();
+        var editedProfile = requestWithHeaders("PATCH", merchantRoute, owner,
+            json.createObjectNode().put("name", "Unpaid owner profile edit"), null,
+            Map.of("If-Match", "\"v" + profileVersion + "\""));
+        assertThat(editedProfile.statusCode()).isEqualTo(200);
+        assertThat(json.readTree(editedProfile.body()).path("name").asText()).isEqualTo("Unpaid owner profile edit");
+        assertThat(request("GET", route + "/" + item, owner, null, null).statusCode()).isEqualTo(200);
+        var editedDraft = requestWithHeaders("PATCH", route + "/" + item, owner,
+            json.createObjectNode().put("name", "Unpaid editable draft"), null,
+            Map.of("If-Match", "\"v" + draft.path("version").asLong() + "\""));
+        assertThat(editedDraft.statusCode()).isEqualTo(204);
+        var rereadDraft = request("GET", route + "/" + item, owner, null, null);
+        assertThat(rereadDraft.statusCode()).isEqualTo(200);
+        draft = json.readTree(rereadDraft.body());
+        assertThat(draft.path("name").asText()).isEqualTo("Unpaid editable draft");
+        assertThat(draft.path("listingStatus").asText()).isEqualTo("DRAFT");
+        var billing = request("GET", base(merchant) + "/summary", owner, null, null);
+        assertThat(billing.statusCode()).isEqualTo(200);
+        assertThat(json.readTree(billing.body()).path("enforced").asBoolean()).isTrue();
+        assertThat(json.readTree(billing.body()).path("canSell").asBoolean()).isFalse();
+        var invoiceHistory = request("GET", base(merchant) + "/invoices", owner, null, null);
+        assertThat(invoiceHistory.statusCode()).isEqualTo(200);
+        assertThat(json.readTree(invoiceHistory.body()).size()).isZero();
+        assertThat(request("GET", "/api/v1/billing/plans", owner, null, null).statusCode()).isEqualTo(200);
+        assertThat(quote(owner, merchant).path("expectedAmountVnd").asLong()).isPositive();
         String before = jdbc.queryForObject("select to_jsonb(i)::text from catalog_items i where id=?", String.class, item);
         long events = jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=?", Long.class, item);
         for (String operation : new String[]{"publish", "activate"}) {

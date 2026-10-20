@@ -1,0 +1,29 @@
+# Remaining goal execution — 2026-10-20
+
+Full objective is unchanged: runtime/temporary cleanup, original Need proof, security/artifact gates, human payment, reviewed integration and production acceptance. This is progress, not completion. Owner confirmed no selected invoice/payment or production infrastructure yet. No agent-created real invoice/link/grant/transfer, no deployment or Git publication.
+
+## Runtime evidence and current Billing state
+
+At start, normal ports3000/8081/18889 had no listeners, Docker normal services were stopped, recorded launcher PID24992 was absent and session.json was stale. Old logs stop without a crash/shutdown stack; the precise external process-termination cause is not proved. Do not label this an application business defect. Relaunched managed dev session with retained volumes;40migrations validate,0apply. Web/login200, API health and metrics available. Standard stop later left orphan children because recorded launcher ownership did not match the stopper check; only exact known owned process trees were terminated before the next restart. No tracked launcher refactor was made.
+
+Old temporary tunnel was unavailable and bridge/tunnel processes absent. Started the existing narrow bridge and a new temporary tunnel. Root404 and invalid webhook signature401 were verified. New URL is stored in ignored env/local receipts, not a production domain. Provider confirm-webhook timed out at25seconds and60seconds; direct provider root also timed out. This is an unconfirmed callback configuration, not successful webhook acceptance. No repeated unbounded provider retries.
+
+To avoid issuing checkout links with a stale/unconfirmed callback URL, PAYOS_PAYMENT_ENABLED is temporarily false. COVIE_BILLING_RELEASE_APPROVED=true, COVIE_BILLING_RECONCILE_ENABLED=true and GLOBAL enforcement=true remain. Actual creation/reconciliation gauges0/1; DB invoice count0. This safety stop supersedes prior all-four-ON receipts; do not promise real QR readiness until provider reconfirmation succeeds and creation is explicitly restored. New app return URL is staged in ignored env. No finance history rollback or grant changes.
+
+The two ignored generated fixture PEM files remain: explicit cleanup was again blocked before shell execution by tool policy, so no alternate deletion mechanism/bypass was attempted. They belong only to the expired owned UI fixture, not normal keys. Manual cleanup remains required unless the tool policy changes.
+
+## Nginx current binary syntax — closed locally
+
+Actual compose-selected nginx:1.28-alpine image `sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236` ran nginx -t successfully against the exact current production config/security headers. No network, host ports, app traffic or deployment. Temporary certificate/key generated in process memory and container tmpfs; owned container removed after command. `.local/nginx-current-syntax-20261020.json/.log` record exit0 and config SHA256 `C7C0AF77065CCC0DFFE6880E6652733EF55225B767B80C26FF2E773696008867`, header SHA256 `20E68A058D239B96A806C7BDE33443054630D2E9FB6317EDC38C62849C8A6AE2`. This closes current syntax proof, not actual TLS/ingress production acceptance.
+
+## Need work
+
+Targeted real-JWT/HTTP/Postgres command tests were added only for original named gaps. First6method run had4PASS,1actual product failure and1fixture error. Replacement retaining the same offer returned500 because Hibernate inserted new ACTIVE response items before retiring old ACTIVE rows, violating existing partial uniqueness. One-line fix flushes retirement before replacement inserts within the same transaction; no API/SQL/history changes. Expiry fixture initially violated expires-after-create; corrected fixture timestamps, not product validation. Two failing methods then passed. Whole affected class68PASS, followed by expiry-method strengthening1PASS and final clock-isolation whole-class68PASS/0skip (41.844s Maven). Separate receipts, not invented combined full-BE result. Exact original contention branches and limits: `need-command-concurrency-progress-2026-10-20.md`.
+
+Original query-plan class1PASS/0skip on disposable populated data using actual repository SQL/default planner. Ninecaptures cover eight original paths with composite-query overlap disclosed;5/7listed indexes selected,2not selected, no forced hints/new index. Exact review: `project-need-original-query-plans-2026-10-20.md`. Security current scan/package/advisory disposition: `security-current-disposition-2026-10-20.md`; Web gate stillFAIL, not silently accepted.
+
+## Artifact and publication progress
+
+Candidate API rebuilt with actual one-line flush production delta: `sha256:846ec40da60a51b804d98c73e0020e92bfa91a3f9595f95e3d04ff0499618a93`. Current cached refreshed-DB raw HIGH/CRITICAL scan0/exit0, CycloneDX generated SHA256 `1E26986FEA11AB3FD69A519C119722BA7D60B72D08DFDF512CFF59C223E39191`, static image/nonroot/forbidden-artifact checker exit0. Optional packaged runtime checker skipped, so old image runtime proof is not relabeled as this image. Test-only final clock/query source was updated after this build context; production source hash binding is separate from complete final-commit artifact binding. Not a registry release.
+
+Owner approved commit/push/PR/merge after review/checks, asked whether direct main push allowed. Existing Git credential proves repository push/admin rights; current branch rules API requires PR and4checks: secret-history/backend/frontend-and-contract/release-security-source. Main remote remains5ad071ff at inspection. No disabling/bypassing rule; authorized publication must use PR. No production deployment or vulnerability exception is included in this approval. Exact-head CI and final source-bound artifact manifest remain required before claiming integration complete.

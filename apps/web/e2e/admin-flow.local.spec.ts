@@ -63,6 +63,14 @@ test("Admin authenticates and captures the deterministic main-state journey", as
       await page.getByLabel("Đến thời điểm", { exact: true }).fill("2026-09-17T00:00");
       await page.getByRole("button", { name: "Áp dụng", exact: true }).click();
       await expect(page.locator(".admin-audit-list").getByRole("listitem")).toHaveCount(5);
+      const overflowingFilters = await page.locator(".admin-filter-grid--audit input").evaluateAll(inputs =>
+        inputs.filter(input => {
+          const control = input.getBoundingClientRect();
+          const field = input.parentElement!.getBoundingClientRect();
+          return control.left < field.left - 1 || control.right > field.right + 1;
+        }).map(input => input.getAttribute("type") ?? "text"),
+      );
+      expect(overflowingFilters, "Audit filter controls must stay inside their grid columns at1280px").toEqual([]);
     }
 
     for (const capture of visualCase!.captures) {

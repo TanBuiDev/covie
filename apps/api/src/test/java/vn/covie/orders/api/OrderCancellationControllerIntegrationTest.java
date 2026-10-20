@@ -409,6 +409,114 @@ class OrderCancellationControllerIntegrationTest extends PostgresIntegrationTest
         dispatch(fixture);
         assertThat(jdbc.queryForObject("select count(*) from reputation_order_outcomes where order_id=?", Long.class, fixture.orderId())).isEqualTo(1L);
     }
+    @org.junit.jupiter.api.RepeatedTest(3)
+    void confirmationAndBuyerPendingCancellationSerializeWithoutDoubleRelease() throws Exception {
+        Fixture fixture = fixture();
+        seedActiveReservation(fixture);
+        jdbc.update("update orders set status='PENDING_CONFIRMATION', confirmed_at=null where id=?", fixture.orderId());
+        String seller = signed(fixture.seller()), buyer = signed(fixture.buyer());
+        var responses = overlap(fixture,
+                () -> command(fixture, seller, "confirm", null),
+                () -> command(fixture, buyer, "cancel", "{\"reasonCode\":\"CHANGED_MIND\"}"));
+        String state = jdbc.queryForObject("select status from orders where id=?", String.class, fixture.orderId());
+        boolean confirmed = state.equals("CONFIRMED");
+        assertThat(state).isIn("CONFIRMED", "CANCELLED_BEFORE_CONFIRMATION");
+        assertThat(responses.get(0).getStatus()).isEqualTo(confirmed ? 200 : 409);
+        assertThat(responses.get(1).getStatus()).isEqualTo(confirmed ? 403 : 200);
+        assertThat(responses.get(confirmed ? 1 : 0).getContentAsString())
+                .contains(confirmed ? "ORDER_ACTION_NOT_ALLOWED" : "ORDER_STATE_CONFLICT");
+        assertSinglePendingOutcome(fixture, confirmed);
+    }
+
+    @org.junit.jupiter.api.RepeatedTest(3)
+    void confirmationAndSellerRejectionSerializeWithOneStateEvent() throws Exception {
+        Fixture fixture = fixture();
+        seedActiveReservation(fixture);
+        jdbc.update("update orders set status='PENDING_CONFIRMATION', confirmed_at=null where id=?", fixture.orderId());
+        String seller = signed(fixture.seller());
+        var responses = overlap(fixture,
+                () -> command(fixture, seller, "confirm", null),
+                () -> command(fixture, seller, "reject", "{\"reasonCode\":\"MERCHANT_UNAVAILABLE\"}"));
+        assertThat(responses.stream().map(response -> response.getStatus()).toList()).containsExactlyInAnyOrder(200, 409);
+        assertThat(responses.stream().filter(response -> response.getStatus() == 409).findFirst().orElseThrow().getContentAsString())
+                .contains("ORDER_STATE_CONFLICT");
+        String state = jdbc.queryForObject("select status from orders where id=?", String.class, fixture.orderId());
+        assertThat(state).isIn("CONFIRMED", "REJECTED_BY_SELLER");
+        assertSinglePendingOutcome(fixture, state.equals("CONFIRMED"));
+    }
+
+    @org.junit.jupiter.api.RepeatedTest(3)
+    void buyerCompletionAndAutomaticCompletionSerializeWithOneSaleAndProjection() throws Exception {
+        Fixture fixture = fixture();
+        seedActiveReservation(fixture);
+        jdbc.update("update orders set status='AWAITING_BUYER_CONFIRMATION' where id=?", fixture.orderId());
+        String buyer = signed(fixture.buyer());
+        var responses = overlap(fixture,
+                () -> command(fixture, buyer, "confirm-received", null),
+                () -> {
+                    scheduledTransitions.autoCompleteOne(fixture.orderId());
+                    return new org.springframework.mock.web.MockHttpServletResponse();
+                });
+        assertThat(responses.get(0).getStatus()).isIn(200, 409);
+        if (responses.get(0).getStatus() == 409) assertThat(responses.get(0).getContentAsString()).contains("ORDER_STATE_CONFLICT");
+        assertThat(responses.get(1).getStatus()).isEqualTo(200);
+        assertThat(jdbc.queryForObject("select status from orders where id=?", String.class, fixture.orderId())).isEqualTo("COMPLETED");
+        assertThat(jdbc.queryForObject("select count(*) from order_events where order_id=?", Long.class, fixture.orderId())).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=?", Long.class, fixture.orderId())).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("select event_type from order_events where order_id=?", String.class, fixture.orderId()))
+                .isEqualTo(responses.get(0).getStatus() == 200 ? "BUYER_CONFIRMED_RECEIVED" : "ORDER_AUTO_COMPLETED");
+        assertThat(jdbc.queryForObject("select reservation_status from inventory_reservations where order_id=?", String.class, fixture.orderId())).isEqualTo("COMMITTED");
+        assertThat(jdbc.queryForObject("select count(*) from inventory_movements where order_id=? and movement_type='SALE'", Long.class, fixture.orderId())).isEqualTo(1L);
+        assertThat(jdbc.queryForMap("select stock_on_hand,reserved_quantity from inventory_balances b join inventory_reservations r on r.location_variant_id=b.location_variant_id where r.order_id=?", fixture.orderId()))
+                .containsEntry("stock_on_hand", 1L).containsEntry("reserved_quantity", 0L);
+        dispatch(fixture);
+        assertThat(jdbc.queryForObject("select count(*) from reputation_order_outcomes where order_id=?", Long.class, fixture.orderId())).isEqualTo(1L);
+    }
+
+    private org.springframework.mock.web.MockHttpServletResponse command(Fixture fixture, String bearer, String action, String body) throws Exception {
+        var request = post("/api/v1/orders/" + fixture.orderId() + "/" + action)
+                .header("Authorization", bearer).header("Idempotency-Key", action + "-" + fixture.orderId());
+        if (body != null) request.contentType(MediaType.APPLICATION_JSON).content(body);
+        return mockMvc.perform(request).andReturn().getResponse();
+    }
+
+    private List<org.springframework.mock.web.MockHttpServletResponse> overlap(Fixture fixture,
+            java.util.concurrent.Callable<org.springframework.mock.web.MockHttpServletResponse> first,
+            java.util.concurrent.Callable<org.springframework.mock.web.MockHttpServletResponse> second) throws Exception {
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try (var blocker = jdbc.getDataSource().getConnection();
+             var workers = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            blocker.setAutoCommit(false);
+            try (var lock = blocker.prepareStatement("select id from orders where id=? for update")) {
+                lock.setObject(1, fixture.orderId());
+                try (var row = lock.executeQuery()) { assertThat(row.next()).isTrue(); }
+            }
+            var firstResult = workers.submit(() -> { assertThat(start.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue(); return first.call(); });
+            var secondResult = workers.submit(() -> { assertThat(start.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue(); return second.call(); });
+            start.countDown();
+            try {
+                long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(5);
+                int waiting;
+                do {
+                    waiting = jdbc.queryForObject("select count(*) from pg_stat_activity where datname=current_database() and wait_event_type='Lock' and query ilike '%orders%'", Integer.class);
+                    if (waiting >= 2) break;
+                    Thread.sleep(25);
+                } while (System.nanoTime() < deadline);
+                assertThat(waiting).as("both named actors reached the locked order").isGreaterThanOrEqualTo(2);
+            } finally { blocker.commit(); }
+            return List.of(firstResult.get(10, java.util.concurrent.TimeUnit.SECONDS), secondResult.get(10, java.util.concurrent.TimeUnit.SECONDS));
+        }
+    }
+
+    private void assertSinglePendingOutcome(Fixture fixture, boolean confirmed) {
+        assertThat(jdbc.queryForObject("select count(*) from order_events where order_id=?", Long.class, fixture.orderId())).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=?", Long.class, fixture.orderId())).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("select reservation_status from inventory_reservations where order_id=?", String.class, fixture.orderId())).isEqualTo(confirmed ? "ACTIVE" : "RELEASED");
+        assertThat(jdbc.queryForObject("select count(*) from inventory_movements where order_id=?", Long.class, fixture.orderId())).isEqualTo(confirmed ? 0L : 1L);
+        assertThat(jdbc.queryForMap("select stock_on_hand,reserved_quantity from inventory_balances b join inventory_reservations r on r.location_variant_id=b.location_variant_id where r.order_id=?", fixture.orderId()))
+                .containsEntry("stock_on_hand", 2L).containsEntry("reserved_quantity", confirmed ? 1L : 0L);
+    }
+
     private void seedActiveReservation(Fixture fixture) {
         UUID categoryId = UUID.randomUUID(), itemId = UUID.randomUUID(), variantId = UUID.randomUUID();
         UUID offerId = UUID.randomUUID(), orderItemId = UUID.randomUUID(), reservationId = UUID.randomUUID();

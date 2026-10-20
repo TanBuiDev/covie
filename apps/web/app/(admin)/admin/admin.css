@@ -7,6 +7,11 @@
   overflow-x: auto;
 }
 
+.admin-filter-grid--audit input {
+  min-width: 0;
+  width: 100%;
+}
+
 @media (max-width: 1180px) {
   .admin-audit-columns {
     min-width: 930px;
