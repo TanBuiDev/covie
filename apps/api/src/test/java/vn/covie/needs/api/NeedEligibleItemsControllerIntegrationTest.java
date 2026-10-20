@@ -55,6 +55,9 @@ import vn.covie.users.model.UserEntity;
 import vn.covie.users.persistence.UserRepository;
 import org.springframework.http.MediaType;
 
+@org.springframework.boot.test.context.SpringBootTest(properties = {
+        "covie.outbox.max-events-per-poll=0", "covie.retention.enabled=false"})
+@org.springframework.context.annotation.Import(NeedEligibleItemsControllerIntegrationTest.NeedRaceClockConfiguration.class)
 class NeedEligibleItemsControllerIntegrationTest extends PostgresIntegrationTest {
     @Autowired WebApplicationContext web;
     @Autowired UserRepository users;
@@ -72,6 +75,37 @@ class NeedEligibleItemsControllerIntegrationTest extends PostgresIntegrationTest
     @Autowired vn.covie.auth.application.InitialSessionIssuer issuer;
     @Autowired vn.covie.needs.persistence.NeedResponseRepository responseRepository;
     private MockMvc mockMvc;
+
+    @Test
+    void signedSellerRequestLogsOnlyOperationMetadataThroughRealMvcConfiguration() throws Exception {
+        var fixture = visibleFixture();
+        String bearer = "Bearer " + issuer.issue(fixture.seller().userId(),
+                new vn.covie.auth.model.DeviceMetadata("Need browser", "need-operation-log")).accessToken().value();
+        var logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(NeedOperationLogging.class);
+        var captured = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+        captured.start();
+        logger.addAppender(captured);
+        try {
+            var loggedMvc = MockMvcBuilders.webAppContextSetup(web).apply(springSecurity())
+                    .addFilters(web.getBean(vn.covie.shared.web.RequestIdFilter.class)).build();
+            loggedMvc.perform(post("/api/v1/need-requests/{needId}/responses", fixture.needId())
+                    .header("Authorization", bearer).header("X-Request-Id", "need-real-configuration")
+                    .header("Idempotency-Key", UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"merchantLocationId\":\"" + fixture.locationId()
+                            + "\",\"locationVariantIds\":[\"" + fixture.offerId()
+                            + "\"],\"note\":\"integration-private-note\"}"))
+                    .andExpect(status().isCreated());
+            assertThat(captured.list).hasSize(1);
+            assertThat(captured.list.getFirst().getFormattedMessage()).contains(
+                    "requestId=need-real-configuration", "userId=" + fixture.seller().userId(),
+                    "merchantId=" + fixture.merchantId(), "merchantLocationId=" + fixture.locationId(),
+                    "needRequestId=" + fixture.needId(), "operation=NeedResponseController.create",
+                    "result=HTTP_SUCCESS", "errorCode=null").doesNotContain("integration-private-note", bearer);
+        } finally {
+            logger.detachAppender(captured);
+            captured.stop();
+        }
+    }
 
     @Test
     void signedBuyerTraversesResponseTimestampTiesThroughEncodedHttpCursor() throws Exception {
@@ -833,6 +867,332 @@ class NeedEligibleItemsControllerIntegrationTest extends PostgresIntegrationTest
                 .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
                 .andExpect(jsonPath("$.items[0].items[0].available").value(false))
                 .andExpect(jsonPath("$.items[0].items[0].actionable").value(false));
+    }
+
+    @Test
+    void concurrentNeedResponseCreationKeepsOneActiveResponseAndItemSet() throws Exception {
+        var fixture = visibleFixture();
+        String seller = bearer(fixture.seller().userId());
+        var results = contendOnNeed(fixture.needId(),
+                () -> commandResponse(fixture, seller), () -> commandResponse(fixture, seller));
+        assertThat(results).extracting(org.springframework.mock.web.MockHttpServletResponse::getStatus)
+                .containsExactlyInAnyOrder(201, 409);
+        assertThat(results.stream().filter(response -> response.getStatus() == 409).findFirst().orElseThrow()
+                .getContentAsString()).contains("NEED_RESPONSE_ALREADY_ACTIVE");
+        assertThat(jdbc.queryForObject("select count(*) from need_responses where need_request_id=? and response_status='ACTIVE'",
+                Integer.class, fixture.needId())).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from need_response_items item join need_responses response on response.id=item.need_response_id where response.need_request_id=?",
+                Integer.class, fixture.needId())).isEqualTo(1);
+        assertEventCount(fixture.needId(), "NEED_RESPONSE_CREATED", 1);
+    }
+
+    @Test
+    void concurrentNeedCancellationAndResponseCreationPreserveSerializedHistory() throws Exception {
+        for (boolean cancelFirst : List.of(true, false)) {
+        var fixture = visibleFixture();
+        String seller = bearer(fixture.seller().userId());
+        String buyer = bearer(needs.findById(fixture.needId()).orElseThrow().getBuyerUserId());
+        var results = orderedNeedContention(
+                () -> needPost("/api/v1/me/need-requests/" + fixture.needId() + "/cancel", buyer, "{}"),
+                () -> commandResponse(fixture, seller), cancelFirst);
+        assertThat(results.getFirst().getStatus()).isEqualTo(200);
+        assertThat(results.get(1).getStatus()).isEqualTo(cancelFirst ? 409 : 201);
+        assertThat(needs.findById(fixture.needId()).orElseThrow().getRequestStatus().name()).isEqualTo("CANCELLED");
+        int committedResponses = results.get(1).getStatus() == 201 ? 1 : 0;
+        if (committedResponses == 0) assertThat(results.get(1).getContentAsString()).contains("NEED_NOT_ACTIVE");
+        assertThat(jdbc.queryForObject("select count(*) from need_responses where need_request_id=?",
+                Integer.class, fixture.needId())).isEqualTo(committedResponses);
+        assertEventCount(fixture.needId(), "NEED_RESPONSE_CREATED", committedResponses);
+        assertEventCount(fixture.needId(), "NEED_CANCELLED", 1);
+        }
+    }
+
+    @Test
+    void concurrentNeedReplacementAndCheckoutKeepHistoricalSourceOrRejectChangedPreview() throws Exception {
+        for (boolean replacementFirst : List.of(true, false)) {
+        var fixture = visibleFixture();
+        String seller = bearer(fixture.seller().userId());
+        String buyer = bearer(needs.findById(fixture.needId()).orElseThrow().getBuyerUserId());
+        var response = commandResponse(fixture, seller);
+        assertThat(response.getStatus()).isEqualTo(201);
+        var original = new ObjectMapper().readTree(response.getContentAsString());
+        UUID responseId = UUID.fromString(original.path("id").asText());
+        UUID itemId = UUID.fromString(original.path("items").get(0).path("id").asText());
+        String preview = needPreview(fixture, buyer, itemId);
+        String replacement = new ObjectMapper().writeValueAsString(java.util.Map.of("locationVariantIds", List.of(fixture.offerId())));
+        var results = orderedNeedContention(
+                () -> mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put(
+                                "/api/v1/need-requests/" + fixture.needId() + "/responses/" + responseId)
+                        .header("Authorization", seller).header("If-Match", "\"v0\"")
+                        .contentType(MediaType.APPLICATION_JSON).content(replacement)).andReturn().getResponse(),
+                () -> needCommit(buyer, preview), replacementFirst);
+        assertThat(results.getFirst().getStatus()).isEqualTo(200);
+        assertThat(results.get(1).getStatus()).isEqualTo(replacementFirst ? 409 : 201);
+        assertThat(jdbc.queryForObject("select item_status from need_response_items where id=?", String.class, itemId)).isEqualTo("RETIRED");
+        int orders = results.get(1).getStatus() == 201 ? 1 : 0;
+        if (orders == 0) assertThat(results.get(1).getContentAsString()).contains("CHECKOUT_CHANGED");
+        assertThat(jdbc.queryForObject("select count(*) from orders where source_need_request_id=? and source_need_response_item_id=?",
+                Integer.class, fixture.needId(), itemId)).isEqualTo(orders);
+        assertThat(jdbc.queryForObject("select count(*) from orders existing left join need_response_items item on item.id=existing.source_need_response_item_id where existing.source_need_request_id=? and item.id is null",
+                Integer.class, fixture.needId())).isZero();
+        assertEventCount(fixture.needId(), "NEED_RESPONSE_UPDATED", 1);
+        }
+    }
+
+    @Test
+    void concurrentExpiredNeedClaimAndActualOrderConfirmationNeverResurrectNeed() throws Exception {
+        var fixture = visibleFixture();
+        String seller = bearer(fixture.seller().userId());
+        String buyer = bearer(needs.findById(fixture.needId()).orElseThrow().getBuyerUserId());
+        UUID orderId = createNeedOrder(fixture, buyer, seller);
+        jdbc.update("update need_requests set created_at=now()-interval '1 hour', expires_at=now()-interval '1 second' where id=?", fixture.needId());
+        try (var blocker = jdbc.getDataSource().getConnection(); var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            blocker.setAutoCommit(false);
+            try (var statement = blocker.prepareStatement("select id from need_requests where id=? for update")) {
+                statement.setObject(1, fixture.needId());
+                statement.executeQuery().close();
+            }
+            var confirm = executor.submit(() -> needPost("/api/v1/orders/" + orderId + "/confirm", seller, "{}"));
+            try {
+                awaitNeedLockWaiters(1);
+                var expiration = executor.submit(() -> web.getBean(vn.covie.needs.application.NeedScheduledTransitionService.class).expireDueBatch(100));
+                assertThat(expiration.get(15, java.util.concurrent.TimeUnit.SECONDS)).isZero();
+            } finally {
+                blocker.commit();
+            }
+            assertThat(confirm.get(20, java.util.concurrent.TimeUnit.SECONDS).getStatus()).isEqualTo(200);
+        }
+        assertThat(jdbc.queryForObject("select status from orders where id=?", String.class, orderId)).isEqualTo("CONFIRMED");
+        assertThat(needs.findById(fixture.needId()).orElseThrow().getRequestStatus().name()).isEqualTo("EXPIRED");
+        assertThat(needs.findById(fixture.needId()).orElseThrow().getFulfilledOrderId()).isNull();
+        assertEventCount(fixture.needId(), "NEED_EXPIRED", 1);
+        assertEventCount(fixture.needId(), "NEED_FULFILLED", 0);
+        for (boolean expirationFirst : List.of(true, false)) {
+            var orderedFixture = visibleFixture();
+            String orderedSeller = bearer(orderedFixture.seller().userId());
+            String orderedBuyer = bearer(needs.findById(orderedFixture.needId()).orElseThrow().getBuyerUserId());
+            UUID orderedOrder = createNeedOrder(orderedFixture, orderedBuyer, orderedSeller);
+            Instant deadline = Instant.now().plusSeconds(30);
+            jdbc.update("update need_requests set expires_at=? where id=?", java.sql.Timestamp.from(deadline), orderedFixture.needId());
+            var acquired = new java.util.concurrent.CountDownLatch(1);
+            var release = new java.util.concurrent.CountDownLatch(1);
+            var transaction = new org.springframework.transaction.support.TransactionTemplate(
+                    web.getBean(org.springframework.transaction.PlatformTransactionManager.class));
+            var expirationService = web.getBean(vn.covie.needs.application.NeedScheduledTransitionService.class);
+            try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+                var winner = executor.submit(() -> transaction.execute(status -> {
+                    try {
+                        if (expirationFirst) {
+                            int expired = NeedRaceClock.at(deadline.plusSeconds(1), () -> expirationService.expireDueBatch(100));
+                            assertThat(expired).isEqualTo(1);
+                        } else {
+                            var confirmed = NeedRaceClock.at(deadline.minusSeconds(1),
+                                    () -> needPost("/api/v1/orders/" + orderedOrder + "/confirm", orderedSeller, "{}"));
+                            assertThat(confirmed.getStatus()).isEqualTo(200);
+                        }
+                        acquired.countDown();
+                        if (!release.await(20, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Timed out releasing expiry contention transaction");
+                        return true;
+                    } catch (Exception failure) {
+                        throw new IllegalStateException(failure);
+                    }
+                }));
+                java.util.concurrent.Future<org.springframework.mock.web.MockHttpServletResponse> confirming = null;
+                try {
+                    assertThat(acquired.await(15, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                    if (expirationFirst) {
+                        confirming = executor.submit(() -> NeedRaceClock.at(deadline.plusSeconds(1),
+                                () -> needPost("/api/v1/orders/" + orderedOrder + "/confirm", orderedSeller, "{}")));
+                        awaitNeedLockWaiters(1);
+                    } else {
+                        var expiring = executor.submit(() -> NeedRaceClock.at(deadline.plusSeconds(1), () -> expirationService.expireDueBatch(100)));
+                        assertThat(expiring.get(15, java.util.concurrent.TimeUnit.SECONDS)).isZero();
+                    }
+                } finally {
+                    release.countDown();
+                }
+                assertThat(winner.get(20, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                if (confirming != null) assertThat(confirming.get(20, java.util.concurrent.TimeUnit.SECONDS).getStatus()).isEqualTo(200);
+            }
+            var stored = needs.findById(orderedFixture.needId()).orElseThrow();
+            assertThat(stored.getRequestStatus().name()).isEqualTo(expirationFirst ? "EXPIRED" : "FULFILLED");
+            assertThat(stored.getFulfilledOrderId()).isEqualTo(expirationFirst ? null : orderedOrder);
+            assertThat(jdbc.queryForObject("select status from orders where id=?", String.class, orderedOrder)).isEqualTo("CONFIRMED");
+            assertEventCount(orderedFixture.needId(), "NEED_EXPIRED", expirationFirst ? 1 : 0);
+            assertEventCount(orderedFixture.needId(), "NEED_FULFILLED", expirationFirst ? 0 : 1);
+        }
+    }
+
+    @Test
+    void concurrentActualSourcedOrderConfirmationsCommitOneNeedFulfillmentEvent() throws Exception {
+        var fixture = visibleFixture();
+        String seller = bearer(fixture.seller().userId());
+        String buyer = bearer(needs.findById(fixture.needId()).orElseThrow().getBuyerUserId());
+        var response = commandResponse(fixture, seller);
+        assertThat(response.getStatus()).isEqualTo(201);
+        UUID item = UUID.fromString(new ObjectMapper().readTree(response.getContentAsString()).path("items").get(0).path("id").asText());
+        UUID firstOrder = committedOrder(needCommit(buyer, needPreview(fixture, buyer, item)));
+        UUID secondOrder = committedOrder(needCommit(buyer, needPreview(fixture, buyer, item)));
+        var results = contendOnNeed(fixture.needId(),
+                () -> needPost("/api/v1/orders/" + firstOrder + "/confirm", seller, "{}"),
+                () -> needPost("/api/v1/orders/" + secondOrder + "/confirm", seller, "{}"));
+        assertThat(results).extracting(org.springframework.mock.web.MockHttpServletResponse::getStatus).containsExactly(200, 200);
+        assertThat(jdbc.queryForList("select status from orders where source_need_request_id=?", String.class, fixture.needId()))
+                .containsExactlyInAnyOrder("CONFIRMED", "CONFIRMED");
+        var persisted = needs.findById(fixture.needId()).orElseThrow();
+        assertThat(persisted.getRequestStatus().name()).isEqualTo("FULFILLED");
+        assertThat(persisted.getFulfilledOrderId()).isIn(firstOrder, secondOrder);
+        assertEventCount(fixture.needId(), "NEED_FULFILLED", 1);
+    }
+
+    @Test
+    void actualSourcedOrderRejectionLeavesNeedActiveAndRetainsAttribution() throws Exception {
+        var fixture = visibleFixture();
+        String seller = bearer(fixture.seller().userId());
+        String buyer = bearer(needs.findById(fixture.needId()).orElseThrow().getBuyerUserId());
+        UUID orderId = createNeedOrder(fixture, buyer, seller);
+        var rejection = needPost("/api/v1/orders/" + orderId + "/reject", seller, "{\"reasonCode\":\"MERCHANT_UNAVAILABLE\"}");
+        assertThat(rejection.getStatus()).isEqualTo(200);
+        assertThat(jdbc.queryForObject("select status from orders where id=?", String.class, orderId)).isEqualTo("REJECTED_BY_SELLER");
+        assertThat(jdbc.queryForObject("select source_need_request_id from orders where id=?", UUID.class, orderId)).isEqualTo(fixture.needId());
+        assertThat(needs.findById(fixture.needId()).orElseThrow().getRequestStatus().name()).isEqualTo("ACTIVE");
+        assertThat(needs.findById(fixture.needId()).orElseThrow().getFulfilledOrderId()).isNull();
+        assertEventCount(fixture.needId(), "NEED_FULFILLED", 0);
+    }
+
+    private String bearer(UUID actorId) {
+        return "Bearer " + issuer.issue(actorId, new vn.covie.auth.model.DeviceMetadata("Need race", "Focused acceptance")).accessToken().value();
+    }
+
+    private org.springframework.mock.web.MockHttpServletResponse needPost(String route, String authorization, String body) throws Exception {
+        return mockMvc.perform(post(route).header("Authorization", authorization).header("Idempotency-Key", UUID.randomUUID().toString())
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andReturn().getResponse();
+    }
+
+    private org.springframework.mock.web.MockHttpServletResponse commandResponse(Fixture fixture, String seller) throws Exception {
+        return needPost("/api/v1/need-requests/" + fixture.needId() + "/responses", seller,
+                new ObjectMapper().writeValueAsString(java.util.Map.of("merchantLocationId", fixture.locationId(), "locationVariantIds", List.of(fixture.offerId()))));
+    }
+
+    private String needPreview(Fixture fixture, String buyer, UUID responseItem) throws Exception {
+        var preview = needPost("/api/v1/checkouts/preview", buyer, new ObjectMapper().writeValueAsString(java.util.Map.of(
+                "source", java.util.Map.of("type", "NEED_REQUEST", "needRequestId", fixture.needId(), "needResponseItemId", responseItem),
+                "items", List.of(java.util.Map.of("locationVariantId", fixture.offerId(), "quantity", 1)), "fulfillmentMethod", "PICKUP", "paymentMethod", "COD")));
+        assertThat(preview.getStatus()).as(preview.getContentAsString()).isEqualTo(200);
+        return new ObjectMapper().readTree(preview.getContentAsString()).path("checkoutToken").asText();
+    }
+
+    private org.springframework.mock.web.MockHttpServletResponse needCommit(String buyer, String token) throws Exception {
+        return needPost("/api/v1/checkouts/commit", buyer, new ObjectMapper().writeValueAsString(java.util.Map.of("checkoutToken", token)));
+    }
+
+    private UUID committedOrder(org.springframework.mock.web.MockHttpServletResponse response) throws Exception {
+        assertThat(response.getStatus()).as(response.getContentAsString()).isEqualTo(201);
+        return UUID.fromString(new ObjectMapper().readTree(response.getContentAsString()).path("id").asText());
+    }
+
+    private UUID createNeedOrder(Fixture fixture, String buyer, String seller) throws Exception {
+        var response = commandResponse(fixture, seller);
+        assertThat(response.getStatus()).as(response.getContentAsString()).isEqualTo(201);
+        UUID item = UUID.fromString(new ObjectMapper().readTree(response.getContentAsString()).path("items").get(0).path("id").asText());
+        return committedOrder(needCommit(buyer, needPreview(fixture, buyer, item)));
+    }
+
+    private void assertEventCount(UUID needId, String event, int expected) {
+        assertThat(jdbc.queryForObject("select count(*) from outbox_events where aggregate_id=? and event_type=?", Integer.class, needId, event)).isEqualTo(expected);
+    }
+
+    private List<org.springframework.mock.web.MockHttpServletResponse> contendOnNeed(UUID needId,
+            java.util.concurrent.Callable<org.springframework.mock.web.MockHttpServletResponse> first,
+            java.util.concurrent.Callable<org.springframework.mock.web.MockHttpServletResponse> second) throws Exception {
+        try (var blocker = jdbc.getDataSource().getConnection(); var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            blocker.setAutoCommit(false);
+            try (var statement = blocker.prepareStatement("select id from need_requests where id=? for update")) {
+                statement.setObject(1, needId);
+                statement.executeQuery().close();
+            }
+            var firstResult = executor.submit(first);
+            var secondResult = executor.submit(second);
+            try {
+                awaitNeedLockWaiters(2);
+            } finally {
+                blocker.commit();
+            }
+            return List.of(firstResult.get(20, java.util.concurrent.TimeUnit.SECONDS), secondResult.get(20, java.util.concurrent.TimeUnit.SECONDS));
+        }
+    }
+
+    private List<org.springframework.mock.web.MockHttpServletResponse> orderedNeedContention(
+            java.util.concurrent.Callable<org.springframework.mock.web.MockHttpServletResponse> first,
+            java.util.concurrent.Callable<org.springframework.mock.web.MockHttpServletResponse> second,
+            boolean firstWins) throws Exception {
+        var held = new java.util.concurrent.CountDownLatch(1);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        var transaction = new org.springframework.transaction.support.TransactionTemplate(
+                web.getBean(org.springframework.transaction.PlatformTransactionManager.class));
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var winner = executor.submit(() -> transaction.execute(status -> {
+                try {
+                    var result = (firstWins ? first : second).call();
+                    assertThat(result.getStatus()).isBetween(200, 299);
+                    held.countDown();
+                    if (!release.await(20, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Timed out releasing held Need transaction");
+                    return result;
+                } catch (Exception failure) {
+                    throw new IllegalStateException(failure);
+                }
+            }));
+            java.util.concurrent.Future<org.springframework.mock.web.MockHttpServletResponse> follower;
+            try {
+                assertThat(held.await(15, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                follower = executor.submit(firstWins ? second : first);
+                awaitNeedLockWaiters(1);
+            } finally {
+                release.countDown();
+            }
+            var won = winner.get(20, java.util.concurrent.TimeUnit.SECONDS);
+            var followed = follower.get(20, java.util.concurrent.TimeUnit.SECONDS);
+            return firstWins ? List.of(won, followed) : List.of(followed, won);
+        }
+    }
+
+    private void awaitNeedLockWaiters(int expected) throws Exception {
+        long deadline = System.nanoTime() + java.time.Duration.ofSeconds(15).toNanos();
+        int observed = 0;
+        while (System.nanoTime() < deadline) {
+            observed = jdbc.queryForObject("select count(*) from pg_stat_activity where datname=current_database() and pid<>pg_backend_pid() and wait_event_type='Lock' and lower(query) like '%need_requests%'", Integer.class);
+            if (observed >= expected) return;
+            Thread.sleep(10);
+        }
+        assertThat(observed).as("actual PostgreSQL Need lock waiters").isGreaterThanOrEqualTo(expected);
+    }
+
+    @org.springframework.boot.test.context.TestConfiguration(proxyBeanMethods = false)
+    static class NeedRaceClockConfiguration {
+        @org.springframework.context.annotation.Bean
+        @org.springframework.context.annotation.Primary
+        vn.covie.shared.time.AppClock needRaceClock() {
+            return new NeedRaceClock();
+        }
+    }
+
+    static class NeedRaceClock implements vn.covie.shared.time.AppClock {
+        private static final ThreadLocal<Instant> TIME = new ThreadLocal<>();
+
+        @Override
+        public Instant now() {
+            Instant fixed = TIME.get();
+            return fixed == null ? Instant.now() : fixed;
+        }
+
+        static <Result> Result at(Instant instant, java.util.concurrent.Callable<Result> command) throws Exception {
+            TIME.set(instant);
+            try {
+                return command.call();
+            } finally {
+                TIME.remove();
+            }
+        }
     }
 
     private Fixture visibleFixture() {

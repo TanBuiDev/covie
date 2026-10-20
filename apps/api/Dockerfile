@@ -14,7 +14,7 @@ RUN cd apps/api \
     && cp "$JAR" /workspace/app.jar
 
 FROM eclipse-temurin:25-jre-alpine
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg && apk upgrade --no-cache libexpat libx11
 WORKDIR /app
 COPY --from=build /workspace/app.jar /app/app.jar
 USER 10001:10001
