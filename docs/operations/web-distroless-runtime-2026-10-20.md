@@ -29,6 +29,10 @@ Two harness issues are retained as failures, not product fixes: Docker Desktop's
 
 ## Acceptance limits
 
+### Integration CI recovery-fixture correction — 2026-10-21
+
+First exact-head CI run39542437497 reported1206tests/0assertion failures/1error/19skips: existing `databaseCrashDuringWebhookRollsBackAndRecoveredWorkerSettlesExactlyOnce` intentionally killed PostgreSQL, then a fresh DriverManager connection passed readiness while Hikari still returned an old connection with SQLSTATE57P01 (`unexpected postmaster exit`) at the financial snapshot. This is concrete fixture-readiness evidence, not a Web regression or reason to bypass CI. The test now waits boundedly for its first successful read-only snapshot through the actual application pool, ignoring only `DataAccessResourceFailureException`; it compares that snapshot to the original outside the wait. No pool reset, financial mutation retry, weakened settlement/outbox assertions or production code change. Focused exact existing method:2passed/0failures/errors/skips, Maven51.249s, `.local/billing-crash-pooled-recovery-20261021.log` in the isolated checkout. Unaffected Web artifact/tests are retained; no local full-BE rerun. A new exact-head CI gate is still required.
+
 The previous57 OS findings are absent from this measured minimal runtime rather than hidden by scanner exceptions. This closes that candidate's HIGH/CRITICAL image gate only; immutable reviewed-commit binding/CI remain integration conditions. No claim of zero vulnerabilities at all severities, complete application journey coverage, signed-image provenance or deployed production safety.
 
 Braces development-only HIGH remains tracked without a compatible published patch. Actual user payment/PAID/entitlement/replay, two restricted fixture-key deletions, unproved historical runtime termination cause and production infrastructure/TLS/restore/alert/load acceptance remain separate. No deployment, invoice/link/grant creation or transfer occurred.

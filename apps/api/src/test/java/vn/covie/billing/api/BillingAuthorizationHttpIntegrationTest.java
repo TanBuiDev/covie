@@ -505,17 +505,12 @@ class BillingAuthorizationHttpIntegrationTest {
                 docker.startContainerCmd(containerId).exec();
             }
         }
-        org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(40)).pollInterval(Duration.ofMillis(200))
-            .ignoreExceptions().until(() -> {
-                try (var recovered = java.sql.DriverManager.getConnection(POSTGRES.getJdbcUrl(),
-                        POSTGRES.getUsername(), POSTGRES.getPassword());
-                     var statement = recovered.createStatement();
-                     var result = statement.executeQuery("select 1")) {
-                    return result.next() && result.getInt(1) == 1;
-                }
-            });
+        Map<String, String> recoveredSnapshot = org.awaitility.Awaitility.await()
+            .atMost(Duration.ofSeconds(40)).pollInterval(Duration.ofMillis(200))
+            .ignoreException(org.springframework.dao.DataAccessResourceFailureException.class)
+            .until(this::financialSnapshot, snapshot -> true);
         assertThat(docker.inspectContainerCmd(containerId).exec().getState().getRunning()).isTrue();
-        assertThat(financialSnapshot()).isEqualTo(before);
+        assertThat(recoveredSnapshot).isEqualTo(before);
         assertThat(jdbc.queryForObject("select count(*) from audit_logs", Long.class)).isEqualTo(auditsBefore);
         assertThat(jdbc.queryForObject("select count(*) from outbox_events", Long.class)).isEqualTo(outboxBefore);
         assertThat(jdbc.queryForObject("select count(*) from billing_webhook_inbox where provider_event_id=?", Long.class,
