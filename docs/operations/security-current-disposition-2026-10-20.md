@@ -1,5 +1,7 @@
 # Current dependency/image security disposition — 2026-10-20
 
+**Later owner-approved runner repair:** `web-distroless-runtime-2026-10-20.md` records the pinned minimal Node24 runtime candidate with raw HIGH/CRITICAL scan0 and targeted packaged compatibility evidence. The exact Bookworm image findings below remain valid historical evidence; they are not suppressed or rewritten. Braces remains open. Final reviewed-commit integration/artifact receipt must be checked separately; no deployment acceptance.
+
 **Status: image gate FAIL; development Braces advisory OPEN.** This is a fresh
 evidence update, not risk acceptance, scanner suppression or deployment approval.
 No app source, Dockerfile, lockfile, VEX, ignore, feature flag or existing data was

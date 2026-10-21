@@ -1,5 +1,13 @@
 # Remaining goal execution — 2026-10-20
 
+## Superseding integration/runtime receipt
+
+Earlier paragraphs below are execution snapshots, not current-state instructions. PR41 merged as e15bea956003b55d7b5ec02313265490af26c4cc after9successful checks at reviewed cd199a7f; backend1206reported/0failures/0errors/19skips. Local/remote main synchronized, topic retired; the two pre-existing generated Web modifications remain preserved and excluded. Exact-source API/Web artifacts and SBOMs were built from git archive cd199a7f; its tree matches merged main exactly. PR41 comments contain immutable integration/artifact receipts, not a deployment claim. The owner later removed only the PR-required rule; four required status checks remain, with no bypass used.
+
+Provider connectivity then recovered: confirm-webhook HTTP200/code00/exact new webhook match and bridge callback200. Payment creation restored only after that confirmation and managed restart. Runtime creation/reconciliation gauges1/1, release config true, read-only GLOBAL enforcement true, Web login200, invoice count0. Restart compiled merged source;40migrations validate and schema up to date/applied0. Previous timeouts/OFF are historical. No agent-created invoice/link/grant/transfer.
+
+Owner additionally approved the measured minimal Web runtime change. `web-distroless-runtime-2026-10-20.md` records pinned official Node24/Debian13 runner, unchanged app/build inputs, raw HIGH/CRITICAL scan0 and packaged SSR/Redis/image-optimization compatibility. This candidate replaces a confirmed failed image gate, not business behavior; final integration/artifact receipt remains required. Braces dev advisory, restricted fixture-key cleanup, real payment and production remain open. Do not repeat unaffected backend suites locally.
+
 Full objective is unchanged: runtime/temporary cleanup, original Need proof, security/artifact gates, human payment, reviewed integration and production acceptance. This is progress, not completion. Owner confirmed no selected invoice/payment or production infrastructure yet. No agent-created real invoice/link/grant/transfer, no deployment or Git publication.
 
 ## Runtime evidence and current Billing state
