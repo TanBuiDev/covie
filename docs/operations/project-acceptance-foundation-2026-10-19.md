@@ -163,6 +163,28 @@ Child status: NOT_VERIFIED_INDIVIDUALLY; existing module/test evidence is retain
 | P01-A014 | - [ ] CI and local verification run the same core commands. | docs/CoVie-technical-plan-01-foundation-repository-v1.0.md:2633 | NOT_VERIFIED_INDIVIDUALLY; reconcile with bounded ledger |
 | P01-A015 | - [ ] Final acceptance uses fresh verification evidence. | docs/CoVie-technical-plan-01-foundation-repository-v1.0.md:2634 | NOT_VERIFIED_INDIVIDUALLY; reconcile with bounded ledger |
 
+### Plan01 checklist reconciliation — 2026-10-21
+
+The following dispositions supersede the generic individual-status text for these fifteen checklist identities only. Source is merged main `6400d168429ab74f6b4eef2030e1ae2017deca99`; no production code changed or unchanged tests rerun. PR42 Backend job119040815226 and frontend job119040817358 retain exact reviewed-head evidence. SOURCE_VERIFIED is not a broader runtime PASS.
+
+| ID | Disposition and bounded evidence |
+|---|---|
+| P01-A001 | NOT_VERIFIED: the twelve Task identities exist, but complete Master Plan deliverable-to-task reconciliation is not established by their count. |
+| P01-A002 | HISTORICAL_SUPERSEDED: isolation of the original Foundation increment is a historical boundary, not a prohibition on the now-approved integrated Plans02–10. No historical commit audit is inferred. |
+| P01-A003 | PASS_LOCAL scoped: `FoundationMigrationTest.installsRequiredPostgresExtensions` checks postgis/pg_trgm/unaccent; `recordsFoundationMigrationInFlywayHistory` checks successful001. `PostgresIntegrationTest` starts actual postgis/postgis18-3.6 and supplies its JDBC URL. Exact CI class result2tests/0failures/0errors/0skips; no production migration claim. |
+| P01-A004 | SOURCE_VERIFIED scoped: current `apps/api/pom.xml` declares PostgreSQL/Flyway/Testcontainers; search of API pom/src and .github/infra found no h2database, jdbc:h2 or org.h2. This is the inspected source scope, not a universal statement about every external artifact. |
+| P01-A005 | SOURCE_VERIFIED current contract: `ApiErrorResponse.ErrorBody` defines code/message/details/fields/requestId; `RequestIdFilter` bounds incoming IDs, emits header and clears MDC in finally. Whether these preceded every historical domain commit is not verified. |
+| P01-A006 | SOURCE_VERIFIED: `Money` is record(long amount,String currency), with no floating-point source field. `MoneyTest`2PASS in retained exact-head CI covers ISO normalization/invalid currency, not all financial arithmetic. |
+| P01-A007 | SOURCE_VERIFIED: `CurrentActor` carries userId/globalRoles/sessionId and no merchant role field. Retained `CurrentActorTest`1PASS does not replace merchant authorization tests. |
+| P01-A008 | SOURCE_VERIFIED / HISTORICAL_SUPERSEDED: `OutboxEventWriter` remains an interface; approved later `JpaOutboxEventWriter` is a real repository writer with MANDATORY transaction, not a no-op bean. The original port-only stage is not a requirement to remove the later worker. |
+| P01-A009 | PASS_LOCAL scoped: `.github/workflows/ci.yml` exports OpenAPI, generates client and executes git diff on both generated files before typecheck/build. Retained successful PR42 frontend job proves that run's drift gate; no fresh regeneration needed for documentation-only changes. |
+| P01-A010 | PARTIAL_SOURCE_VERIFIED: generated client/schema and client typecheck exist and passed retained CI. A universal absence of handwritten duplicate DTOs across all FE features has not been demonstrated. |
+| P01-A011 | SOURCE_VERIFIED: `apps/web/next.config.ts` returns no rewrites outside development; nginx skeleton sends /api/v1 to API. Approved SSR authentication paths are a later scoped extension, not evidence of an unintended general production API proxy. |
+| P01-A012 | SOURCE_VERIFIED skeleton: `infra/docker/nginx.conf` explicitly returns404 for /actuator/. Separate current production nginx syntax proof is retained; syntax alone does not prove deployed ingress behavior. |
+| P01-A013 | PARTIAL_RETAINED: reviewed-head secret-history and source secret checks succeeded. Current ignored real configuration is intentionally not published or printed; a blanket manual review of every example value is not inferred from CI. |
+| P01-A014 | PARTIAL_SOURCE_VERIFIED: CI explicitly runs Maven verify, OpenAPI export/generation/drift, client/Web typecheck, lint/test/build. Historical local execution of every identical command and platform is not established; current targeted/no-repeat instructions supersede unnecessary full reruns. |
+| P01-A015 | PASS_LOCAL scoped for reviewed integration, not whole project: exact-head CI, source-bound artifact checks and dated runtime receipts exist. This does not turn unverified original assertions or production acceptance into PASS. |
+
 Inventory: 12Tasks / 89Step headings / 15explicit checklist lines selected by stated heading rule. Normative details and in-code acceptance examples remain at the linked original locations; this index is not a claim that prose/code blocks were exhaustively audited.
 
 ## Plan02: identity/auth
@@ -377,6 +399,35 @@ Child status: NOT_VERIFIED_INDIVIDUALLY; existing module/test evidence is retain
 | P02-A021 | - [ ] OpenAPI/client generation remains deterministic. | docs/CoVie-technical-plan-02-identity-auth-user-v1.0.md:3619 | NOT_VERIFIED_INDIVIDUALLY; reconcile with bounded ledger |
 | P02-A022 | - [ ] Plan 02 contains no merchant/catalog/order business implementation. | docs/CoVie-technical-plan-02-identity-auth-user-v1.0.md:3620 | NOT_VERIFIED_INDIVIDUALLY; reconcile with bounded ledger |
 
+### Plan02 checklist reconciliation — 2026-10-21
+
+Same merged-source and retained PR42 CI binding as the Plan01 reconciliation above. These dispositions replace the generic statuses for these checklist identities, not every child Step or normative paragraph. AuthAcceptanceTest10, AuthDatabaseInvariantTest2, AuthCookieCsrfAcceptanceTest4, AuthIdorAcceptanceTest7, AuthAuditSafetyTest1 and UserAddressPostgisIntegrationTest1 each reported zero failures/errors/skips in retained successful Backend job119040815226. Counts identify those classes, not blanket requirement coverage.
+
+| ID | Disposition and bounded evidence |
+|---|---|
+| P02-A001 | PARTIAL_SOURCE_VERIFIED: inspected auth services import shared AppClock, UuidV7Generator, ApiException/ErrorCode and audit ports. Universal absence of duplicate interfaces across the repository is not established. |
+| P02-A002 | HISTORICAL_SUPERSEDED: integrated migration histories follow `migration-lineages.md`; preserve applied SQL/checksum identity. Do not renumber existing histories to recreate an earlier sequencing instruction. |
+| P02-A003 | SOURCE_VERIFIED original schema: V002 users table has profile/status fields, while email/password_hash are in user_identities. No full live-column inventory is inferred from this source check. |
+| P02-A004 | SOURCE_VERIFIED: `GoogleAuthService.handleLogin` resolves GOOGLE by validated subject; V002 enforces provider/subject uniqueness. Returning Google login in AuthAcceptanceTest is fixture-based, not live Google acceptance. |
+| P02-A005 | SOURCE_VERIFIED new identity branch: unknown Google subject returns an onboarding ticket, not InitialSessionIssuer output; existing identity may issue a session after active-user validation. AuthAcceptanceTest first-registration method traverses fixture OIDC handler then onboarding. |
+| P02-A006 | PARTIAL_SOURCE_VERIFIED: GoogleAuthService persists ticket fingerprint, and GoogleOAuthSuccessHandler writes an action cookie with fixed onboarding/reset redirects. Audit safety checks sampled raw ticket absence. Universal absence from every URL/DB column for every action ticket is not proven by the refresh-token column scan. |
+| P02-A007 | SOURCE_VERIFIED DB constraint: V002 local-email unique index is partial on provider EMAIL; GOOGLE email metadata is indexed non-uniquely. AuthDatabaseInvariantTest retains identity uniqueness checks. This is not permission to auto-link identities by email. |
+| P02-A008 | SOURCE_VERIFIED: PasswordConfiguration uses DelegatingPasswordEncoder with `argon2id-v1`; no password-algorithm migration or rehash is introduced. |
+| P02-A009 | PASS_LOCAL scoped: AuthAuditSafetyTest captures logs and audit snapshots for login, rotation/reuse, reset and OAuth failure, asserting sampled passwords/access/refresh/action/CSRF/code values absent. Not an exhaustive guarantee for all future loggers or provider payloads. |
+| P02-A010 | SOURCE_VERIFIED: SystemRole enum contains USER/ADMIN and JwtTokenService serializes those roles. Merchant permissions are not added to the global role claim. |
+| P02-A011 | HISTORICAL_SUPERSEDED / SOURCE_VERIFIED boundary: CurrentActor contains globalRoles, not merchant roles. Approved Plan03 DB membership implementation is retained; full membership semantics have their own named evidence. |
+| P02-A012 | SOURCE_VERIFIED named paths: RefreshRotationTransaction locks session before refresh token; SessionManagementService locks session then family tokens; PasswordRecoveryService locks active sessions before their tokens. Reset also locks its separate action ticket. Existing refresh/logout/reset races are retained; no universal deadlock-free claim. |
+| P02-A013 | PASS_LOCAL scoped: `AuthAcceptanceTest.simultaneousUsesOfOneRefreshTokenSerializeOnPostgresAndDetectReuse` starts two barrier-synchronized calls to real refresh service, asserts one success/one reuse and persisted family revocation. It is service/PG proof, not simultaneous HTTP or deployed multi-replica proof. |
+| P02-A014 | PASS_LOCAL scoped: AuthIdorAcceptanceTest checks event reconnect after logout and `logoutAndGoogleRecoveryRejectThePreviouslyUsableAccessJwt`; active-session filter remains in security chain. Other revoke paths retain separate evidence, not inferred from the class name. |
+| P02-A015 | PASS_LOCAL scoped: AuthCookieCsrfAcceptanceTest browser mutation method asserts missing/wrong CSRF403 and valid cookie/header success on actual private address route. No production cookie/TLS inference. |
+| P02-A016 | PASS_LOCAL same method: issued Bearer JWT address mutation succeeds without browser CSRF; BrowserCsrfRequestMatcher excludes Bearer-header requests. Authentication and authorization still apply. |
+| P02-A017 | PARTIAL_SOURCE_VERIFIED: MeController delegates to profile service; private address/contact/session HTTP evidence uses issued actor identity. Every `/me` child added by later plans has not been exhaustively audited in this row. |
+| P02-A018 | PASS_LOCAL scoped: AuthIdorAcceptanceTest `userCannotReadOrMutateAnotherUsersAddressContactOrSession` uses issued attacker Bearer and victim rows; session delete/address get+patch/contact delete each404. Not every private-resource route in later plans. |
+| P02-A019 | PASS_LOCAL exact method: UserAddressPostgisIntegrationTest persists/reloads distinct106.8374longitude/10.8412latitude and verifies entity X/Y/SRID4326 plus native ST_X/ST_Y against actual PostGIS. |
+| P02-A020 | HISTORICAL_SUPERSEDED: FK deferral was a migration sequencing requirement. Approved later Plan03 tables and immutable combined lineages must remain; do not remove applied constraints to reproduce the early stage. |
+| P02-A021 | PASS_LOCAL scoped: retained exact-head frontend job exported/generated and passed both-file drift gate; same evidence as P01-A009. No redundant regeneration for this documentation delta. |
+| P02-A022 | HISTORICAL_SUPERSEDED: original increment scope excludes domain implementation at that stage; approved integrated merchant/catalog/order modules are not current scope leakage. Original commit-by-commit boundary not re-audited. |
+
 Inventory: 16Tasks / 149Step headings / 22explicit checklist lines selected by stated heading rule. Normative details and in-code acceptance examples remain at the linked original locations; this index is not a claim that prose/code blocks were exhaustively audited.
 
 ## Plan03: merchant/catalog/media
@@ -558,7 +609,45 @@ Evidence to retain: `docs/backend-evidence-matrix-2026-10-11.md; docs/plans/soci
 
 Child status: NOT_VERIFIED_INDIVIDUALLY; existing module/test evidence is retained without implying each procedural step independently passed. No test rerun or source change is authorized solely by these index entries.
 
-Inventory: 17Tasks / 142Step headings / 0explicit checklist lines selected by stated heading rule. Normative details and in-code acceptance examples remain at the linked original locations; this index is not a claim that prose/code blocks were exhaustively audited.
+### Plan03 fenced acceptance requirements — 2026-10-21
+
+The original acceptance checklist at lines3653–3683 is inside a text fence and contains31 `[ ]` lines without a leading Markdown bullet. The earlier parser's zero count did not mean no acceptance requirements. IDs below identify these original lines in order, not newly invented requirements. Binding is merged main6400d168 and retained PR42 CI. PASS_SCOPED and PARTIAL distinguish direct assertions from broader interpretations; none authorizes speculative tests or fixes.
+
+| ID | Original requirement | Disposition / evidence boundary |
+|---|---|---|
+| P03-C01 | Flyway clean DB applies V001 -> V006 in order | HISTORICAL_SUPERSEDED sequencing; combined immutable migration lineages and fresh disposable migration tests replace recreating an old six-migration database. |
+| P03-C02 | location_areas exists and PostGIS GIST indexes are active | PARTIAL: Plan03SchemaMigrationTest checks table/index existence via to_regclass,2PASS; that is not validity or actual planner use of every GIST index. |
+| P03-C03 | user_addresses.location_area_id FK is installed | SOURCE_VERIFIED: V004__location_merchant_media.sql188–189 installs fk_user_addresses_location_area referencing location_areas. This source assertion is not a live recovered-DB constraint inspection; applied SQL remains untouched. |
+| P03-C04 | media upload uses presigned direct PUT, not Spring binary proxy | PARTIAL: Plan03AcceptanceIntegrationTest mocks ObjectStorage presign/HEAD/range; its marketplace journey is not a real object-store PUT proof. Separate MediaObjectStorageAcceptanceTest evidence must be bound before full acceptance. |
+| P03-C05 | JPEG/PNG/WebP magic mismatch is rejected | PARTIAL: MediaMagicSnifferTest2PASS exercises valid image signatures, invalid PNG/unsupported SVG plus video containers. It does not individually test all image-declared cross-mismatch permutations. No product defect inferred. |
+| P03-C06 | media wrong owner/PENDING/FAILED cannot be attached | PARTIAL: MediaAttachmentPolicyTest3PASS covers foreign owner/PENDING/wrong purpose. CatalogInvariantTest has owned-ready policy assertions; FAILED transport evidence remains separately to reconcile. |
+| P03-C07 | merchant creation atomically creates OWNER membership | PARTIAL: Plan03AcceptanceIntegrationTest creates merchant then authorized location/catalog through HTTP/PG,1PASS; this alone is not injected-failure atomic rollback proof. |
+| P03-C08 | last active OWNER cannot be removed | PASS_SCOPED: MerchantControllerIntegrationTest.rollsBackLastOwnerRevocation sends actual DELETE with fixture JWT, expects409/MERCHANT_LAST_OWNER_REQUIRED and checks persisted membership remainsACTIVE. Retained class6PASS; not a two-owner concurrent-removal race claim. |
+| P03-C09 | membership revoke changes authorization on next request | PASS_SCOPED: CatalogAuthorizationMatrixTest revokes persisted membership then same fixture actor request404. Its security-test JWT is not a real issuer-token proof. |
+| P03-C10 | STAFF can access only explicitly assigned MerchantLocation | PASS_SCOPED: same class checks assigned-list and cross-location404 for STAFF A/B. Separate issued-JWT catalog edit/revocation evidence is retained in backend progress. |
+| P03-C11 | coordinates lng/lat-correct and timezone validated | PARTIAL: MerchantHoursServiceTest names a longitude-first/timezone evaluation case; complete MerchantLocation create validation matrix not established by it. |
+| P03-C12 | hours exception overrides weekly schedule | PASS_SCOPED: MerchantHoursServiceTest named closed-exception case; additionally CatalogDiscoveryRepositoryIntegrationTest.honorsWeeklyHoursAndAnExceptionDayForOpenNow persists weekly hours and closed/open exceptions and checks actual SQL result inclusion/exclusion. Not live opening-hours UI acceptance. |
+| P03-C13 | every CatalogItem has >=1 Variant | PARTIAL: CatalogInvariantTest actual HTTP rejects deleting last variant; aggregate-create positive path exists. Universal DB invariant for every possible writer not inferred. |
+| P03-C14 | Product/Service LocationVariant inventory-mode invariant | PASS_SCOPED: CatalogInvariantTest create rejects PRODUCT missing mode and SERVICE with UNTRACKED; retained4PASS class, actual HTTP/PG with fixture JWT. Later inventory-mode transitions have separate Plan04 requirements. |
+| P03-C15 | price source is LocationVariant only | PARTIAL: public-detail test checks concrete offer price25000. Universal absence of alternate price fields/writers not proven in this row. |
+| P03-C16 | aggregate catalog create is idempotent | PASS_SCOPED retained actual-issued-JWT create/replay proof recorded in backend evidence; MerchantCatalogCreateControllerIntegrationTest13PASS in current CI. No new replay run for unchanged source. |
+| P03-C17 | same key/different body409 | PASS_SCOPED same retained create evidence; preserve existing request fingerprint contract, no new business restriction. |
+| P03-C18 | mutable seller resources honor ETag/If-Match | PARTIAL: create/edit/variant HTTP suites retain named version assertions; all mutable seller resources are not exhaustively covered by a single edit class. |
+| P03-C19 | stale concurrent update RESOURCE_VERSION_CONFLICT | NOT_VERIFIED_INDIVIDUALLY for exact simultaneous writers in this reconciliation; stale-version rejection must not be mislabeled as deterministic concurrent-lock proof. |
+| P03-C20 | lifecycle cannot use arbitrary status PATCH | PARTIAL_SOURCE_VERIFIED: UpdateCatalogItemRequest has editable content/category/attribute/tag/media/caption fields, no status member. This DTO inspection alone does not prove every mutation entrypoint or unknown-property handling. |
+| P03-C21 | lifecycle/outbox same transaction | SOURCE_VERIFIED: CatalogLifecycleService publish/pause/activate/archive are Transactional and call append after saveAndFlush; injected OutboxEventWriter implementation requires the existing transaction. Same-call transaction boundary verified, not a newly injected outbox-failure test. |
+| P03-C22 | public hidden/inactive404 | PASS_SCOPED: PublicCatalogDetailControllerIntegrationTest `returnsNotFoundWhenCatalogIsNotPublic`; class8PASS. Not every later Social public projection. |
+| P03-C23 | discovery explicit LocationContext | PASS_SCOPED: PublicCatalogDiscoveryControllerIntegrationTest missing-context HTTP assertion; class5PASS. |
+| P03-C24 | another user's addressId404 | PASS_SCOPED same class owned-address vs outsider address method, fixture authentication; not all private address endpoints. |
+| P03-C25 | one result resolves nearest concrete MerchantLocation | PASS_SCOPED: CatalogDiscoveryRepositoryIntegrationTest.resolvesTheNearestConcreteLocationBeforePriceSorting persists a farther1000VND offer versus near25000VND, then asserts actual repository SQL returns near location/item/25000price and distance<10m. Retained class13PASS; no production-sized planner/SLO claim. |
+| P03-C26 | public offer exposes exact locationVariantId | PASS_SCOPED: public-detail HTTP compares stored fixture offer ID to variants[0].offer.locationVariantId and resolved location. |
+| P03-C27 | price sort does not switch to farther location | PASS_SCOPED same near/far actual repository test as C25 explicitly uses PRICE_ASC and retains near25000 rather than farther1000. This closes the missing binding without adding a duplicate test. |
+| P03-C28 | opaque keyset cursor/no tie duplicates | PASS_SCOPED combined layers: discovery HTTP checks opaque next cursor; CatalogDiscoveryRepositoryIntegrationTest.keysetsEverySortAcrossAllPagesWithEveryTiedItemExactlyOnce creates four tied items, asserts tie keys, traverses all pages for each current CatalogSort and checks exact UUID order/no duplicates. Repository13PASS and discovery HTTP5PASS retained; no all-future-sort guarantee. |
+| P03-C29 | generated contract in sync | PASS_SCOPED retained successful PR42 frontend export/generate/two-file drift gate; same evidence as P01-A009. |
+| P03-C30 | backend clean verify passes | PASS_SCOPED reviewed-head CI Maven verify1206reported/0failures/0errors/19skips; do not relabel command as a newly run local clean verify. |
+| P03-C31 | frontend lint/typecheck/test/build passes | PASS_SCOPED retained reviewed-head frontend gates;143filesPASS/1skip,685testsPASS/12skip. Not rendered all-page acceptance. |
+
+Inventory: 17Tasks / 142Step headings / 0Markdown-bullet checklist lines under the original parser, plus31fenced acceptance lines reconciled above. Normative details and in-code examples remain at the original locations; this is not an exhaustive prose audit.
 
 ## Plan04: shipping/cart/inventory/checkout
 
@@ -724,7 +813,58 @@ Evidence to retain: `docs/backend-evidence-matrix-2026-10-11.md; docs/backend-pr
 
 Child status: NOT_VERIFIED_INDIVIDUALLY; existing module/test evidence is retained without implying each procedural step independently passed. No test rerun or source change is authorized solely by these index entries.
 
-Inventory: 21Tasks / 123Step headings / 0explicit checklist lines selected by stated heading rule. Normative details and in-code acceptance examples remain at the linked original locations; this index is not a claim that prose/code blocks were exhaustively audited.
+### Plan04 fenced acceptance requirements — 2026-10-21
+
+Original lines2866–2909 contain44fenced checklist entries omitted by the Markdown-bullet census. These IDs follow original order. Source binding remains merged main6400d168 and retained PR42 CI; no unchanged test rerun. CheckoutLastStockConcurrencyTest4PASS, CheckoutRollbackInvariantTest1PASS, CheckoutDeliveryCoverageIntegrationTest1PASS, CheckoutSessionServiceTest4PASS and CheckoutCommitServiceTest2PASS are bounded evidence, not automatic proof of all rows. Earlier actual-JWT checkout/shipping boundary receipts remain authoritative for their exact methods.
+
+| ID | Original requirement | Disposition / evidence boundary |
+|---|---|---|
+| P04-C01 | clean migrations V001–V009 | HISTORICAL_SUPERSEDED sequencing by immutable combined migration lineages; no renumber/reset. |
+| P04-C02 | one active PRODUCT_DELIVERY coverage | SOURCE_VERIFIED V007 ux_delivery_coverage_active_type unique(location,type) where coverage_status=ACTIVE. Not a newly executed duplicate-insert HTTP test. |
+| P04-C03 | one active SERVICE_AREA coverage | SOURCE_VERIFIED same type-scoped active coverage constraint as C02, distinct from shipping-policy uniqueness. |
+| P04-C04 | radius uses PostGIS geography | PASS_SCOPED CheckoutDeliveryCoverageIntegrationTest actual PG radius case; not live GPS precision. |
+| P04-C05 | selected area matches descendants | PASS_SCOPED same test ancestor/descendant eligibility and unrelated-area rejection. |
+| P04-C06 | coverage modes combine OR | SOURCE_VERIFIED DeliveryCoverageEvaluator independently adds RADIUS/AREA matches and rejects only an empty source set. No combined-boundary runtime proof inferred. |
+| P04-C07 | four shipping modes | PARTIAL: existing shipping evaluator/boundary and FIXED/NEGOTIATED actual checkout chains retained; all modes retain separate evidence scopes. |
+| P04-C08 | NEGOTIATED fee/total null | PASS_SCOPED retained actual checkout/delivery snapshot chain, no fee mutation. |
+| P04-C09 | conditional ANY/ALL boundaries | PASS_SCOPED ShippingEvaluatorBoundaryTest6PASS current CI, inclusive amount/distance threshold parameterization; no browser claim. |
+| P04-C10 | every TRACKED Product has balance | PARTIAL: actual tracked checkout proves selected balances; universal backfill/new-offer paths not inferred from one race. |
+| P04-C11 | Service has no balance | PARTIAL: retained service checkout has no reservation; no-reservation is not by itself universal no-balance proof. |
+| P04-C12 | TRACKED→UNTRACKED preserves stock/reservations | SOURCE_VERIFIED InventoryModeCoordinator rejects nonzero reserved or physical stock before deleting a balance. Response/error mapping and concurrent mode-change runtime coverage are not claimed by this guard inspection. |
+| P04-C13 | nonzero stock adjustment ledger | SOURCE_VERIFIED InventoryAdjustmentService.setStockInternal writes ADJUSTMENT_IN/OUT movement for nonzero delta in existing mandatory transaction, then adjusts balance; zero delta writes no movement. Not inferred from SALE/RELEASE tests. |
+| P04-C14 | stock never below reserved | SOURCE_VERIFIED V007 check reserved_quantity<=stock_on_hand plus adjustment/setStock and stockOut guards. Existing tracked races retain runtime evidence; not every mutation path re-tested. |
+| P04-C15 | independent bulk-stock results | PARTIAL_SOURCE_VERIFIED InventoryBulkService maps items through per-item IdempotencyExecutor with key batchKey:offerId; executor returns individual outcomes for three named domain errors. Unexpected errors propagate; successful mixed-batch HTTP/PG behavior not inferred from source alone. |
+| P04-C16 | one active Cart/user/location/type | SOURCE_VERIFIED V008 ux_cart_active_user_location_type partial unique index with cart_status=ACTIVE. Actual-JWT cart concurrency methods remain separate positive evidence. |
+| P04-C17 | separate Cart for same merchant/different location | NOT_VERIFIED_INDIVIDUALLY here. |
+| P04-C18 | Product/Service separate Cart | PARTIAL retained service quantity/cart proof does not alone prove two-cart separation. |
+| P04-C19 | exact locationVariantId add | PARTIAL retained actual-JWT cart/checkout methods use concrete offers; no silent-switch universal claim. |
+| P04-C20 | Service quantity exactly1 | PASS_SCOPED CheckoutHttpAcceptanceTest.serviceCartRejectsQuantityChangesAndDuplicateAddsWithoutChangingLine; retains exact state assertions, not all Service lifecycle permutations. |
+| P04-C21 | current Cart latest price/warning | NOT_VERIFIED_INDIVIDUALLY here; Commit stale snapshot detection is not Cart warning UI proof. |
+| P04-C22 | Cart If-Match | PASS_SCOPED retained CheckoutHttpAcceptanceTest.cartOwnershipAndVersionFailuresLeaveQuantityUnchanged. |
+| P04-C23 | CART/DIRECT common candidate | PARTIAL retained successful actual HTTP paths and common checkout implementation; every source/fulfillment combination not inferred. |
+| P04-C24 | Preview no stock reservation | PARTIAL source-bound Preview/Commit separation retained; concurrent PG row-lock breadth remains separate. |
+| P04-C25 | Preview no price lock | PARTIAL authoritative data is revalidated at Commit; literal absence of every DB lock is not claimed. |
+| P04-C26 | opaque/hashed/15min/single-use token | SOURCE_VERIFIED CheckoutSessionService stores hasher.hash(raw), uses configured TTL and rejects consumed session under lock; CheckoutProperties defaults missing TTL to15minutes. Nondefault configuration and all token-generator entropy properties remain separate checks. |
+| P04-C27 | expired token rejected | PASS_SCOPED CheckoutSessionServiceTest deadline boundary4PASS class; service/unit assertion, not elapsed real15min wait. |
+| P04-C28 | consumed token/new key no second Order | PASS_SCOPED retained actual-JWT concurrentCommitsConsumeCheckoutOnceThroughActualJwtHttp sameKey=false branch; one committed Order. |
+| P04-C29 | Commit revalidates all authoritative fields | PARTIAL named actual shipping/cart/inventory boundary proofs retained; universal item/coverage/minimum matrix not inferred from a subset. |
+| P04-C30 | changed Preview409/CHECKOUT_CHANGED | PASS_SCOPED retained actual-JWT changed shipping/cart cases; no broader contract rewrite. |
+| P04-C31 | idempotent Commit one Order | PASS_SCOPED retained actualJwtCheckoutRejectsForeignTokenAndReplaysOnlyOneOrder and same-key concurrent branch. |
+| P04-C32 | actual pending Order/items/fulfillment/event | PASS_SCOPED retained actual product and Service HTTP checkout chains; mocked CheckoutCommitServiceTest alone is not used as full proof. |
+| P04-C33 | immutable snapshots | PARTIAL retained OrderSnapshotImmutabilityIntegrationTest6PASS and checkout shipping snapshots; all historical snapshot fields not reasserted in this row. |
+| P04-C34 | tracked reservation at create | PASS_SCOPED retained last-unit actual-JWT chain before completion checks balance/reservation; later SALE check not substituted for create-time assertion. |
+| P04-C35 | untracked/Service no reservation | PASS_SCOPED retained untracked product/Service checkout chains; does not imply no inventory balance in all paths. |
+| P04-C36 | clear selected Cart only after success | PASS_SCOPED retained cartCheckoutRejectsChangedCartAndClearsOnlyAfterSuccessfulCommit; mocked Commit unit case is supplementary only. |
+| P04-C37 | Order/outbox atomic | PASS_SCOPED CheckoutRollbackInvariantTest injects hook failure after real Order creation and asserts no Order/items/fulfillment/event/outbox/reservation/movement, reserved0. Preview/session/comparison are mocked, so not full HTTP request proof. |
+| P04-C38 | injected rollback no partial Order/reservation/movement/Cart | PARTIAL same DIRECT-source rollback proves financial/inventory/outbox rows and session unconsumed; no Cart exists in that fixture. Do not label it Cart rollback proof. |
+| P04-C39 | last-stock exactly success/conflict | PASS_SCOPED existing actual-JWT last-unit chain and PG checkout race retained; no extra repeated test. |
+| P04-C40 | reverse item order no deadlock | PASS_SCOPED CheckoutLastStockConcurrencyTest.reversedTrackedOfferOrderingAcrossConcurrentCommitsDoesNotDeadlock uses actual Commit/PG inventory with mocked Preview/session boundary. Not actual simultaneous HTTP or all-order deadlock guarantee. |
+| P04-C41 | fulfillment filters preserve resolved location | PARTIAL CatalogDiscoveryRepositoryIntegrationTest delivery eligibility/nearest-price assertions retained; individual public filter combinations remain bounded. |
+| P04-C42 | generated client in sync | PASS_SCOPED retained PR42 export/generate/drift gate, shared with P01-A009. |
+| P04-C43 | backend clean verify | PASS_SCOPED reviewed CI Maven verify; not a newly run local clean command. |
+| P04-C44 | frontend quality gates | PASS_SCOPED reviewed CI typecheck/lint/test/build; not rendered all-page acceptance. |
+
+Inventory: 21Tasks / 123Step headings / 0Markdown-bullet checklist lines under the old parser, plus44fenced acceptance lines above. Normative prose and embedded examples still require their own reconciliation.
 
 ## Plan05: orders/fulfillment
 
@@ -888,7 +1028,40 @@ Evidence to retain: `docs/backend-evidence-matrix-2026-10-11.md; docs/backend-pr
 
 Child status: NOT_VERIFIED_INDIVIDUALLY; existing module/test evidence is retained without implying each procedural step independently passed. No test rerun or source change is authorized solely by these index entries.
 
-Inventory: 20Tasks / 122Step headings / 0explicit checklist lines selected by stated heading rule. Normative details and in-code acceptance examples remain at the linked original locations; this index is not a claim that prose/code blocks were exhaustively audited.
+### Plan05 fenced acceptance requirements — 2026-10-21
+
+Original lines2654–2679 contain26fenced required-behavior entries omitted by the Markdown-bullet census. IDs below follow their original order. Same6400d168 source/PR42 CI binding as above; OrderCancellationControllerIntegrationTest23PASS and snapshot suite6PASS are retained without rerun. Fixture setup SQL is not counted as an exercised creation command; signed HTTP commands and real projection dispatch are distinguished from mocked service tests.
+
+| ID | Original requirement | Disposition / evidence boundary |
+|---|---|---|
+| P05-C01 | buyer private Order isolation | PARTIAL retained OrderReadServiceTest6PASS; all actual issued-JWT private read variants are not proved by service class success. |
+| P05-C02 | seller merchant/location visibility | PARTIAL same service evidence and snapshot authorized-role reads; snapshot suite mocks CurrentActorProvider, not transport authentication proof. |
+| P05-C03 | STAFF location restriction | PARTIAL retained merchant access matrix; exact Order read/command STAFF transport boundaries remain separate assertions. |
+| P05-C04 | actor-specific allowedActions | PARTIAL OrderAllowedActionServiceTest10PASS, service logic; canonical JSON transport parity not inferred for every actor/state. |
+| P05-C05 | confirm/reject pending | PASS_SCOPED actual-issued-JWT confirm/reject race plus sourced Need HTTP commands retained. No every-provider-role matrix claim. |
+| P05-C06 | buyer pending cancel | PASS_SCOPED actual confirm-versus-pending-cancel named race; existing unit test is supplementary, not PG proof. |
+| P05-C07 | post-confirm cancel requires decision | PASS_SCOPED OrderCancellationControllerIntegrationTest.buyerMustRequestRatherThanDirectlyCancelAConfirmedOrder and accepted-request projection path retained. |
+| P05-C08 | rejected cancel restores exact previous state | NOT_VERIFIED_INDIVIDUALLY here; do not infer from request model name or accepted cancellation path. |
+| P05-C09 | seller cancel requires reason/releases reservation | PASS_SCOPED actual merchant cancellation/replay and missing-reason HTTP cases plus completion-vs-cancel stock outcome retained. |
+| P05-C10 | seller delivery progress | PASS_SCOPED retained FIXED/NEGOTIATED×TRACKED/UNTRACKED actual checkout→delivery→buyer completion chains, not every intermediary error path. |
+| P05-C11 | server-time pickup/no-show grace | PASS_SCOPED signed HTTP no-show test asserts future eligibleAt409/ACTIVE reservation then past eligibleAt success; fixture changes timestamp, not an elapsed-clock wait. |
+| P05-C12 | buyer contests no-show | PASS_SCOPED same HTTP test uses buyer contest command, checks NO_SHOW_CONTESTED and real reputation dispatch changes. |
+| P05-C13 | Service performed flow | PASS_SCOPED retained actual Service checkout→performed→completion/replay→dispatch chain; separate issue HTTP case retained. |
+| P05-C14 | direct buyer completion from CONFIRMED | PARTIAL retained completion/cancellation races and source paths; explicit start-state-specific transport assertion remains to bind independently. |
+| P05-C15 | issue only after declared fulfillment | PARTIAL signed Service/delivery issue positives retained; every premature issue denial not inferred. |
+| P05-C16 | issue blocks auto-complete | NOT_VERIFIED_INDIVIDUALLY here; issue-timeout worker is a different transition from ordinary auto-completion and not interchangeable proof. |
+| P05-C17 | pending timeout expires/releases | PARTIAL scheduler/model evidence retained; due-selection, actual selected-order worker and inventory result must be distinguished. |
+| P05-C18 | completion commits tracked SALE | PASS_SCOPED actual tracked pickup/delivery checkout chains and named completion races assert one SALE, COMMITTED reservation and exact balance. |
+| P05-C19 | no-show releases reservation | PASS_SCOPED noShowGraceContestAndCompletionNeverDeductReleasedStockAgain plus persisted reservation/movement assertions; no actual customer no-show inference. |
+| P05-C20 | late contest completion no re-commit RELEASED | PASS_SCOPED same signed HTTP no-show→contest→completion path with real dispatch and unchanged released-inventory outcome. |
+| P05-C21 | delivery issue closure commits ACTIVE, contest stays RELEASED | PASS_SCOPED deliveryIssueTimeoutCommitsReservedStockOnce and separate no-show contest path retained. Selected worker/direct service evidence is not a scheduler due-selection claim. |
+| P05-C22 | COMPLETED terminal | PARTIAL entity transition tests and actual replay/race outcomes retained; every command against completed not exhaustively asserted in this row. |
+| P05-C23 | important transitions event/outbox atomic | PASS_SCOPED named actual persisted race outcomes and command transaction boundaries; not an injected-failure matrix for all transitions. |
+| P05-C24 | replay no duplicate event/inventory/outbox | PASS_SCOPED existing actual HTTP completion/cancel/no-show replay and real dispatch assertions; do not sum historical runs into a new test count. |
+| P05-C25 | concurrent commands one valid state | PASS_SCOPED exact named race proofs including three Plan05 additions, three repeats each, observed row-lock waits and single persisted event/inventory/projection outcomes. Not all conceivable command pairs. |
+| P05-C26 | no Admin force-status endpoint | SOURCE_VERIFIED inspected AdminOrderController exposes only GET list/detail/events. A reflection check omitting POST/PATCH alone would not establish a repository-wide negative; no broader scan claim here. |
+
+Inventory: 20Tasks / 122Step headings / 0Markdown-bullet checklist lines under the old parser, plus26fenced acceptance lines above. Normative prose and embedded examples still require their own reconciliation.
 
 ## Coverage and next decision
 

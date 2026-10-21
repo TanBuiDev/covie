@@ -6,6 +6,36 @@ Date: 2026-10-19 (Asia/Saigon). Read-only W01/W08 evidence census; no tests, ser
 
 ## Scope and interpretation
 
+### Superseding assertion bindings — 2026-10-21
+
+Source main6400d168/PR42 reviewed head22399bcc; retained successful Backend job119040815226 and frontend job119040817358. No new test run or feature/config/data mutation. These rows refine the original census identities below, not every normative paragraph. Latest integration, Web gate0 and owner-selected local payment/reconciliation are recorded in `project-acceptance-current-2026-10-19.md`; old Web57finding, stopped-runtime or invoice0 statements below are historical.
+
+| Original row family | Current disposition and exact scope |
+|---|---|
+| P06 response uniqueness and original command races | PASS_SCOPED actual issued-JWT/HTTP/PG command methods and deterministic winner ordering, final affected class68PASS, integrated PR41. See `need-command-concurrency-progress-2026-10-20.md`. No duplication of earlier weaker service-only proofs. |
+| P06 Preview source locking | SOURCE_VERIFIED NeedCheckoutCandidateResolver readSource(false) for Preview versus explicit locked Commit path. This means no pessimistic source reservation, not absence of ordinary SQL AccessShare locks. |
+| P06 expiry/multi-replica breadth | PASS_SCOPED actual expiry-versus-confirm and held-row SKIP LOCKED assertions; two deployed scheduler replicas NOT_VERIFIED. NeedExpirationSchedulerIntegrationTest mocks its repository and is not used as PG proof. |
+| P06 original query-plan requirements | Reviewed actual SQL/binds/default planner with nine captures/eight paths; five of seven named indexes selected. Two unselected indexes remain a disclosed planner deviation, not silently PASS or reason for forced hints. See `project-need-original-query-plans-2026-10-20.md`. |
+| P07-A005/A029 rating/rebuild | PASS_SCOPED RatingProjectionServiceIntegrationTest3PASS and RatingRebuildServiceIntegrationTest1PASS: persisted totals, corrupt/rebuild, separate concurrent contributions. Not a live external review journey. |
+| P07-A007 canonical statuses | PASS_SCOPED ReputationOutcomeClassifierTest17 current explicit cases; enum-size assertion compares OrderStatus.values to itself and does not independently guard future omitted argument cases. No current missing case established. |
+| P07-A013/A014 outbox locking/atomicity | SOURCE_VERIFIED lockNextDue FOR UPDATE SKIP LOCKED and REQUIRES_NEW processor. Existing partialHandlerWriteRollsBackAndRetryCreatesOneNotification asserts failed handler rollback then one notification/PUBLISHED on retry. Not external-provider exactly-once delivery. |
+| P07-A016 notification dedup | PASS_SCOPED NotificationServiceIntegrationTest2PASS: event/recipient/type retry returns existing notification with one IN_APP delivery. |
+| P07-A017/A018 inbox paging/read | PASS_SCOPED NotificationHttpAcceptanceTest2PASS: issued JWT, tied timestamps, malformed cursor, foreign404/anonymous401, repeated read/all-read preserving timestamp and private/no-store. |
+| P07-A019 notification families | PARTIAL named actual Review/Need-expiry/Order dispatch proofs retained; unit recipient mapping does not prove every event/channel/audience. |
+| P07-A012/A020–A022 trust UI/SSE breadth | NOT_VERIFIED for exact rendered actor comparison and production proxy/multi-replica reconnect breadth. Existing bounded local SSE assertions retained, no inferred defect. |
+| P08-A005/A025 moderation modes | PASS_SCOPED hybrid history-service argument tests2PASS with mocked repository; actual Need PRE_APPROVAL Admin+Buyer HTTP journey retained. Not every historical threshold SQL or mode/target permutation. |
+| P08-A006/A007/A024 single case/lifecycle | PASS_SCOPED AdminModerationAcceptanceTest21PASS class includes Need create/replay/approve once, resolved-case409 and separate lifecycle ACTIVE/moderation state assertions; cancellation concurrency and Catalog revalidation remain named cases, not all targets. |
+| P08-A008 ratings hide/restore | PASS_SCOPED actual review creation→repeated hide/restore asserts item+merchant counts/sums0/0 then1/5, review lifecycle ACTIVE and two effective actions. |
+| P08-A009 report idempotency | PASS_SCOPED named Catalog/Need/review target routes plus invalid/missing-key no-mutation assertions; target visibility restrictions remain intact. |
+| P08-A013 Admin Order read-only | SOURCE_VERIFIED AdminOrderController only GET list/detail/events; POST/PATCH-only reflection test is not a universal negative endpoint proof. |
+| P08-A015/A033 settings/audit | PASS_SCOPED AdminSettingAcceptanceTest7PASS missing/stale If-Match, value/history/audit/outbox and invalid/nonadmin nonmutation. Not an injected-failure matrix for every Admin command. |
+| P08-A016/A034 dispatch | PASS_SCOPED SettingDispatchAcceptanceTest1PASS and AdminSafetyDispatchAcceptanceTest2PASS for current audience/dedup/session nonrevival; not every external notification channel. |
+| P08-A035 secret settings | PARTIAL_SOURCE_VERIFIED registered typed definitions, not process environment. No full serialized-registry secret-negative matrix inferred from invalid-value tests. |
+| P09 component/build evidence | PASS_SCOPED successful CI143files/685tests plus typecheck/lint/build/contract gates. Component mocks and packaged SSR/image smoke tests are not697real-browser journeys or exhaustive actor/state UI acceptance. Figma fidelity stays waived. |
+| P10 target acceptance | EXTERNAL_INPUT for production domain/TLS/storage/provider/restore/alerts/load/operator. Disposable backup/restore, synthetic rule evaluation, Redis outage and local SQL plans remain bounded evidence, not substituted target operation. |
+
+Unmapped normative details remain NOT_VERIFIED rather than automatically inheriting PASS from these families. No requirement is closed merely because a similarly named test exists.
+
 - Source baseline: `5ad071ffb9f3c2f9d7cfaf327c09726690dc3c1a`. Inspected source tree had only existing Web AGENTS/next-env changes plus new planning/acceptance documents; no production source changes observed at census time. Later root-worker changes require delta review, not rewriting these historical results.
 - Inventory contains **100 numbered Tasks, 731 named child Steps, and 416 gate/checklist/type/handoff/objective lines** from Plans06–10. The 416 are traceability lines, **not416 defects**. Repeated statements remain listed at their original headings/lines. Task body acceptance details remain addressable through every Step's exact source link; a Step title is not treated as proof of its body.
 - `PASS_LOCAL (bounded)` means the named implemented slice has retained actual local evidence, **not that every lower-level sentence in a Task has independently passed**. `PASS_LOCAL + NOT_VERIFIED` retains that result while showing its precise missing proof. Full-suite counts are never substituted for per-item acceptance. No old PASS path should be rerun solely because this ledger expands inventory.
