@@ -2,6 +2,19 @@
 
 Baseline main5ad071ff. This register tracks actual findings from the approved remaining-work plan. It is not a claim that the whole project has been exhaustively audited or that these rows all represent software bugs.
 
+## Superseding dispositions — 2026-10-21
+
+Read these before the historical table below. Current evidence and limits are recorded in the superseding receipt in `project-acceptance-current-2026-10-19.md`.
+
+| ID | Updated disposition |
+|---|---|
+| LIVE-01 | Selected local real settlement VERIFIED_LIVE: provider/server callback agree, one successful attempt and one matching invoice grant. Normal Admin reconciliation retained COMPLETED/200/PAID/PAID/NONE, with financial counts and period unchanged. Actual post-payment publish command remains separate; no second payment or raw callback retransmission required. |
+| SEC-02 | Reviewed pinned Distroless Web artifact0HIGH/CRITICAL, unchanged scanner gate, targeted compatibilityPASS; PR42 merged after exact-head CI. Previous Bookworm57finding result retained as history, not ignored. Not deployment acceptance. |
+| ART-01 | Reviewed source/archive/image/SBOM bindings finalized in PR42 receipt; final Web build inputs unchanged after its build commit. API production inputs unchanged; later API test-source change is explicitly distinguished. No registry release or optional exact-image API runtime claim. |
+| CALLBACK-02 | User restarted managed app/bridge/new tunnel; provider confirmation and four local Billing controlsON verified for that session. Keep terminal ownership and temporary-URL replacement procedure; historical termination cause remains unproved. |
+| NEED-LOG-01 | Minimal logger integrated by PR41; current-source CI retained. Earlier unmerged wording is obsolete. |
+| CLEANUP-02 / SEC-01 / OPS-01 / TRACE-01 | Remain open within their stated scope: manual fixture cleanup, unpatched dev-only advisory, absent production target and incomplete exhaustive requirement dispositions. Missing evidence is not automatically a code defect. |
+
 **Latest owner override2026-10-20:** Explicitly authorized four Billing controlsON on local and supplied normal Admin credentials through Drive. Payment/release/reconciliationON, gauges1/1 and webhook reconfirmed200/code00. Enforcement nowON via authenticated PATCH201; effective/onboarding reread, history/audit and PUBLISHED outbox verified. Temporary Admin session logged out; no credential/cookie content persisted. Earlier OFF/no-write dispositions below are historical for this narrowly authorized activation. No Social/video activation, deployment or agent payment is authorized; invoice count0. Current authority/state: `project-acceptance-current-2026-10-19.md`.
 
 | ID | Type / priority | Evidence / expected vs actual | Current disposition / closure |
